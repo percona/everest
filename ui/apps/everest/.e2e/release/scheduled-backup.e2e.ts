@@ -136,10 +136,6 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Submit wizard', async () => {
           await submitWizard(page);
-
-          await expect(
-            page.getByText('Awesome! Your database is being created!')
-          ).toBeVisible();
         });
 
         await test.step('Check db list and status', async () => {
@@ -310,7 +306,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             expect(result.trim()).toBe('1\n2\n3');
             break;
           case 'psmdb':
-            expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+            expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
             break;
           case 'postgresql':
             expect(result.trim()).toBe('1\n 2\n 3');

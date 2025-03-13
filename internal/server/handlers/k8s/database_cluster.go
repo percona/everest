@@ -20,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
 )
@@ -196,7 +195,7 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 	}
 
 	response := &api.DatabaseClusterPitr{}
-	if !databaseCluster.Spec.Backup.Enabled || !databaseCluster.Spec.Backup.PITR.Enabled {
+	if !databaseCluster.Spec.Backup.PITR.Enabled {
 		return response, nil
 	}
 
@@ -221,7 +220,10 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 	// if there is the LatestRestorableTime set in the CR, use it
 	// except of psmdb which has a bug https://perconadev.atlassian.net/browse/K8SPSMDB-1186
 	if latestBackup.Status.LatestRestorableTime != nil && databaseCluster.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePSMDB {
-		latest = &latestBackup.Status.LatestRestorableTime.Time
+		t := &latestBackup.Status.LatestRestorableTime.Time
+		if t.After(backupTime) {
+			latest = t
+		}
 	} else {
 		// otherwise use heuristics based on the UploadInterval
 		heuristicsInterval := getDefaultUploadInterval(databaseCluster.Spec.Engine, databaseCluster.Spec.Backup.PITR.UploadIntervalSec)

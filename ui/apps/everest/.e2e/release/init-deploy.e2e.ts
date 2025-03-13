@@ -33,6 +33,7 @@ import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
+import { queryPG, queryPSMDB, queryMySQL } from '@e2e/utils/db-cmd-line';
 
 let token: string;
 
@@ -129,10 +130,6 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Submit wizard', async () => {
           await submitWizard(page);
-
-          await expect(
-            page.getByText('Awesome! Your database is being created!')
-          ).toBeVisible();
         });
 
         await test.step('Check db list and status', async () => {
@@ -166,6 +163,42 @@ test.describe.configure({ retries: 0 });
             expect(addedCluster?.spec.proxy.replicas).toBe(size);
           }
         });
+      });
+
+      test(`Check DB custom option [${db} size ${size}]`, async () => {
+        let result: string;
+
+        switch (db) {
+          case 'pxc': {
+            result = await queryMySQL(
+              clusterName,
+              namespace,
+              `SHOW variables LIKE "max_connections";`
+            );
+            expect(result.trim()).toBe('max_connections	250');
+            break;
+          }
+          case 'psmdb': {
+            result = await queryPSMDB(
+              clusterName,
+              namespace,
+              'admin',
+              `db.serverCmdLineOpts().parsed.systemLog;`
+            );
+            expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
+            break;
+          }
+          case 'postgresql': {
+            result = await queryPG(
+              clusterName,
+              namespace,
+              'postgres',
+              `SHOW shared_buffers;`
+            );
+            expect(result.trim()).toBe('192MB');
+            break;
+          }
+        }
       });
 
       test(`Suspend cluster [${db} size ${size}]`, async ({ page }) => {

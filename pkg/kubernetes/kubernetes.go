@@ -28,7 +28,6 @@ import (
 	"time"
 
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"go.uber.org/zap"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,6 +40,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
 )
 
@@ -93,9 +93,7 @@ const (
 	// defaultChunkSize  = 500
 )
 
-var (
-	once sync.Once
-)
+var once sync.Once
 
 // Kubernetes is a client for Kubernetes.
 type Kubernetes struct {

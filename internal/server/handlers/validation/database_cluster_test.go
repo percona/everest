@@ -5,16 +5,15 @@ import (
 	"testing"
 
 	"github.com/AlekSi/pointer"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -274,33 +273,21 @@ func TestValidateBackupSpec(t *testing.T) {
 			err:     nil,
 		},
 		{
-			name: "disabled backup is allowed",
+			name: "allow no schedules",
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: false,
+						Schedules: []everestv1alpha1.BackupSchedule{},
 					},
 				},
 			},
 			err: nil,
 		},
 		{
-			name: "errNoSchedules",
-			cluster: &everestv1alpha1.DatabaseCluster{
-				Spec: everestv1alpha1.DatabaseClusterSpec{
-					Backup: everestv1alpha1.Backup{
-						Enabled: true,
-					},
-				},
-			},
-			err: errNoSchedules,
-		},
-		{
 			name: "errNoNameInSchedule",
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled: true,
@@ -316,7 +303,6 @@ func TestValidateBackupSpec(t *testing.T) {
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled: true,
@@ -333,7 +319,6 @@ func TestValidateBackupSpec(t *testing.T) {
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -358,7 +343,6 @@ func TestValidateBackupSpec(t *testing.T) {
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -398,7 +382,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -437,7 +420,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -474,7 +456,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -511,7 +492,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("storage"),
@@ -552,7 +532,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: true,
 						},
@@ -592,7 +571,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("storage"),
@@ -659,7 +637,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("name"),
@@ -674,7 +651,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: false,
 						},
@@ -687,9 +663,7 @@ func TestValidatePitrSpec(t *testing.T) {
 			name: "valid spec no pitr",
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
-					Backup: everestv1alpha1.Backup{
-						Enabled: true,
-					},
+					Backup: everestv1alpha1.Backup{},
 				},
 			},
 			err: nil,
@@ -699,7 +673,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: true,
 						},
@@ -716,7 +689,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: true,
 						},
@@ -733,7 +705,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: true,
 						},
@@ -750,7 +721,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("name"),
@@ -766,7 +736,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("name"),

@@ -6,15 +6,14 @@ import (
 	"time"
 
 	"github.com/AlekSi/pointer"
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"

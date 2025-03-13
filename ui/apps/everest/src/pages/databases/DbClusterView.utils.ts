@@ -27,13 +27,13 @@ const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.pausing]: Messages.statusProvider.pausing,
   [DbClusterStatus.paused]: Messages.statusProvider.paused,
   [DbClusterStatus.stopping]: Messages.statusProvider.stopping,
-  [DbClusterStatus.unknown]: Messages.statusProvider.unknown,
   [DbClusterStatus.restoring]: Messages.statusProvider.restoring,
   [DbClusterStatus.deleting]: Messages.statusProvider.deleting,
+  [DbClusterStatus.creating]: Messages.statusProvider.creating,
 };
 
 export const beautifyDbClusterStatus = (status: DbClusterStatus): string =>
-  DB_CLUSTER_STATUS_HUMANIFIED[status] || Messages.statusProvider.unknown;
+  DB_CLUSTER_STATUS_HUMANIFIED[status] || Messages.statusProvider.creating;
 
 export const convertDbClusterPayloadToTableFormat = (
   data: DbClusterForNamespaceResult[]
@@ -46,10 +46,10 @@ export const convertDbClusterPayloadToTableFormat = (
           namespace: item.namespace,
           status: cluster.status
             ? cluster.status.status
-            : DbClusterStatus.unknown,
+            : DbClusterStatus.creating,
           dbType: cluster.spec.engine.type,
           dbVersion: cluster.spec.engine.version || '',
-          backupsEnabled: !!cluster.spec.backup?.enabled,
+          backupsEnabled: (cluster.spec.backup?.schedules || []).length > 0,
           databaseName: cluster.metadata.name,
           cpu: cluster.spec.engine.resources?.cpu || '',
           memory: cluster.spec.engine.resources?.memory || '',

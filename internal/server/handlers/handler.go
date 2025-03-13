@@ -7,7 +7,6 @@ import (
 	"context"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-
 	"github.com/percona/everest/api"
 )
 

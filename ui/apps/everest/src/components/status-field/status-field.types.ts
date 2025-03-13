@@ -7,7 +7,8 @@ export type BaseStatus =
   | 'pending'
   | 'success'
   | 'deleting'
-  | 'unknown';
+  | 'unknown'
+  | 'creating';
 
 export type StatusFieldProps<T extends string | number | symbol> = {
   status: T;
@@ -16,4 +17,5 @@ export type StatusFieldProps<T extends string | number | symbol> = {
   dataTestId?: string;
   iconProps?: StatusIconProps;
   stackProps?: StackProps;
+  defaultIcon?: React.ElementType;
 };
