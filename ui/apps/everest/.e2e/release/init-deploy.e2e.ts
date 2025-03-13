@@ -19,6 +19,7 @@ import {
   suspendDbCluster,
   resumeDbCluster,
   restartDbCluster,
+  findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
@@ -229,6 +230,69 @@ test.describe.configure({ retries: 0 });
           await waitForStatus(page, clusterName, 'Initializing', 60000);
         }
         await waitForStatus(page, clusterName, 'Up', 300000);
+      });
+
+      test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
+        const newSize = size + 2;
+        let customProxyTestId = 'toggle-button-proxies-custom';
+
+        await test.step('Change options', async () => {
+          await page.goto('databases');
+          await findDbAndClickRow(page, clusterName);
+          await page.getByTestId('edit-resources-button').click();
+          if (db !== 'pxc') {
+            await page.getByTestId('toggle-button-nodes-custom').click();
+            await page
+              .getByTestId('text-input-custom-nr-of-nodes')
+              .fill(newSize.toString());
+          } else {
+            await page.getByTestId(`toggle-button-nodes-${newSize}`).click();
+          }
+
+          if (db === 'postgresql') {
+            customProxyTestId = 'toggle-button-PG Bouncers-custom';
+          }
+          if (db === 'pxc' || db === 'postgresql') {
+            await page.getByTestId('ExpandMoreIcon').last().click();
+            await page.getByTestId(customProxyTestId).click();
+            await page.getByTestId('text-input-custom-nr-of-proxies').fill('2');
+          }
+          await page.getByTestId('form-dialog-save').click();
+        });
+
+        await test.step('Check new values', async () => {
+          if (db === 'pxc') {
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: '2 proxies' })
+            ).toBeVisible({ timeout: 10000 });
+          } else if (db === 'postgresql') {
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: '2 PG Bouncers' })
+            ).toBeVisible({ timeout: 10000 });
+          }
+
+          // TODO: Re-enable for PG after fix for: https://perconadev.atlassian.net/browse/EVEREST-1920
+          if (db !== 'postgresql') {
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: `${newSize} nodes` })
+            ).toBeVisible({ timeout: 10000 });
+          }
+        });
+
+        await test.step('Wait for cluster status', async () => {
+          await page.goto('databases');
+          // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+          if (size != 1 || db != 'psmdb') {
+            await waitForStatus(page, clusterName, 'Initializing', 60000);
+          }
+          await waitForStatus(page, clusterName, 'Up', 300000);
+        });
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
