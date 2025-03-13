@@ -19,7 +19,6 @@ export const basicInformationStepCheck = async (
   page: Page,
   engineVersions,
   recommendedEngineVersions,
-  storageClasses,
   clusterName
 ) => {
   expect(
@@ -29,12 +28,11 @@ export const basicInformationStepCheck = async (
 
   const dbVersionOptions = page.getByRole('option');
 
-  engineVersions.psmdb.forEach(
-    async (version) =>
-      await expect(
-        dbVersionOptions.filter({ hasText: new RegExp(`^${version}$`) })
-      ).toBeVisible()
-  );
+  for (const version of engineVersions.psmdb) {
+    await expect(
+      dbVersionOptions.filter({ hasText: new RegExp(`^${version}$`) })
+    ).toBeVisible();
+  }
 
   const defaultOption = await page.getByRole('option', { selected: true });
   expect(await defaultOption.textContent()).toBe(
@@ -43,19 +41,7 @@ export const basicInformationStepCheck = async (
 
   await page.getByRole('option').filter({ hasText: '6.0.9-7' }).click();
   await page.getByTestId('text-input-db-name').fill(clusterName);
-  await page.getByTestId('text-input-storage-class').click();
   expect(
     await page.getByTestId('switch-input-sharding').getByRole('checkbox')
   ).not.toBeDisabled();
-
-  const storageClassOptions = page.getByRole('option');
-
-  storageClasses.forEach(
-    async (className) =>
-      await expect(
-        storageClassOptions.filter({ hasText: new RegExp(`^${className}$`) })
-      ).toBeVisible()
-  );
-
-  await page.getByRole('option').first().click();
 };
