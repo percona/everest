@@ -19,4 +19,6 @@ export const Messages = {
     `Your specified ${fieldName} size exceeds the ${
       value ? `${value.toFixed(2)} ${units}` : ''
     } available. Enter a smaller value before continuing.`,
+  disabledDiskInputTooltip:
+    'You can’t change the disk size as the selected storage class doesn’t support volume expansion.',
 };
