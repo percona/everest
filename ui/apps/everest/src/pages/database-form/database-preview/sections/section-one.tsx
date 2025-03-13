@@ -7,7 +7,6 @@ export const PreviewSectionOne = ({
   dbName,
   dbVersion,
   dbType,
-  storageClass,
   k8sNamespace,
   sharding,
 }: SectionProps) => (
@@ -16,7 +15,6 @@ export const PreviewSectionOne = ({
     <PreviewContentText text={`Type: ${beautifyDbTypeName(dbType)}`} />
     <PreviewContentText text={`Name: ${dbName}`} />
     <PreviewContentText text={`Version: ${dbVersion}`} />
-    <PreviewContentText text={`Storage class: ${storageClass ?? ''}`} />
     {dbType === DbType.Mongo && (
       <PreviewContentText
         text={`Sharding: ${sharding ? 'enabled' : 'disabled'}`}
