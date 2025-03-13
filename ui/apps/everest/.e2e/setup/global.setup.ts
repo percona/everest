@@ -47,7 +47,7 @@ const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
     }
 
     if (response.status() !== 201 && response.status() !== 200) {
-      Promise.reject();
+      return Promise.reject();
     }
 
     if (statusText && statusText.message) {
