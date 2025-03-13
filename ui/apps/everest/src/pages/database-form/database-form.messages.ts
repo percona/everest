@@ -36,9 +36,6 @@ export const Messages = {
       tooLong: errorMessages.tooLong('database'),
       duplicate: 'You already have a database with the same name.',
     },
-    storageClass: {
-      invalid: 'Invalid storage class',
-    },
     monitoringEndpoint: {
       invalidOption:
         'Invalid option. Please make sure you added a monitoring endpoint and select it from the dropdown',
