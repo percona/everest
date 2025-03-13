@@ -46,6 +46,10 @@ const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
       return Promise.resolve();
     }
 
+    if (response.status() !== 201 && response.status() !== 200) {
+      Promise.reject();
+    }
+
     if (statusText && statusText.message) {
       if (statusText.message.includes('Could not read')) {
         if (retries > 0) {
