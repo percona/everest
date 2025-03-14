@@ -23,9 +23,10 @@ import { UpgradeDbVersionModal } from './upgrade-db-version-modal/upgrade-db-ver
 import { useDbVersionsList } from 'components/cluster-form/db-version/useDbVersions';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterContext } from '../../../../dbCluster.context';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
-import { useEffect } from 'react';
+import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
 import { changeDbClusterVersion } from 'utils/db';
+import { useQueryClient } from '@tanstack/react-query';
+import { DB_CLUSTER_QUERY } from 'hooks/api';
 
 export const BasicInformationSection = ({
   loading,
@@ -39,11 +40,27 @@ export const BasicInformationSection = ({
     setOpenEditModal(false);
   };
   const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
-
+  const queryClient = useQueryClient();
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
     {
       onError: () => setUpgrading(false),
+      onSuccess: (data) => {
+        handleCloseModal();
+        setUpgrading(false);
+        queryClient.setQueryData<DbCluster>(
+          [DB_CLUSTER_QUERY, dbCluster?.metadata.name],
+          (oldData) =>
+            ({
+              ...oldData,
+              ...data,
+              status: {
+                ...data.status,
+                status: DbClusterStatus.initializing,
+              },
+            }) as DbCluster
+        );
+      },
     }
   );
 
@@ -53,13 +70,6 @@ export const BasicInformationSection = ({
     setUpgrading(true);
     updateCluster(changeDbClusterVersion(dbCluster!, dbVersion));
   };
-
-  useEffect(() => {
-    if (upgrading && dbCluster?.status?.status !== DbClusterStatus.ready) {
-      handleCloseModal();
-      setUpgrading(false);
-    }
-  }, [upgrading, dbCluster?.status?.status]);
 
   const dbVersionsUpgradeList = useDbVersionsList({
     namespace,
