@@ -141,7 +141,7 @@ const formValuesToPayloadMapping = (
 
 export const useCreateDbCluster = (
   options?: UseMutationOptions<
-    unknown,
+    DbCluster,
     unknown,
     CreateDbClusterArgType,
     unknown
