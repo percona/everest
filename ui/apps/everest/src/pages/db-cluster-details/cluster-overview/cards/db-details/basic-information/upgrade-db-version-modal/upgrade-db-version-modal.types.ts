@@ -15,7 +15,6 @@
 
 import { z } from 'zod';
 import { DbEngine } from 'shared-types/dbEngines.types';
-import { DBVersionFields } from 'components/cluster-form/db-version/db-version.types';
 import { dbVersionSchema } from 'components/cluster-form/db-version/db-version-schema';
 
 export interface UpgradeModalProps {
@@ -26,9 +25,5 @@ export interface UpgradeModalProps {
   version: string;
   submitting: boolean;
 }
-
-export const upgradeModalDefaultValues = (dbVersion: string) => ({
-  [DBVersionFields.dbVersion]: dbVersion,
-});
 
 export type UpgradeModalFormType = z.infer<typeof dbVersionSchema>;
