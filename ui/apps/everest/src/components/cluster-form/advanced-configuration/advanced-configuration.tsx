@@ -79,7 +79,6 @@ export const AdvancedConfigurationForm = ({
       <AdvancedCard
         title={Messages.cards.storage.title}
         description={Messages.cards.storage.description}
-        gapFromText={96}
         controlComponent={
           <AutoCompleteInput
             name={AdvancedConfigurationFields.storageClass}
@@ -89,6 +88,9 @@ export const AdvancedConfigurationForm = ({
             autoCompleteProps={{
               disableClearable: true,
               disabled: loadingDefaultsForEdition,
+              sx: {
+                mt: 0,
+              },
             }}
           />
         }
