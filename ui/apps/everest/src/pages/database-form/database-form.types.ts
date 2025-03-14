@@ -19,3 +19,8 @@ export type StepProps = {
   loadingDefaultsForEdition: boolean;
   alreadyVisited: boolean;
 };
+
+export type DbClusterName = {
+  name: string;
+  namespace: string;
+};
