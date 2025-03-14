@@ -8,7 +8,7 @@ function AutoCompleteInput<T>({
   control,
   controllerProps,
   label,
-  autoCompleteProps,
+  autoCompleteProps = {},
   textFieldProps = {},
   options,
   loading = false,
@@ -18,6 +18,7 @@ function AutoCompleteInput<T>({
 }: AutoCompleteInputProps<T>) {
   const { control: contextControl } = useFormContext();
   const { helperText, ...restTextFieldProps } = textFieldProps;
+  const { sx, ...restAutocompleteProps } = autoCompleteProps;
   return (
     <Controller
       name={name}
@@ -25,7 +26,7 @@ function AutoCompleteInput<T>({
       render={({ field, fieldState: { error } }) => (
         <Autocomplete
           {...field}
-          sx={{ mt: 3 }}
+          sx={{ mt: 3, ...sx }}
           options={options}
           forcePopupIcon
           disabled={disabled}
@@ -64,7 +65,7 @@ function AutoCompleteInput<T>({
               {...restTextFieldProps}
             />
           )}
-          {...autoCompleteProps}
+          {...restAutocompleteProps}
         />
       )}
       {...controllerProps}
