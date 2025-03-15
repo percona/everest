@@ -95,16 +95,6 @@ func (cfg *NamespaceRemoveConfig) ValidateNamespaces(ctx context.Context, nsList
 		}
 	}
 
-	// // Check that there are no DB clusters left in namespaces.
-	// dbsExist, err := k.DatabasesExist(ctx, nsList...)
-	// if err != nil {
-	// 	return errors.Join(err, errors.New("failed to check if databases exist"))
-	// }
-
-	// if dbsExist && !cfg.Force {
-	// 	return ErrNamespaceNotEmpty
-	// }
-
 	return nil
 }
 
