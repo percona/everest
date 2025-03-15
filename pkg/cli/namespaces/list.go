@@ -20,11 +20,14 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
+	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
@@ -77,7 +80,7 @@ type (
 	// NamespaceLister is the CLI operation to list namespaces.
 	NamespaceLister struct {
 		cfg        NamespaceListConfig
-		kubeClient *kubernetes.Kubernetes
+		kubeClient kubernetes.KubernetesConnector
 		l          *zap.SugaredLogger
 	}
 )
@@ -92,7 +95,7 @@ func NewNamespaceLister(c NamespaceListConfig, l *zap.SugaredLogger) (*Namespace
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeclient(n.l, n.cfg.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(n.l, n.cfg.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -110,17 +113,14 @@ func (nsL *NamespaceLister) Run(ctx context.Context) ([]NamespaceInfo, error) {
 	}
 
 	var nsList *corev1.NamespaceList
-	var labelSelector string
+	opts := []client.ListOption{client.MatchingFields{"status.phase": string(corev1.NamespaceActive)}}
 
 	if !nsL.cfg.ListAllNamespaces {
 		// show only namespaces already managed by Everest.
-		labelSelector = fmt.Sprintf("%s=%s", common.KubernetesManagedByLabel, common.Everest)
+		opts = append(opts, client.MatchingLabels{common.KubernetesManagedByLabel: common.Everest})
 	}
 
-	if nsList, err = nsL.kubeClient.ListNamespaces(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("status.phase=%s", corev1.NamespaceActive),
-		LabelSelector: labelSelector,
-	}); err != nil {
+	if nsList, err = nsL.kubeClient.ListNamespaces(ctx, opts...); err != nil {
 		return nil, err
 	}
 
@@ -131,10 +131,11 @@ func (nsL *NamespaceLister) Run(ctx context.Context) ([]NamespaceInfo, error) {
 
 	var toReturn []NamespaceInfo
 	for _, ns := range nsList.Items {
-		nsInfo := NamespaceInfo{Name: ns.Name}
+		nsInfo := NamespaceInfo{Name: ns.GetName()}
 		if nsInfo.InstalledOperators, err = nsL.getNamespaceOperators(ctx, &ns); err != nil {
 			return nil, fmt.Errorf("cannot get namespace subscriptions: %w", err)
 		}
+		slices.Sort(nsInfo.InstalledOperators)
 		toReturn = append(toReturn, nsInfo)
 	}
 	return toReturn, nil
@@ -146,18 +147,41 @@ func (nsL *NamespaceLister) getNamespaceOperators(ctx context.Context, ns *v1.Na
 	var toReturn []string
 	if isManagedByEverest(ns) {
 		// no need to look for installed operators from namespaces not managed by Everest.
-		dbEngines, err := nsL.kubeClient.ListDatabaseEngines(ctx, ns.Name)
-		if err != nil {
-			return []string{}, fmt.Errorf("cannot list installed DB Engines: %w", err)
+		subList, err := nsL.kubeClient.ListInstalledOperators(ctx, client.InNamespace(ns.GetName()))
+		if err != nil && client.IgnoreNotFound(err) != nil {
+			return []string{}, fmt.Errorf("cannot list installed operators in namespace='%s': %w", ns.GetName(), err)
 		}
 
-		for _, dbE := range dbEngines.Items {
-			// need to skip DB Engines that are not installed in this particular namespaces.
-			if dbE.Status.State != "installed" {
-				continue
+		for _, sub := range subList.Items {
+			csv, csvErr := nsL.kubeClient.GetClusterServiceVersion(ctx, types.NamespacedName{
+				Namespace: ns.GetName(),
+				Name:      sub.Status.InstalledCSV,
+			})
+			if csvErr != nil && client.IgnoreNotFound(csvErr) != nil {
+				return []string{}, fmt.Errorf("cannot list installed operators in namespace='%s': %w", ns.GetName(), csvErr)
 			}
-			toReturn = append(toReturn, fmt.Sprintf("%s(v%s)", dbE.Spec.Type, dbE.Status.OperatorVersion))
+			v, err := goversion.NewVersion(csv.Spec.Version.FinalizeVersion())
+			if err != nil {
+				return []string{}, fmt.Errorf("cannot parse operator='%s' version in namespace='%s': %w",
+					sub.Spec.CatalogSourceNamespace,
+					ns.GetName(),
+					err)
+			}
+			toReturn = append(toReturn, fmt.Sprintf("%s(v%s)", converDbOperatorName(sub.GetName()), v.String()))
 		}
 	}
 	return toReturn, nil
+}
+
+func converDbOperatorName(name string) string {
+	switch strings.ToLower(name) {
+	case "percona-server-mongodb-operator":
+		return "psmdb"
+	case "percona-xtradb-cluster-operator":
+		return "pxc"
+	case "percona-postgresql-operator":
+		return "postgresql"
+	default:
+		return name
+	}
 }

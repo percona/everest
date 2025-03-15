@@ -57,7 +57,7 @@ func settingsRBACValidatePreRun(cmd *cobra.Command, _ []string) { //nolint:reviv
 }
 
 func settingsRBACValidateRun(cmd *cobra.Command, _ []string) {
-	var k *kubernetes.Kubernetes
+	var k kubernetes.KubernetesConnector
 	if rbacValidatePolicyFilePath == "" {
 		// check over policy in Everest deployment (ConfigMap).
 		var l *zap.SugaredLogger

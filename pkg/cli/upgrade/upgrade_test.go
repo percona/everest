@@ -26,9 +26,9 @@ import (
 	version "github.com/Percona-Lab/percona-version-service/versionpb"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/percona/everest/pkg/kubernetes"
 	versionservice "github.com/percona/everest/pkg/version_service"
@@ -188,15 +188,16 @@ func TestUpgrade_canUpgrade(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			k := &kubernetes.MockKubernetesConnector{}
-			k.On("GetDBNamespaces", mock.Anything, mock.Anything).Return([]string{}, nil)
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme())
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient.Build())
 
 			u := &Upgrade{
-				l: zap.L().Sugar(),
+				l: zap.NewNop().Sugar(),
 				config: &Config{
 					VersionMetadataURL: ts.URL,
 				},
-				kubeClient:     k,
+				kubeConnector:  k,
 				versionService: versionservice.New(ts.URL),
 			}
 			everestVersion, err := goversion.NewVersion(tt.everestVersion)

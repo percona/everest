@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/common"
 )
@@ -74,7 +75,7 @@ func (k *Kubernetes) CreateRSAKeyPair(ctx context.Context) error {
 
 	// Check if the secret exists?
 	exists := false
-	secret, err := k.GetSecret(ctx, common.SystemNamespace, common.EverestJWTSecretName)
+	secret, err := k.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestJWTSecretName})
 	if err == nil {
 		exists = true
 	} else if !k8serrors.IsNotFound(err) {
@@ -97,7 +98,7 @@ func (k *Kubernetes) CreateRSAKeyPair(ctx context.Context) error {
 			return err
 		}
 		// Restart the deployment to pick up the new secret.
-		return k.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+		return k.RestartDeployment(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.PerconaEverestDeploymentName})
 	}
 
 	// Otherwise, update the secret.
@@ -107,5 +108,5 @@ func (k *Kubernetes) CreateRSAKeyPair(ctx context.Context) error {
 		return err
 	}
 	// Restart the deployment to pick up the new secret.
-	return k.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+	return k.RestartDeployment(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.PerconaEverestDeploymentName})
 }

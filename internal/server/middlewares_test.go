@@ -16,13 +16,14 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
@@ -30,7 +31,7 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
 		description string
-		mockFn      func(m *client.MockKubeClientConnector)
+		objs        []ctrlclient.Object
 		ctxFn       func() echo.Context
 		allow       bool
 	}{
@@ -84,22 +85,13 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 				ctx.SetParamValues("default")
 				return ctx
 			},
-			mockFn: func(m *client.MockKubeClientConnector) {
-				m.On("ListDatabaseEngines",
-					mock.Anything,
-					"default",
-				).
-					Return(&everestv1alpha1.DatabaseEngineList{
-						Items: []everestv1alpha1.DatabaseEngine{
-							{
-								ObjectMeta: metav1.ObjectMeta{
-									Name:      "test-engine",
-									Namespace: "default",
-								},
-							},
-						},
-					}, nil,
-					)
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseEngine{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-engine",
+						Namespace: "default",
+					},
+				},
 			},
 			allow: true,
 		},
@@ -117,24 +109,16 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 				ctx.SetParamValues("default")
 				return ctx
 			},
-			mockFn: func(m *client.MockKubeClientConnector) {
-				m.On("ListDatabaseEngines",
-					mock.Anything, "default",
-				).
-					Return(&everestv1alpha1.DatabaseEngineList{
-						Items: []everestv1alpha1.DatabaseEngine{
-							{
-								ObjectMeta: metav1.ObjectMeta{
-									Name:      "test-engine",
-									Namespace: "default",
-									Annotations: map[string]string{
-										everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation: lockedAt,
-									},
-								},
-							},
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseEngine{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-engine",
+						Namespace: "default",
+						Annotations: map[string]string{
+							everestv1alpha1.DatabaseOperatorUpgradeLockAnnotation: lockedAt,
 						},
-					}, nil,
-					)
+					},
+				},
 			},
 			allow: false,
 		},
@@ -143,16 +127,9 @@ func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			t.Parallel()
-			mockConnector := &client.MockKubeClientConnector{}
-			kubeClient := &kubernetes.Kubernetes{}
-			kubeClient = kubeClient.WithClient(mockConnector)
-
-			e := EverestServer{kubeClient: kubeClient}
-
-			if tc.mockFn != nil {
-				tc.mockFn(mockConnector)
-			}
-
+			mockClient := fakeclient.NewClientBuilder().WithScheme(kubernetes.CreateScheme()).WithObjects(tc.objs...)
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient.Build())
+			e := EverestServer{kubeConnector: k}
 			ctx := tc.ctxFn()
 
 			allow, err := e.shouldAllowRequestDuringEngineUpgrade(ctx)
