@@ -96,7 +96,7 @@ type KubernetesConnector interface {
 	// UpdateDatabaseClusterBackup updates database cluster backup.
 	UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
 	// DeleteDatabaseClusterBackup deletes database cluster backup.
-	DeleteDatabaseClusterBackup(ctx context.Context, obj *everestv1alpha1.DatabaseCluster) error
+	DeleteDatabaseClusterBackup(ctx context.Context, obj *everestv1alpha1.DatabaseClusterBackup) error
 	// CreateDatabaseClusterBackup creates database cluster backup.
 	CreateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error)
 	// GetDatabaseClusterRestore returns database cluster restore by name.

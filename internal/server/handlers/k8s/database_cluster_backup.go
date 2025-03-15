@@ -49,7 +49,7 @@ func (h *k8sHandler) DeleteDatabaseClusterBackup(ctx context.Context, namespace,
 	if err := h.ensureBackupForegroundDeletion(ctx, backup); err != nil {
 		return errors.Join(err, errors.New("could not ensure backup foreground deletion"))
 	}
-	delObj := &everestv1alpha1.DatabaseCluster{
+	delObj := &everestv1alpha1.DatabaseClusterBackup{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,

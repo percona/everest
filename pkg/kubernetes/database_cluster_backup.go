@@ -52,7 +52,7 @@ func (k *Kubernetes) UpdateDatabaseClusterBackup(ctx context.Context, backup *ev
 }
 
 // DeleteDatabaseClusterBackup deletes database cluster backup.
-func (k *Kubernetes) DeleteDatabaseClusterBackup(ctx context.Context, obj *everestv1alpha1.DatabaseCluster) error {
+func (k *Kubernetes) DeleteDatabaseClusterBackup(ctx context.Context, obj *everestv1alpha1.DatabaseClusterBackup) error {
 	return k.k8sClient.Delete(ctx, obj)
 }
 
