@@ -117,12 +117,15 @@ func securityHeaders(oidcProvider *oidc.ProviderConfig) echo.MiddlewareFunc {
 				// https://github.com/emotion-js/emotion/issues/2996
 				"'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
 			},
-			cspbuilder.FormAction:              {CSPSelf},
-			cspbuilder.BaseURI:                 {CSPSelf},
-			cspbuilder.ObjectSrc:               {CSPNone},
-			cspbuilder.FrameAncestors:          {CSPNone},
-			cspbuilder.UpgradeInsecureRequests: {},
-			cspbuilder.ConnectSrc:              connectSrc,
+			cspbuilder.FormAction:     {CSPSelf},
+			cspbuilder.BaseURI:        {CSPSelf},
+			cspbuilder.ObjectSrc:      {CSPNone},
+			cspbuilder.FrameAncestors: {CSPNone},
+			// TODO (EVEREST-1180): Once we have native support for TLS, we
+			// should probably redirect all HTTP traffic to HTTPS and set the
+			// upgrade-insecure-requests directive.
+			// cspbuilder.UpgradeInsecureRequests: {},
+			cspbuilder.ConnectSrc: connectSrc,
 		},
 	}
 
