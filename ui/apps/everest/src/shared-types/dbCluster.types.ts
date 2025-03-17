@@ -21,7 +21,6 @@ export enum ProxyExposeType {
 }
 
 export enum DbClusterStatus {
-  unknown = 'unknown',
   initializing = 'initializing',
   paused = 'paused',
   pausing = 'pausing',
@@ -31,6 +30,7 @@ export enum DbClusterStatus {
   restoring = 'restoring',
   deleting = 'deleting',
   resizingVolumes = 'resizingVolumes',
+  creating = 'creating',
 }
 
 export interface Schedule {

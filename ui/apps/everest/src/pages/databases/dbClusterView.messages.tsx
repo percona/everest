@@ -22,10 +22,10 @@ export const Messages = {
     pausing: 'Pausing',
     stopping: 'Stopping',
     paused: 'Paused',
-    unknown: 'Unknown',
     restoring: 'Restoring',
     deleting: 'Deleting',
     resizingVolumes: 'Resizing volumes',
+    creating: 'Creating',
   },
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',

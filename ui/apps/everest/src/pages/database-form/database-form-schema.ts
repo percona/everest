@@ -14,22 +14,13 @@ const basicInfoSchema = () =>
   z
     .object({
       [DbWizardFormFields.dbType]: z.nativeEnum(DbType),
-      [DbWizardFormFields.dbName]: rfc_123_schema('database name')
+      [DbWizardFormFields.dbName]: rfc_123_schema({
+        fieldName: 'database name',
+      })
         .max(MAX_DB_CLUSTER_NAME_LENGTH, Messages.errors.dbName.tooLong)
         .nonempty(),
       [DbWizardFormFields.k8sNamespace]: z.string().nullable(),
       ...dbVersionSchemaObject,
-      [DbWizardFormFields.storageClass]: z
-        .string()
-        .nullable()
-        .superRefine((input, ctx) => {
-          if (!input) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.errors.storageClass.invalid,
-            });
-          }
-        }),
       [DbWizardFormFields.sharding]: z.boolean(),
     })
     .passthrough();
