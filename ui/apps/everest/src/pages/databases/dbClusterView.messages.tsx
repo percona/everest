@@ -25,6 +25,7 @@ export const Messages = {
     unknown: 'Unknown',
     restoring: 'Restoring',
     deleting: 'Deleting',
+    resizingVolumes: 'Resizing volumes',
   },
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',

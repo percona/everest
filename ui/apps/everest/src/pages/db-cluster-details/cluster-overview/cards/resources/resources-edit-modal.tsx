@@ -3,12 +3,14 @@ import { SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { ResourcesForm, resourcesFormSchema } from 'components/cluster-form';
 import { FormDialog } from 'components/form-dialog';
+import { useKubernetesClusterInfo } from 'hooks';
 type Props = {
   handleCloseModal: () => void;
   dbType: DbType;
   shardingEnabled: boolean;
   onSubmit: SubmitHandler<z.infer<ReturnType<typeof resourcesFormSchema>>>;
   defaultValues: z.infer<ReturnType<typeof resourcesFormSchema>>;
+  storageClass: string;
 };
 
 const ResourcesEditModal = ({
@@ -17,7 +19,15 @@ const ResourcesEditModal = ({
   shardingEnabled,
   onSubmit,
   defaultValues,
+  storageClass,
 }: Props) => {
+  const { data: clusterInfo } = useKubernetesClusterInfo([
+    'resources-cluster-info',
+  ]);
+  const allowVolumeExpansion = (clusterInfo?.storageClasses || []).find(
+    (item) => item.metadata.name === storageClass
+  )?.allowVolumeExpansion;
+
   return (
     <FormDialog
       dataTestId="edit-resources"
@@ -34,7 +44,7 @@ const ResourcesEditModal = ({
         dbType={dbType}
         pairProxiesWithNodes={false}
         showSharding={dbType === DbType.Mongo}
-        disableDiskInput
+        disableDiskInput={!allowVolumeExpansion || dbType !== DbType.Mysql}
         allowDiskInputUpdate={false}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
       />
