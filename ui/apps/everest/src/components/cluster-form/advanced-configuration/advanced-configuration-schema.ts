@@ -43,23 +43,21 @@ export const advancedConfigurationsSchema = () =>
     .superRefine(({ sourceRanges }, ctx) => {
       sourceRanges.forEach(({ sourceRange }, index) => {
         if (sourceRange && IP_REGEX.exec(sourceRange) === null) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.invalid_string,
-              validation: 'ip',
-              path: [
-                AdvancedConfigurationFields.sourceRanges,
-                index,
-                'sourceRange',
-              ],
-              message: Messages.errors.sourceRange.invalid,
-            });
-          }
+          ctx.addIssue({
+            code: z.ZodIssueCode.invalid_string,
+            validation: 'ip',
+            path: [
+              AdvancedConfigurationFields.sourceRanges,
+              index,
+              'sourceRange',
+            ],
+            message: Messages.errors.sourceRange.invalid,
+          });
+        }
       });
       const seen = new Set<string>();
       sourceRanges.forEach(({ sourceRange }, index) => {
-        
         if (sourceRange && seen.has(sourceRange)) {
-          
           seen.add(sourceRange);
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
