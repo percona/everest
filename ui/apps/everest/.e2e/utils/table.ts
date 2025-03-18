@@ -6,7 +6,10 @@ export const findRowAndClickActions = async (
   nameOfAction?: string
 ) => {
   // cluster actions menu click
-  const dbRow = page.locator('.MuiTableRow-root').filter({ hasText: name }).first();
+  const dbRow = page
+    .locator('.MuiTableRow-root')
+    .filter({ hasText: name })
+    .first();
 
   await expect(dbRow).toBeVisible({ timeout: 10000 });
   await dbRow.locator('[data-testid="MoreHorizIcon"]').click();
