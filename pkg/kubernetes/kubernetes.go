@@ -27,13 +27,16 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
@@ -90,7 +93,10 @@ var ErrEmptyVersionTag = errors.New("got an empty version tag from Github")
 
 // Kubernetes is a client for Kubernetes.
 type Kubernetes struct {
-	client     client.KubeClientConnector
+	// client client.KubeClientConnector
+	client     *client.Client
+	k8sClient  ctrlclient.Client
+	k8sCache   ctrlcache.Cache
 	l          *zap.SugaredLogger
 	namespace  string
 	httpClient *http.Client
@@ -146,11 +152,90 @@ func NewInCluster(l *zap.SugaredLogger) (*Kubernetes, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Create the cache for the cached read client and registering informers
+	syncPeriod := 1 * time.Hour
+	cacheOpts := ctrlcache.Options{
+		SyncPeriod: &syncPeriod,
+	}
+	cache, err := ctrlcache.New(client.Config(), cacheOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the client with cache, and default its options.
+	clientOpts := ctrlclient.Options{
+		Cache: &ctrlclient.CacheOptions{
+			Unstructured: false,
+			Reader:       cache,
+			// do not cache the following resources because in big K8S clusters
+			// it can lead to high memory usage
+			DisableFor: []ctrlclient.Object{
+				&corev1.ConfigMap{},
+				&corev1.Secret{},
+			},
+		},
+	}
+	clientWriter, err := ctrlclient.New(client.Config(), clientOpts)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Kubernetes{
 		client:    client,
+		k8sCache:  cache,
+		k8sClient: clientWriter,
 		l:         l,
 		namespace: client.Namespace(),
 	}, nil
+}
+
+// StartCache starts the cache in background.
+func (k *Kubernetes) StartCache(ctx context.Context) error {
+	if err := k.initIndexers(ctx); err != nil {
+		return errors.Join(err, errors.New("failed to init field indexers for cache"))
+	}
+
+	// Start the cache in a separate goroutine, since it is a blocking call.
+	go func() {
+		if err := k.k8sCache.Start(ctx); err != nil {
+			k.l.Error("failed to start cache", zap.Error(err))
+		}
+	}()
+	return nil
+}
+
+// initIndexers initializes the field indexers for the DatabaseCluster.
+func (k *Kubernetes) initIndexers(ctx context.Context) error {
+	if err := k.k8sCache.IndexField(
+		ctx, &everestv1alpha1.DatabaseCluster{}, ".spec.backup.schedules.backupStorageName",
+		func(rawObj ctrlclient.Object) []string {
+			var res []string
+			database := rawObj.(*everestv1alpha1.DatabaseCluster)
+			if !database.Spec.Backup.Enabled {
+				return res
+			}
+
+			for _, storage := range database.Spec.Backup.Schedules {
+				res = append(res, storage.BackupStorageName)
+			}
+			return res
+		},
+	); err != nil {
+		return err
+	}
+
+	if err := k.k8sCache.IndexField(
+		ctx, &everestv1alpha1.DatabaseClusterBackup{}, ".spec.backupStorageName",
+		func(rawObj ctrlclient.Object) []string {
+			dbBackup := rawObj.(*everestv1alpha1.DatabaseClusterBackup)
+			return []string{dbBackup.Spec.BackupStorageName}
+		},
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Config returns *rest.Config.
@@ -174,7 +259,7 @@ func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
 }
 
 // WithClient sets the client connector.
-func (k *Kubernetes) WithClient(c client.KubeClientConnector) *Kubernetes {
+func (k *Kubernetes) WithClient(c *client.Client) *Kubernetes {
 	k.client = c
 	return k
 }

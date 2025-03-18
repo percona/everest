@@ -212,36 +212,6 @@ func (_m *MockKubeClientConnector) CreateConfigMap(ctx context.Context, configMa
 	return r0, r1
 }
 
-// CreateDatabaseCluster provides a mock function with given fields: ctx, namespace, cluster
-func (_m *MockKubeClientConnector) CreateDatabaseCluster(ctx context.Context, namespace string, cluster *v1alpha1.DatabaseCluster) (*v1alpha1.DatabaseCluster, error) {
-	ret := _m.Called(ctx, namespace, cluster)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateDatabaseCluster")
-	}
-
-	var r0 *v1alpha1.DatabaseCluster
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseCluster) (*v1alpha1.DatabaseCluster, error)); ok {
-		return rf(ctx, namespace, cluster)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseCluster) *v1alpha1.DatabaseCluster); ok {
-		r0 = rf(ctx, namespace, cluster)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1alpha1.DatabaseCluster)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, *v1alpha1.DatabaseCluster) error); ok {
-		r1 = rf(ctx, namespace, cluster)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // CreateDatabaseClusterBackup provides a mock function with given fields: ctx, namespace, backup
 func (_m *MockKubeClientConnector) CreateDatabaseClusterBackup(ctx context.Context, namespace string, backup *v1alpha1.DatabaseClusterBackup) (*v1alpha1.DatabaseClusterBackup, error) {
 	ret := _m.Called(ctx, namespace, backup)
@@ -565,24 +535,6 @@ func (_m *MockKubeClientConnector) DeleteClusterServiceVersion(ctx context.Conte
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, types.NamespacedName) error); ok {
 		r0 = rf(ctx, key)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteDatabaseCluster provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubeClientConnector) DeleteDatabaseCluster(ctx context.Context, namespace string, name string) error {
-	ret := _m.Called(ctx, namespace, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteDatabaseCluster")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, namespace, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -980,36 +932,6 @@ func (_m *MockKubeClientConnector) GetConfigMap(ctx context.Context, namespace s
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v1.ConfigMap)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, namespace, name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetDatabaseCluster provides a mock function with given fields: ctx, namespace, name
-func (_m *MockKubeClientConnector) GetDatabaseCluster(ctx context.Context, namespace string, name string) (*v1alpha1.DatabaseCluster, error) {
-	ret := _m.Called(ctx, namespace, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetDatabaseCluster")
-	}
-
-	var r0 *v1alpha1.DatabaseCluster
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1alpha1.DatabaseCluster, error)); ok {
-		return rf(ctx, namespace, name)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1alpha1.DatabaseCluster); ok {
-		r0 = rf(ctx, namespace, name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1alpha1.DatabaseCluster)
 		}
 	}
 
@@ -1844,36 +1766,6 @@ func (_m *MockKubeClientConnector) ListDatabaseClusterRestores(ctx context.Conte
 	return r0, r1
 }
 
-// ListDatabaseClusters provides a mock function with given fields: ctx, namespace, options
-func (_m *MockKubeClientConnector) ListDatabaseClusters(ctx context.Context, namespace string, options metav1.ListOptions) (*v1alpha1.DatabaseClusterList, error) {
-	ret := _m.Called(ctx, namespace, options)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListDatabaseClusters")
-	}
-
-	var r0 *v1alpha1.DatabaseClusterList
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) (*v1alpha1.DatabaseClusterList, error)); ok {
-		return rf(ctx, namespace, options)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, metav1.ListOptions) *v1alpha1.DatabaseClusterList); ok {
-		r0 = rf(ctx, namespace, options)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1alpha1.DatabaseClusterList)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, metav1.ListOptions) error); ok {
-		r1 = rf(ctx, namespace, options)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ListDatabaseEngines provides a mock function with given fields: ctx, namespace
 func (_m *MockKubeClientConnector) ListDatabaseEngines(ctx context.Context, namespace string) (*v1alpha1.DatabaseEngineList, error) {
 	ret := _m.Called(ctx, namespace)
@@ -2253,36 +2145,6 @@ func (_m *MockKubeClientConnector) UpdateConfigMap(ctx context.Context, configMa
 
 	if rf, ok := ret.Get(1).(func(context.Context, *v1.ConfigMap) error); ok {
 		r1 = rf(ctx, configMap)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateDatabaseCluster provides a mock function with given fields: ctx, namespace, cluster
-func (_m *MockKubeClientConnector) UpdateDatabaseCluster(ctx context.Context, namespace string, cluster *v1alpha1.DatabaseCluster) (*v1alpha1.DatabaseCluster, error) {
-	ret := _m.Called(ctx, namespace, cluster)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateDatabaseCluster")
-	}
-
-	var r0 *v1alpha1.DatabaseCluster
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseCluster) (*v1alpha1.DatabaseCluster, error)); ok {
-		return rf(ctx, namespace, cluster)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *v1alpha1.DatabaseCluster) *v1alpha1.DatabaseCluster); ok {
-		r0 = rf(ctx, namespace, cluster)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1alpha1.DatabaseCluster)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, *v1alpha1.DatabaseCluster) error); ok {
-		r1 = rf(ctx, namespace, cluster)
 	} else {
 		r1 = ret.Error(1)
 	}
