@@ -33,12 +33,18 @@ describe('DBVersion Available filter test', () => {
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
           generateDbEngineWithVersions(
-            ['8.0.39-30.1', '8.0.36-28.1', '8.0.35-27.1', '5.7.44-31.65'],
+            [
+              '8.0.40',
+              '8.0.39-30.1',
+              '8.0.36-28.1',
+              '8.0.35-27.1',
+              '5.7.44-31.65',
+            ],
             DbEngineType.PXC
           ),
           '8.0.39-30.1'
         ).map(({ version }) => version)
-      ).toEqual(['8.0.39-30.1']);
+      ).toEqual(['8.0.40']);
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
           generateDbEngineWithVersions(
@@ -47,16 +53,28 @@ describe('DBVersion Available filter test', () => {
           ),
           '7.0.15-9'
         ).map(({ version }) => version)
-      ).toEqual(['7.0.15-9']);
+      ).toEqual([]);
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
           generateDbEngineWithVersions(
-            ['16.4', '16.3', '15.8'],
+            ['16.4', '16.3', '15.8', '16.6'],
             DbEngineType.POSTGRESQL
           ),
           '16.4'
         ).map(({ version }) => version)
-      ).toEqual(['16.4']);
+      ).toEqual(['16.6']);
+    });
+
+    it('should not include own version', () => {
+      expect(
+        filterAvailableDbVersionsForDbEngineEdition(
+          generateDbEngineWithVersions(
+            ['13.0', '14.0', '14.1', '15.0'],
+            DbEngineType.POSTGRESQL
+          ),
+          '14.1'
+        ).map(({ version }) => version)
+      ).toEqual([]);
     });
 
     it('should allow major upgrade to the next version for PSMDB', () => {
@@ -68,7 +86,7 @@ describe('DBVersion Available filter test', () => {
           ),
           '6.0.18-15'
         ).map(({ version }) => version)
-      ).toEqual(['7.0.15-9', '7.0.14-8', '6.0.19-16', '6.0.18-15']);
+      ).toEqual(['7.0.15-9', '7.0.14-8', '6.0.19-16']);
     });
 
     it('should rule out major upgrades for PXC/PG', () => {
@@ -80,7 +98,7 @@ describe('DBVersion Available filter test', () => {
           ),
           '8.0.36-28.1'
         ).map(({ version }) => version)
-      ).toEqual(['8.4.2-2.1', '8.0.39-30.1', '8.0.36-28.1']);
+      ).toEqual(['8.4.2-2.1', '8.0.39-30.1']);
       expect(
         filterAvailableDbVersionsForDbEngineEdition(
           generateDbEngineWithVersions(
@@ -89,7 +107,7 @@ describe('DBVersion Available filter test', () => {
           ),
           '15.7'
         ).map(({ version }) => version)
-      ).toEqual(['15.8', '15.7']);
+      ).toEqual(['15.8']);
     });
   });
 });

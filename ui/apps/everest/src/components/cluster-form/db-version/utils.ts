@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 
-import { gte, coerce } from 'semver';
+import { gt, coerce } from 'semver';
 import { DbEngine, DbEngineType } from 'shared-types/dbEngines.types';
 
 export const filterAvailableDbVersionsForDbEngineEdition = (
@@ -32,7 +32,7 @@ export const filterAvailableDbVersionsForDbEngineEdition = (
   // Filter out downgrades
   versions = versions.filter(({ version }) => {
     const semverVersion = coerce(version);
-    return semverVersion ? gte(semverVersion, currentSemverVersion) : true;
+    return semverVersion ? gt(semverVersion, currentSemverVersion) : true;
   });
 
   // If the engine is PXC or PG, major version upgrades are also ruled out
