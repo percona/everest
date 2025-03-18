@@ -129,8 +129,7 @@ func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, opts ...ctrlcli
 	})
 }
 
-// DatabasesExist checks if databases exist in provided at least one of the provided namespaces.
-// If namespaces are not provided, it checks in all namespaces managed by Everest.
+// DatabasesExist checks if databases that match criteria exist.
 func (k *Kubernetes) DatabasesExist(ctx context.Context, opts ...ctrlclient.ListOption) (bool, error) {
 	list, err := k.listDatabaseClustersMeta(ctx, opts...)
 	if err != nil {

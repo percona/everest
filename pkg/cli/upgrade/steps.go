@@ -217,7 +217,7 @@ func (u *Upgrade) helmAdoptDBNamespaces(ctx context.Context, namespace, version 
 }
 
 func helmValuesForDBEngines(list *everestv1alpha1.DatabaseEngineList) values.Options {
-	vals := []string{}
+	var vals []string
 	for _, dbEngine := range list.Items {
 		t := dbEngine.Spec.Type
 		vals = append(vals, fmt.Sprintf("%s=%t", t, dbEngine.Status.State == everestv1alpha1.DBEngineStateInstalled))
@@ -254,14 +254,16 @@ func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 		return fmt.Errorf("could not delete operator='%s' in namespace='%s': %w",
 			common.EverestOperatorName,
 			common.SystemNamespace,
-			err)
+			err,
+		)
 	}
 	// Delete resources related to victoria metrics operator Subscription.
 	if err := deleteOLMOperator(ctx, u.kubeConnector, common.VictoriaMetricsOperatorName, common.MonitoringNamespace); err != nil {
 		return fmt.Errorf("could not delete operator='%s' in namespace='%s': %w",
 			common.VictoriaMetricsOperatorName,
 			common.MonitoringNamespace,
-			err)
+			err,
+		)
 	}
 	delDep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -273,7 +275,8 @@ func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 		return fmt.Errorf("could not delete deployment='%s' in namespace='%s': %w",
 			common.PerconaEverestDeploymentName,
 			common.SystemNamespace,
-			err)
+			err,
+		)
 	}
 	// Delete Everest Catalog.
 	// This is not a legacy resource, but we need to delete it so that Helm creates a new one that is owned by the release.
@@ -287,7 +290,8 @@ func (u *Upgrade) cleanupLegacyResources(ctx context.Context) error {
 		return fmt.Errorf("could not delete CatalogSource='%s' in namespace='%s': %w",
 			common.PerconaEverestCatalogName,
 			kubernetes.OLMNamespace,
-			err)
+			err,
+		)
 	}
 	return nil
 }

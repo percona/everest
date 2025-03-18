@@ -166,7 +166,8 @@ func (nsL *NamespaceLister) getNamespaceOperators(ctx context.Context, ns *v1.Na
 				return []string{}, fmt.Errorf("cannot parse operator='%s' version in namespace='%s': %w",
 					sub.Spec.CatalogSourceNamespace,
 					ns.GetName(),
-					err)
+					err,
+				)
 			}
 			toReturn = append(toReturn, fmt.Sprintf("%s(v%s)", convertDbOperatorName(sub.GetName()), v.String()))
 		}
