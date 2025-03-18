@@ -544,6 +544,11 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 		return errCannotChangeStorageSize
 	}
 
+	// Do not allow shrinking storage size.
+	if dbc.Spec.Engine.Storage.Size.Cmp(oldDB.Spec.Engine.Storage.Size) < 0 {
+		return errCannotShrinkStorageSize
+	}
+
 	if err := validateShardingOnUpdate(dbc, oldDB); err != nil {
 		return err
 	}
