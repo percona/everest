@@ -101,7 +101,7 @@ export const AdvancedConfigurationForm = ({
         name={AdvancedConfigurationFields.externalAccess}
       />
       {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
+        <Stack sx={{ ml: 6 }} data-testid="external-access-fields">
           <TextArray
             placeholder={Messages.sourceRangePlaceholder}
             fieldName={AdvancedConfigurationFields.sourceRanges}
