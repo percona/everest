@@ -86,9 +86,7 @@ describe('Monitoring Step', () => {
       </QueryClientProvider>
     );
     expect(screen.getByTestId('switch-input-monitoring')).toBeInTheDocument();
-    expect(screen.getByTestId('switch-input-monitoring')).not.toHaveAttribute(
-      'aria-disabled'
-    );
+    expect(screen.getByTestId('switch-input-monitoring')).not.toBeDisabled();
     expect(screen.queryByTestId('monitoring-warning')).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('text-input-monitoring-instance')
@@ -128,9 +126,7 @@ describe('Monitoring Step', () => {
 
     expect(screen.queryByTestId('monitoring-warning')).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getByTestId('switch-input-monitoring')).toHaveAttribute(
-        'aria-disabled'
-      )
+      expect(screen.getByTestId('switch-input-monitoring')).toBeDisabled()
     );
   });
 });
