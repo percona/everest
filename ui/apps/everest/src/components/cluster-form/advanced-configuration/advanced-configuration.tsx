@@ -40,8 +40,7 @@ export const AdvancedConfigurationForm = ({
   dbType,
   loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, setValue, getFieldState, getValues, setError, clearErrors } =
-    useFormContext();
+  const { watch, setValue, getFieldState } = useFormContext();
   const mode = useDatabasePageMode();
   const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
