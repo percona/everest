@@ -34,7 +34,8 @@ import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
-import { queryPG, queryPSMDB, queryMySQL } from '@e2e/utils/db-cmd-line';
+import { queryPG, queryPSMDB, queryMySQL, getPGStsName } from '@e2e/utils/db-cmd-line';
+import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
 
 let token: string;
 
@@ -197,6 +198,73 @@ test.describe.configure({ retries: 0 });
               `SHOW shared_buffers;`
             );
             expect(result.trim()).toBe('192MB');
+            break;
+          }
+        }
+      });
+
+      test(`Check PMM DB metrics [${db} size ${size}]`, async () => {
+        switch (db) {
+          case 'psmdb': {
+            for (let i=0; i<size; i++) {
+              await checkDBMetrics('node_boot_time_seconds', `everest-ui-${clusterName}-rs0-${i}`, 'admin:admin');
+              await checkDBMetrics('mongodb_connections', `everest-ui-${clusterName}-rs0-${i}`, 'admin:admin');
+            }
+            break;
+          }
+          case 'pxc': {
+            const nodeTypes = ["pxc", "haproxy"];
+
+            for (const nodeType of nodeTypes) {
+              for (let i=0; i<size; i++) {
+                switch (nodeType) {
+                  case 'pxc': {
+                    await checkDBMetrics('node_boot_time_seconds', `everest-ui-${clusterName}-${nodeType}-${i}`, 'admin:admin');
+                    await checkDBMetrics('mysql_global_status_uptime', `everest-ui-${clusterName}-${nodeType}-${i}`, 'admin:admin');
+                    break;
+                  }
+                  case 'haproxy': {
+                    await checkDBMetrics('haproxy_backend_status', `everest-ui-${clusterName}-${nodeType}-${i}`, 'admin:admin');
+                    await checkDBMetrics('haproxy_backend_active_servers', `everest-ui-${clusterName}-${nodeType}-${i}`, 'admin:admin');
+                    break;
+                  }
+                }
+              }
+            }
+            break;
+          }
+          case 'postgresql': {
+            const pgSts = await getPGStsName(clusterName, namespace);
+            for (let i=0; i<size; i++) {
+              await checkDBMetrics('node_boot_time_seconds', `everest-ui-${pgSts[i]}-0`, 'admin:admin');
+              await checkDBMetrics('pg_postmaster_uptime_seconds', `everest-ui-${pgSts[i]}-0`, 'admin:admin');
+            }
+            break;
+          }
+        }
+      });
+
+      test(`Check PMM QAN [${db} size ${size}]`, async () => {
+        // Wait for 75 seconds for QAN to get data
+        await new Promise(resolve => setTimeout(resolve, 75000));
+
+        switch (db) {
+          case 'psmdb': {
+            // for PSMDB we see QAN only for the first node (primary)
+            await checkQAN('mongodb', `everest-ui-${clusterName}-rs0-0`, 'admin:admin');
+            break;
+          }
+          case 'pxc': {
+            for (let i=0; i<size; i++) {
+              await checkQAN('mysql', `everest-ui-${clusterName}-pxc-${i}`, 'admin:admin');
+            }
+            break;
+          }
+          case 'postgresql': {
+            const pgSts = await getPGStsName(clusterName, namespace);
+            for (let i=0; i<size; i++) {
+              await checkQAN('postgresql', `everest-ui-${pgSts[i]}-0`, 'admin:admin');
+            }
             break;
           }
         }

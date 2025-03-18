@@ -16,6 +16,29 @@
 import { execSync } from 'child_process';
 import { expect } from '@playwright/test';
 
+export const getK8sUid = async () => {
+  try {
+    const command = `kubectl get namespace kube-system -o jsonpath='{.metadata.uid}'`;
+    const output = execSync(command).toString();
+    return output;
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
+};
+
+export const getPGStsName = async (cluster: string, namespace: string) => {
+  try {
+    const command = `kubectl get sts --namespace ${namespace} --selector=app.kubernetes.io/instance=${cluster},app.kubernetes.io/component=pg -o 'jsonpath={.items[*].metadata.name}'`;
+    const output = execSync(command).toString();
+    const resultArray = output.split(" ");
+    return resultArray;
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
+};
+
 export const getDBHost = async (cluster: string, namespace: string) => {
   try {
     const command = `kubectl get --namespace ${namespace} DatabaseClusters ${cluster} -ojsonpath='{.status.hostname}'`;
@@ -40,6 +63,8 @@ export const getDBType = async (cluster: string, namespace: string) => {
 
 export const getDBClientPod = async (dbType: string, namespace: string) => {
   try {
+    if (dbType === 'pxc') { dbType = 'mysql'};
+
     const command = `kubectl get pods --namespace ${namespace} --selector=name=${dbType}-client -o 'jsonpath={.items[].metadata.name}'`;
     const output = execSync(command).toString();
     return output;
