@@ -201,7 +201,7 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 
 	backups, err := h.kubeConnector.ListDatabaseClusterBackups(ctx,
 		ctrlclient.InNamespace(namespace),
-		ctrlclient.MatchingLabels{"clusterName": name},
+		ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: name},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list database cluster backups: %w", err)

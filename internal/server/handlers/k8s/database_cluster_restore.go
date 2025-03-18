@@ -10,12 +10,13 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 )
 
 func (h *k8sHandler) ListDatabaseClusterRestores(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
 	return h.kubeConnector.ListDatabaseClusterRestores(ctx,
 		ctrlclient.InNamespace(namespace),
-		ctrlclient.MatchingLabels{"clusterName": clusterName},
+		ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: clusterName},
 	)
 }
 

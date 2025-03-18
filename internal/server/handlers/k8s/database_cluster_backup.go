@@ -12,16 +12,13 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
-)
-
-const (
-	databaseClusterNameLabel = "clusterName"
+	"github.com/percona/everest/pkg/common"
 )
 
 func (h *k8sHandler) ListDatabaseClusterBackups(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
 	return h.kubeConnector.ListDatabaseClusterBackups(ctx,
 		ctrlclient.InNamespace(namespace),
-		ctrlclient.MatchingLabels{databaseClusterNameLabel: clusterName},
+		ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: clusterName},
 	)
 }
 
@@ -66,7 +63,7 @@ func (h *k8sHandler) GetDatabaseClusterBackup(ctx context.Context, namespace, na
 func (h *k8sHandler) ensureNoBackupsRunningForCluster(ctx context.Context, dbClusterName, namespace string) (bool, error) {
 	backupList, err := h.kubeConnector.ListDatabaseClusterBackups(ctx,
 		ctrlclient.InNamespace(namespace),
-		ctrlclient.MatchingLabels{databaseClusterNameLabel: dbClusterName},
+		ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: dbClusterName},
 	)
 	if err != nil {
 		return false, errors.Join(err, errors.New("could not list Database Cluster Backups"))

@@ -145,24 +145,3 @@ func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, key ctrlclient.
 
 	return false, nil
 }
-
-// GetMonitoringConfigsBySecretName returns a list of monitoring configs which use
-// the provided secret name.
-// func (k *Kubernetes) GetMonitoringConfigsBySecretName(
-// 	ctx context.Context, namespace, secretName string,
-// ) ([]*everestv1alpha1.MonitoringConfig, error) {
-// 	mcs, err := k.client.ListMonitoringConfigs(ctx, namespace)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	res := make([]*everestv1alpha1.MonitoringConfig, 0, 1)
-// 	for _, mc := range mcs.Items {
-// 		if mc.Spec.CredentialsSecretName == secretName {
-// 			//nolint:exportloopref
-// 			res = append(res, &mc)
-// 		}
-// 	}
-//
-// 	return res, nil
-// }

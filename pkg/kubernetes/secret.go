@@ -34,11 +34,6 @@ func (k *Kubernetes) CreateSecret(ctx context.Context, secret *corev1.Secret) (*
 	return secret, nil
 }
 
-// SetSecret creates or updates an existing secret.
-// func (k *Kubernetes) SetSecret(secret *corev1.Secret) error {
-// 	return k.ApplyObject(secret)
-// }
-
 // UpdateSecret updates a secret.
 func (k *Kubernetes) UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error) {
 	if err := k.k8sClient.Update(ctx, secret); err != nil {

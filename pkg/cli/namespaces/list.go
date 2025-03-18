@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	everestOperator "github.com/percona/everest-operator/api/v1alpha1"
 	cliutils "github.com/percona/everest/pkg/cli/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -89,7 +90,7 @@ type (
 func NewNamespaceLister(c NamespaceListConfig, l *zap.SugaredLogger) (*NamespaceLister, error) {
 	n := &NamespaceLister{
 		cfg: c,
-		l:   l.With("component", "namespace-remover"),
+		l:   l.With("component", "namespace-lister"),
 	}
 	if c.Pretty {
 		n.l = zap.NewNop().Sugar()
@@ -167,20 +168,20 @@ func (nsL *NamespaceLister) getNamespaceOperators(ctx context.Context, ns *v1.Na
 					ns.GetName(),
 					err)
 			}
-			toReturn = append(toReturn, fmt.Sprintf("%s(v%s)", converDbOperatorName(sub.GetName()), v.String()))
+			toReturn = append(toReturn, fmt.Sprintf("%s(v%s)", convertDbOperatorName(sub.GetName()), v.String()))
 		}
 	}
 	return toReturn, nil
 }
 
-func converDbOperatorName(name string) string {
+func convertDbOperatorName(name string) string {
 	switch strings.ToLower(name) {
-	case "percona-server-mongodb-operator":
-		return "psmdb"
-	case "percona-xtradb-cluster-operator":
-		return "pxc"
-	case "percona-postgresql-operator":
-		return "postgresql"
+	case common.PSMDBOperatorName:
+		return string(everestOperator.DatabaseEnginePSMDB)
+	case common.PXCOperatorName:
+		return string(everestOperator.DatabaseEnginePXC)
+	case common.PGOperatorName:
+		return string(everestOperator.DatabaseEnginePostgresql)
 	default:
 		return name
 	}

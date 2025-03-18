@@ -444,7 +444,7 @@ func validatePGReposForAPIDB(
 	dbcName := dbc.GetName()
 	dbcNamespace := dbc.GetNamespace()
 
-	backups, err := getBackupsFunc(ctx, ctrlclient.InNamespace(dbcNamespace), ctrlclient.MatchingLabels{"clusterName": dbcName})
+	backups, err := getBackupsFunc(ctx, ctrlclient.InNamespace(dbcNamespace), ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: dbcName})
 	if err != nil {
 		return err
 	}

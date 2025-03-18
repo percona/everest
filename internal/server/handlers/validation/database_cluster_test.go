@@ -14,6 +14,7 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -1053,7 +1054,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-4",
 						Namespace: "ns-3",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"},
 				},
@@ -1093,7 +1094,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-1",
 						Namespace: "ns-5",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
 				},
@@ -1101,7 +1102,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-2",
 						Namespace: "ns-5",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
 				},
@@ -1109,7 +1110,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-3",
 						Namespace: "ns-5",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"},
 				},
@@ -1129,7 +1130,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-1",
 						Namespace: "ns-6",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
 				},
@@ -1137,7 +1138,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-2",
 						Namespace: "ns-6",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
 				},
@@ -1145,7 +1146,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-3",
 						Namespace: "ns-6",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"},
 				},
@@ -1153,7 +1154,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-1-1",
 						Namespace: "ns-6",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
 				},
@@ -1161,7 +1162,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-2-1",
 						Namespace: "ns-6",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
 				},
@@ -1181,7 +1182,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-1",
 						Namespace: "ns-7",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
 				},
@@ -1189,7 +1190,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-2",
 						Namespace: "ns-7",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
 				},
@@ -1197,7 +1198,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-3",
 						Namespace: "ns-7",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"},
 				},
@@ -1205,7 +1206,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-4",
 						Namespace: "ns-7",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"},
 				},
@@ -1225,7 +1226,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-1-1",
 						Namespace: "ns-8",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
 				},
@@ -1233,7 +1234,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-1-2",
 						Namespace: "ns-8",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
 				},
@@ -1241,7 +1242,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-2-1",
 						Namespace: "ns-8",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
 				},
@@ -1249,7 +1250,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-2-2",
 						Namespace: "ns-8",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
 				},
@@ -1298,7 +1299,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-3",
 						Namespace: "ns-10",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"},
 				},
@@ -1306,7 +1307,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "bc-bs-4",
 						Namespace: "ns-10",
-						Labels:    map[string]string{"clusterName": "some"},
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
 					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"},
 				},

@@ -14,6 +14,7 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -192,11 +193,11 @@ func TestConnectionURL(t *testing.T) {
 					Namespace: "ns-1",
 				},
 				Spec:   everestv1alpha1.DatabaseClusterSpec{Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB}},
-				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0.my-special-place.svc.cluster.local", Port: 27017},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0.ns-1.svc.cluster.local", Port: 27017},
 			},
 			user:     "databaseAdmin",
 			password: "azoE4FwvDRVycH83CO",
-			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.ns-1.svc.cluster.local:27017",
 		},
 		{
 			name: "non-sharded psmdb, 3 node, external access disabled",
@@ -232,11 +233,11 @@ func TestConnectionURL(t *testing.T) {
 					Namespace: "ns-2",
 				},
 				Spec:   everestv1alpha1.DatabaseClusterSpec{Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB}},
-				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0.my-special-place.svc.cluster.local", Port: 27017},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0.ns-2.svc.cluster.local", Port: 27017},
 			},
 			user:     "databaseAdmin",
 			password: "azoE4FwvDRVycH83CO",
-			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017,mongodb-try-rs0-1.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017,mongodb-try-rs0-2.mongodb-56u-rs0.my-special-place.svc.cluster.local:27017",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.ns-2.svc.cluster.local:27017,mongodb-try-rs0-1.mongodb-56u-rs0.ns-2.svc.cluster.local:27017,mongodb-try-rs0-2.mongodb-56u-rs0.ns-2.svc.cluster.local:27017",
 		},
 		{
 			name: "non-sharded psmdb, 3 node, external access enabled",
@@ -336,11 +337,11 @@ func TestConnectionURL(t *testing.T) {
 					Engine:   everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB},
 					Sharding: &everestv1alpha1.Sharding{Enabled: true},
 				},
-				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-mongos.my-special-place.svc.cluster.local", Port: 27017},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-mongos.ns-5.svc.cluster.local", Port: 27017},
 			},
 			user:     "databaseAdmin",
 			password: "azoE4FwvDRVycH83CO",
-			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-56u-mongos.my-special-place.svc.cluster.local:27017",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-56u-mongos.ns-5.svc.cluster.local:27017",
 		},
 		{
 			name: "pg",
@@ -350,11 +351,11 @@ func TestConnectionURL(t *testing.T) {
 					Namespace: "ns-6",
 				},
 				Spec:   everestv1alpha1.DatabaseClusterSpec{Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePostgresql}},
-				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "postgresql-a5d-pgbouncer.everest.svc", Port: 5432},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "postgresql-a5d-pgbouncer.ns-6.svc", Port: 5432},
 			},
 			user:     "postgres",
 			password: "55aBDedMF;So|C?^3x|h.dDC",
-			expected: "postgres://postgres:55aBDedMF%3BSo%7CC%3F%5E3x%7Ch.dDC@postgresql-a5d-pgbouncer.everest.svc:5432",
+			expected: "postgres://postgres:55aBDedMF%3BSo%7CC%3F%5E3x%7Ch.dDC@postgresql-a5d-pgbouncer.ns-6.svc:5432",
 		},
 		{
 			name: "pxc",
