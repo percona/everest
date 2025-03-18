@@ -15,6 +15,8 @@ var (
 	minCPUQuantity     = resource.MustParse("600m") //nolint:gochecknoglobals
 	minMemQuantity     = resource.MustParse("512M") //nolint:gochecknoglobals
 
+	errCannotChangeStorageSize       = errors.New("cannot change storage size")
+	errCannotShrinkStorageSize       = errors.New("cannot shrink storage size")
 	errNotEnoughMemory               = fmt.Errorf("memory limits should be above %s", minMemQuantity.String())
 	errNotEnoughCPU                  = fmt.Errorf("CPU limits should be above %s", minCPUQuantity.String())
 	errNotEnoughDiskSize             = fmt.Errorf("storage size should be above %s", minStorageQuantity.String())
