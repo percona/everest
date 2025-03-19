@@ -282,8 +282,8 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Check PMM QAN [${db} size ${size}]`, async () => {
-        // Wait for 75 seconds for QAN to get data
-        await new Promise((resolve) => setTimeout(resolve, 75000));
+        // Wait for 90 seconds for QAN to get data
+        await new Promise((resolve) => setTimeout(resolve, 90000));
 
         switch (db) {
           case 'psmdb': {

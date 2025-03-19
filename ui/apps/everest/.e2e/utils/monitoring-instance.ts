@@ -178,7 +178,7 @@ export const checkQAN = async (
   }
 
   // we use node_name because if it's returned it means there is some data for the node
-  const schema = output?.metadata?.node_name.toString();
-  expect(schema).toBeTruthy();
-  expect(schema?.trim()).not.toBe('');
+  const nodeName = output?.metadata?.node_name.toString();
+  expect(nodeName).toBeTruthy();
+  expect(nodeName?.trim()).not.toBe('');
 };
