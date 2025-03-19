@@ -25,7 +25,6 @@ import {
   TextInput,
 } from '@percona/ui-lib';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
 import { StepProps } from '../../../database-form.types.ts';
@@ -47,9 +46,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
   } = useDatabasePageDefaultValues(mode);
   const { watch, setValue, getFieldState, resetField } = useFormContext();
-
-  const { data: clusterInfo, isLoading: clusterInfoLoading } =
-    useKubernetesClusterInfo(['wizard-k8-info']);
 
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
@@ -92,26 +88,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
 
   const disableSharding =
     mode !== 'new' || notSupportedMongoOperatorVersionForSharding;
-
-  // setting the storage class default value
-  useEffect(() => {
-    const { isTouched: storageClassTouched } = getFieldState(
-      DbWizardFormFields.storageClass
-    );
-
-    if (
-      !storageClassTouched &&
-      mode === 'new' &&
-      clusterInfo?.storageClassNames &&
-      clusterInfo.storageClassNames.length > 0
-    ) {
-      setValue(
-        DbWizardFormFields.storageClass,
-        clusterInfo?.storageClassNames[0],
-        { shouldValidate: true }
-      );
-    }
-  }, [clusterInfo]);
 
   const { canCreate, isLoading } =
     useNamespacePermissionsForResource('database-clusters');
@@ -221,16 +197,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           }}
           availableVersions={dbEngineData?.availableVersions.engine}
           loading={dbEnginesFoDbEngineTypesFetching || isLoading}
-        />
-        <AutoCompleteInput
-          name={DbWizardFormFields.storageClass}
-          label={Messages.labels.storageClass}
-          loading={clusterInfoLoading}
-          options={clusterInfo?.storageClassNames || []}
-          autoCompleteProps={{
-            disableClearable: true,
-            disabled: loadingDefaultsForEdition,
-          }}
         />
         {dbType === DbType.Mongo && (
           <Box sx={{ marginY: '30px' }}>

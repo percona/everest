@@ -35,9 +35,6 @@ export const Messages = {
     dbName: {
       tooLong: errorMessages.tooLong('database'),
     },
-    storageClass: {
-      invalid: 'Invalid storage class',
-    },
     monitoringEndpoint: {
       invalidOption:
         'Invalid option. Please make sure you added a monitoring endpoint and select it from the dropdown',
