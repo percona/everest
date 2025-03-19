@@ -71,7 +71,7 @@ export const AdvancedConfigurationForm = ({
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
-      setValue(fieldName, `${value}/32`);
+      setValue(fieldName, `${value}/32`, {shouldValidate: true});
     }
   };
 

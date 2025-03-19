@@ -42,36 +42,38 @@ export const advancedConfigurationsSchema = () =>
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {
       sourceRanges.forEach(({ sourceRange }, index) => {
-        if (sourceRange && IP_REGEX.exec(sourceRange) === null) {
+
+        if (sourceRange) {
+        // Validate if it's a valid IP using regex
+        if (IP_REGEX.exec(sourceRange) === null) {
           ctx.addIssue({
             code: z.ZodIssueCode.invalid_string,
             validation: 'ip',
-            path: [
-              AdvancedConfigurationFields.sourceRanges,
-              index,
-              'sourceRange',
-            ],
+            path: [AdvancedConfigurationFields.sourceRanges, index, 'sourceRange'],
             message: Messages.errors.sourceRange.invalid,
           });
         }
-      });
-      const seen = new Set<string>();
-      sourceRanges.forEach(({ sourceRange }, index) => {
-        if (sourceRange && seen.has(sourceRange)) {
-          seen.add(sourceRange);
+
+        const nonEmptyRanges = sourceRanges
+        .map(({ sourceRange }) => sourceRange)
+        .filter((range): range is string => !!range);
+
+        
+        const uniqueRanges = new Set(
+          Object.values(nonEmptyRanges).map((item) => item)
+        );
+
+        const isCurrentOneOfDuplicates = nonEmptyRanges.filter((item) => item === sourceRange).length;
+        
+        // Check for duplicates
+        if (nonEmptyRanges.length !== uniqueRanges.size && isCurrentOneOfDuplicates > 1) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: [
-              AdvancedConfigurationFields.sourceRanges,
-              index,
-              'sourceRange',
-            ],
+            path: [AdvancedConfigurationFields.sourceRanges, index, 'sourceRange'],
             message: Messages.errors.sourceRange.duplicate,
           });
-        }
-        if (sourceRange) {
-          seen.add(sourceRange);
-        }
+        };
+      };
       });
     });
 
