@@ -24,7 +24,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// GetClusterServiceVersion retrieves a ClusterServiceVersion by namespaced name.
+// GetClusterServiceVersion retrieves a ClusterServiceVersion that matches the criteria.
 func (k *Kubernetes) GetClusterServiceVersion(ctx context.Context, key ctrlclient.ObjectKey) (*olmv1alpha1.ClusterServiceVersion, error) {
 	result := &olmv1alpha1.ClusterServiceVersion{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -33,7 +33,7 @@ func (k *Kubernetes) GetClusterServiceVersion(ctx context.Context, key ctrlclien
 	return result, nil
 }
 
-// ListClusterServiceVersion list all CSVs for the given namespace.
+// ListClusterServiceVersion list all CSVs that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListClusterServiceVersion(ctx context.Context, opts ...ctrlclient.ListOption) (*olmv1alpha1.ClusterServiceVersionList, error) {
 	result := &olmv1alpha1.ClusterServiceVersionList{}
@@ -43,7 +43,7 @@ func (k *Kubernetes) ListClusterServiceVersion(ctx context.Context, opts ...ctrl
 	return result, nil
 }
 
-// listClusterServiceVersionMeta list all CSVs for the given namespace.
+// listClusterServiceVersionMeta list all CSVs that match the criteria.
 // This method returns a list of simplified objects (meta only).
 func (k *Kubernetes) listClusterServiceVersionMeta(ctx context.Context, opts ...ctrlclient.ListOption) (*metav1.PartialObjectMetadataList, error) {
 	result := &metav1.PartialObjectMetadataList{}
@@ -54,12 +54,12 @@ func (k *Kubernetes) listClusterServiceVersionMeta(ctx context.Context, opts ...
 	return result, nil
 }
 
-// DeleteClusterServiceVersion deletes a ClusterServiceVersion.
+// DeleteClusterServiceVersion deletes a ClusterServiceVersion that matches the criteria.
 func (k *Kubernetes) DeleteClusterServiceVersion(ctx context.Context, obj *olmv1alpha1.ClusterServiceVersion) error {
 	return k.k8sClient.Delete(ctx, obj)
 }
 
-// DeleteClusterServiceVersions deletes all ClusterServiceVersion in the given namespace.
+// DeleteClusterServiceVersions deletes all ClusterServiceVersion that match the criteria.
 // This function will wait until all ClusterServiceVersion are deleted.
 func (k *Kubernetes) DeleteClusterServiceVersions(ctx context.Context, opts ...ctrlclient.ListOption) error {
 	// No need to fetch full objects, we only need the fact there are objects that match the criteria(opts).

@@ -22,7 +22,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// GetService returns service by provided name and namespace.
+// GetService returns service that matches the criteria.
 func (k *Kubernetes) GetService(ctx context.Context, key ctrlclient.ObjectKey) (*corev1.Service, error) {
 	result := &corev1.Service{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {

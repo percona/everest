@@ -213,7 +213,6 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 func (e *EverestServer) setupHandlers(
 	ctx context.Context,
 	log *zap.SugaredLogger,
-	// kubeConnector *kubernetes.Kubernetes,
 	kubeConnector kubernetes.KubernetesConnector,
 	vsURL string,
 ) error {

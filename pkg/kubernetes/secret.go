@@ -7,7 +7,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ListSecrets returns secret by name.
+// ListSecrets returns list of secrets that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListSecrets(ctx context.Context, opts ...ctrlclient.ListOption) (*corev1.SecretList, error) {
 	result := &corev1.SecretList{}
@@ -17,7 +17,7 @@ func (k *Kubernetes) ListSecrets(ctx context.Context, opts ...ctrlclient.ListOpt
 	return result, nil
 }
 
-// GetSecret returns a secret by name.
+// GetSecret returns a secret that matches the criteria.
 func (k *Kubernetes) GetSecret(ctx context.Context, key ctrlclient.ObjectKey) (*corev1.Secret, error) {
 	result := &corev1.Secret{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -42,7 +42,7 @@ func (k *Kubernetes) UpdateSecret(ctx context.Context, secret *corev1.Secret) (*
 	return secret, nil
 }
 
-// DeleteSecret deletes a secret.
+// DeleteSecret deletes a secret that matches the criteria.
 func (k *Kubernetes) DeleteSecret(ctx context.Context, obj *corev1.Secret) error {
 	return k.k8sClient.Delete(ctx, obj)
 }

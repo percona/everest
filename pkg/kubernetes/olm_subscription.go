@@ -22,7 +22,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// GetSubscription returns OLM subscription by namespaced name.
+// GetSubscription returns OLM subscription that matches the criteria.
 func (k *Kubernetes) GetSubscription(ctx context.Context, key ctrlclient.ObjectKey) (*olmv1alpha1.Subscription, error) {
 	result := &olmv1alpha1.Subscription{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -31,7 +31,7 @@ func (k *Kubernetes) GetSubscription(ctx context.Context, key ctrlclient.ObjectK
 	return result, nil
 }
 
-// ListSubscriptions lists OLM subscriptions in the namespace.
+// ListSubscriptions lists OLM subscriptions that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListSubscriptions(ctx context.Context, opts ...ctrlclient.ListOption) (*olmv1alpha1.SubscriptionList, error) {
 	result := &olmv1alpha1.SubscriptionList{}
@@ -41,7 +41,7 @@ func (k *Kubernetes) ListSubscriptions(ctx context.Context, opts ...ctrlclient.L
 	return result, nil
 }
 
-// DeleteSubscription deletes OLM subscription by provided namespace and name.
+// DeleteSubscription deletes OLM subscription that matches the criteria.
 func (k *Kubernetes) DeleteSubscription(ctx context.Context, obj *olmv1alpha1.Subscription) error {
 	return k.k8sClient.Delete(ctx, obj)
 }

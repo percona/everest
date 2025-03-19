@@ -42,7 +42,7 @@ const (
 
 // ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
 // and applies them against the cluster.
-func (k *Kubernetes) ApplyManifestFile(fileBytes []byte, namespace string, ignoreObjects ...ctrlclient.Object) error {
+func (k *Kubernetes) ApplyManifestFile(ctx context.Context, fileBytes []byte, namespace string, ignoreObjects ...ctrlclient.Object) error {
 	objs, err := k.getObjects(fileBytes)
 	if err != nil {
 		return err
@@ -59,68 +59,11 @@ func (k *Kubernetes) ApplyManifestFile(fileBytes []byte, namespace string, ignor
 			continue
 		}
 
-		if err := k.applyTemplateCustomization(o, namespace); err != nil {
+		if err := k.applyTemplateCustomization(ctx, o, namespace); err != nil {
 			return err
 		}
 		err := k.ApplyObject(o)
 		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
-// and deletes them from the cluster.
-func (k *Kubernetes) DeleteManifestFile(fileBytes []byte, namespace string) error {
-	objs, err := k.getObjects(fileBytes)
-	if err != nil {
-		return err
-	}
-	for i := range objs {
-		o := objs[i]
-		if err := k.applyTemplateCustomization(o, namespace); err != nil {
-			return err
-		}
-		err := k.DeleteObject(o)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// DeleteObject deletes object from the k8s cluster.
-func (k *Kubernetes) DeleteObject(obj runtime.Object) error {
-	groupResources, err := restmapper.GetAPIGroupResources(k.getDiscoveryClient())
-	if err != nil {
-		return err
-	}
-	mapper := restmapper.NewDiscoveryRESTMapper(groupResources)
-
-	gvk := obj.GetObjectKind().GroupVersionKind()
-	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
-	mapping, err := mapper.RESTMapping(gk, gvk.Version)
-	if err != nil {
-		return err
-	}
-	namespace, name, err := k.retrieveMetaFromObject(obj)
-	if err != nil {
-		return err
-	}
-	cli, err := k.resourceClient(mapping.GroupVersionKind.GroupVersion())
-	if err != nil {
-		return err
-	}
-	helper := resource.NewHelper(cli, mapping)
-	err = deleteObject(helper, namespace, name)
-	return err
-}
-
-func deleteObject(helper *resource.Helper, namespace, name string) error {
-	if _, err := helper.Get(namespace, name); err == nil {
-		_, err = helper.Delete(namespace, name)
-		if ctrlclient.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
@@ -195,7 +138,7 @@ func (k *Kubernetes) applyObject(helper *resource.Helper, namespace, name string
 	return nil
 }
 
-func (k *Kubernetes) applyTemplateCustomization(u *unstructured.Unstructured, namespace string) error {
+func (k *Kubernetes) applyTemplateCustomization(ctx context.Context, u *unstructured.Unstructured, namespace string) error {
 	if err := unstructured.SetNestedField(u.Object, namespace, "metadata", "namespace"); err != nil {
 		return err
 	}
@@ -213,7 +156,7 @@ func (k *Kubernetes) applyTemplateCustomization(u *unstructured.Unstructured, na
 	if ok && kind == "Service" {
 		// During installation or upgrading of the everest API Server
 		// CLI should keep spec.type untouched to prevent overriding of it.
-		if err := k.setEverestServiceType(u, namespace); err != nil {
+		if err := k.setEverestServiceType(ctx, u, namespace); err != nil {
 			return err
 		}
 	}
@@ -249,8 +192,8 @@ func (k *Kubernetes) updateClusterRoleBinding(u *unstructured.Unstructured, name
 	return unstructured.SetNestedSlice(u.Object, subjects, "subjects")
 }
 
-func (k *Kubernetes) setEverestServiceType(u *unstructured.Unstructured, namespace string) error {
-	s, err := k.GetService(context.Background(), types.NamespacedName{Namespace: namespace, Name: "everest"})
+func (k *Kubernetes) setEverestServiceType(ctx context.Context, u *unstructured.Unstructured, namespace string) error {
+	s, err := k.GetService(ctx, types.NamespacedName{Namespace: namespace, Name: "everest"})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}

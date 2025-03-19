@@ -124,10 +124,7 @@ func (k *Kubernetes) DeleteBackupStorages(ctx context.Context, opts ...ctrlclien
 	})
 }
 
-// IsBackupStorageUsed checks if a backup storage in a given namespace is used by any clusters
-// in that namespace.
-//
-//nolint:cyclop
+// IsBackupStorageUsed checks if a backup storage that matches the criteria is used by any DB clusters.
 func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error) {
 	_, err := k.GetBackupStorage(ctx, key)
 	if err != nil {

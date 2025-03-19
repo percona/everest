@@ -27,7 +27,7 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-// ListDatabaseClusters returns list of managed database clusters in a given namespace.
+// ListDatabaseClusters returns list of managed database clusters that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListDatabaseClusters(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterList, error) {
 	result := &everestv1alpha1.DatabaseClusterList{}
@@ -37,7 +37,7 @@ func (k *Kubernetes) ListDatabaseClusters(ctx context.Context, opts ...ctrlclien
 	return result, nil
 }
 
-// ListDatabaseClusters returns list of managed database clusters in a given namespace.
+// ListDatabaseClusters returns list of managed database clusters that match the criteria.
 // This method returns a list of simplified objects (meta only).
 func (k *Kubernetes) listDatabaseClustersMeta(ctx context.Context, opts ...ctrlclient.ListOption) (*metav1.PartialObjectMetadataList, error) {
 	result := &metav1.PartialObjectMetadataList{}
@@ -48,7 +48,7 @@ func (k *Kubernetes) listDatabaseClustersMeta(ctx context.Context, opts ...ctrlc
 	return result, nil
 }
 
-// GetDatabaseCluster returns database clusters by provided name and namespace.
+// GetDatabaseCluster returns database cluster that matches the criteria.
 func (k *Kubernetes) GetDatabaseCluster(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.DatabaseCluster, error) {
 	result := &everestv1alpha1.DatabaseCluster{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -57,7 +57,7 @@ func (k *Kubernetes) GetDatabaseCluster(ctx context.Context, key ctrlclient.Obje
 	return result, nil
 }
 
-// DeleteDatabaseCluster deletes database cluster by provided name and namespace.
+// DeleteDatabaseCluster deletes database cluster that matches the criteria.
 func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, obj *everestv1alpha1.DatabaseCluster) error {
 	return k.k8sClient.Delete(ctx, obj)
 }
@@ -78,7 +78,7 @@ func (k *Kubernetes) UpdateDatabaseCluster(ctx context.Context, cluster *everest
 	return cluster, nil
 }
 
-// DeleteDatabaseClusters deletes all database clusters in provided namespace.
+// DeleteDatabaseClusters deletes all database clusters that match the criteria.
 // This function will wait until all clusters are deleted.
 func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, opts ...ctrlclient.ListOption) error {
 	// No need to fetch full objects, we only need the fact there are objects that match the criteria(opts).

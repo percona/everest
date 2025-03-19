@@ -23,7 +23,7 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-// GetDatabaseClusterRestore returns database cluster restore by name.
+// GetDatabaseClusterRestore returns database cluster restore that matches the criteria.
 func (k *Kubernetes) GetDatabaseClusterRestore(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	result := &everestv1alpha1.DatabaseClusterRestore{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -32,7 +32,7 @@ func (k *Kubernetes) GetDatabaseClusterRestore(ctx context.Context, key ctrlclie
 	return result, nil
 }
 
-// ListDatabaseClusterRestores returns database cluster restores.
+// ListDatabaseClusterRestores returns database cluster restores that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListDatabaseClusterRestores(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
 	result := &everestv1alpha1.DatabaseClusterRestoreList{}
@@ -50,7 +50,7 @@ func (k *Kubernetes) UpdateDatabaseClusterRestore(ctx context.Context, restore *
 	return restore, nil
 }
 
-// DeleteDatabaseClusterRestore deletes database cluster restore.
+// DeleteDatabaseClusterRestore deletes database cluster restore that matches the criteria.
 func (k *Kubernetes) DeleteDatabaseClusterRestore(ctx context.Context, obj *everestv1alpha1.DatabaseClusterRestore) error {
 	return k.k8sClient.Delete(ctx, obj)
 }

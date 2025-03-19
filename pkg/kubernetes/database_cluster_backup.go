@@ -23,7 +23,7 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-// GetDatabaseClusterBackup returns database cluster backup by provided namespace and name.
+// GetDatabaseClusterBackup returns database cluster backup that matches the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) GetDatabaseClusterBackup(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.DatabaseClusterBackup, error) {
 	result := &everestv1alpha1.DatabaseClusterBackup{}
@@ -33,7 +33,7 @@ func (k *Kubernetes) GetDatabaseClusterBackup(ctx context.Context, key ctrlclien
 	return result, nil
 }
 
-// ListDatabaseClusterBackups returns database cluster backups.
+// ListDatabaseClusterBackups returns database cluster backups that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListDatabaseClusterBackups(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterBackupList, error) {
 	result := &everestv1alpha1.DatabaseClusterBackupList{}
@@ -51,7 +51,7 @@ func (k *Kubernetes) UpdateDatabaseClusterBackup(ctx context.Context, backup *ev
 	return backup, nil
 }
 
-// DeleteDatabaseClusterBackup deletes database cluster backup.
+// DeleteDatabaseClusterBackup deletes database cluster backup that matches the criteria.
 func (k *Kubernetes) DeleteDatabaseClusterBackup(ctx context.Context, obj *everestv1alpha1.DatabaseClusterBackup) error {
 	return k.k8sClient.Delete(ctx, obj)
 }

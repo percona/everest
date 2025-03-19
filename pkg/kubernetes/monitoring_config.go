@@ -30,7 +30,7 @@ const (
 	monitoringConfigNameLabel = "monitoringConfigName"
 )
 
-// ListMonitoringConfigs returns list of managed monitoring configs.
+// ListMonitoringConfigs returns list of managed monitoring configs that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListMonitoringConfigs(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.MonitoringConfigList, error) {
 	result := &everestv1alpha1.MonitoringConfigList{}
@@ -40,7 +40,7 @@ func (k *Kubernetes) ListMonitoringConfigs(ctx context.Context, opts ...ctrlclie
 	return result, nil
 }
 
-// listMonitoringConfigsMeta returns list of managed monitoring configs.
+// listMonitoringConfigsMeta returns list of managed monitoring configs that match the criteria.
 // This method returns a list of simplified objects (meta only).
 func (k *Kubernetes) listMonitoringConfigsMeta(ctx context.Context, opts ...ctrlclient.ListOption) (*metav1.PartialObjectMetadataList, error) {
 	result := &metav1.PartialObjectMetadataList{}
@@ -51,7 +51,7 @@ func (k *Kubernetes) listMonitoringConfigsMeta(ctx context.Context, opts ...ctrl
 	return result, nil
 }
 
-// GetMonitoringConfig returns monitoring configs by provided name.
+// GetMonitoringConfig returns monitoring configs that matches the criteria.
 func (k *Kubernetes) GetMonitoringConfig(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.MonitoringConfig, error) {
 	result := &everestv1alpha1.MonitoringConfig{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -60,7 +60,7 @@ func (k *Kubernetes) GetMonitoringConfig(ctx context.Context, key ctrlclient.Obj
 	return result, nil
 }
 
-// CreateMonitoringConfig returns monitoring configs by provided name.
+// CreateMonitoringConfig creates monitoring config.
 func (k *Kubernetes) CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
 	if err := k.k8sClient.Create(ctx, config); err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (k *Kubernetes) CreateMonitoringConfig(ctx context.Context, config *everest
 	return config, nil
 }
 
-// UpdateMonitoringConfig returns monitoring configs by provided name.
+// UpdateMonitoringConfig updates monitoring config.
 func (k *Kubernetes) UpdateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error) {
 	if err := k.k8sClient.Update(ctx, config); err != nil {
 		return nil, err
@@ -76,12 +76,12 @@ func (k *Kubernetes) UpdateMonitoringConfig(ctx context.Context, config *everest
 	return config, nil
 }
 
-// DeleteMonitoringConfig returns monitoring configs by provided name.
+// DeleteMonitoringConfig deletes monitoring config that matches the criteria.
 func (k *Kubernetes) DeleteMonitoringConfig(ctx context.Context, obj *everestv1alpha1.MonitoringConfig) error {
 	return k.k8sClient.Delete(ctx, obj)
 }
 
-// DeleteMonitoringConfigs deletes all monitoring configs in provided namespace.
+// DeleteMonitoringConfigs deletes monitoring configs that matches the criteria.
 // This function will wait until all configs are deleted.
 func (k *Kubernetes) DeleteMonitoringConfigs(ctx context.Context, opts ...ctrlclient.ListOption) error {
 	// No need to fetch full objects, we only need the fact there are objects that match the criteria(opts).
@@ -128,7 +128,7 @@ func (k *Kubernetes) DeleteMonitoringConfigs(ctx context.Context, opts ...ctrlcl
 	})
 }
 
-// IsMonitoringConfigUsed checks if a monitoring config is used by any database cluster in the provided namespace.
+// IsMonitoringConfigUsed checks if a monitoring config that matches the criteria is used by any database cluster.
 func (k *Kubernetes) IsMonitoringConfigUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error) {
 	_, err := k.GetMonitoringConfig(ctx, key)
 	if err != nil {

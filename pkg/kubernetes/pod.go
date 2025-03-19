@@ -7,7 +7,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ListPods returns list of pods.
+// ListPods returns list of pods that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListPods(ctx context.Context, opts ...ctrlclient.ListOption) (*corev1.PodList, error) {
 	result := &corev1.PodList{}

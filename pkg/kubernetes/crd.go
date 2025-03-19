@@ -22,7 +22,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ListCRDs lists all CRDs.
+// ListCRDs lists all CRDs that match the criteria.
 func (k *Kubernetes) ListCRDs(ctx context.Context, opts ...ctrlclient.ListOption) (*apiextv1.CustomResourceDefinitionList, error) {
 	result := &apiextv1.CustomResourceDefinitionList{}
 	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
@@ -31,7 +31,7 @@ func (k *Kubernetes) ListCRDs(ctx context.Context, opts ...ctrlclient.ListOption
 	return result, nil
 }
 
-// DeleteCRD deletes a CRD by name.
+// DeleteCRD deletes a CRD that matches the criteria.
 func (k *Kubernetes) DeleteCRD(ctx context.Context, obj *apiextv1.CustomResourceDefinition) error {
 	return k.k8sClient.Delete(ctx, obj)
 }

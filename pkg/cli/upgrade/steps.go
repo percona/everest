@@ -101,7 +101,7 @@ func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("could not get CRDs: %w", err)
 	}
-	return u.kubeConnector.ApplyManifestFile(helmutils.YAMLStringsToBytes(crds), common.SystemNamespace)
+	return u.kubeConnector.ApplyManifestFile(ctx, helmutils.YAMLStringsToBytes(crds), common.SystemNamespace)
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {

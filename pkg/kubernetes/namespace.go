@@ -34,7 +34,7 @@ func (k *Kubernetes) CreateNamespace(ctx context.Context, namespace *corev1.Name
 	return namespace, nil
 }
 
-// GetNamespace returns a namespace.
+// GetNamespace returns a namespace that matches the criteria.
 func (k *Kubernetes) GetNamespace(ctx context.Context, key ctrlclient.ObjectKey) (*corev1.Namespace, error) {
 	result := &corev1.Namespace{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -43,8 +43,7 @@ func (k *Kubernetes) GetNamespace(ctx context.Context, key ctrlclient.ObjectKey)
 	return result, nil
 }
 
-// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-// It is possible to pass additional options to filter the namespaces.
+// GetDBNamespaces returns a list of DB namespaces that managed by the Everest and match the criteria.
 func (k *Kubernetes) GetDBNamespaces(ctx context.Context, opts ...ctrlclient.ListOption) (*corev1.NamespaceList, error) {
 	opts = append(opts, ctrlclient.MatchingLabels{common.KubernetesManagedByLabel: common.Everest})
 	result, err := k.ListNamespaces(ctx, opts...)
@@ -60,12 +59,12 @@ func (k *Kubernetes) GetDBNamespaces(ctx context.Context, opts ...ctrlclient.Lis
 	return result, nil
 }
 
-// DeleteNamespace deletes a namespace.
+// DeleteNamespace deletes a namespace that matches the criteria.
 func (k *Kubernetes) DeleteNamespace(ctx context.Context, obj *corev1.Namespace) error {
 	return k.k8sClient.Delete(ctx, obj)
 }
 
-// ListNamespaces lists all namespaces.
+// ListNamespaces lists all namespaces that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListNamespaces(ctx context.Context, opts ...ctrlclient.ListOption) (*corev1.NamespaceList, error) {
 	result := &corev1.NamespaceList{}

@@ -30,8 +30,8 @@ import (
 // ErrOperatorNotInstalled is returned when an operator is not installed.
 var ErrOperatorNotInstalled = fmt.Errorf("operatorNotInstalled")
 
-// OperatorInstalledVersion returns the installed version of operator by name and namespace.
-func (k *Kubernetes) OperatorInstalledVersion(ctx context.Context, key ctrlclient.ObjectKey) (*goversion.Version, error) {
+// GetInstalledOperatorVersion returns the version of installed operator that matches the criteria.
+func (k *Kubernetes) GetInstalledOperatorVersion(ctx context.Context, key ctrlclient.ObjectKey) (*goversion.Version, error) {
 	sub := &olmv1alpha1.Subscription{}
 	if err := k.k8sClient.Get(ctx, key, sub); err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -52,7 +52,7 @@ func (k *Kubernetes) OperatorInstalledVersion(ctx context.Context, key ctrlclien
 	return goversion.NewVersion(csv.Spec.Version.FinalizeVersion())
 }
 
-// ListInstalledOperators returns the list of  installed operator by name and namespace.
+// ListInstalledOperators returns the list of installed operators that match the criteria.
 func (k *Kubernetes) ListInstalledOperators(ctx context.Context, opts ...ctrlclient.ListOption) (*olmv1alpha1.SubscriptionList, error) {
 	result := &olmv1alpha1.SubscriptionList{}
 	if err := k.k8sClient.List(ctx, result, opts...); err != nil {

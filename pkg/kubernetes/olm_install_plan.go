@@ -7,11 +7,10 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// GetInstallPlan retrieves an OLM install plan by namespace and name.
+// GetInstallPlan retrieves an OLM install plan that matches the criteria.
 func (k *Kubernetes) GetInstallPlan(ctx context.Context, key ctrlclient.ObjectKey) (*olmv1alpha1.InstallPlan, error) {
 	k.rcLock.Lock()
 	defer k.rcLock.Unlock()
@@ -31,14 +30,14 @@ func (k *Kubernetes) UpdateInstallPlan(ctx context.Context, installPlan *olmv1al
 	return installPlan, nil
 }
 
-// ApproveInstallPlan approves an install plan.
-func (k *Kubernetes) ApproveInstallPlan(ctx context.Context, namespace, installPlanName string) (bool, error) {
-	ip, err := k.GetInstallPlan(ctx, types.NamespacedName{Namespace: namespace, Name: installPlanName})
+// ApproveInstallPlan approves OLM install plan that matches the criteria.
+func (k *Kubernetes) ApproveInstallPlan(ctx context.Context, key ctrlclient.ObjectKey) (bool, error) {
+	ip, err := k.GetInstallPlan(ctx, key)
 	if err != nil {
 		return false, err
 	}
 
-	k.l.Debugf("Approving install plan='%s' in namespace='%s'", installPlanName, namespace)
+	k.l.Debugf("Approving install plan='%s' in namespace='%s'", key.Name, key.Namespace)
 
 	ip.Spec.Approved = true
 	_, err = k.UpdateInstallPlan(ctx, ip)

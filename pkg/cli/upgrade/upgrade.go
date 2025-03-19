@@ -404,7 +404,7 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 		u.l.Infof("Checking operator requirements in namespace %s", ns)
 
 		for _, c := range cfg {
-			v, err := u.kubeConnector.OperatorInstalledVersion(ctx, types.NamespacedName{Namespace: ns.GetName(), Name: c.operatorName})
+			v, err := u.kubeConnector.GetInstalledOperatorVersion(ctx, types.NamespacedName{Namespace: ns.GetName(), Name: c.operatorName})
 			if err != nil && !errors.Is(err, kubernetes.ErrOperatorNotInstalled) {
 				return err
 			}

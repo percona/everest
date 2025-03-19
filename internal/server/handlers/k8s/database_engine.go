@@ -103,7 +103,7 @@ func (h *k8sHandler) setLockDBEnginesForUpgrade(
 ) error {
 	return backoff.Retry(func() error {
 		for _, upgrade := range pointer.Get(up.Upgrades) {
-			if err := h.kubeConnector.SetDatabaseEngineLock(ctx, namespace, pointer.Get(upgrade.Name), lock); err != nil {
+			if err := h.kubeConnector.SetDatabaseEngineLock(ctx, types.NamespacedName{Namespace: namespace, Name: pointer.Get(upgrade.Name)}, lock); err != nil {
 				return err
 			}
 		}
@@ -380,7 +380,7 @@ func (h *k8sHandler) startOperatorUpgrade(ctx context.Context, namespace string)
 	// approve install plans.
 	for _, plan := range installPlans {
 		if err := backoff.Retry(func() error {
-			_, err := h.kubeConnector.ApproveInstallPlan(ctx, namespace, plan)
+			_, err := h.kubeConnector.ApproveInstallPlan(ctx, types.NamespacedName{Namespace: namespace, Name: plan})
 			return err
 		}, backoff.WithContext(everestAPIConstantBackoff, ctx),
 		); err != nil {

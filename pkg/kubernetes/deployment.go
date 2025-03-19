@@ -14,7 +14,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// GetDeployment returns k8s deployment by provided name and namespace.
+// GetDeployment returns k8s deployment that matches the criteria.
 func (k *Kubernetes) GetDeployment(ctx context.Context, key ctrlclient.ObjectKey) (*appsv1.Deployment, error) {
 	result := &appsv1.Deployment{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -31,7 +31,7 @@ func (k *Kubernetes) UpdateDeployment(ctx context.Context, deployment *appsv1.De
 	return deployment, nil
 }
 
-// ListDeployments returns a list of deployments in the provided namespace.
+// ListDeployments returns a list of deployments that match the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListDeployments(ctx context.Context, opts ...ctrlclient.ListOption) (*appsv1.DeploymentList, error) {
 	result := &appsv1.DeploymentList{}
@@ -41,12 +41,12 @@ func (k *Kubernetes) ListDeployments(ctx context.Context, opts ...ctrlclient.Lis
 	return result, nil
 }
 
-// DeleteDeployment deletes a deployment by provided name and namespace.
+// DeleteDeployment deletes a deployment that matches the criteria.
 func (k *Kubernetes) DeleteDeployment(ctx context.Context, obj *appsv1.Deployment) error {
 	return k.k8sClient.Delete(ctx, obj)
 }
 
-// RestartDeployment restarts the given deployment.
+// RestartDeployment restarts deployment that matches the criteria.
 func (k *Kubernetes) RestartDeployment(ctx context.Context, key ctrlclient.ObjectKey) error {
 	// Get the Deployment and add restart annotation to pod template.
 	// We retry this operatation since there may be update conflicts.
@@ -91,7 +91,7 @@ func (k *Kubernetes) RestartDeployment(ctx context.Context, key ctrlclient.Objec
 	})
 }
 
-// WaitForRollout waits for rollout of a provided deployment in the provided namespace.
+// WaitForRollout waits for rollout of deployment that matches the criteria.
 func (k *Kubernetes) WaitForRollout(ctx context.Context, key ctrlclient.ObjectKey) error {
 	rolloutComplete := func(ctx context.Context) (bool, error) {
 		deployment, err := k.GetDeployment(ctx, key)

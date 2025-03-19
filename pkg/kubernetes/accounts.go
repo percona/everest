@@ -48,8 +48,6 @@ type configMapsClient struct {
 
 // Accounts returns an implementation of the accounts interface that
 // manages everest accounts directly via ConfigMaps.
-//
-//nolint:ireturn
 func (k *Kubernetes) Accounts() accounts.Interface {
 	return &configMapsClient{k: k}
 }

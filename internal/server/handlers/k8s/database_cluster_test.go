@@ -14,6 +14,7 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -357,18 +358,32 @@ func TestConnectionURL(t *testing.T) {
 			expected: "postgres://postgres:55aBDedMF%3BSo%7CC%3F%5E3x%7Ch.dDC@postgresql-a5d-pgbouncer.ns-6.svc:5432",
 		},
 		{
-			name: "pxc",
+			name: "pxc external domain",
 			db: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "psmdb-try",
+					Name:      "pxc-try",
 					Namespace: "ns-7",
 				},
 				Spec:   everestv1alpha1.DatabaseClusterSpec{Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePXC}},
-				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mysql-29o-haproxy.everest", Port: 3306},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mysql-29o-haproxy.everest.io", Port: 3306},
 			},
 			user:     "root",
 			password: ",0#3PdCIc=9CS(do2",
-			expected: "jdbc:mysql://root:%2C0%233PdCIc%3D9CS%28do2@mysql-29o-haproxy.everest:3306",
+			expected: "jdbc:mysql://root:%2C0%233PdCIc%3D9CS%28do2@mysql-29o-haproxy.everest.io:3306",
+		},
+		{
+			name: "pxc local service",
+			db: everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pxc-try",
+					Namespace: "ns-8",
+				},
+				Spec:   everestv1alpha1.DatabaseClusterSpec{Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePXC}},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mysql-56o-haproxy.ns-8.svc", Port: 3306},
+			},
+			user:     "root",
+			password: ",0#123AIc=9CS(do2",
+			expected: "jdbc:mysql://root:%2C0%23123AIc%3D9CS%28do2@mysql-56o-haproxy.ns-8.svc:3306",
 		},
 	}
 

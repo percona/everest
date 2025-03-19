@@ -22,7 +22,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// GetCatalogSource returns catalog source by name and namespace.
+// GetCatalogSource returns catalog source that matches the criteria.
 func (k *Kubernetes) GetCatalogSource(ctx context.Context, key ctrlclient.ObjectKey) (*olmv1alpha1.CatalogSource, error) {
 	result := &olmv1alpha1.CatalogSource{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
@@ -31,7 +31,7 @@ func (k *Kubernetes) GetCatalogSource(ctx context.Context, key ctrlclient.Object
 	return result, nil
 }
 
-// DeleteCatalogSource deletes catalog source by name and namespace.
+// DeleteCatalogSource deletes catalog source that matches the criteria.
 func (k *Kubernetes) DeleteCatalogSource(ctx context.Context, obj *olmv1alpha1.CatalogSource) error {
 	return k.k8sClient.Delete(ctx, obj)
 }

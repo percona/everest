@@ -63,18 +63,10 @@ const (
 	// ClusterTypeGeneric is a generic type.
 	ClusterTypeGeneric ClusterType = "generic"
 
-	// EverestDBNamespacesEnvVar is the name of the environment variable that
-	// contains the list of monitored namespaces.
-	// EverestDBNamespacesEnvVar = "DB_NAMESPACES"
-
 	// OLMNamespace is the namespace where OLM is installed.
 	OLMNamespace = "everest-olm"
-	// olmOperatorName = "olm-operator"
 
 	openShiftCatalogNamespace = "openshift-marketplace"
-
-	// APIVersionCoreosV1 constant for some API requests.
-	// APIVersionCoreosV1 = "operators.coreos.com/v1"
 
 	pollInterval = 5 * time.Second
 	pollTimeout  = 15 * time.Minute
@@ -84,13 +76,8 @@ const (
 	backoffInterval   = 5 * time.Second
 	backoffMaxRetries = 5
 
-	// requestTimeout  = 5 * time.Second
-	// maxIdleConns    = 1
-	// idleConnTimeout = 10 * time.Second
-
 	defaultQPSLimit   = 100
 	defaultBurstLimit = 150
-	// defaultChunkSize  = 500
 )
 
 var once sync.Once
@@ -102,7 +89,7 @@ type Kubernetes struct {
 	rcLock     *sync.Mutex
 	restConfig *rest.Config
 	kubeconfig string
-	// it is required for handling plain runtime.Objects (ApplyManifestFile, DeleteManifestFile)
+	// it is required for handling plain runtime.Objects (ApplyManifestFile)
 	// WARNING: do not access this field directly, use getDiscoveryClient() instead.
 	// This field is lazy initialized because it is not always needed.
 	discoveryClient discovery.DiscoveryInterface
@@ -215,7 +202,7 @@ func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
 	}
 }
 
-// WithKubernetesClient sets the client connector.
+// WithKubernetesClient sets the k8s client.
 func (k *Kubernetes) WithKubernetesClient(c ctrlclient.Client) *Kubernetes {
 	k.k8sClient = c
 	return k
