@@ -56,7 +56,7 @@ export const BasicInformationSection = ({
               ...data,
               status: {
                 ...data.status,
-                status: DbClusterStatus.initializing,
+                status: DbClusterStatus.upgrading,
               },
             }) as DbCluster
         );
