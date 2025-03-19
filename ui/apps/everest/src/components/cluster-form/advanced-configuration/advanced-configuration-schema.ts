@@ -42,38 +42,49 @@ export const advancedConfigurationsSchema = () =>
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {
       sourceRanges.forEach(({ sourceRange }, index) => {
-
         if (sourceRange) {
-        // Validate if it's a valid IP using regex
-        if (IP_REGEX.exec(sourceRange) === null) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.invalid_string,
-            validation: 'ip',
-            path: [AdvancedConfigurationFields.sourceRanges, index, 'sourceRange'],
-            message: Messages.errors.sourceRange.invalid,
-          });
+          // Validate if it's a valid IP using regex
+          if (IP_REGEX.exec(sourceRange) === null) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.invalid_string,
+              validation: 'ip',
+              path: [
+                AdvancedConfigurationFields.sourceRanges,
+                index,
+                'sourceRange',
+              ],
+              message: Messages.errors.sourceRange.invalid,
+            });
+          }
+
+          const nonEmptyRanges = sourceRanges
+            .map(({ sourceRange }) => sourceRange)
+            .filter((range): range is string => !!range);
+
+          const uniqueRanges = new Set(
+            Object.values(nonEmptyRanges).map((item) => item)
+          );
+
+          const isCurrentOneOfDuplicates = nonEmptyRanges.filter(
+            (item) => item === sourceRange
+          ).length;
+
+          // Check for duplicates
+          if (
+            nonEmptyRanges.length !== uniqueRanges.size &&
+            isCurrentOneOfDuplicates > 1
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: [
+                AdvancedConfigurationFields.sourceRanges,
+                index,
+                'sourceRange',
+              ],
+              message: Messages.errors.sourceRange.duplicate,
+            });
+          }
         }
-
-        const nonEmptyRanges = sourceRanges
-        .map(({ sourceRange }) => sourceRange)
-        .filter((range): range is string => !!range);
-
-        
-        const uniqueRanges = new Set(
-          Object.values(nonEmptyRanges).map((item) => item)
-        );
-
-        const isCurrentOneOfDuplicates = nonEmptyRanges.filter((item) => item === sourceRange).length;
-        
-        // Check for duplicates
-        if (nonEmptyRanges.length !== uniqueRanges.size && isCurrentOneOfDuplicates > 1) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: [AdvancedConfigurationFields.sourceRanges, index, 'sourceRange'],
-            message: Messages.errors.sourceRange.duplicate,
-          });
-        };
-      };
       });
     });
 
