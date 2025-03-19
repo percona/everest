@@ -204,29 +204,45 @@ test.describe(
     });
 
     test(`Check PMM DB metrics [${db} size ${size}]`, async () => {
-      const replicas = ["rs0", "rs1", "cfg"];
+      const replicas = ['rs0', 'rs1', 'cfg'];
 
       for (const replica of replicas) {
-        for (let i=0; i<size; i++) {
-          await checkDBMetrics('node_boot_time_seconds', `everest-ui-${clusterName}-${replica}-${i}`, 'admin:admin');
-          await checkDBMetrics('mongodb_connections', `everest-ui-${clusterName}-${replica}-${i}`, 'admin:admin');
+        for (let i = 0; i < size; i++) {
+          await checkDBMetrics(
+            'node_boot_time_seconds',
+            `everest-ui-${clusterName}-${replica}-${i}`,
+            'admin:admin'
+          );
+          await checkDBMetrics(
+            'mongodb_connections',
+            `everest-ui-${clusterName}-${replica}-${i}`,
+            'admin:admin'
+          );
         }
       }
 
       // check mongos metrics
-      for (let i=0; i<2; i++) {
-        await checkDBMetrics('node_boot_time_seconds', `everest-ui-${clusterName}-mongos-${i}`, 'admin:admin');
+      for (let i = 0; i < 2; i++) {
+        await checkDBMetrics(
+          'node_boot_time_seconds',
+          `everest-ui-${clusterName}-mongos-${i}`,
+          'admin:admin'
+        );
       }
     });
 
     test(`Check PMM QAN [${db} size ${size}]`, async () => {
       // Wait for 75 seconds for QAN to get data
-      await new Promise(resolve => setTimeout(resolve, 75000));
+      await new Promise((resolve) => setTimeout(resolve, 75000));
 
-      const replicas = ["rs0", "rs1"];
+      const replicas = ['rs0', 'rs1'];
 
       for (const replica of replicas) {
-        await checkQAN('mongodb', `everest-ui-${clusterName}-${replica}-0`, 'admin:admin');
+        await checkQAN(
+          'mongodb',
+          `everest-ui-${clusterName}-${replica}-0`,
+          'admin:admin'
+        );
       }
     });
 

@@ -31,7 +31,7 @@ export const getPGStsName = async (cluster: string, namespace: string) => {
   try {
     const command = `kubectl get sts --namespace ${namespace} --selector=app.kubernetes.io/instance=${cluster},app.kubernetes.io/component=pg -o 'jsonpath={.items[*].metadata.name}'`;
     const output = execSync(command).toString();
-    const resultArray = output.split(" ");
+    const resultArray = output.split(' ');
     return resultArray;
   } catch (error) {
     console.error(`Error executing command: ${error}`);
@@ -63,7 +63,9 @@ export const getDBType = async (cluster: string, namespace: string) => {
 
 export const getDBClientPod = async (dbType: string, namespace: string) => {
   try {
-    if (dbType === 'pxc') { dbType = 'mysql'};
+    if (dbType === 'pxc') {
+      dbType = 'mysql';
+    }
 
     const command = `kubectl get pods --namespace ${namespace} --selector=name=${dbType}-client -o 'jsonpath={.items[].metadata.name}'`;
     const output = execSync(command).toString();

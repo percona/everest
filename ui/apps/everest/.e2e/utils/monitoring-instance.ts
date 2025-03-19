@@ -89,7 +89,11 @@ export const listMonitoringInstances = async (
   return responseBody;
 };
 
-export const checkDBMetrics = async (metric: string, instance: string, userPass: string): Promise<void> => {
+export const checkDBMetrics = async (
+  metric: string,
+  instance: string,
+  userPass: string
+): Promise<void> => {
   const clientPod = await getDBClientPod('psmdb', 'db-client');
   const date = new Date();
   const end = Math.floor(date.getTime() / 1000);
@@ -111,7 +115,10 @@ export const checkDBMetrics = async (metric: string, instance: string, userPass:
   expect(Number.isNaN(metrics)).toBeFalsy();
 };
 
-export const checkK8sMetrics = async (metric: string, userPass: string): Promise<void> => {
+export const checkK8sMetrics = async (
+  metric: string,
+  userPass: string
+): Promise<void> => {
   const clientPod = await getDBClientPod('psmdb', 'db-client');
   const k8sUid = await getK8sUid();
   const date = new Date();
@@ -134,7 +141,11 @@ export const checkK8sMetrics = async (metric: string, userPass: string): Promise
   expect(Number.isNaN(metrics)).toBeFalsy();
 };
 
-export const checkQAN = async (serviceType: string, node: string, userPass: string): Promise<void> => {
+export const checkQAN = async (
+  serviceType: string,
+  node: string,
+  userPass: string
+): Promise<void> => {
   const clientPod = await getDBClientPod('psmdb', 'db-client');
   const now = new Date();
   const start = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
@@ -150,10 +161,10 @@ export const checkQAN = async (serviceType: string, node: string, userPass: stri
     filter_by: node,
     labels: [
       { key: 'service_type', value: [serviceType] },
-      { key: 'node_name', value: [node] }
+      { key: 'node_name', value: [node] },
     ],
     limit: 10,
-    totals: false
+    totals: false,
   });
 
   const encodedPayload = Buffer.from(payload).toString('base64');
@@ -169,5 +180,5 @@ export const checkQAN = async (serviceType: string, node: string, userPass: stri
   // we use node_name because if it's returned it means there is some data for the node
   const schema = output?.metadata?.node_name.toString();
   expect(schema).toBeTruthy();
-  expect(schema?.trim()).not.toBe("");
-}
+  expect(schema?.trim()).not.toBe('');
+};

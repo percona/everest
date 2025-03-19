@@ -239,7 +239,8 @@ export const populateAdvancedConfig = async (
       switch (dbType) {
         case 'psmdb':
           // we set operationProfiling for PMM QAN test
-          inputParameters = 'systemLog:\n verbosity: 1\noperationProfiling:\n mode: all\n slowOpThresholdMs: 100\n rateLimit: 100';
+          inputParameters =
+            'systemLog:\n verbosity: 1\noperationProfiling:\n mode: all\n slowOpThresholdMs: 100\n rateLimit: 100';
           break;
         case 'postgresql':
           inputParameters = 'log_connections = yes\nshared_buffers = 192MB';
