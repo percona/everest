@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useBlocker, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Stack, Step, StepLabel } from '@mui/material';
+import { useQueryClient } from '@tanstack/react-query';
 import { Stepper } from '@percona/ui-lib';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
@@ -29,6 +30,7 @@ import { useDbValidationSchema } from './useDbValidationSchema';
 import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
+import { DB_CLUSTERS_QUERY_KEY } from 'hooks';
 
 export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -40,6 +42,7 @@ export const DatabasePage = () => {
   const navigate = useNavigate();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
+  const queryClient = useQueryClient();
   const { defaultValues, isFetching: loadingClusterValues } =
     useDatabasePageDefaultValues(mode);
 
@@ -108,7 +111,11 @@ export const DatabasePage = () => {
           }),
         },
         {
-          onSuccess: () => {
+          onSuccess: (cluster) => {
+            // We clear the query for the namespace to make sure the new cluster is fetched
+            queryClient.removeQueries({
+              queryKey: [DB_CLUSTERS_QUERY_KEY, cluster.metadata.namespace],
+            });
             setFormSubmitted(true);
           },
         }
@@ -177,9 +184,11 @@ export const DatabasePage = () => {
     }
   }, []);
 
-  if (formSubmitted) {
-    navigate('/databases');
-  }
+  useEffect(() => {
+    if (formSubmitted) {
+      navigate('/databases');
+    }
+  }, [formSubmitted, navigate]);
 
   return (
     <>
