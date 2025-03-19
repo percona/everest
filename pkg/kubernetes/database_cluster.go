@@ -129,7 +129,7 @@ func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, opts ...ctrlcli
 	})
 }
 
-// DatabasesExist checks if databases that match criteria exist.
+// DatabasesExist checks if there are databases that match criteria exist.
 func (k *Kubernetes) DatabasesExist(ctx context.Context, opts ...ctrlclient.ListOption) (bool, error) {
 	list, err := k.listDatabaseClustersMeta(ctx, opts...)
 	if err != nil {

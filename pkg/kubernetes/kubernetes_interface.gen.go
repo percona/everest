@@ -84,8 +84,7 @@ type KubernetesConnector interface {
 	// DeleteDatabaseClusters deletes all database clusters in provided namespace.
 	// This function will wait until all clusters are deleted.
 	DeleteDatabaseClusters(ctx context.Context, opts ...ctrlclient.ListOption) error
-	// DatabasesExist checks if databases exist in provided at least one of the provided namespaces.
-	// If namespaces are not provided, it checks in all namespaces managed by Everest.
+	// DatabasesExist checks if there are databases that match criteria exist.
 	DatabasesExist(ctx context.Context, opts ...ctrlclient.ListOption) (bool, error)
 	// GetDatabaseClusterBackup returns database cluster backup by provided namespace and name.
 	// This method returns a list of full objects (meta and spec).
