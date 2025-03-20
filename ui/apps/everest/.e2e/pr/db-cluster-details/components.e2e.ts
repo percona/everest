@@ -88,7 +88,13 @@ test.describe('Cluster components', async () => {
 
     for (const component of componentsList) {
       const { name, type, containers } = component;
-      const correspondingNode = page.getByTestId(`component-node-${name}`);
+      const correspondingNode = page.getByTestId(
+        new RegExp(`component-node-${name}(-selected)?`)
+      );
+      const correspondingNodeSelected = page.getByTestId(
+        `component-node-${name}-selected`
+      );
+      const isSelected = await correspondingNodeSelected.isVisible();
 
       await expect(correspondingNode).toBeVisible();
       expect(
@@ -97,7 +103,10 @@ test.describe('Cluster components', async () => {
       expect(
         await correspondingNode.getByTestId('component-type').innerText()
       ).toBe(type);
-      await correspondingNode.click();
+
+      if (!isSelected) {
+        await correspondingNode.click();
+      }
       // Wait for the diagram to be updated
       await page.waitForTimeout(300);
 

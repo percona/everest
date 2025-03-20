@@ -19,7 +19,7 @@ const ComponentNode = ({
       height={COMPONENT_NODE_HEIGHT}
       width={COMPONENT_NODE_WIDTH}
       elevation={selected ? 4 : 0}
-      dataTestId={`component-node-${name}`}
+      dataTestId={`component-node-${name}${selected ? '-selected' : ''}`}
       showBottomHandle
       paperProps={{
         sx: {
