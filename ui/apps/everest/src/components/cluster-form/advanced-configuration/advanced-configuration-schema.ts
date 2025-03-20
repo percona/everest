@@ -66,12 +66,12 @@ export const advancedConfigurationsSchema = () =>
 
           const isCurrentOneOfDuplicates = nonEmptyRanges.filter(
             (item) => item === sourceRange
-          ).length;
+          ).length > 1;
 
           // Check for duplicates
           if (
             nonEmptyRanges.length !== uniqueRanges.size &&
-            isCurrentOneOfDuplicates > 1
+            isCurrentOneOfDuplicates
           ) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
