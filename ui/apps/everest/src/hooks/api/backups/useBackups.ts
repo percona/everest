@@ -95,6 +95,7 @@ export const useCreateBackupOnDemand = (
 
 export const useDeleteBackup = (
   namespace: string,
+  disablePITR: boolean,
   options?: UseMutationOptions<unknown, unknown, DeleteBackupArgType, unknown>
 ) =>
   useMutation({

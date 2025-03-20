@@ -28,7 +28,11 @@ import { MRT_ColumnDef } from 'material-react-table';
 import { Alert, Typography } from '@mui/material';
 import { RestoreDbModal } from 'modals/index.ts';
 import { useContext, useMemo, useState } from 'react';
-import { Backup, BackupStatus } from 'shared-types/backups.types';
+import {
+  Backup,
+  BackupStatus,
+  GetBackupsPayload,
+} from 'shared-types/backups.types';
 import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
@@ -42,6 +46,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import TableActionsMenu from 'components/table-actions-menu';
 import { BackupActionButtons } from './backups-list-menu-actions';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -56,14 +61,17 @@ export const BackupsList = () => {
     setOpenOnDemandModal,
   } = useContext(ScheduleModalContext);
 
-  const { mutate: deleteBackup, isPending: deletingBackup } = useDeleteBackup(
-    dbCluster?.metadata.namespace
-  );
   const { data: backups = [] } = useDbBackups(
     dbCluster.metadata.name,
     dbCluster.metadata.namespace,
     {
       refetchInterval: 10 * 1000,
+    }
+  );
+  const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster,
+    {
+      onSuccess: () => handleCloseDeleteDialog(),
     }
   );
   const { data: pitrData } = useDbClusterPitr(
@@ -77,6 +85,17 @@ export const BackupsList = () => {
     dbCluster?.metadata.namespace
   );
   const dbType = dbCluster.spec?.engine.type;
+  const pitrEnabled = !!dbCluster.spec?.backup?.pitr?.enabled;
+  const willDisablePITR =
+    (dbCluster.spec?.backup?.schedules || []).length === 0 &&
+    pitrEnabled &&
+    backups.length === 1;
+
+  const { mutate: deleteBackup, isPending: deletingBackup } = useDeleteBackup(
+    dbCluster?.metadata.namespace,
+    willDisablePITR
+  );
+
   const { storagesToShow, uniqueStoragesInUse } =
     getAvailableBackupStoragesForBackups(
       backups,
@@ -169,13 +188,42 @@ export const BackupsList = () => {
       { backupName: backupName, cleanupBackupStorage: cleanupBackupStorage },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: [
+          if (willDisablePITR) {
+            updateCluster({
+              ...dbCluster,
+              spec: {
+                ...dbCluster.spec,
+                backup: {
+                  ...dbCluster.spec.backup,
+                  pitr: {
+                    enabled: false,
+                    backupStorageName:
+                      dbCluster.spec.backup?.pitr?.backupStorageName || '',
+                  },
+                },
+              },
+            });
+          }
+          queryClient.setQueryData(
+            [
               BACKUPS_QUERY_KEY,
               dbCluster.metadata.namespace,
               dbCluster.metadata.name,
             ],
-          });
+            (oldData: GetBackupsPayload) => ({
+              items: oldData.items.map((backup) =>
+                backup.metadata.name === backupName
+                  ? {
+                      ...backup,
+                      status: {
+                        ...backup.status,
+                        state: BackupStatus.DELETING,
+                      },
+                    }
+                  : backup
+              ),
+            })
+          );
           handleCloseDeleteDialog();
         },
       }
@@ -223,6 +271,7 @@ export const BackupsList = () => {
             onNowClick={handleManualBackup}
             onScheduleClick={handleScheduledBackup}
             noStoragesAvailable={noStoragesAvailable}
+            backups={backups}
           />
         )}
         enableRowActions
@@ -254,7 +303,8 @@ export const BackupsList = () => {
           confirmationInput={false}
           dialogContent={Messages.deleteDialog.content(
             selectedBackup,
-            dbCluster.spec.engine.type
+            dbCluster.spec.engine.type,
+            willDisablePITR
           )}
           alertMessage={Messages.deleteDialog.alertMessage}
           submitMessage={Messages.deleteDialog.confirmButton}

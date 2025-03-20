@@ -3,10 +3,12 @@ export const Messages = {
   schedule: 'Schedule',
   deleteModal: {
     header: 'Delete schedule',
-    content: (scheduleName: string) => (
+    content: (scheduleName: string, willDisablePITR: boolean) => (
       <>
         Are you sure you want to permanently delete schedule{' '}
-        <b>{scheduleName}</b>?
+        <b>{scheduleName}</b>?{' '}
+        {willDisablePITR &&
+          ' This will disable point-in-time recovery, as it requires a full backup.'}
       </>
     ),
   },
