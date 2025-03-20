@@ -41,6 +41,13 @@ export const advancedConfigurationsSchema = () =>
     })
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {
+      const nonEmptyRanges = sourceRanges
+      .map(({ sourceRange }) => sourceRange)
+      .filter((range): range is string => !!range);
+
+      const uniqueRanges = new Set(
+        Object.values(nonEmptyRanges).map((item) => item)
+      );
       sourceRanges.forEach(({ sourceRange }, index) => {
         if (sourceRange) {
           // Validate if it's a valid IP using regex
@@ -56,14 +63,6 @@ export const advancedConfigurationsSchema = () =>
               message: Messages.errors.sourceRange.invalid,
             });
           }
-
-          const nonEmptyRanges = sourceRanges
-            .map(({ sourceRange }) => sourceRange)
-            .filter((range): range is string => !!range);
-
-          const uniqueRanges = new Set(
-            Object.values(nonEmptyRanges).map((item) => item)
-          );
 
           const isCurrentOneOfDuplicates = nonEmptyRanges.filter(
             (item) => item === sourceRange
