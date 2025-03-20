@@ -39,7 +39,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250317191108-0a7d4b5c8d3b
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250318175140-0d5356fffa59
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250317191112-9f51d0fda4be
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
@@ -140,7 +140,7 @@ require (
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.0 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/h2non/go-is-svg v0.0.0-20160927212452-35e8c4b0612c // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -192,7 +192,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/operator-framework/operator-registry v1.35.0 // indirect
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20241212160532-0157f87a7eee // indirect
-	github.com/percona/percona-postgresql-operator v0.0.0-20241007204305-35d61aa5aebd // indirect
+	github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26 // indirect
 	github.com/percona/percona-server-mongodb-operator v1.19.1 // indirect
 	github.com/percona/percona-xtradb-cluster-operator v1.16.1 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
