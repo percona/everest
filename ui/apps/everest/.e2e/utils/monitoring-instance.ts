@@ -164,7 +164,7 @@ export const checkQAN = async (
       { key: 'node_name', value: [node] },
     ],
     limit: 10,
-    totals: false,
+    totals: true,
   });
 
   const encodedPayload = Buffer.from(payload).toString('base64');
