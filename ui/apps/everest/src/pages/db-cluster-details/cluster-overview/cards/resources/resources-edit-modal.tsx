@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { ResourcesForm, resourcesFormSchema } from 'components/cluster-form';
 import { FormDialog } from 'components/form-dialog';
 import { useKubernetesClusterInfo } from 'hooks';
+
 type Props = {
   handleCloseModal: () => void;
   dbType: DbType;
@@ -36,7 +37,7 @@ const ResourcesEditModal = ({
       closeModal={handleCloseModal}
       headerMessage="Edit Topology"
       submitMessage="Save"
-      schema={resourcesFormSchema(defaultValues, false)}
+      schema={resourcesFormSchema(defaultValues, false, false)}
       onSubmit={onSubmit}
       defaultValues={defaultValues}
     >
