@@ -13,7 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+import { test } from '@playwright/test';
+import { checkK8sMetrics } from '@e2e/utils/monitoring-instance';
 
-//go:generate ../../../bin/ifacemaker -f backup_storage.go -f catalog_source.go -f configmap.go -f client.go -f cluster_service_version.go -f ctl.go -f database_cluster.go -f database_cluster_backup.go -f database_cluster_restore.go -f database_engine.go -f deployment.go -f install_plan.go -f monitoring.go -f monitoring_config.go -f namespace.go -f olm.go -f node.go -f pod.go -f secret.go -f storage.go -f writer -s Client -i KubeClientConnector -p client -o kubeclient_interface.gen.go
-//go:generate ../../../bin/mockery --name=KubeClientConnector --case=snake --inpackage
+test(`Check PMM K8s metrics`, async () => {
+  await checkK8sMetrics('kube_node_info', 'admin:admin');
+  await checkK8sMetrics('kube_pod_status_phase', 'admin:admin');
+});
