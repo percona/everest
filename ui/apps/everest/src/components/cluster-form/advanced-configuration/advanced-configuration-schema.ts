@@ -42,8 +42,8 @@ export const advancedConfigurationsSchema = () =>
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {
       const nonEmptyRanges = sourceRanges
-      .map(({ sourceRange }) => sourceRange)
-      .filter((range): range is string => !!range);
+        .map(({ sourceRange }) => sourceRange)
+        .filter((range): range is string => !!range);
 
       const uniqueRanges = new Set(
         Object.values(nonEmptyRanges).map((item) => item)
@@ -64,9 +64,8 @@ export const advancedConfigurationsSchema = () =>
             });
           }
 
-          const isCurrentOneOfDuplicates = nonEmptyRanges.filter(
-            (item) => item === sourceRange
-          ).length > 1;
+          const isCurrentOneOfDuplicates =
+            nonEmptyRanges.filter((item) => item === sourceRange).length > 1;
 
           // Check for duplicates
           if (
