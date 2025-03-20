@@ -61,13 +61,12 @@ const ComponentsDiagramView = ({
       }
 
       selectedNode.current = node.id;
-      const { nodes: updatedNodes, edges: updatedEdges } = selectNode(
-        originalNodes.current,
-        originalEdges.current,
-        node.id
-      );
+      selectNode(originalNodes.current, originalEdges.current, node.id);
       const { nodeComponents: visibleNodes, edgeComponents: visibleEdges } =
-        filterOutInvisibleNodesAndEdges(updatedNodes, updatedEdges);
+        filterOutInvisibleNodesAndEdges(
+          originalNodes.current,
+          originalEdges.current
+        );
       setNodes(visibleNodes);
       setEdges(visibleEdges);
     },
@@ -83,7 +82,10 @@ const ComponentsDiagramView = ({
 
   useEffect(() => {
     const { nodeComponents, edgeComponents } =
-      getNodesAndEdgesFromDbClusterComponents(components, selectedNode.current);
+      getNodesAndEdgesFromDbClusterComponents(
+        components.sort((a, b) => a.name.localeCompare(b.name)),
+        selectedNode.current
+      );
     originalNodes.current = nodeComponents;
     originalEdges.current = edgeComponents;
     const { nodeComponents: visibleNodes, edgeComponents: visibleEdges } =

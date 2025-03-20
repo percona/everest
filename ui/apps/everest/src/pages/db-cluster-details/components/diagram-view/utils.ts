@@ -123,22 +123,24 @@ export const selectNode = (
   nodes: CustomNode[],
   edges: CustomEdge[],
   id: string
-) => ({
-  nodes: nodes.map((node) => ({
-    ...node,
-    data: {
-      ...node.data,
-      selected: node.id === id,
-      visible:
-        isComponentNode(node) ||
-        (isContainerNode(node) && node.data?.parentId === id),
-    },
-  })),
-  edges: edges.map((edge) => ({
-    ...edge,
-    data: { ...edge.data, visible: edge.source === id || edge.target === id },
-  })),
-});
+) => {
+  nodes.forEach((node) => {
+    const isContainerChild = isContainerNode(node) && node.data.parentId === id;
+    const isContaineChildAndVisible = isContainerChild && node.data.visible;
+    const visible =
+      isComponentNode(node) ||
+      (isContainerChild ? !isContaineChildAndVisible : false);
+    node.data.visible = visible;
+    node.data.selected = node.id === id;
+  });
+
+  edges.forEach((edge) => {
+    if (!edge.data) {
+      edge.data = {};
+    }
+    edge.data.visible = edge.source === id || edge.target === id;
+  });
+};
 
 export const filterOutInvisibleNodesAndEdges = (
   nodeComponents: CustomNode[],
