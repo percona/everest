@@ -22,7 +22,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
-import { DB_WIZARD_DEFAULTS } from './database-form.constants.ts';
+import { DEFAULT_NODES } from './database-form.constants.ts';
 import { generateShortUID } from 'utils/generateShortUID';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
@@ -35,6 +35,44 @@ import {
 } from 'components/cluster-form';
 import { isProxy } from 'utils/db.tsx';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
+
+export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
+  // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
+  [DbWizardFormFields.schedules]: [],
+  [DbWizardFormFields.pitrEnabled]: false,
+  [DbWizardFormFields.pitrStorageLocation]: null,
+  // @ts-ignore
+  [DbWizardFormFields.storageLocation]: null,
+  [DbWizardFormFields.dbType]: dbType,
+  [DbWizardFormFields.dbName]: `${dbType}-${generateShortUID()}`,
+  [DbWizardFormFields.dbVersion]: '',
+  [DbWizardFormFields.storageClass]: '',
+  [DbWizardFormFields.k8sNamespace]: null,
+  [DbWizardFormFields.externalAccess]: false,
+  [DbWizardFormFields.sourceRanges]: [{ sourceRange: '' }],
+  [DbWizardFormFields.engineParametersEnabled]: false,
+  [DbWizardFormFields.engineParameters]: '',
+  [DbWizardFormFields.monitoring]: false,
+  [DbWizardFormFields.monitoringInstance]: '',
+  [DbWizardFormFields.numberOfNodes]: DEFAULT_NODES[dbType],
+  [DbWizardFormFields.numberOfProxies]: DEFAULT_NODES[dbType],
+  [DbWizardFormFields.resourceSizePerNode]: ResourceSize.small,
+  [DbWizardFormFields.resourceSizePerProxy]: ResourceSize.small,
+  [DbWizardFormFields.customNrOfNodes]: DEFAULT_NODES[dbType],
+  [DbWizardFormFields.customNrOfProxies]: DEFAULT_NODES[dbType],
+  [DbWizardFormFields.cpu]: NODES_DEFAULT_SIZES[dbType].small.cpu,
+  [DbWizardFormFields.proxyCpu]: PROXIES_DEFAULT_SIZES[dbType].small.cpu,
+  [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES[dbType].small.disk,
+  [DbWizardFormFields.diskUnit]: 'Gi',
+  [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES[dbType].small.memory,
+  [DbWizardFormFields.proxyMemory]: PROXIES_DEFAULT_SIZES[dbType].small.memory,
+  [DbWizardFormFields.sharding]: false,
+  [DbWizardFormFields.shardNr]: '2',
+  [DbWizardFormFields.shardConfigServers]:
+    getDefaultNumberOfconfigServersByNumberOfNodes(
+      parseInt(DEFAULT_NODES[DbType.Mongo], 10)
+    ),
+});
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
   const nodeOptions = NODES_DB_TYPE_MAP[dbType];
@@ -52,6 +90,9 @@ export const DbClusterPayloadToFormValues = (
   mode: DbWizardMode,
   namespace: string
 ): DbWizardType => {
+  const defaults = getDbWizardDefaultValues(
+    dbEngineToDbType(dbCluster.spec.engine.type)
+  );
   const backup = dbCluster?.spec?.backup;
   const replicas = dbCluster?.spec?.engine?.replicas.toString();
   const proxies = (
@@ -70,7 +111,7 @@ export const DbClusterPayloadToFormValues = (
   return {
     //basic info
     [DbWizardFormFields.k8sNamespace]:
-      namespace || DB_WIZARD_DEFAULTS[DbWizardFormFields.k8sNamespace],
+      namespace || defaults[DbWizardFormFields.k8sNamespace],
     [DbWizardFormFields.dbType]: dbEngineToDbType(
       dbCluster?.spec?.engine?.type
     ),
@@ -108,8 +149,7 @@ export const DbClusterPayloadToFormValues = (
       sharding?.configServer?.replicas ||
       getDefaultNumberOfconfigServersByNumberOfNodes(+numberOfNodes),
     [DbWizardFormFields.shardNr]: (
-      sharding?.shards ||
-      (DB_WIZARD_DEFAULTS[DbWizardFormFields.shardNr] as string)
+      sharding?.shards || (defaults[DbWizardFormFields.shardNr] as string)
     ).toString(),
     [DbWizardFormFields.cpu]: cpuParser(
       dbCluster?.spec?.engine?.resources?.cpu.toString() || '0'
@@ -140,7 +180,7 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.pitrStorageLocation]:
       backup?.pitr?.enabled && mode === 'new'
         ? backup?.pitr?.backupStorageName || null
-        : DB_WIZARD_DEFAULTS[DbWizardFormFields.pitrStorageLocation],
+        : defaults[DbWizardFormFields.pitrStorageLocation],
     [DbWizardFormFields.schedules]: backup?.schedules || [],
 
     //advanced configuration

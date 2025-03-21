@@ -64,7 +64,8 @@ export const AdvancedConfigurationForm = ({
     ) {
       setValue(
         DbWizardFormFields.storageClass,
-        clusterInfo?.storageClassNames[0]
+        clusterInfo?.storageClassNames[0],
+        { shouldValidate: true }
       );
     }
   }, [clusterInfo]);
