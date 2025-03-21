@@ -44,10 +44,8 @@ export const BasicInformationSection = ({
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
     {
-      onError: () => setUpgrading(false),
       onSuccess: (data) => {
         handleCloseModal();
-        setUpgrading(false);
         queryClient.setQueryData<DbCluster>(
           [DB_CLUSTER_QUERY, dbCluster?.metadata.name],
           (oldData) =>
@@ -56,18 +54,16 @@ export const BasicInformationSection = ({
               ...data,
               status: {
                 ...data.status,
-                status: DbClusterStatus.initializing,
+                status: DbClusterStatus.upgrading,
               },
             }) as DbCluster
         );
       },
     }
   );
-
-  const [upgrading, setUpgrading] = useState(false);
+  const upgrading = dbCluster?.status?.status === DbClusterStatus.upgrading;
 
   const handleSubmit = async (dbVersion: string) => {
-    setUpgrading(true);
     updateCluster(changeDbClusterVersion(dbCluster!, dbVersion));
   };
 

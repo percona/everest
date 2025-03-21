@@ -19,4 +19,5 @@ export const STATUS_TO_ICON: Record<
   unknown: UnknownIcon,
   deleting: PendingIcon,
   creating: PendingIcon,
+  upgrading: PendingIcon,
 };
