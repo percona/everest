@@ -396,9 +396,9 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 	}
 
 	cfg := []requirementsCheck{
-		{common.PXCOperatorName, supVer.PXCOperator},
-		{common.PGOperatorName, supVer.PGOperator},
-		{common.PSMDBOperatorName, supVer.PSMBDOperator},
+		{common.MySQLOperatorName, supVer.PXCOperator},
+		{common.PostgreSQLOperatorName, supVer.PGOperator},
+		{common.MongoDBOperatorName, supVer.PSMBDOperator},
 	}
 	for _, ns := range nss.Items {
 		u.l.Infof("Checking operator requirements in namespace %s", ns)
