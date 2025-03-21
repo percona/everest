@@ -97,6 +97,7 @@ export const ClusterOverview = () => {
         }
         monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
         parameters={!!dbCluster?.spec.engine.config}
+        storageClass={dbCluster?.spec.engine.storage.class!}
       />
       <ResourcesDetails
         dbCluster={dbCluster}

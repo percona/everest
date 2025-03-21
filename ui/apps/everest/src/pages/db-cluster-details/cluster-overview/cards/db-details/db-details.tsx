@@ -40,6 +40,7 @@ export const DbDetails = ({
   monitoring,
   externalAccess,
   parameters,
+  storageClass,
 }: DatabaseDetailsOverviewCardProps) => {
   const { data: monitoringInstances } =
     useMonitoringInstancesForNamespace(namespace);
@@ -91,6 +92,7 @@ export const DbDetails = ({
         <AdvancedConfiguration
           externalAccess={externalAccess}
           parameters={parameters}
+          storageClass={storageClass}
         />
       </Stack>
     </OverviewCard>
