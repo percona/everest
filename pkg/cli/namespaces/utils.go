@@ -113,15 +113,15 @@ func ensureNoOperatorsRemoved(
 ) bool {
 	for _, subscription := range subscriptions {
 		switch subscription.GetName() {
-		case common.PGOperatorName:
+		case common.PostgreSQLOperatorName:
 			if !installPG {
 				return false
 			}
-		case common.PSMDBOperatorName:
+		case common.MongoDBOperatorName:
 			if !installPSMDB {
 				return false
 			}
-		case common.PXCOperatorName:
+		case common.MySQLOperatorName:
 			if !installPXC {
 				return false
 			}
