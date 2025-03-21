@@ -20,4 +20,4 @@ then
 fi
 
 # run everest installation with everest CLI
-"./everestctl-$os-$arch" install --chart-dir "helm-chart" --version "$(cat version.txt)" --version-metadata-url http://localhost:8081  --operator.xtradb-cluster --operator.mongodb --operator.postgresql --skip-wizard --namespaces everest -v --helm.set "versionMetadataURL=http://$SERVICE_IP"
+"./everestctl-$os-$arch" install --chart-dir "helm-chart" --version "$(cat version.txt)" --version-metadata-url http://localhost:8081  --operator.mysql=true --operator.mongodb=true --operator.postgresql=true --skip-wizard --namespaces everest -v --helm.set "versionMetadataURL=http://$SERVICE_IP"
