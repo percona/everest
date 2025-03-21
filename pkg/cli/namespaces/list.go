@@ -177,11 +177,11 @@ func (nsL *NamespaceLister) getNamespaceOperators(ctx context.Context, ns *v1.Na
 
 func convertDbOperatorName(name string) string {
 	switch strings.ToLower(name) {
-	case common.PSMDBOperatorName:
+	case common.MongoDBOperatorName:
 		return string(everestOperator.DatabaseEnginePSMDB)
-	case common.PXCOperatorName:
+	case common.MySQLOperatorName:
 		return string(everestOperator.DatabaseEnginePXC)
-	case common.PGOperatorName:
+	case common.PostgreSQLOperatorName:
 		return string(everestOperator.DatabaseEnginePostgresql)
 	default:
 		return name
