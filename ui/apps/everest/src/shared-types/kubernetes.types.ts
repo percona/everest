@@ -19,9 +19,17 @@ export type KubernetesCluster = {
 
 export type KubernetesClusterList = KubernetesCluster[];
 
+export type StorageClass = {
+  allowVolumeExpansion: boolean;
+  metadata: {
+    name: string;
+  };
+};
+
 export type GetKubernetesClusterInfoPayload = {
   clusterType: string;
   storageClassNames: string[];
+  storageClasses?: StorageClass[];
 };
 
 export type KubernetesClusterInfo = GetKubernetesClusterInfoPayload;
