@@ -392,14 +392,11 @@ test.describe.configure({ retries: 0 });
             ).toBeVisible({ timeout: 10000 });
           }
 
-          // TODO: Re-enable for PG after fix for: https://perconadev.atlassian.net/browse/EVEREST-1920
-          if (db !== 'postgresql') {
-            await expect(
-              page
-                .getByTestId('overview-section')
-                .filter({ hasText: `${newSize} nodes` })
-            ).toBeVisible({ timeout: 10000 });
-          }
+          await expect(
+            page
+              .getByTestId('overview-section')
+              .filter({ hasText: `${newSize} nodes` })
+          ).toBeVisible({ timeout: 10000 });
         });
 
         await test.step('Wait for cluster status', async () => {
