@@ -86,7 +86,6 @@ var once sync.Once
 type Kubernetes struct {
 	k8sClient  ctrlclient.Client
 	l          *zap.SugaredLogger
-	rcLock     *sync.Mutex
 	restConfig *rest.Config
 	kubeconfig string
 	// it is required for handling plain runtime.Objects (ApplyManifestFile)
@@ -126,7 +125,6 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 	return &Kubernetes{
 		k8sClient:  k8client,
 		l:          l.With("component", "kubernetes"),
-		rcLock:     &sync.Mutex{},
 		restConfig: restConfig,
 		kubeconfig: path,
 	}, nil
@@ -146,7 +144,6 @@ func NewInCluster(l *zap.SugaredLogger) (KubernetesConnector, error) {
 	return &Kubernetes{
 		k8sClient:  k8sclient,
 		l:          l.With("component", "kubernetes"),
-		rcLock:     &sync.Mutex{},
 		restConfig: restConfig,
 	}, nil
 }
@@ -197,8 +194,7 @@ func (k *Kubernetes) Config() *rest.Config {
 // useful for testing.
 func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
 	return &Kubernetes{
-		l:      l.With("component", "kubernetes"),
-		rcLock: &sync.Mutex{},
+		l: l.With("component", "kubernetes"),
 	}
 }
 

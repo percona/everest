@@ -12,9 +12,6 @@ import (
 
 // GetInstallPlan retrieves an OLM install plan that matches the criteria.
 func (k *Kubernetes) GetInstallPlan(ctx context.Context, key ctrlclient.ObjectKey) (*olmv1alpha1.InstallPlan, error) {
-	k.rcLock.Lock()
-	defer k.rcLock.Unlock()
-
 	result := &olmv1alpha1.InstallPlan{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
 		return nil, err

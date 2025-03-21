@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
@@ -78,12 +79,7 @@ func (u *Uninstall) deleteEverestCRDs(ctx context.Context) error {
 	return nil
 }
 
-func (u *Uninstall) uninstallHelmChart(ctx context.Context) error {
-	// First delete the CSVs in monitoring namespace, otherwise the deletion of the namespace will be stuck.
-	// TODO: remove this after we install Victoriametrics using its Helm chart.
-	if err := u.kubeConnector.DeleteClusterServiceVersions(ctx, client.InNamespace(common.MonitoringNamespace)); err != nil {
-		return err
-	}
+func (u *Uninstall) uninstallHelmChart(_ context.Context) error {
 	// Delete helm chart.
 	uninstaller, err := helm.NewUninstaller(common.SystemNamespace, common.SystemNamespace, u.config.KubeconfigPath)
 	if err != nil {
