@@ -4,8 +4,9 @@ import (
 	"context"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/common"
 )
@@ -17,8 +18,8 @@ func (k *Kubernetes) UpdateEverestSettings(ctx context.Context, settings common.
 		return err
 	}
 
-	_, getErr := k.client.GetConfigMap(ctx, common.SystemNamespace, common.EverestSettingsConfigMapName)
-	if getErr != nil && !errors.IsNotFound(getErr) {
+	_, getErr := k.GetConfigMap(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestSettingsConfigMapName})
+	if getErr != nil && !k8serrors.IsNotFound(getErr) {
 		return getErr
 	}
 
@@ -30,19 +31,19 @@ func (k *Kubernetes) UpdateEverestSettings(ctx context.Context, settings common.
 		},
 		Data: configMapData,
 	}
-	if errors.IsNotFound(getErr) {
-		_, err = k.client.CreateConfigMap(ctx, c)
+	if k8serrors.IsNotFound(getErr) {
+		_, err = k.CreateConfigMap(ctx, c)
 		return err
 	}
 
-	_, err = k.client.UpdateConfigMap(ctx, c)
+	_, err = k.UpdateConfigMap(ctx, c)
 	return err
 }
 
 // GetEverestSettings returns Everest settings.
 func (k *Kubernetes) GetEverestSettings(ctx context.Context) (common.EverestSettings, error) {
 	settings := common.EverestSettings{}
-	m, err := k.client.GetConfigMap(ctx, common.SystemNamespace, common.EverestSettingsConfigMapName)
+	m, err := k.GetConfigMap(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestSettingsConfigMapName})
 	if err != nil {
 		return settings, err
 	}

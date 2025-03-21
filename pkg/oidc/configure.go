@@ -24,6 +24,7 @@ import (
 	"slices"
 
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/cli/tui"
@@ -35,7 +36,7 @@ import (
 // OIDC describes the command to configure OIDC settings.
 type OIDC struct {
 	config     Config
-	kubeClient *kubernetes.Kubernetes
+	kubeClient kubernetes.KubernetesConnector
 	l          *zap.SugaredLogger
 }
 
@@ -102,7 +103,7 @@ func NewOIDC(c Config, l *zap.SugaredLogger) (*OIDC, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +170,10 @@ func (u *OIDC) getOIDCProviderConfigureSteps() []steps.Step {
 	stepList = append(stepList, steps.Step{
 		Desc: "Restarting Everest",
 		F: func(ctx context.Context) error {
-			return u.kubeClient.RestartDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+			return u.kubeClient.RestartDeployment(ctx, types.NamespacedName{
+				Namespace: common.SystemNamespace,
+				Name:      common.PerconaEverestDeploymentName,
+			})
 		},
 	},
 	)
