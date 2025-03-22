@@ -28,7 +28,7 @@ env:
 jobs:
   cache_pnpm:
     name: Cache PNPM
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +107,7 @@ jobs:
           commit_message: "chore: lint/format"
 
   permission_checks:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Get User Permission
         id: checkAccess
@@ -136,7 +136,7 @@ jobs:
     needs: [CI_checks, permission_checks, E2E_tests_workflow]
     name: Merge Gatekeeper
     if: ${{ always() }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Run Merge Gatekeeper
         uses: upsidr/merge-gatekeeper@v1.2.1
