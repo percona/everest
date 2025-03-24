@@ -92,8 +92,7 @@ export const BackupsList = () => {
     backups.length === 1;
 
   const { mutate: deleteBackup, isPending: deletingBackup } = useDeleteBackup(
-    dbCluster?.metadata.namespace,
-    willDisablePITR
+    dbCluster?.metadata.namespace
   );
 
   const { storagesToShow, uniqueStoragesInUse } =
