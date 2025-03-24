@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/percona/everest/pkg/cli/namespaces"
 	"github.com/percona/everest/pkg/cli/steps"
@@ -41,10 +42,10 @@ const (
 
 // Uninstall implements logic for the cluster command.
 type Uninstall struct {
-	config      Config
-	kubeClient  *kubernetes.Kubernetes
-	l           *zap.SugaredLogger
-	clusterType kubernetes.ClusterType
+	config        Config
+	kubeConnector kubernetes.KubernetesConnector
+	l             *zap.SugaredLogger
+	clusterType   kubernetes.ClusterType
 }
 
 // Config stores configuration for the Uninstall command.
@@ -71,11 +72,11 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	kubeClient, err := cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
+	kubeClient, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
-	cli.kubeClient = kubeClient
+	cli.kubeConnector = kubeClient
 	return cli, nil
 }
 
@@ -83,7 +84,7 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 func (u *Uninstall) Run(ctx context.Context) error {
 	// This command expects a Helm based installation. Otherwise, we stop here.
 	// Older versions must use an older version of the CLI.
-	_, err := cliutils.CheckHelmInstallation(ctx, u.kubeClient)
+	_, err := cliutils.CheckHelmInstallation(ctx, u.kubeConnector)
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to detect Kubernetes environment: %w", err)
 	}
 
-	dbsExist, err := u.kubeClient.DatabasesExist(ctx)
+	dbsExist, err := u.kubeConnector.DatabasesExist(ctx)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to check if databases exist"))
 	}
@@ -118,7 +119,7 @@ func (u *Uninstall) Run(ctx context.Context) error {
 		}
 	}
 
-	dbNamespaces, err := u.kubeClient.GetDBNamespaces(ctx)
+	dbNamespaces, err := u.kubeConnector.GetDBNamespaces(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get database namespaces: %w", err)
 	}
@@ -142,7 +143,7 @@ func (u *Uninstall) setKubernetesEnv(ctx context.Context) error {
 	if !u.config.SkipEnvDetection {
 		return nil
 	}
-	t, err := u.kubeClient.GetClusterType(ctx)
+	t, err := u.kubeConnector.GetClusterType(ctx)
 	if err != nil {
 		return err
 	}
@@ -151,17 +152,20 @@ func (u *Uninstall) setKubernetesEnv(ctx context.Context) error {
 	return nil
 }
 
-func (u *Uninstall) newUninstallSteps(dbNamespaces []string) []steps.Step {
-	steps := []steps.Step{}
+func (u *Uninstall) newUninstallSteps(nsList *corev1.NamespaceList) []steps.Step {
+	var uninstallSteps []steps.Step
 
-	for _, ns := range dbNamespaces {
-		steps = append(steps, namespaces.NewRemoveNamespaceSteps(ns, false, u.kubeClient)...)
+	if nsList != nil {
+		for _, ns := range nsList.Items {
+			uninstallSteps = append(uninstallSteps, namespaces.NewRemoveNamespaceSteps(ns.GetName(), false, u.kubeConnector)...)
+		}
 	}
-	steps = append(steps, u.newStepUninstallHelmChart())
-	steps = append(steps, u.newStepDeleteNamespace(common.MonitoringNamespace))
-	steps = append(steps, u.newStepDeleteNamespace(common.SystemNamespace))
-	steps = append(steps, u.newStepDeleteCRDs())
-	return steps
+
+	uninstallSteps = append(uninstallSteps, u.newStepUninstallHelmChart())
+	uninstallSteps = append(uninstallSteps, u.newStepDeleteNamespace(common.MonitoringNamespace))
+	uninstallSteps = append(uninstallSteps, u.newStepDeleteNamespace(common.SystemNamespace))
+	uninstallSteps = append(uninstallSteps, u.newStepDeleteCRDs())
+	return uninstallSteps
 }
 
 // Asks user for uninstall confirmation.
