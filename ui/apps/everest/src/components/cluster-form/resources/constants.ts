@@ -191,7 +191,8 @@ const numberOfResourcesValidator = (
 
 export const resourcesFormSchema = (
   defaultValues: Record<string, unknown>,
-  allowShardingDescaling: boolean
+  allowShardingDescaling: boolean,
+  allowDescalingToOneNode: boolean
 ) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
@@ -227,6 +228,10 @@ export const resourcesFormSchema = (
       },
       ctx
     ) => {
+      const areNodesCustom = numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE;
+      const areProxiesCustom = numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE;
+      const customNrOfNodesInt = parseInt(customNrOfNodes, 10);
+
       numberOfResourcesValidator(
         numberOfNodes,
         customNrOfNodes,
@@ -244,9 +249,9 @@ export const resourcesFormSchema = (
       }
 
       if (
-        numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE &&
+        areNodesCustom &&
         dbType === DbType.Mongo &&
-        +customNrOfNodes % 2 === 0
+        customNrOfNodesInt % 2 === 0
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -255,19 +260,18 @@ export const resourcesFormSchema = (
         });
       }
 
-      const intNrNodes =
-        numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
-          ? customNrOfNodes
-          : numberOfNodes;
+      const intNrNodes = areNodesCustom
+        ? customNrOfNodesInt
+        : parseInt(numberOfNodes, 10);
 
       if (dbType === DbType.Mysql) {
-        const intNrProxies =
-          numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
-            ? customNrOfProxies
-            : numberOfProxies;
+        const intNrProxies = parseInt(
+          areProxiesCustom ? customNrOfProxies : numberOfProxies,
+          10
+        );
 
-        if (+intNrNodes > 1 && +intNrProxies === 1) {
-          if (numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE) {
+        if (intNrNodes > 1 && intNrProxies === 1) {
+          if (areProxiesCustom) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: 'Number of proxies must be more than 1',
@@ -280,6 +284,28 @@ export const resourcesFormSchema = (
               path: [DbWizardFormFields.numberOfProxies],
             });
           }
+        }
+      }
+
+      if (!allowDescalingToOneNode) {
+        const prevNumberOfNodes = defaultValues[
+          DbWizardFormFields.numberOfNodes
+        ] as string;
+
+        const prevNumberOfNodesInt =
+          prevNumberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
+            ? parseInt(
+                defaultValues[DbWizardFormFields.customNrOfNodes] as string,
+                10
+              )
+            : parseInt(prevNumberOfNodes, 10);
+
+        if (intNrNodes === 1 && prevNumberOfNodesInt > 1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Cannot scale down to one node.',
+            path: [DbWizardFormFields.numberOfNodes],
+          });
         }
       }
 
