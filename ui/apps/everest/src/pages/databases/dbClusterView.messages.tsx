@@ -24,6 +24,7 @@ export const Messages = {
     paused: 'Paused',
     restoring: 'Restoring',
     deleting: 'Deleting',
+    resizingVolumes: 'Resizing volumes',
     creating: 'Creating',
     upgrading: 'Upgrading',
   },
