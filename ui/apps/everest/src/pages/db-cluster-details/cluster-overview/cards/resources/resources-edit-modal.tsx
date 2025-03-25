@@ -37,7 +37,7 @@ const ResourcesEditModal = ({
       closeModal={handleCloseModal}
       headerMessage="Edit Topology"
       submitMessage="Save"
-      schema={resourcesFormSchema(defaultValues, false, false)}
+      schema={resourcesFormSchema(defaultValues, false, false, false)}
       onSubmit={onSubmit}
       defaultValues={defaultValues}
     >
