@@ -1,4 +1,5 @@
 import { DbType } from '@percona/types';
+import { Path, UseFormGetFieldState } from 'react-hook-form';
 
 export const getProxyUnitNamesFromDbType = (
   dbType: DbType
@@ -24,4 +25,11 @@ export const getPreviewResourcesText = (
   return Number.isNaN(parsedResource)
     ? ''
     : `${type} - ${sharding && parsedShardNr ? (parsedShardNr * parsedResource).toFixed(2) : parsedResource.toFixed(2)} ${measurementUnit}`;
+};
+
+export const someErrorInStateFields = <T extends Record<string, unknown>>(
+  fieldStateGetter: UseFormGetFieldState<T>,
+  fields: Path<T>[]
+) => {
+  return fields.some((field) => fieldStateGetter(field)?.error);
 };
