@@ -42,13 +42,12 @@ import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { DbType } from '@percona/types';
 import { changeDbClusterResources, isProxy } from 'utils/db';
 import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const ResourcesDetails = ({
   dbCluster,
   loading,
   sharding,
-  canUpdateDb,
+  canUpdate,
 }: ResourcesDetailsOverviewProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
@@ -86,8 +85,6 @@ export const ResourcesDetails = ({
   const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
-  const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
-  const deleting = dbCluster?.status?.status === DbClusterStatus.deleting;
 
   const onSubmit: SubmitHandler<
     z.infer<ReturnType<typeof resourcesFormSchema>>
@@ -149,7 +146,7 @@ export const ResourcesDetails = ({
                 startIcon={<EditOutlinedIcon />}
                 onClick={() => setOpenEditModal(true)}
                 data-testid="edit-resources-button"
-                disabled={!canUpdateDb || restoring || deleting}
+                disabled={!canUpdate}
               >
                 Edit
               </Button>
