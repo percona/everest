@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
@@ -525,7 +526,7 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 	newVersion := dbc.Spec.Engine.Version
 	oldVersion := oldDB.Spec.Engine.Version
 	if newVersion != "" && newVersion != oldVersion {
-		if err := validateDBEngineVersionUpgrade(newVersion, oldVersion); err != nil {
+		if err := validateDBEngineVersionUpgrade(oldDB.Spec.Engine.Type, newVersion, oldVersion); err != nil {
 			return err
 		}
 	}
@@ -556,7 +557,7 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 }
 
 // validateDBEngineVersionUpgrade validates if upgrade of DBEngine from `oldVersion` to `newVersion` is allowed.
-func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
+func validateDBEngineVersionUpgrade(engineType everestv1alpha1.EngineType, newVersion, oldVersion string) error {
 	// Ensure a "v" prefix so that it is a valid semver.
 	if !strings.HasPrefix(newVersion, "v") {
 		newVersion = "v" + newVersion
@@ -574,14 +575,20 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	if semver.Compare(newVersion, oldVersion) < 0 {
 		return errDBEngineDowngrade
 	}
-	// We will not allow major upgrades.
-	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
-	// For example:
-	// - PXC operator allows major upgrades.
-	// - PSMDB operator allows major upgrades, but we need to handle FCV.
-	// - PG operator does not allow major upgrades.
-	if semver.Major(oldVersion) != semver.Major(newVersion) {
+	// We will not allow major upgrades for PXC and PG.
+	// - PXC: Major upgrades are not supported.
+	// - PG: Major upgrades are in technical preview. https://docs.percona.com/percona-operator-for-postgresql/2.0/update.html#major-version-upgrade
+	if engineType != everestv1alpha1.DatabaseEnginePSMDB && semver.Major(oldVersion) != semver.Major(newVersion) {
 		return errDBEngineMajorVersionUpgrade
+	}
+
+	// It's fine to ignore the errors here because we have already validated the version.
+	newMajorInt, _ := strconv.Atoi(semver.Major(newVersion)[1:])
+	oldMajorInt, _ := strconv.Atoi(semver.Major(oldVersion)[1:])
+	// We will not allow major upgrades if the versions are not sequential.
+	if newMajorInt-oldMajorInt > 1 {
+		fmt.Println("errDBEngineMajorUpgradeNotSeq")
+		return errDBEngineMajorUpgradeNotSeq
 	}
 	return nil
 }
