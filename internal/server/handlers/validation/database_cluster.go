@@ -31,6 +31,15 @@ func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, db *everest
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
+
+	if currentDB, err := h.kubeClient.GetDatabaseCluster(ctx, db.GetNamespace(), db.GetName()); err != nil {
+		if !k8serrors.IsNotFound(err) {
+			return nil, fmt.Errorf("failed to check if DB cluster with name already exists in namespace: %w", err)
+		}
+	} else if currentDB.GetName() != "" {
+		return nil, fmt.Errorf("db cluster with name '%s' already exists in namespace '%s'", db.GetName(), db.GetNamespace())
+	}
+
 	return h.next.CreateDatabaseCluster(ctx, db)
 }
 
@@ -523,6 +532,10 @@ func validateMetadata(obj metav1.Object) error {
 func (h *validateHandler) validateDatabaseClusterOnUpdate(
 	dbc, oldDB *everestv1alpha1.DatabaseCluster,
 ) error {
+	if !isDatabaseClusterUpdateAllowed(oldDB) {
+		return fmt.Errorf("db operations are not allowed in current db state: %s", oldDB.Status.Status)
+	}
+
 	newVersion := dbc.Spec.Engine.Version
 	oldVersion := oldDB.Spec.Engine.Version
 	if newVersion != "" && newVersion != oldVersion {
@@ -599,4 +612,26 @@ func validateShardingOnUpdate(dbc, oldDB *everestv1alpha1.DatabaseCluster) error
 		return errDisableShardingNotSupported
 	}
 	return validateSharding(dbc)
+}
+
+// isDatabaseClusterUpdateAllowed checks if the requested change is allowed for the database cluster.
+// The returns false in case DB cluster is in one of the following states:
+// - restoring
+// - deleting
+// - upgrading
+// - resizingVolumes
+func isDatabaseClusterUpdateAllowed(currentDB *everestv1alpha1.DatabaseCluster) bool {
+	if currentDB == nil {
+		return false
+	}
+
+	switch currentDB.Status.Status {
+	case everestv1alpha1.AppStateRestoring,
+		everestv1alpha1.AppStateDeleting,
+		everestv1alpha1.AppStateUpgrading,
+		everestv1alpha1.AppStateResizingVolumes:
+		return false
+	}
+
+	return true
 }
