@@ -379,6 +379,15 @@ export const resourcesFormSchema = (
           path: [DbWizardFormFields.disk],
         });
       }
+
+      if (!Number.isInteger(disk)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Disk size must be an integer number.',
+
+          path: [DbWizardFormFields.disk],
+        });
+      }
     }
   );
 };

@@ -12,6 +12,7 @@ type Props = {
   onSubmit: SubmitHandler<z.infer<ReturnType<typeof resourcesFormSchema>>>;
   defaultValues: z.infer<ReturnType<typeof resourcesFormSchema>>;
   storageClass: string;
+  allowDiskDescaling: boolean;
 };
 
 const ResourcesEditModal = ({
@@ -21,6 +22,7 @@ const ResourcesEditModal = ({
   onSubmit,
   defaultValues,
   storageClass,
+  allowDiskDescaling,
 }: Props) => {
   const { data: clusterInfo } = useKubernetesClusterInfo([
     'resources-cluster-info',
@@ -37,7 +39,12 @@ const ResourcesEditModal = ({
       closeModal={handleCloseModal}
       headerMessage="Edit Topology"
       submitMessage="Save"
-      schema={resourcesFormSchema(defaultValues, false, false, false)}
+      schema={resourcesFormSchema(
+        defaultValues,
+        false,
+        false,
+        allowDiskDescaling
+      )}
       onSubmit={onSubmit}
       defaultValues={defaultValues}
     >
