@@ -29,6 +29,7 @@ export enum DbClusterStatus {
   error = 'error',
   restoring = 'restoring',
   deleting = 'deleting',
+  resizingVolumes = 'resizingVolumes',
   creating = 'creating',
   upgrading = 'upgrading',
 }

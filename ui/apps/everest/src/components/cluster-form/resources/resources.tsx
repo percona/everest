@@ -13,6 +13,7 @@ import {
   Stack,
   SxProps,
   Theme,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -370,22 +371,31 @@ const ResourcesToggles = ({
           endSuffix="GB"
           numberOfUnits={intNumberOfUnits}
         />
+
         {diskInputName && (
-          <ResourceInput
-            unit={unit}
-            unitPlural={unitPlural}
-            name={diskInputName}
-            disabled={disableDiskInput}
-            label="DISK"
-            helperText={checkResourceText(
-              resourcesInfo?.available?.diskSize,
-              diskUnit,
-              'disk',
-              diskCapacityExceeded
-            )}
-            endSuffix={diskUnit}
-            numberOfUnits={intNumberOfUnits}
-          />
+          <Tooltip
+            title={disableDiskInput ? Messages.disabledDiskInputTooltip : ''}
+            placement="top"
+            arrow
+          >
+            <Box>
+              <ResourceInput
+                unit={unit}
+                unitPlural={unitPlural}
+                name={diskInputName}
+                disabled={disableDiskInput}
+                label="DISK"
+                helperText={checkResourceText(
+                  resourcesInfo?.available?.diskSize,
+                  diskUnit,
+                  'disk',
+                  diskCapacityExceeded
+                )}
+                endSuffix={diskUnit}
+                numberOfUnits={intNumberOfUnits}
+              />
+            </Box>
+          </Tooltip>
         )}
       </Box>
     </FormGroup>
