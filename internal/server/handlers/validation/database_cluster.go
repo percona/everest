@@ -541,7 +541,7 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 	}
 
 	// Do not allow updating storage size.
-	if dbc.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePXC &&
+	if dbc.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePSMDB &&
 		dbc.Spec.Engine.Storage.Size.Cmp(oldDB.Spec.Engine.Storage.Size) != 0 {
 		return errCannotChangeStorageSize
 	}
