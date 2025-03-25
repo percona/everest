@@ -14,6 +14,7 @@
 // limitations under the License.
 import { ProxyType } from '@percona/types';
 import { DbEngineType } from './dbEngines.types';
+import { DbErrorType } from './dbErrors.types';
 
 export enum ProxyExposeType {
   internal = 'internal',
@@ -120,6 +121,14 @@ export interface Spec {
   monitoring: Monitoring;
   sharding?: Sharding;
 }
+export interface StatusCondition {
+  type: DbErrorType;
+  status: string;
+  observedGeneration: number;
+  lastTransitionTime: string;
+  reason: string;
+  message: string;
+}
 
 export interface StatusSpec {
   status: DbClusterStatus;
@@ -129,6 +138,7 @@ export interface StatusSpec {
   crVersion: string;
   recommendedCRVersion?: string;
   details?: string;
+  conditions: StatusCondition[];
 }
 
 export interface DbClusterMetadata {
