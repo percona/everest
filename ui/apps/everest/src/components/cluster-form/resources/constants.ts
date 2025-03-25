@@ -192,7 +192,7 @@ const numberOfResourcesValidator = (
 export const resourcesFormSchema = (
   defaultValues: Record<string, unknown>,
   allowShardingDescaling: boolean,
-  allowDescalingToOneNode: boolean
+  allowDescalingToOneNode: boolean,
   allowDiskDescaling: boolean
 ) => {
   const objectShape = {
