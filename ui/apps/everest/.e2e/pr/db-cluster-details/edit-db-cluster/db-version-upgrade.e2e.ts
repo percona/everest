@@ -112,7 +112,7 @@ let token: string;
 
           //check result
           await expect(page.getByTestId(`${clusterName}-status`)).toHaveText(
-            'Initializing',
+            'Upgrading',
             { timeout: 15000 }
           );
           await expect(
