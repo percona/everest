@@ -81,8 +81,8 @@ export const ResourcesDetails = ({
     : CUSTOM_NR_UNITS_INPUT_VALUE;
   const numberOfNodesStr =
     sharding?.enabled && sharding?.shards
-      ? (+numberOfNodes * sharding?.shards).toString()
-      : numberOfNodes;
+      ? (+replicas * sharding?.shards).toString()
+      : replicas;
   const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;

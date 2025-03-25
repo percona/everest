@@ -15,7 +15,6 @@
 
 import { FormDialog } from 'components/form-dialog/form-dialog';
 import {
-  upgradeModalDefaultValues,
   UpgradeModalFormType,
   UpgradeModalProps,
 } from './upgrade-db-version-modal.types';
@@ -48,11 +47,14 @@ export const UpgradeDbVersionModal = ({
       onSubmit={onSubmit}
       submitting={submitting}
       submitMessage={Messages.upgrade}
-      defaultValues={upgradeModalDefaultValues(version)}
     >
       <Typography variant="body1">{Messages.description}</Typography>
       <DbVersion
         availableVersions={dbVersionsUpgradeList?.availableVersions?.engine}
+        selectInputProps={{
+          helperText: `Current version: ${version}`,
+          label: 'Select version',
+        }}
       />
     </FormDialog>
   );
