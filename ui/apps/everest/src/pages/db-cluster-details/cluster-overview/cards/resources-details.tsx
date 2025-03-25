@@ -43,6 +43,7 @@ import { DbType } from '@percona/types';
 import { changeDbClusterResources, isProxy } from 'utils/db';
 import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { DbErrorType } from 'shared-types/dbErrors.types';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -88,6 +89,10 @@ export const ResourcesDetails = ({
     : CUSTOM_NR_UNITS_INPUT_VALUE;
   const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
   const deleting = dbCluster?.status?.status === DbClusterStatus.deleting;
+
+  const allowDiskDescaling = !!(dbCluster?.status?.conditions || []).find(
+    (condition) => condition.type === DbErrorType.VolumeResizeFailed
+  );
 
   const onSubmit: SubmitHandler<
     z.infer<ReturnType<typeof resourcesFormSchema>>
@@ -251,6 +256,7 @@ export const ResourcesDetails = ({
         <ResourcesEditModal
           dbType={dbType}
           storageClass={storageClass || ''}
+          allowDiskDescaling={allowDiskDescaling}
           shardingEnabled={!!sharding?.enabled}
           handleCloseModal={() => setOpenEditModal(false)}
           onSubmit={onSubmit}
