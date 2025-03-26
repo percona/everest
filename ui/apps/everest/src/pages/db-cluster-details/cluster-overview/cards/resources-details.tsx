@@ -42,7 +42,6 @@ import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { DbType } from '@percona/types';
 import { changeDbClusterResources, isProxy } from 'utils/db';
 import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
-import { DbErrorType } from 'shared-types/dbErrors.types';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -86,10 +85,6 @@ export const ResourcesDetails = ({
   const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
-
-  const allowDiskDescaling = !!(dbCluster?.status?.conditions || []).find(
-    (condition) => condition.type === DbErrorType.VolumeResizeFailed
-  );
 
   const onSubmit: SubmitHandler<
     z.infer<ReturnType<typeof resourcesFormSchema>>
@@ -253,7 +248,7 @@ export const ResourcesDetails = ({
         <ResourcesEditModal
           dbType={dbType}
           storageClass={storageClass || ''}
-          allowDiskDescaling={allowDiskDescaling}
+          allowDiskDescaling={false}
           shardingEnabled={!!sharding?.enabled}
           handleCloseModal={() => setOpenEditModal(false)}
           onSubmit={onSubmit}

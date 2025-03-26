@@ -27,7 +27,6 @@ import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useRBACPermissions } from 'hooks/rbac';
 import { isProxy, shouldDbActionsBeBlocked } from 'utils/db';
 import { DbErrors } from './db-errors/db-errors';
-import { DbErrorType } from 'shared-types/dbErrors.types';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -64,15 +63,8 @@ export const ClusterOverview = () => {
   const dbType = dbCluster?.spec.engine.type;
   const conditions = dbCluster?.status?.conditions || [];
   const hasConditions = conditions.length > 0;
-  const hasVolumeResizeConditions =
-    hasConditions &&
-    !!conditions.find(
-      (condition) => condition.type === DbErrorType.VolumeResizeFailed
-    );
   const canChangeResources =
-    canUpdateDb &&
-    (!shouldDbActionsBeBlocked(dbCluster.status?.status) ||
-      hasVolumeResizeConditions);
+    canUpdateDb && !shouldDbActionsBeBlocked(dbCluster.status?.status);
 
   const pitrEnabled =
     dbType === DbEngineType.POSTGRESQL
