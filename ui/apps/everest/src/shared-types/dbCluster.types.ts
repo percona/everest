@@ -30,6 +30,7 @@ export enum DbClusterStatus {
   restoring = 'restoring',
   deleting = 'deleting',
   creating = 'creating',
+  upgrading = 'upgrading',
 }
 
 export interface Schedule {
