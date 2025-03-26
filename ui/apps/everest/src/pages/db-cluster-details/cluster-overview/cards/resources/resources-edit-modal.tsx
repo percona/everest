@@ -53,6 +53,7 @@ const ResourcesEditModal = ({
         pairProxiesWithNodes={false}
         showSharding={dbType === DbType.Mongo}
         disableDiskInput={!allowVolumeExpansion || dbType !== DbType.Mongo}
+        defaultValues={defaultValues}
         allowDiskInputUpdate={false}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
       />
