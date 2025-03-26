@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import {
   Accordion,
   AccordionSummary,
+  Alert,
   Box,
   Divider,
   FormGroup,
@@ -38,6 +39,7 @@ import {
   NODES_DB_TYPE_MAP,
   ResourceSize,
   PROXIES_DEFAULT_SIZES,
+  resourcesFormSchema,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
@@ -45,6 +47,8 @@ import { someErrorInStateFields, getProxyUnitNamesFromDbType } from './utils';
 
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
+import { z } from 'zod';
+import { memoryParser } from 'utils/k8ResourceParser';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
@@ -152,6 +156,7 @@ const ResourcesToggles = ({
   disableDiskInput,
   allowDiskInputUpdate,
   disableCustom = false,
+  warnForUpscaling = false,
 }: ResourcesTogglesProps) => {
   const { isMobile, isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
@@ -398,6 +403,11 @@ const ResourcesToggles = ({
           </Tooltip>
         )}
       </Box>
+      {warnForUpscaling && (
+        <Alert sx={{ mt: 2 }} severity="warning">
+          Upscaling disk size is an irreversible action.
+        </Alert>
+      )}
     </FormGroup>
   );
 };
@@ -474,6 +484,7 @@ const ResourcesForm = ({
   showSharding,
   hideProxies = false,
   disableShardingInput = false,
+  defaultValues,
 }: {
   dbType: DbType;
   hideProxies?: boolean;
@@ -482,11 +493,13 @@ const ResourcesForm = ({
   pairProxiesWithNodes?: boolean;
   showSharding?: boolean;
   disableShardingInput?: boolean;
+  defaultValues?: z.infer<ReturnType<typeof resourcesFormSchema>>;
 }) => {
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
   );
-  const { watch, getFieldState, setValue, trigger, clearErrors } =
+  const [showDiskWarning, setShowDiskWarning] = useState(false);
+  const { watch, getFieldState, setValue, trigger, clearErrors, getValues } =
     useFormContext();
 
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
@@ -502,6 +515,7 @@ const ResourcesForm = ({
   const numberOfProxies: string = watch(DbWizardFormFields.numberOfProxies);
   const customNrOfNodes: string = watch(DbWizardFormFields.customNrOfNodes);
   const customNrOfProxies: string = watch(DbWizardFormFields.customNrOfProxies);
+  const disk: number = watch(DbWizardFormFields.disk);
   const proxyUnitNames = getProxyUnitNamesFromDbType(dbType);
   const nodesAccordionSummaryNumber =
     numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
@@ -596,6 +610,19 @@ const ResourcesForm = ({
   ]);
 
   useEffect(() => {
+    if (defaultValues) {
+      const diskUnit = getValues(DbWizardFormFields.diskUnit);
+      const defaultDiskUnit = defaultValues.diskUnit;
+      const defaultGiValue = memoryParser(
+        `${defaultValues.disk}${defaultDiskUnit}`,
+        'Gi'
+      ).value;
+      const newGiValue = memoryParser(`${disk}${diskUnit}`, 'Gi').value;
+      setShowDiskWarning(newGiValue > defaultGiValue);
+    }
+  }, [defaultValues, disk, getValues]);
+
+  useEffect(() => {
     trigger();
   }, [numberOfNodes, customNrOfNodes, trigger, numberOfProxies]);
 
@@ -629,6 +656,7 @@ const ResourcesForm = ({
         onChange={handleAccordionChange('nodes')}
         sx={{
           px: 2,
+          pb: 2,
         }}
       >
         <CustomAccordionSummary
@@ -651,6 +679,7 @@ const ResourcesForm = ({
           disableDiskInput={disableDiskInput}
           allowDiskInputUpdate={allowDiskInputUpdate}
           disableCustom={dbType === DbType.Mysql}
+          warnForUpscaling={showDiskWarning}
         />
       </Accordion>
       {!hideProxies && (
