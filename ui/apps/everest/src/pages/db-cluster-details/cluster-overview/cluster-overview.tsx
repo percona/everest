@@ -27,6 +27,7 @@ import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useRBACPermissions } from 'hooks/rbac';
 import { isProxy, shouldDbActionsBeBlocked } from 'utils/db';
 import { DbErrors } from './db-errors/db-errors';
+import { DbErrorType } from 'shared-types/dbErrors.types';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -61,7 +62,17 @@ export const ClusterOverview = () => {
 
   const hasBackupsOrSchedules = schedules.length > 0 || backups.length > 0;
   const dbType = dbCluster?.spec.engine.type;
-  const actionsBlocked = shouldDbActionsBeBlocked(dbCluster.status?.status);
+  const conditions = dbCluster?.status?.conditions || [];
+  const hasConditions = conditions.length > 0;
+  const hasVolumeResizeConditions =
+    hasConditions &&
+    !!conditions.find(
+      (condition) => condition.type === DbErrorType.VolumeResizeFailed
+    );
+  const canChangeResources =
+    canUpdateDb &&
+    (!shouldDbActionsBeBlocked(dbCluster.status?.status) ||
+      hasVolumeResizeConditions);
 
   const pitrEnabled =
     dbType === DbEngineType.POSTGRESQL
@@ -70,9 +81,7 @@ export const ClusterOverview = () => {
 
   return (
     <>
-      {(dbCluster?.status?.conditions || []).length > 0 && (
-        <DbErrors conditions={dbCluster.status?.conditions!} />
-      )}
+      {hasConditions && <DbErrors conditions={dbCluster.status?.conditions!} />}
       <Stack
         direction="row"
         flexWrap="wrap"
@@ -108,7 +117,7 @@ export const ClusterOverview = () => {
           dbCluster={dbCluster}
           sharding={dbCluster?.spec.sharding}
           loading={loadingCluster}
-          canUpdate={canUpdateDb && !actionsBlocked}
+          canUpdate={canChangeResources}
         />
         {canReadBackups && (
           <BackupsDetails
