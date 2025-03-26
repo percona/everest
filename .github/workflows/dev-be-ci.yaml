@@ -475,6 +475,6 @@ jobs:
           self: Merge Gatekeeper
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
-          timeout: 300
+          timeout: 600
           ignored: "license/snyk (Percona Everest), security/snyk (Percona Everest)"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
