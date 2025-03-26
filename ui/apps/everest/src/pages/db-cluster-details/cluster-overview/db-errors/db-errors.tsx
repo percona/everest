@@ -24,7 +24,7 @@ export const DbErrors = ({ conditions }: { conditions: StatusCondition[] }) => {
               }}
               action={
                 <Button
-                  color="error"
+                  sx={{ color: 'error.contrastText' }}
                   size="small"
                   onClick={() => setOpenDialog(true)}
                 >
