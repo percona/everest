@@ -15,7 +15,11 @@ import {
 } from 'utils/db';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 
-const ScheduledBackupsList = () => {
+type Props = {
+  emptyBackups: boolean;
+};
+
+const ScheduledBackupsList = ({ emptyBackups }: Props) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
   const {
@@ -29,7 +33,8 @@ const ScheduledBackupsList = () => {
       onSuccess: () => handleCloseDeleteDialog(),
     });
   const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
-
+  const pitrEnabled = !!dbCluster.spec?.backup?.pitr?.enabled;
+  const willDisablePITR = emptyBackups && schedules.length === 1 && pitrEnabled;
   const handleDelete = (scheduleName: string) => {
     setSelectedSchedule(scheduleName);
     setOpenDeleteDialog(true);
@@ -40,7 +45,9 @@ const ScheduledBackupsList = () => {
   };
 
   const handleConfirmDelete = (scheduleName: string) => {
-    updateCluster(deleteScheduleFromDbCluster(scheduleName, dbCluster));
+    updateCluster(
+      deleteScheduleFromDbCluster(scheduleName, dbCluster, willDisablePITR)
+    );
   };
 
   const handleEdit = (scheduleName: string) => {
@@ -156,7 +163,7 @@ const ScheduledBackupsList = () => {
           handleConfirm={handleConfirmDelete}
           disabledButtons={updatingCluster}
         >
-          {Messages.deleteModal.content(selectedSchedule)}
+          {Messages.deleteModal.content(selectedSchedule, willDisablePITR)}
         </ConfirmDialog>
       )}
     </Stack>

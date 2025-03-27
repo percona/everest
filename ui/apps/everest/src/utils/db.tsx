@@ -247,7 +247,8 @@ export const changeDbClusterPITR = (
 
 export const deleteScheduleFromDbCluster = (
   scheduleName: string,
-  dbCluster: DbCluster
+  dbCluster: DbCluster,
+  disablePITR: boolean
 ): DbCluster => {
   const schedules = dbCluster?.spec?.backup?.schedules || [];
   const filteredSchedulesWithCronCorrection = schedules.reduce(
@@ -268,6 +269,14 @@ export const deleteScheduleFromDbCluster = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster.spec.backup,
+        ...(disablePITR && {
+          pitr: {
+            ...dbCluster.spec.backup?.pitr,
+            backupStorageName:
+              dbCluster.spec.backup?.pitr?.backupStorageName || '',
+            enabled: false,
+          },
+        }),
         schedules:
           filteredSchedulesWithCronCorrection.length > 0
             ? filteredSchedulesWithCronCorrection
