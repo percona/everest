@@ -1,5 +1,5 @@
 export const Messages = {
-    button : {
-        resetView: 'Reset View',
-    }
-}
+  button: {
+    resetView: 'Reset View',
+  },
+};

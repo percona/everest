@@ -84,7 +84,10 @@ const ComponentsDiagramView = ({
 
   const handleResetView = useCallback(() => {
     const { nodeComponents: visibleNodes, edgeComponents: visibleEdges } =
-      filterOutInvisibleNodesAndEdges(originalNodes.current, originalEdges.current);
+      filterOutInvisibleNodesAndEdges(
+        originalNodes.current,
+        originalEdges.current
+      );
     setNodes(visibleNodes);
     setEdges(visibleEdges);
     fitView();
@@ -100,7 +103,7 @@ const ComponentsDiagramView = ({
     setNodes(visibleNodes);
     setEdges(visibleEdges);
     fitView();
-  }, [components, setEdges, setNodes,fitView]);
+  }, [components, setEdges, setNodes, fitView]);
 
   return (
     <>

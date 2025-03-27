@@ -28,15 +28,15 @@ const Components = () => {
     namespace,
     dbClusterName!
   );
-  const [ searchQuery, setSearchQuery ] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredComponents = components.filter((component) =>{
+  const filteredComponents = components.filter((component) => {
     const keys = Object.keys(component) as (keyof typeof component)[];
 
     for (const key of keys) {
       if (
-        typeof component[key] === 'string'
-        && component[key].toLowerCase().includes(searchQuery.toLowerCase())
+        typeof component[key] === 'string' &&
+        component[key].toLowerCase().includes(searchQuery.toLowerCase())
       ) {
         return true;
       }
@@ -46,20 +46,24 @@ const Components = () => {
 
   return (
     <Stack>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: "space-between" }}>
-        {
-          !tableView && (
-            <TextField
-              label="Search Components"
-              variant="filled"
-              size='medium'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search"
-              sx={{ mb: 2, width: '300px' }}
-            />
-          )
-        }
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {!tableView && (
+          <TextField
+            label="Search Components"
+            variant="filled"
+            size="medium"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search"
+            sx={{ mb: 2, width: '300px' }}
+          />
+        )}
         <FormControlLabel
           sx={{ ml: 'auto' }}
           control={
