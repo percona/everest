@@ -15,7 +15,7 @@
 
 import { Box, FormGroup, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { lt, valid } from 'semver';
 import { DbType } from '@percona/types';
 import {
@@ -27,10 +27,6 @@ import {
 import { dbTypeToDbEngine } from '@percona/utils';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineToolStatus } from 'shared-types/dbEngines.types';
-import {
-  DB_WIZARD_DEFAULTS,
-  DEFAULT_NODES,
-} from '../../../database-form.constants.ts';
 import { StepProps } from '../../../database-form.types.ts';
 import { DbWizardFormFields } from 'consts.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
@@ -38,14 +34,10 @@ import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './first-step.messages.ts';
 import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
-import {
-  NODES_DEFAULT_SIZES,
-  PROXIES_DEFAULT_SIZES,
-  ResourceSize,
-} from 'components/cluster-form';
 import { DbVersion } from 'components/cluster-form/db-version';
 import { useDBEnginesForDbEngineTypes } from 'hooks/index.ts';
 import { useDatabasePageDefaultValues } from 'pages/database-form/useDatabaseFormDefaultValues.ts';
+import { getDbWizardDefaultValues } from 'pages/database-form/database-form.utils';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -53,8 +45,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
   } = useDatabasePageDefaultValues(mode);
-  const { watch, setValue, getFieldState, resetField, trigger } =
-    useFormContext();
+  const { watch, setValue, getFieldState, resetField } = useFormContext();
 
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
@@ -119,8 +110,9 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       filteredNamespaces.length > 0 &&
       !isLoading
     ) {
-      setValue(DbWizardFormFields.k8sNamespace, filteredNamespaces[0]);
-      trigger(DbWizardFormFields.k8sNamespace);
+      setValue(DbWizardFormFields.k8sNamespace, filteredNamespaces[0], {
+        shouldValidate: true,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, isLoading, filteredNamespaces.length]);
@@ -148,55 +140,26 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         DbWizardFormFields.dbVersion,
         recommendedVersion
           ? recommendedVersion.version
-          : dbEngineData.availableVersions.engine[0].version
+          : dbEngineData.availableVersions.engine[0].version,
+        { shouldValidate: true }
       );
     }
   }, [dbVersion, dbEngineData, getFieldState, mode, setValue]);
 
   const onNamespaceChange = () => {
+    const defaults = getDbWizardDefaultValues(dbType);
     setValue(
       DbWizardFormFields.monitoringInstance,
-      DB_WIZARD_DEFAULTS.monitoringInstance
+      defaults.monitoringInstance
     );
-    setValue(DbWizardFormFields.monitoring, DB_WIZARD_DEFAULTS.monitoring);
+    setValue(DbWizardFormFields.monitoring, defaults.monitoring);
     setValue(
       DbWizardFormFields.monitoringInstance,
-      DB_WIZARD_DEFAULTS.monitoringInstance
+      defaults.monitoringInstance
     );
     setValue(DbWizardFormFields.schedules, []);
     setValue(DbWizardFormFields.pitrEnabled, false);
   };
-
-  const setDefaultsForDbType = useCallback((dbType: DbType) => {
-    setValue(DbWizardFormFields.numberOfNodes, DEFAULT_NODES[dbType]);
-    setValue(DbWizardFormFields.customNrOfNodes, DEFAULT_NODES[dbType]);
-    setValue(DbWizardFormFields.numberOfProxies, DEFAULT_NODES[dbType]);
-    setValue(DbWizardFormFields.resourceSizePerNode, ResourceSize.small);
-    setValue(DbWizardFormFields.resourceSizePerProxy, ResourceSize.small);
-    setValue(DbWizardFormFields.cpu, NODES_DEFAULT_SIZES[dbType].small.cpu);
-    setValue(
-      DbWizardFormFields.proxyCpu,
-      PROXIES_DEFAULT_SIZES[dbType].small.cpu
-    );
-    setValue(
-      DbWizardFormFields.memory,
-      NODES_DEFAULT_SIZES[dbType].small.memory
-    );
-    setValue(
-      DbWizardFormFields.proxyMemory,
-      PROXIES_DEFAULT_SIZES[dbType].small.memory
-    );
-    setValue(DbWizardFormFields.disk, NODES_DEFAULT_SIZES[dbType].small.disk);
-    setValue(DbWizardFormFields.shardNr, DB_WIZARD_DEFAULTS.shardNr);
-    setValue(
-      DbWizardFormFields.shardConfigServers,
-      DB_WIZARD_DEFAULTS.shardConfigServers
-    );
-  }, []);
-
-  useEffect(() => {
-    setDefaultsForDbType(dbType);
-  }, [dbType, setDefaultsForDbType]);
 
   return (
     <>
