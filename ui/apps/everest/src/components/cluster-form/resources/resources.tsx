@@ -17,6 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import {
   TextInput,
   ToggleButtonGroupInput,
@@ -39,7 +40,7 @@ import {
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
-import { getProxyUnitNamesFromDbType } from './utils';
+import { someErrorInStateFields, getProxyUnitNamesFromDbType } from './utils';
 
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
@@ -155,7 +156,7 @@ const ResourcesToggles = ({
   const { isMobile, isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
     useKubernetesClusterResourcesInfo();
-  const { watch, setValue, setError, clearErrors, resetField } =
+  const { watch, setValue, setError, clearErrors, getFieldState, resetField } =
     useFormContext();
 
   const resourceSizePerUnit: ResourceSize = watch(resourceSizePerUnitInputName);
@@ -170,6 +171,9 @@ const ResourcesToggles = ({
       ? customNrOfUnits
       : numberOfUnits,
     10
+  );
+  const { error: numberOfUnitsInpuError } = getFieldState(
+    numberOfUnitsInputName
   );
 
   const cpuCapacityExceeded = resourcesInfo
@@ -230,7 +234,7 @@ const ResourcesToggles = ({
 
   return (
     <FormGroup sx={{ mt: 3 }}>
-      <Stack>
+      <Stack position="relative">
         <ToggleButtonGroupInput
           name={numberOfUnitsInputName}
           label={`Number of ${unitPlural}`}
@@ -262,6 +266,20 @@ const ResourcesToggles = ({
             </ToggleCard>
           )}
         </ToggleButtonGroupInput>
+        {!!numberOfUnitsInpuError && (
+          <FormHelperText
+            error
+            sx={{
+              position: 'absolute',
+              bottom: (theme) =>
+                theme.spacing(
+                  numberOfUnits === CUSTOM_NR_UNITS_INPUT_VALUE ? 4.5 : -1.5
+                ),
+            }}
+          >
+            {numberOfUnitsInpuError.message}
+          </FormHelperText>
+        )}
         {numberOfUnits === CUSTOM_NR_UNITS_INPUT_VALUE && (
           <TextInput
             name={customNrOfUnitsInputName}
@@ -378,9 +396,11 @@ const ResourcesToggles = ({
 const CustomAccordionSummary = ({
   unitPlural,
   nr,
+  hasError,
 }: {
   unitPlural: string;
   nr: number;
+  hasError?: boolean;
 }) => {
   const text = Number.isNaN(nr) || nr < 1 ? '' : ` (${nr})`;
 
@@ -391,10 +411,18 @@ const CustomAccordionSummary = ({
       }}
       expandIcon={<ExpandMoreIcon />}
     >
-      <Typography
-        variant="sectionHeading"
-        textTransform="capitalize"
-      >{`${unitPlural} ${text}`}</Typography>
+      <Box display="flex" alignItems="center">
+        {hasError && (
+          <ErrorOutlineIcon
+            color="error"
+            sx={{ mr: 1, position: 'relative', bottom: 1 }}
+          />
+        )}
+        <Typography
+          variant="sectionHeading"
+          textTransform="capitalize"
+        >{`${unitPlural} ${text}`}</Typography>
+      </Box>
     </AccordionSummary>
   );
 };
@@ -476,9 +504,20 @@ const ResourcesForm = ({
       ? customNrOfProxies
       : numberOfProxies;
 
-  const { error: proxyFieldError } = getFieldState(
-    DbWizardFormFields.numberOfProxies
-  );
+  const someErrorInProxies = someErrorInStateFields(getFieldState, [
+    DbWizardFormFields.numberOfProxies,
+    DbWizardFormFields.customNrOfProxies,
+    DbWizardFormFields.proxyCpu,
+    DbWizardFormFields.proxyMemory,
+  ]);
+
+  const someErrorInNodes = someErrorInStateFields(getFieldState, [
+    DbWizardFormFields.numberOfNodes,
+    DbWizardFormFields.customNrOfNodes,
+    DbWizardFormFields.cpu,
+    DbWizardFormFields.memory,
+    DbWizardFormFields.disk,
+  ]);
 
   const handleAccordionChange =
     (panel: 'nodes' | 'proxies') =>
@@ -589,6 +628,7 @@ const ResourcesForm = ({
         <CustomAccordionSummary
           unitPlural={sharding ? `Nodes per shard` : 'Nodes'}
           nr={parseInt(nodesAccordionSummaryNumber || '', 10)}
+          hasError={someErrorInNodes}
         />
         <Divider />
         <ResourcesToggles
@@ -614,11 +654,13 @@ const ResourcesForm = ({
           onChange={handleAccordionChange('proxies')}
           sx={{
             px: 2,
+            mt: 1,
           }}
         >
           <CustomAccordionSummary
             unitPlural={proxyUnitNames.plural}
             nr={parseInt(proxiesAccordionSummaryNumber || '', 10)}
+            hasError={someErrorInProxies}
           />
           <Divider />
           <ResourcesToggles
@@ -635,11 +677,6 @@ const ResourcesForm = ({
             numberOfUnitsInputName={DbWizardFormFields.numberOfProxies}
             customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}
           />
-          {proxyFieldError && (
-            <FormHelperText error={true}>
-              {proxyFieldError?.message}
-            </FormHelperText>
-          )}
         </Accordion>
       )}
       {!!showSharding && !!sharding && (
