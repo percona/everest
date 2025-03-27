@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { useState } from 'react';
-import { Box, FormControlLabel, Stack, Switch } from '@mui/material';
+import { Box, FormControlLabel, Stack, Switch, TextField } from '@mui/material';
 import ComponentsDiagramView from './diagram-view/components-diagram-view';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useParams } from 'react-router-dom';
@@ -28,20 +28,50 @@ const Components = () => {
     namespace,
     dbClusterName!
   );
+  const [ searchQuery, setSearchQuery ] = useState('');
+
+  const filteredComponents = components.filter((component) =>{
+    const keys = Object.keys(component) as (keyof typeof component)[];
+
+    for (const key of keys) {
+      if (
+        typeof component[key] === 'string'
+        && component[key].toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        return true;
+      }
+    }
+    return false;
+  });
 
   return (
     <Stack>
-      <FormControlLabel
-        sx={{ ml: 'auto' }}
-        control={
-          <Switch
-            data-testid="switch-input-table-view"
-            value={tableView}
-            onChange={(_, checked) => setTableView(checked)}
-          />
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: "space-between" }}>
+        {
+          !tableView && (
+            <TextField
+              label="Search Components"
+              variant="filled"
+              size='medium'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search"
+              sx={{ mb: 2, width: '300px' }}
+            />
+          )
         }
-        label="Table view"
-      />
+        <FormControlLabel
+          sx={{ ml: 'auto' }}
+          control={
+            <Switch
+              data-testid="switch-input-table-view"
+              value={tableView}
+              onChange={(_, checked) => setTableView(checked)}
+            />
+          }
+          label="Table view"
+        />
+      </Box>
       {tableView ? (
         <ComponentsTableView
           components={components}
@@ -54,7 +84,7 @@ const Components = () => {
           sx={{ backgroundColor: 'surfaces.elevation0', borderRadius: 2 }}
         >
           <ReactFlowProvider>
-            <ComponentsDiagramView components={components} />
+            <ComponentsDiagramView components={filteredComponents} />
           </ReactFlowProvider>
         </Box>
       )}
