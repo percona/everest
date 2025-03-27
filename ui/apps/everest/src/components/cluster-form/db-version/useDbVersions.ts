@@ -43,7 +43,8 @@ export const useDbVersionsList = ({
           ...data?.availableVersions,
           engine: filterAvailableDbVersionsForDbEngineEdition(
             data,
-            currentVersion
+            currentVersion,
+            'edit'
           ),
         },
       };
