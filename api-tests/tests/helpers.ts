@@ -67,7 +67,8 @@ export const deleteDBCluster = async (request, page, name) => {
     const data = await cluster.json()
 
     const engineType = data.spec.engine.type === 'postgresql' ? 'pg' : data.spec.engine.type
-    const command = `kubectl patch --namespace ${testsNs} ${engineType} ${name} --type='merge' -p '{"metadata":{"finalizers":null}}'`;
+    // remove finalizers but ignore errors, e.g. if the object is already deleted
+    const command = `kubectl patch --namespace ${testsNs} ${engineType} ${name} --type='merge' -p '{"metadata":{"finalizers":null}}' | true`;
     const output = execSync(command).toString();
 
     await page.waitForTimeout(1000)
