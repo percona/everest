@@ -25,7 +25,8 @@ import { useRBACPermissions } from 'hooks/rbac';
 
 export const BackupActionButtons = (
   row: MRT_Row<Backup>,
-  restoring: boolean,
+  // Only applies to restores, not to deletes
+  blockActions: boolean,
   handleDeleteBackup: (backupName: string) => void,
   handleRestoreBackup: (backupName: string) => void,
   handleRestoreToNewDbBackup: (backupName: string) => void,
@@ -56,7 +57,7 @@ export const BackupActionButtons = (
       ? [
           <MenuItem
             key={0}
-            disabled={row.original.state !== BackupStatus.OK || restoring}
+            disabled={row.original.state !== BackupStatus.OK || blockActions}
             onClick={() => {
               handleRestoreBackup(row.original.name);
             }}
@@ -76,7 +77,7 @@ export const BackupActionButtons = (
       ? [
           <MenuItem
             key={1}
-            disabled={row.original.state !== BackupStatus.OK || restoring}
+            disabled={row.original.state !== BackupStatus.OK || blockActions}
             onClick={() => {
               handleRestoreToNewDbBackup(row.original.name);
             }}
