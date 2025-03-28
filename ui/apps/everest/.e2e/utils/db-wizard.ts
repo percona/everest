@@ -96,7 +96,8 @@ export const populateBasicInformation = async (
   clusterName: string,
   dbType: string,
   storageClass: string,
-  mongoSharding: boolean = false
+  mongoSharding: boolean = false,
+  dbVersion: string
 ) => {
   if (namespace) {
     await page.getByTestId('k8s-namespace-autocomplete').click();
@@ -116,6 +117,11 @@ export const populateBasicInformation = async (
       await page.getByTestId('switch-input-sharding').click();
       await expect(page.getByTestId('switch-input-sharding')).toBeEnabled();
     }
+  }
+
+  if (dbVersion) {
+    await page.getByTestId('select-db-version-button').click();
+    await page.getByRole('option', { name: `${dbVersion}` }).click();
   }
 };
 

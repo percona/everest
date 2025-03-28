@@ -16,6 +16,12 @@ export enum EVEREST_CI_NAMESPACES {
   PG_ONLY = 'pg-only',
 }
 
+export const technologyMap: Record<string, string> = {
+  psmdb: "MongoDB",
+  pxc: "MySQL",
+  postgresql: "PostgreSQL",
+};
+
 export const getBucketNamespacesMap = (): BucketsNamespaceMap =>
   JSON.parse(EVEREST_BUCKETS_NAMESPACES_MAP);
 

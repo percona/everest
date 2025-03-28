@@ -28,28 +28,32 @@ import {
   populateResources,
   populateAdvancedConfig,
 } from '@e2e/utils/db-wizard';
-import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { EVEREST_CI_NAMESPACES, technologyMap } from '@e2e/constants';
 import {
   waitForStatus,
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
-import { prepareTestDB, dropTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
-import { getDbClusterAPI } from '@e2e/utils/db-cluster';
+import { prepareTestDB, dropTestDB, queryTestDB, insertTestDB } from '@e2e/utils/db-cmd-line';
+import { getDbClusterAPI, getDbNextLatestMajorVersion } from '@e2e/utils/db-cluster';
+import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
+import { request } from 'http';
 
 let token: string;
+
+const DBVersions = {
+  psmdb: ["6.0", "7.0", "8.0"],
+};
 
 test.describe.configure({ retries: 0 });
 
 [
   { db: 'psmdb', size: 3 },
-  { db: 'pxc', size: 3 },
-  { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
-    'Demand backup',
+    'Database major upgrade',
     {
       tag: '@release',
     },
@@ -57,12 +61,12 @@ test.describe.configure({ retries: 0 });
       test.skip(!shouldExecuteDBCombination(db, size));
       test.describe.configure({ timeout: 720000 });
 
-      const clusterName = `${db}-${size}-dembkp`;
+      const clusterName = `${db}-${size}-upgrade`;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
       const monitoringName = 'e2e-endpoint-0';
-      const baseBackupName = `dembkp-${db}-${size}`;
+      const baseBackupName = `upgrade-${db}-${size}`;
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -85,6 +89,7 @@ test.describe.configure({ retries: 0 });
         await page.getByTestId('add-db-cluster-button').click();
         await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
+        const dbVersion = await getDbNextLatestMajorVersion(db, namespace, DBVersions[db][0], request);
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
@@ -93,7 +98,7 @@ test.describe.configure({ retries: 0 });
             db,
             storageClasses[0],
             false,
-            null
+            dbVersion
           );
           await moveForward(page);
         });
@@ -117,15 +122,15 @@ test.describe.configure({ retries: 0 });
           await moveForward(page);
         });
 
-        await test.step('Populate monitoring', async () => {
-          await page.getByTestId('switch-input-monitoring').click();
-          await page
-            .getByTestId('text-input-monitoring-instance')
-            .fill(monitoringName);
-          await expect(
-            page.getByTestId('text-input-monitoring-instance')
-          ).toHaveValue(monitoringName);
-        });
+        // await test.step('Populate monitoring', async () => {
+        //   await page.getByTestId('switch-input-monitoring').click();
+        //   await page
+        //     .getByTestId('text-input-monitoring-instance')
+        //     .fill(monitoringName);
+        //   await expect(
+        //     page.getByTestId('text-input-monitoring-instance')
+        //   ).toHaveValue(monitoringName);
+        // });
 
         await test.step('Submit wizard', async () => {
           await submitWizard(page);
@@ -179,61 +184,75 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
       });
 
-      test(`Delete data [${db} size ${size}]`, async () => {
-        await dropTestDB(clusterName, namespace);
-      });
+      test(`Run major upgrades [${db} size ${size}]`, async ({ page, request }) => {
+        let i = 0;
+        let expectedResult: string[] = ['1', '2', '3'];
 
-      test(`Restore cluster [${db} size ${size}]`, async ({ page }) => {
-        await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(
-          page,
-          baseBackupName + '-1',
-          'Restore to this DB'
-        );
-        await expect(
-          page.getByTestId('select-input-backup-name')
-        ).not.toBeEmpty();
-        await page.getByTestId('form-dialog-restore').click();
+        for (const dbVersion of DBVersions[db]) {
+          if (i !== 0) { // we skip first element because it's just used for initial installation
+            expectedResult.push(`${i}+3`);
 
-        await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+            await test.step(`Upgrade to ${dbVersion}`, async () => {
+              const nextMajorVersion = await getDbNextLatestMajorVersion(db, namespace, dbVersion, request);
+              await page.goto('/databases');
+              await findDbAndClickRow(page, clusterName);
+              await page.getByTestId('upgrade-db-btn').click();
+              await expect(page.getByText('Upgrade DB version')).toBeVisible();
+              await expect(page.getByTestId('form-dialog-upgrade')).toBeDisabled();
+              await page.getByRole('combobox').click();
+              await page.getByRole('option', { name: `${nextMajorVersion}` }).click();
+              await expect(page.getByTestId('form-dialog-cancel')).toBeEnabled();
+              await page.getByTestId('form-dialog-upgrade').click();
+              await page.goto('/databases');
+              await waitForStatus(page, clusterName, 'Upgrading', 15000);
+              await waitForStatus(page, clusterName, 'Up', 300000);
+              const technology = technologyMap[db] || "Unknown";
+              await expect(page.getByText(`${technology} ${nextMajorVersion}`)).toBeVisible();
+              await findDbAndClickRow(page, clusterName);
+              await expect(page.getByTestId('upgrade-db-btn')).not.toBeVisible();
+            });
 
-        await gotoDbClusterRestores(page, clusterName);
-        // we select based on backup source since restores cannot be named and we don't know
-        // in advance what will be the name
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
-      });
+            await test.step('Insert more data after upgrade', async () => {
+              await insertTestDB(
+                clusterName,
+                namespace,
+                [`${i}+3`],
+                expectedResult
+              );
+            });
 
-      test(`Check data after restore [${db} size ${size}]`, async () => {
-        const result = await queryTestDB(clusterName, namespace);
-        switch (db) {
-          case 'pxc':
-            expect(result.trim()).toBe('1\n2\n3');
-            break;
-          case 'psmdb':
-            expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
-            break;
-          case 'postgresql':
-            expect(result.trim()).toBe('1\n 2\n 3');
-            break;
+            await test.step(`Create demand backup after upgrade`, async () => {
+              await gotoDbClusterBackups(page, clusterName);
+              await clickOnDemandBackup(page);
+              await page.getByTestId('text-input-name').fill(baseBackupName + `${i}+1`);
+              await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
+              await expect(
+                page.getByTestId('text-input-storage-location')
+              ).not.toBeEmpty();
+              await page.getByTestId('form-dialog-create').click();
+
+              await waitForStatus(page, baseBackupName + `${i}+1`, 'Succeeded', 300000);
+            });
+          }
+          i++;
         }
       });
 
-      test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
-        await gotoDbClusterRestores(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
-        await expect(page.getByLabel('Delete restore')).toBeVisible();
-        await page.getByTestId('confirm-dialog-delete').click();
-        await waitForDelete(page, baseBackupName + '-1', 15000);
-      });
-
-      test(`Delete backup [${db} size ${size}]`, async ({ page }) => {
-        await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
-        await expect(page.getByLabel('Delete backup')).toBeVisible();
-        await page.getByTestId('form-dialog-delete').click();
-        await waitForDelete(page, baseBackupName + '-1', 30000);
+      test(`Delete all backups [${db} size ${size}]`, async ({ page }) => {
+        for (let i = 1; i <= DBVersions[db].length; i++) {
+          // PG doesn't list first backup after second restore
+          if (db !== 'postgresql' && i !== 1) {
+            await gotoDbClusterBackups(page, clusterName);
+            await findRowAndClickActions(
+              page,
+              baseBackupName + `-${i}`,
+              'Delete'
+            );
+            await expect(page.getByLabel('Delete backup')).toBeVisible();
+            await page.getByTestId('form-dialog-delete').click();
+            await waitForDelete(page, baseBackupName + `-${i}`, 30000);
+          }
+        }
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
