@@ -63,6 +63,7 @@ export const AdvancedConfigurationEditModal = ({
     >
       <AdvancedConfigurationForm
         dbType={dbEngineToDbType(dbCluster?.spec?.engine?.type)}
+        loadingDefaultsForEdition
       />
     </FormDialog>
   );
