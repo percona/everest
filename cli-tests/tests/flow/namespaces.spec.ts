@@ -75,7 +75,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('create database namespace', async () => {
       const out = await cli.everestExecNamespacesSkipWizard(
-        `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
+        `add everest --operator.mongodb=false --operator.postgresql=false --operator.mysql=true`,
       );
 
       await out.assertSuccess();
@@ -89,7 +89,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('create database namespace again (fail))', async () => {
       const out = await cli.everestExecNamespacesSkipWizard(
-        `add everest --operator.mongodb=false --operator.postgresql=false --operator.xtradb-cluster=true`,
+        `add everest --operator.mongodb=false --operator.postgresql=false --operator.mysql=true`,
       );
 
       await out.outErrContainsNormalizedMany([
@@ -102,7 +102,7 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('update database namespace', async () => {
       const out = await cli.everestExecNamespacesSkipWizard(
-        `update everest --operator.mongodb=true --operator.postgresql=true --operator.xtradb-cluster=true`,
+        `update everest --operator.mongodb=true --operator.postgresql=true --operator.mysql=true`,
       );
 
       await out.assertSuccess();

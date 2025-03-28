@@ -20,6 +20,7 @@ export type DatabasePreviewProps = {
   longestAchievedStep: number;
   onSectionEdit?: (order: number) => void;
   disabled?: boolean;
+  stepsWithErrors: number[];
 } & StackProps;
 
 export type PreviewSectionProps = {
@@ -29,6 +30,7 @@ export type PreviewSectionProps = {
   active?: boolean;
   hasBeenReached?: boolean;
   disabled?: boolean;
+  hasError?: boolean;
   onEditClick?: () => void;
 } & StackProps;
 

@@ -406,8 +406,8 @@ k8s_resource(
         'vm-operator:serviceaccount',
         'vm-operator:role',
         'vm-operator:clusterrole',
-        "victoriametrics\\:admin:clusterrole",
-        "victoriametrics\\:view:clusterrole",
+        "vm-operator-victoriametrics-admin:clusterrole",
+        "vm-operator-victoriametrics-view:clusterrole",
         'vm-operator:clusterrolebinding',
         'vm-operator:rolebinding'
 
