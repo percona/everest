@@ -39,7 +39,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250326200335-220365110c38
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250327143002-32dcf907531a
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250326083141-c65336857c5e
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
