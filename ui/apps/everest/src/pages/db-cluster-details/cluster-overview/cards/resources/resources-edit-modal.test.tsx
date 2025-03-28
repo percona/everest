@@ -10,6 +10,8 @@ describe('ResourcesEditModal', () => {
     const { getByTestId, getByText } = render(
       <QueryClientProvider client={queryClient}>
         <ResourcesEditModal
+          allowDiskDescaling={false}
+          storageClass="standard"
           handleCloseModal={vi.fn()}
           dbType={DbType.Mysql}
           shardingEnabled={false}
