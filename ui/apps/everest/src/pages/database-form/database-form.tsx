@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useBlocker, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Stack, Step, StepLabel } from '@mui/material';
+import { useQueryClient } from '@tanstack/react-query';
 import { Stepper } from '@percona/ui-lib';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
@@ -28,18 +29,20 @@ import { useDatabasePageMode } from './useDatabasePageMode';
 import { useDbValidationSchema } from './useDbValidationSchema';
 import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
-import { DbWizardFormFields } from 'consts.ts';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
+import { DB_CLUSTERS_QUERY_KEY } from 'hooks';
 
 export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [longestAchievedStep, setLongestAchievedStep] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [stepsWithErrors, setStepsWithErrors] = useState<number[]>([]);
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
   const location = useLocation();
   const navigate = useNavigate();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
+  const queryClient = useQueryClient();
   const { defaultValues, isFetching: loadingClusterValues } =
     useDatabasePageDefaultValues(mode);
 
@@ -51,17 +54,36 @@ export const DatabasePage = () => {
 
   const methods = useForm<DbWizardType>({
     mode: 'onChange',
-    resolver: zodResolver(validationSchema),
+    resolver: async (data, context, options) => {
+      const result = await zodResolver(validationSchema)(
+        data,
+        context,
+        options
+      );
+      if (Object.keys(result.errors).length > 0) {
+        setStepsWithErrors((prev) => {
+          if (!prev.includes(activeStep)) {
+            return [...prev, activeStep];
+          }
+          return prev;
+        });
+      } else {
+        setStepsWithErrors((prev) =>
+          prev.filter((step) => step !== activeStep)
+        );
+      }
+      return result;
+    },
     // @ts-ignore
     defaultValues,
   });
 
   const {
     reset,
-    formState: { isDirty, errors },
+    formState: { isDirty },
     clearErrors,
-    trigger,
     handleSubmit,
+    trigger,
   } = methods;
 
   const blocker = useBlocker(
@@ -70,8 +92,6 @@ export const DatabasePage = () => {
       !formSubmitted &&
       currentLocation.pathname !== nextLocation.pathname
   );
-
-  const formHasErrors = Object.values(errors).length > 0;
 
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
     if (mode === 'new' || mode === 'restoreFromBackup') {
@@ -91,7 +111,11 @@ export const DatabasePage = () => {
           }),
         },
         {
-          onSuccess: () => {
+          onSuccess: (cluster) => {
+            // We clear the query for the namespace to make sure the new cluster is fetched
+            queryClient.removeQueries({
+              queryKey: [DB_CLUSTERS_QUERY_KEY, cluster.metadata.namespace],
+            });
             setFormSubmitted(true);
           },
         }
@@ -101,24 +125,14 @@ export const DatabasePage = () => {
 
   const handleNext = async () => {
     if (activeStep < steps.length - 1) {
-      let isStepValid;
+      setActiveStep((prevActiveStep) => {
+        const newStep = prevActiveStep + 1;
 
-      if (errors[DbWizardFormFields.disk] && activeStep === 1) {
-        isStepValid = false;
-      } else {
-        isStepValid = await trigger();
-      }
-
-      if (isStepValid) {
-        setActiveStep((prevActiveStep) => {
-          const newStep = prevActiveStep + 1;
-
-          if (newStep > longestAchievedStep) {
-            setLongestAchievedStep(newStep);
-          }
-          return newStep;
-        });
-      }
+        if (newStep > longestAchievedStep) {
+          setLongestAchievedStep(newStep);
+        }
+        return newStep;
+      });
     }
   };
 
@@ -147,6 +161,10 @@ export const DatabasePage = () => {
   };
 
   useEffect(() => {
+    trigger();
+  }, [activeStep, trigger]);
+
+  useEffect(() => {
     // We disable the inputs on first step to make sure user doesn't change anything before all data is loaded
     // When users change the inputs, it means all data was loaded and we should't change the defaults anymore at this point
     // Because this effect relies on defaultValues, which comes from a hook that has dependencies that might be triggered somewhere else
@@ -166,9 +184,11 @@ export const DatabasePage = () => {
     }
   }, []);
 
-  if (formSubmitted) {
-    navigate('/databases');
-  }
+  useEffect(() => {
+    if (formSubmitted) {
+      navigate('/databases');
+    }
+  }, [formSubmitted, navigate]);
 
   return (
     <>
@@ -184,9 +204,8 @@ export const DatabasePage = () => {
           <DatabaseFormBody
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
-            disableNext={formHasErrors}
             isSubmitting={isCreating}
-            hasErrors={formHasErrors}
+            hasErrors={stepsWithErrors.length > 0}
             onSubmit={handleSubmit(onSubmit)}
             onCancel={() => navigate('/databases')}
             handleNextStep={handleNext}
@@ -197,6 +216,7 @@ export const DatabasePage = () => {
             activeStep={activeStep}
             longestAchievedStep={longestAchievedStep}
             handleSectionEdit={handleSectionEdit}
+            stepsWithErrors={stepsWithErrors}
           />
         </FormProvider>
       </Stack>

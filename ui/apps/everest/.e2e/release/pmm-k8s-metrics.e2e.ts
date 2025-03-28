@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export enum AdvancedConfigurationFields {
-  externalAccess = 'externalAccess',
-  sourceRanges = 'sourceRanges',
-  engineParametersEnabled = 'engineParametersEnabled',
-  engineParameters = 'engineParameters',
-  storageClass = 'storageClass',
-}
+import { test } from '@playwright/test';
+import { checkK8sMetrics } from '@e2e/utils/monitoring-instance';
+
+test(`Check PMM K8s metrics`, async () => {
+  await checkK8sMetrics('kube_node_info', 'admin:admin');
+  await checkK8sMetrics('kube_pod_status_phase', 'admin:admin');
+});

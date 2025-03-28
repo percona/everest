@@ -16,10 +16,15 @@ export const storageLocationAutocompleteEmptyValidationCheck = async (
 };
 
 export const moveForward = async (page: Page) => {
-  await expect(
-    page.getByTestId('db-wizard-continue-button')
-  ).not.toBeDisabled();
+  const currHeader = await page.getByTestId('step-header').textContent();
   await page.getByTestId('db-wizard-continue-button').click();
+
+  do {
+    if ((await page.getByTestId('step-header').textContent()) !== currHeader) {
+      break;
+    }
+    page.waitForTimeout(200);
+  } while (1);
 };
 
 export const moveBack = (page: Page) =>
@@ -217,6 +222,10 @@ export const populateAdvancedConfig = async (
   addDefaultEngineParameters: boolean,
   engineParameters: string
 ) => {
+  const combobox = page.getByTestId('text-input-storage-class');
+  await combobox.waitFor({ state: 'visible', timeout: 5000 });
+  await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
+
   if (externalAccess != '') {
     await page.getByLabel('Enable External Access').check();
     await page
@@ -234,7 +243,9 @@ export const populateAdvancedConfig = async (
 
       switch (dbType) {
         case 'psmdb':
-          inputParameters = 'systemLog:\n verbosity: 1';
+          // we set operationProfiling for PMM QAN test
+          inputParameters =
+            'systemLog:\n verbosity: 1\noperationProfiling:\n mode: all\n slowOpThresholdMs: 2\n rateLimit: 5';
           break;
         case 'postgresql':
           inputParameters = 'log_connections = yes\nshared_buffers = 192MB';

@@ -19,6 +19,7 @@ import {
   suspendDbCluster,
   resumeDbCluster,
   restartDbCluster,
+  findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
@@ -33,7 +34,13 @@ import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
-import { queryPG, queryPSMDB, queryMySQL } from '@e2e/utils/db-cmd-line';
+import {
+  queryPG,
+  queryPSMDB,
+  queryMySQL,
+  getPGStsName,
+} from '@e2e/utils/db-cmd-line';
+import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
 
 let token: string;
 
@@ -201,6 +208,117 @@ test.describe.configure({ retries: 0 });
         }
       });
 
+      test(`Check PMM DB metrics [${db} size ${size}]`, async () => {
+        switch (db) {
+          case 'psmdb': {
+            for (let i = 0; i < size; i++) {
+              await checkDBMetrics(
+                'node_boot_time_seconds',
+                `everest-ui-${clusterName}-rs0-${i}`,
+                'admin:admin'
+              );
+              await checkDBMetrics(
+                'mongodb_connections',
+                `everest-ui-${clusterName}-rs0-${i}`,
+                'admin:admin'
+              );
+            }
+            break;
+          }
+          case 'pxc': {
+            const nodeTypes = ['pxc', 'haproxy'];
+
+            for (const nodeType of nodeTypes) {
+              for (let i = 0; i < size; i++) {
+                switch (nodeType) {
+                  case 'pxc': {
+                    await checkDBMetrics(
+                      'node_boot_time_seconds',
+                      `everest-ui-${clusterName}-${nodeType}-${i}`,
+                      'admin:admin'
+                    );
+                    await checkDBMetrics(
+                      'mysql_global_status_uptime',
+                      `everest-ui-${clusterName}-${nodeType}-${i}`,
+                      'admin:admin'
+                    );
+                    break;
+                  }
+                  case 'haproxy': {
+                    await checkDBMetrics(
+                      'haproxy_backend_status',
+                      `everest-ui-${clusterName}-${nodeType}-${i}`,
+                      'admin:admin'
+                    );
+                    await checkDBMetrics(
+                      'haproxy_backend_active_servers',
+                      `everest-ui-${clusterName}-${nodeType}-${i}`,
+                      'admin:admin'
+                    );
+                    break;
+                  }
+                }
+              }
+            }
+            break;
+          }
+          case 'postgresql': {
+            const pgSts = await getPGStsName(clusterName, namespace);
+            for (let i = 0; i < size; i++) {
+              await checkDBMetrics(
+                'node_boot_time_seconds',
+                `everest-ui-${pgSts[i]}-0`,
+                'admin:admin'
+              );
+              await checkDBMetrics(
+                'pg_postmaster_uptime_seconds',
+                `everest-ui-${pgSts[i]}-0`,
+                'admin:admin'
+              );
+            }
+            break;
+          }
+        }
+      });
+
+      test(`Check PMM QAN [${db} size ${size}]`, async () => {
+        // Wait for 90 seconds for QAN to get data
+        await new Promise((resolve) => setTimeout(resolve, 90000));
+
+        switch (db) {
+          case 'psmdb': {
+            // for PSMDB we see QAN only for the first node (primary)
+            await checkQAN(
+              'mongodb',
+              `everest-ui-${clusterName}-rs0-0`,
+              'admin:admin'
+            );
+            break;
+          }
+          case 'pxc': {
+            for (let i = 0; i < size; i++) {
+              await checkQAN(
+                'mysql',
+                `everest-ui-${clusterName}-pxc-${i}`,
+                'admin:admin'
+              );
+            }
+            break;
+          }
+          case 'postgresql': {
+            const pgSts = await getPGStsName(clusterName, namespace);
+            for (let i = 0; i < size; i++) {
+              await checkQAN(
+                'postgresql',
+                `everest-ui-${pgSts[i]}-0`,
+                'admin:admin'
+              );
+            }
+            break;
+          }
+        }
+      });
+
       test(`Suspend cluster [${db} size ${size}]`, async ({ page }) => {
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
@@ -229,6 +347,66 @@ test.describe.configure({ retries: 0 });
           await waitForStatus(page, clusterName, 'Initializing', 60000);
         }
         await waitForStatus(page, clusterName, 'Up', 300000);
+      });
+
+      test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
+        const newSize = size + 2;
+        let customProxyTestId = 'toggle-button-proxies-custom';
+
+        await test.step('Change options', async () => {
+          await page.goto('databases');
+          await findDbAndClickRow(page, clusterName);
+          await page.getByTestId('edit-resources-button').click();
+          if (db !== 'pxc') {
+            await page.getByTestId('toggle-button-nodes-custom').click();
+            await page
+              .getByTestId('text-input-custom-nr-of-nodes')
+              .fill(newSize.toString());
+          } else {
+            await page.getByTestId(`toggle-button-nodes-${newSize}`).click();
+          }
+
+          if (db === 'postgresql') {
+            customProxyTestId = 'toggle-button-PG Bouncers-custom';
+          }
+          if (db === 'pxc' || db === 'postgresql') {
+            await page.getByTestId('ExpandMoreIcon').last().click();
+            await page.getByTestId(customProxyTestId).click();
+            await page.getByTestId('text-input-custom-nr-of-proxies').fill('2');
+          }
+          await page.getByTestId('form-dialog-save').click();
+        });
+
+        await test.step('Check new values', async () => {
+          if (db === 'pxc') {
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: '2 proxies' })
+            ).toBeVisible({ timeout: 10000 });
+          } else if (db === 'postgresql') {
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: '2 PG Bouncers' })
+            ).toBeVisible({ timeout: 10000 });
+          }
+
+          await expect(
+            page
+              .getByTestId('overview-section')
+              .filter({ hasText: `${newSize} nodes` })
+          ).toBeVisible({ timeout: 10000 });
+        });
+
+        await test.step('Wait for cluster status', async () => {
+          await page.goto('databases');
+          // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+          if (size != 1 || db != 'psmdb') {
+            await waitForStatus(page, clusterName, 'Initializing', 60000);
+          }
+          await waitForStatus(page, clusterName, 'Up', 300000);
+        });
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
