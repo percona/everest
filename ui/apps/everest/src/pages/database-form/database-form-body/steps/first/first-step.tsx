@@ -68,7 +68,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     if (mode !== 'new' && dbEngine) {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         dbEngine,
-        defaultDbVersion
+        defaultDbVersion,
+        mode
       );
       return {
         ...dbEngine,
