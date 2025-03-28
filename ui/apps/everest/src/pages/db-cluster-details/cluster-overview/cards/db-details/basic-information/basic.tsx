@@ -24,7 +24,7 @@ import { useDbVersionsList } from 'components/cluster-form/db-version/useDbVersi
 import { useUpdateDbClusterWithConflictRetry } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterContext } from '../../../../dbCluster.context';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
-import { changeDbClusterVersion } from 'utils/db';
+import { changeDbClusterVersion, shouldDbActionsBeBlocked } from 'utils/db';
 import { useQueryClient } from '@tanstack/react-query';
 import { DB_CLUSTER_QUERY } from 'hooks/api';
 
@@ -101,7 +101,7 @@ export const BasicInformationSection = ({
               onClick: () => {
                 setOpenEditModal(true);
               },
-              disabled: upgrading,
+              disabled: shouldDbActionsBeBlocked(dbCluster?.status?.status),
               children: 'Upgrade',
               'data-testid': 'upgrade-db-btn',
             },
