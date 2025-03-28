@@ -1,4 +1,5 @@
 import {expect} from '@playwright/test'
+import { execSync } from 'child_process';
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
@@ -63,11 +64,9 @@ export const deleteDBCluster = async (request, page, name) => {
       return;
     }
 
-    const data = await cluster.json()
+    const command = `kubectl patch --namespace ${testsNs} db ${name} --type='merge' -p '{"metadata":{"finalizers":null}}'`;
+    const output = execSync(command).toString();
 
-    data.metadata.finalizers = null
-
-    await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data })
     await page.waitForTimeout(1000)
   }
 }
