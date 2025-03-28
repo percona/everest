@@ -1,6 +1,5 @@
 export const Messages = {
   sharding: {
-    descaling: 'Descaling is not allowed',
     invalid: 'Please fill in valid values for sharding',
     min: (val: number) => `The value cannot be less than ${val}`,
     max: (val: number) => `The value cannot be more than ${val}`,
@@ -19,4 +18,7 @@ export const Messages = {
     `Your specified ${fieldName} size exceeds the ${
       value ? `${value.toFixed(2)} ${units}` : ''
     } available. Enter a smaller value before continuing.`,
+  disabledDiskInputTooltip:
+    'You can’t change the disk size as the selected storage class doesn’t support volume expansion.',
+  descaling: 'Descaling is not allowed',
 };

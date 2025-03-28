@@ -38,4 +38,6 @@ test('get cluster info', async ({ request }) => {
   expect(info?.clusterType).toBeTruthy()
   expect(info?.storageClassNames).toBeTruthy()
   expect(info?.storageClassNames).toHaveLength(1)
+  expect(info?.storageClasses).toBeTruthy()
+  expect(info?.storageClasses).toHaveLength(1)
 })
