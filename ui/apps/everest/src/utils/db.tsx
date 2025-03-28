@@ -2,6 +2,7 @@ import { MongoIcon, MySqlIcon, PostgreSqlIcon } from '@percona/ui-lib';
 import { DbEngineType, DbType, ProxyType } from '@percona/types';
 import {
   DbCluster,
+  DbClusterStatus,
   ManageableSchedules,
   Proxy,
   ProxyExposeConfig,
@@ -305,3 +306,13 @@ const humanizedDbMap: Record<DbType, string> = {
 };
 
 export const humanizeDbType = (type: DbType): string => humanizedDbMap[type];
+
+// This does not apply to the delete action, which is only blocked when the db is being deleted itself
+export const shouldDbActionsBeBlocked = (status?: DbClusterStatus) => {
+  return [
+    DbClusterStatus.restoring,
+    DbClusterStatus.deleting,
+    DbClusterStatus.resizingVolumes,
+    DbClusterStatus.upgrading,
+  ].includes(status || ('' as DbClusterStatus));
+};

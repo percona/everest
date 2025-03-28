@@ -3,12 +3,16 @@ import { SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { ResourcesForm, resourcesFormSchema } from 'components/cluster-form';
 import { FormDialog } from 'components/form-dialog';
+import { useKubernetesClusterInfo } from 'hooks';
+
 type Props = {
   handleCloseModal: () => void;
   dbType: DbType;
   shardingEnabled: boolean;
   onSubmit: SubmitHandler<z.infer<ReturnType<typeof resourcesFormSchema>>>;
   defaultValues: z.infer<ReturnType<typeof resourcesFormSchema>>;
+  storageClass: string;
+  allowDiskDescaling: boolean;
 };
 
 const ResourcesEditModal = ({
@@ -17,7 +21,16 @@ const ResourcesEditModal = ({
   shardingEnabled,
   onSubmit,
   defaultValues,
+  storageClass,
+  allowDiskDescaling,
 }: Props) => {
+  const { data: clusterInfo } = useKubernetesClusterInfo([
+    'resources-cluster-info',
+  ]);
+  const allowVolumeExpansion = (clusterInfo?.storageClasses || []).find(
+    (item) => item.metadata.name === storageClass
+  )?.allowVolumeExpansion;
+
   return (
     <FormDialog
       dataTestId="edit-resources"
@@ -26,7 +39,12 @@ const ResourcesEditModal = ({
       closeModal={handleCloseModal}
       headerMessage="Edit Topology"
       submitMessage="Save"
-      schema={resourcesFormSchema(defaultValues, false, false)}
+      schema={resourcesFormSchema(
+        defaultValues,
+        false,
+        false,
+        allowDiskDescaling
+      )}
       onSubmit={onSubmit}
       defaultValues={defaultValues}
     >
@@ -34,7 +52,8 @@ const ResourcesEditModal = ({
         dbType={dbType}
         pairProxiesWithNodes={false}
         showSharding={dbType === DbType.Mongo}
-        disableDiskInput
+        disableDiskInput={!allowVolumeExpansion}
+        defaultValues={defaultValues}
         allowDiskInputUpdate={false}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
       />

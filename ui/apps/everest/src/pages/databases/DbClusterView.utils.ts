@@ -29,6 +29,7 @@ const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.stopping]: Messages.statusProvider.stopping,
   [DbClusterStatus.restoring]: Messages.statusProvider.restoring,
   [DbClusterStatus.deleting]: Messages.statusProvider.deleting,
+  [DbClusterStatus.resizingVolumes]: Messages.statusProvider.resizingVolumes,
   [DbClusterStatus.creating]: Messages.statusProvider.creating,
   [DbClusterStatus.upgrading]: Messages.statusProvider.upgrading,
 };
