@@ -1,7 +1,7 @@
 import { NodeProps } from '@xyflow/react';
 import { CustomNode } from './types';
 import { DBClusterComponent } from 'shared-types/components.types';
-import { Chip, Stack, Typography } from '@mui/material';
+import { Chip, Stack, Tooltip, Typography } from '@mui/material';
 import { COMPONENT_NODE_HEIGHT, COMPONENT_NODE_WIDTH } from './constants';
 import ComponentStatus from '../component-status';
 import { componentStatusToBaseStatus } from '../components.constants';
@@ -19,7 +19,7 @@ const ComponentNode = ({
       height={COMPONENT_NODE_HEIGHT}
       width={COMPONENT_NODE_WIDTH}
       elevation={selected ? 4 : 0}
-      dataTestId={`component-node-${name}`}
+      dataTestId={`component-node-${name}${selected ? '-selected' : ''}`}
       showBottomHandle
       paperProps={{
         sx: {
@@ -37,9 +37,19 @@ const ComponentNode = ({
         </Typography>
       </Stack>
       <Stack mt={2}>
-        <Typography variant="body1" data-testid="component-name">
-          {name}
-        </Typography>
+        <Tooltip title={name} placement="right" arrow>
+          <Typography
+            variant="body1"
+            data-testid="component-name"
+            sx={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {name}
+          </Typography>
+        </Tooltip>
         <DiagramComponentAge
           date={started}
           restarts={restarts}
@@ -50,7 +60,7 @@ const ComponentNode = ({
       </Stack>
       <Chip
         label={type}
-        sx={{ alignSelf: 'flex-start', mt: 1 }}
+        sx={{ alignSelf: 'flex-start', mt: 'auto' }}
         data-testid="component-type"
       />
     </DiagramNode>

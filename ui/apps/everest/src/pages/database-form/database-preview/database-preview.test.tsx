@@ -2,21 +2,22 @@ import React from 'react';
 import { screen, render, fireEvent, waitFor } from '@testing-library/react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { DbType } from '@percona/types';
-import { DB_WIZARD_DEFAULTS } from '../database-form.constants';
 import { TestWrapper } from 'utils/test';
 import { DatabasePreview } from './database-preview';
 import { DbWizardType } from '../database-form-schema.ts';
+import { getDbWizardDefaultValues } from '../database-form.utils';
 
 const FormProviderWrapper = ({
   children,
-  values = {},
+  values = {
+    dbType: DbType.Mongo,
+  },
 }: {
   children: React.ReactNode;
   values?: Partial<DbWizardType>;
 }) => {
   const methods = useForm<DbWizardType>({
-    // @ts-ignore
-    defaultValues: { ...DB_WIZARD_DEFAULTS, ...values },
+    defaultValues: { ...getDbWizardDefaultValues(values.dbType!), ...values },
   });
 
   return (
@@ -31,7 +32,11 @@ describe('DatabasePreview', () => {
     render(
       <FormProviderWrapper>
         <TestWrapper>
-          <DatabasePreview activeStep={0} longestAchievedStep={0} />
+          <DatabasePreview
+            stepsWithErrors={[]}
+            activeStep={0}
+            longestAchievedStep={0}
+          />
         </TestWrapper>
       </FormProviderWrapper>
     );
@@ -51,7 +56,11 @@ describe('DatabasePreview', () => {
         }}
       >
         <TestWrapper>
-          <DatabasePreview activeStep={0} longestAchievedStep={0} />
+          <DatabasePreview
+            stepsWithErrors={[]}
+            activeStep={0}
+            longestAchievedStep={0}
+          />
         </TestWrapper>
       </FormProviderWrapper>
     );
@@ -63,7 +72,7 @@ describe('DatabasePreview', () => {
     expect(screen.queryByText('Nº nodes: 1')).not.toBeInTheDocument();
   });
 
-  it('should show values from previous steps', () => {
+  it('should show values from previous steps', async () => {
     render(
       <FormProviderWrapper
         values={{
@@ -74,7 +83,11 @@ describe('DatabasePreview', () => {
         }}
       >
         <TestWrapper>
-          <DatabasePreview activeStep={1} longestAchievedStep={1} />
+          <DatabasePreview
+            stepsWithErrors={[]}
+            activeStep={1}
+            longestAchievedStep={1}
+          />
         </TestWrapper>
       </FormProviderWrapper>
     );
@@ -85,7 +98,7 @@ describe('DatabasePreview', () => {
 
     expect(
       screen.getByText(
-        '1 node - CPU - 1.00 CPU; Memory - 4.00 GB; Disk - 30.00 Gi'
+        '3 nodes - CPU - 3.00 CPU; Memory - 6.00 GB; Disk - 90.00 Gi'
       )
     ).toBeInTheDocument();
   });
@@ -115,7 +128,11 @@ describe('DatabasePreview', () => {
       >
         <TestWrapper>
           <FormConsumer />
-          <DatabasePreview activeStep={1} longestAchievedStep={1} />
+          <DatabasePreview
+            stepsWithErrors={[]}
+            activeStep={1}
+            longestAchievedStep={1}
+          />
         </TestWrapper>
       </FormProviderWrapper>
     );
