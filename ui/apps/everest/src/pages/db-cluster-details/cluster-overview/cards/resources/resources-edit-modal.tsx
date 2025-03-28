@@ -52,7 +52,7 @@ const ResourcesEditModal = ({
         dbType={dbType}
         pairProxiesWithNodes={false}
         showSharding={dbType === DbType.Mongo}
-        disableDiskInput={!allowVolumeExpansion || dbType !== DbType.Mysql}
+        disableDiskInput={!allowVolumeExpansion}
         defaultValues={defaultValues}
         allowDiskInputUpdate={false}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}

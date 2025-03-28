@@ -553,12 +553,6 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 		return fmt.Errorf("cannot scale down %d node cluster to 1. The operation is not supported", oldDB.Spec.Engine.Replicas)
 	}
 
-	// Do not allow updating storage size.
-	if dbc.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePXC &&
-		dbc.Spec.Engine.Storage.Size.Cmp(oldDB.Spec.Engine.Storage.Size) != 0 {
-		return errCannotChangeStorageSize
-	}
-
 	// Do not allow shrinking storage size.
 	if dbc.Spec.Engine.Storage.Size.Cmp(oldDB.Spec.Engine.Storage.Size) < 0 {
 		return errCannotShrinkStorageSize
