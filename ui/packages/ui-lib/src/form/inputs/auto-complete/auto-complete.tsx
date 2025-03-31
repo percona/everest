@@ -19,19 +19,19 @@ function AutoCompleteInput<T>({
   loading = false,
   isRequired = false,
   disabled = false,
-  showTooltip = false,
   tooltipText,
   onChange,
 }: AutoCompleteInputProps<T>) {
   const { control: contextControl } = useFormContext();
   const { helperText, ...restTextFieldProps } = textFieldProps;
   const { sx, ...restAutocompleteProps } = autoCompleteProps;
+
   return (
     <Controller
       name={name}
       control={control ?? contextControl}
       render={({ field, fieldState: { error } }) => (
-        <Tooltip title={showTooltip ? tooltipText : ''} placement="top" arrow>
+        <Tooltip title={tooltipText} placement="top" arrow>
           <Autocomplete
             {...field}
             sx={{ mt: 3, ...sx }}

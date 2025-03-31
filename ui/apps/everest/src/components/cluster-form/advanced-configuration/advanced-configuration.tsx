@@ -87,8 +87,11 @@ export const AdvancedConfigurationForm = ({
             loading={clusterInfoLoading}
             options={clusterInfo?.storageClassNames || []}
             disabled={loadingDefaultsForEdition}
-            showTooltip
-            tooltipText={Messages.tooltipTexts.storageClass}
+            tooltipText={
+              loadingDefaultsForEdition
+                ? Messages.tooltipTexts.storageClass
+                : undefined
+            }
             autoCompleteProps={{
               sx: {
                 mt: 0,
