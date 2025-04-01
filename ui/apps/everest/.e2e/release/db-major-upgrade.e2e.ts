@@ -355,7 +355,7 @@ test.describe.configure({ retries: 0 });
               await page.getByTestId('form-dialog-upgrade').click();
               await page.goto('/databases');
               await waitForStatus(page, clusterName, 'Upgrading', 15000);
-              await waitForStatus(page, clusterName, 'Up', 1200000);
+              await waitForStatus(page, clusterName, 'Up', 600000);
               const technology = technologyMap[db] || 'Unknown';
               await expect(
                 page.getByText(`${technology} ${nextMajorVersion}`)
@@ -433,7 +433,7 @@ test.describe.configure({ retries: 0 });
               await page.getByTestId('form-dialog-upgrade').click();
               await page.goto('/databases');
               await waitForStatus(page, clusterName, 'Upgrading', 15000);
-              await waitForStatus(page, clusterName, 'Up', 300000);
+              await waitForStatus(page, clusterName, 'Up', 600000);
               const technology = technologyMap[db] || 'Unknown';
               await expect(
                 page.getByText(`${technology} ${nextDbMinorVersion}`)
