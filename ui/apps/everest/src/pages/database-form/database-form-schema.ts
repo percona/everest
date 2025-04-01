@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DbType, WizardMode } from '@percona/types';
+import { DbType } from '@percona/types';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from '../../consts.ts';
 import { Messages } from './database-form.messages.ts';
 import { DbWizardFormFields } from 'consts.ts';
@@ -8,6 +8,7 @@ import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialo
 import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema.ts';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 const basicInfoSchema = () =>
   z

@@ -1,10 +1,11 @@
-import { DbType, WizardMode } from '@percona/types';
+import { DbType } from '@percona/types';
 import { useFormContext } from 'react-hook-form';
 import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './resources-step.messages.ts';
 import { ResourcesForm } from 'components/cluster-form';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const ResourcesStep = () => {
   const { watch } = useFormContext();

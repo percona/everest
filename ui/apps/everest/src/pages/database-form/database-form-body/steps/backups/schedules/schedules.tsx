@@ -29,7 +29,7 @@ import { ScheduleFormDialog } from 'components/schedule-form-dialog';
 import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { DbType, ScheduleWizardMode, WizardMode } from '@percona/types';
+import { DbType } from '@percona/types';
 import { ActionableLabeledContent } from '@percona/ui-lib';
 import { useDatabasePageMode } from '../../../../useDatabasePageMode';
 import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
@@ -37,6 +37,7 @@ import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefault
 import { PG_SLOTS_LIMIT } from 'consts';
 import { useRBACPermissions } from 'hooks/rbac';
 import { transformSchedulesIntoManageableSchedules } from 'utils/db';
+import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types';
 
 type Props = {
   disableCreateButton?: boolean;

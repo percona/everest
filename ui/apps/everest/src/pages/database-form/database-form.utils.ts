@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DbEngineType, DbType, WizardMode } from '@percona/types';
+import { DbEngineType, DbType } from '@percona/types';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields } from 'consts.ts';
 import { dbEngineToDbType } from '@percona/utils';
@@ -33,6 +33,7 @@ import {
 } from 'components/cluster-form';
 import { isProxy } from 'utils/db.tsx';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509

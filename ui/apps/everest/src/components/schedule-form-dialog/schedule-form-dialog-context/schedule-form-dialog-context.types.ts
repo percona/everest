@@ -1,7 +1,7 @@
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { ScheduleFormData } from '../schedule-form/schedule-form-schema';
-import { ScheduleWizardMode, WizardMode } from '@percona/types';
 import { kebabize } from '@percona/utils';
+import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types';
 
 export type ScheduleFormDialogExternalContext =
   | 'db-wizard-new'
