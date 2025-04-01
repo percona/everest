@@ -155,8 +155,10 @@ describe('TimeSelection', () => {
     );
   });
 
-  it('should render correctly for UTX+X timezone when monthly is selected', () => {
+  it('should render correctly for UTX+X timezone with or without DST when monthly is selected', () => {
     vi.stubEnv('TZ', 'Europe/Amsterdam');
+    const today = new Date();
+    const isDST = today.getMonth() > 1 && today.getDate() >= 30 ? true : false;
     render(
       <TestWrapper>
         <FormProviderWrapper>
@@ -174,7 +176,7 @@ describe('TimeSelection', () => {
 
     expect(screen.getByTestId('select-input-hour')).toHaveAttribute(
       'value',
-      '1'
+      isDST ? '2' : '1'
     );
     expect(screen.getByTestId('select-input-minute')).toHaveAttribute(
       'value',
