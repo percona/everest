@@ -132,6 +132,7 @@ export const useDbActions = (dbCluster: DbCluster) => {
                       ...item,
                       status: {
                         ...item.status,
+                        conditions: item.status?.conditions || [],
                         crVersion: item.status?.crVersion || '',
                         hostname: item.status?.hostname || '',
                         port: item.status?.port || 0,
@@ -156,6 +157,7 @@ export const useDbActions = (dbCluster: DbCluster) => {
                 ...oldData,
                 status: {
                   ...oldData.status,
+                  conditions: oldData.status?.conditions || [],
                   hostname: oldData.status?.hostname || '',
                   port: oldData.status?.port || 0,
                   crVersion: oldData.status?.crVersion || '',

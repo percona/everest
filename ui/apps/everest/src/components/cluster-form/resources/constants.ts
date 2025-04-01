@@ -192,7 +192,8 @@ const numberOfResourcesValidator = (
 export const resourcesFormSchema = (
   defaultValues: Record<string, unknown>,
   allowShardingDescaling: boolean,
-  allowDescalingToOneNode: boolean
+  allowDescalingToOneNode: boolean,
+  allowDiskDescaling: boolean
 ) => {
   const objectShape = {
     [DbWizardFormFields.shardNr]: z.string().optional(),
@@ -225,6 +226,7 @@ export const resourcesFormSchema = (
         customNrOfNodes = '',
         customNrOfProxies = '',
         dbType,
+        disk,
       },
       ctx
     ) => {
@@ -340,7 +342,7 @@ export const resourcesFormSchema = (
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               path: [DbWizardFormFields.shardNr],
-              message: Messages.sharding.descaling,
+              message: Messages.descaling,
             });
           }
         }
@@ -367,6 +369,24 @@ export const resourcesFormSchema = (
             }
           }
         }
+      }
+
+      const prevDiskValue = defaultValues[DbWizardFormFields.disk] as number;
+      if (!allowDiskDescaling && disk < prevDiskValue) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: Messages.descaling,
+          path: [DbWizardFormFields.disk],
+        });
+      }
+
+      if (!Number.isInteger(disk)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Disk size must be an integer number.',
+
+          path: [DbWizardFormFields.disk],
+        });
       }
     }
   );

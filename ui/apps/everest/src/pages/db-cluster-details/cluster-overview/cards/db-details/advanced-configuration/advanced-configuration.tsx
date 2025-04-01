@@ -22,8 +22,10 @@ import { useContext, useState } from 'react';
 import { AdvancedConfigurationEditModal } from './edit-advanced-configuration';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
-import { changeDbClusterAdvancedConfig } from 'utils/db';
+import {
+  changeDbClusterAdvancedConfig,
+  shouldDbActionsBeBlocked,
+} from 'utils/db';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -52,11 +54,8 @@ export const AdvancedConfiguration = ({
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
-  const restoringOrDeleting = [
-    DbClusterStatus.restoring,
-    DbClusterStatus.deleting,
-  ].includes(dbCluster?.status?.status!);
-  const editable = canUpdateDb && !restoringOrDeleting;
+  const editable =
+    canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
   const handleSubmit = async ({
     externalAccess,
