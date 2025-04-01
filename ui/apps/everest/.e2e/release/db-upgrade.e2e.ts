@@ -61,7 +61,7 @@ test.describe.configure({ retries: 0 });
   { db: 'psmdb', size: 3, sharding: true },
 ].forEach(({ db, size, sharding }) => {
   test.describe(
-    'Database major upgrade',
+    'Database upgrade',
     {
       tag: '@release',
     },
