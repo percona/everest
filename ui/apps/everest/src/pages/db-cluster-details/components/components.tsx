@@ -128,11 +128,7 @@ const Components = () => {
       newRules.forEach((rule) => {
         filteredRules[rule.component].push(rule);
       });
-      update({
-        dbCluster: changeDbClusterAffinityRules(dbCluster!, newRules),
-        clusterName: dbCluster!.metadata.name,
-        namespace: dbCluster!.metadata.namespace,
-      });
+      update(changeDbClusterAffinityRules(dbCluster!, newRules));
     },
     [dbCluster, update]
   );
