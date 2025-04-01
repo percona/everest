@@ -61,7 +61,6 @@ export const useMonitoringInstancesList = (
   >(({ namespace, options }) => {
     return {
       queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-      retry: false,
       queryFn: () => getMonitoringInstancesFn(namespace),
       refetchInterval: 5 * 1000,
       ...options,
@@ -82,7 +81,6 @@ export const useMonitoringInstancesList = (
 export const useMonitoringInstancesForNamespace = (namespace: string) => {
   return useQuery({
     queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-    retry: false,
     queryFn: () => getMonitoringInstancesFn(namespace),
     refetchInterval: 5 * 1000,
   });

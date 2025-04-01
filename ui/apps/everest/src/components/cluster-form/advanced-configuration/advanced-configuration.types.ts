@@ -19,4 +19,5 @@ export enum AdvancedConfigurationFields {
   engineParametersEnabled = 'engineParametersEnabled',
   engineParameters = 'engineParameters',
   affinityRules = 'affinityRules',
+  storageClass = 'storageClass',
 }

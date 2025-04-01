@@ -22,6 +22,17 @@ import { AffinityRule } from 'shared-types/affinity.types';
 export const advancedConfigurationsSchema = () =>
   z
     .object({
+      [AdvancedConfigurationFields.storageClass]: z
+        .string()
+        .nullable()
+        .superRefine((input, ctx) => {
+          if (!input) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: Messages.errors.storageClass.invalid,
+            });
+          }
+        }),
       [AdvancedConfigurationFields.externalAccess]: z.boolean(),
       [AdvancedConfigurationFields.sourceRanges]: z.array(
         z.object({ sourceRange: z.string().optional() })

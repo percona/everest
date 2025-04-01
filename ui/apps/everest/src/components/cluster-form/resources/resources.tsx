@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import {
   Accordion,
   AccordionSummary,
+  Alert,
   Box,
   Divider,
   FormGroup,
@@ -13,10 +14,12 @@ import {
   Stack,
   SxProps,
   Theme,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import {
   TextInput,
   ToggleButtonGroupInput,
@@ -36,13 +39,17 @@ import {
   NODES_DB_TYPE_MAP,
   ResourceSize,
   PROXIES_DEFAULT_SIZES,
+  resourcesFormSchema,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
-import { getProxyUnitNamesFromDbType } from 'utils/db';
 
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
+import { z } from 'zod';
+import { memoryParser } from 'utils/k8ResourceParser';
+import { DbWizardType } from 'pages/database-form/database-form-schema';
+import { getProxyUnitNamesFromDbType, someErrorInStateFields } from 'utils/db';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
@@ -120,7 +127,7 @@ const ResourceInput = ({
             sx={{ whiteSpace: 'nowrap' }}
             color={theme.palette.text.secondary}
           >{`x ${numberOfUnits} ${+numberOfUnits > 1 ? unitPlural : unit}`}</Typography>
-          {value && numberOfUnits && (
+          {!!value && numberOfUnits && (
             <Typography
               variant="body1"
               sx={{ whiteSpace: 'nowrap' }}
@@ -150,11 +157,12 @@ const ResourcesToggles = ({
   disableDiskInput,
   allowDiskInputUpdate,
   disableCustom = false,
+  warnForUpscaling = false,
 }: ResourcesTogglesProps) => {
   const { isMobile, isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
     useKubernetesClusterResourcesInfo();
-  const { watch, setValue, setError, clearErrors, resetField } =
+  const { watch, setValue, setError, clearErrors, getFieldState, resetField } =
     useFormContext();
 
   const resourceSizePerUnit: ResourceSize = watch(resourceSizePerUnitInputName);
@@ -169,6 +177,9 @@ const ResourcesToggles = ({
       ? customNrOfUnits
       : numberOfUnits,
     10
+  );
+  const { error: numberOfUnitsInpuError } = getFieldState(
+    numberOfUnitsInputName
   );
 
   const cpuCapacityExceeded = resourcesInfo
@@ -229,7 +240,7 @@ const ResourcesToggles = ({
 
   return (
     <FormGroup sx={{ mt: 3 }}>
-      <Stack>
+      <Stack position="relative">
         <ToggleButtonGroupInput
           name={numberOfUnitsInputName}
           label={`Number of ${unitPlural}`}
@@ -261,6 +272,20 @@ const ResourcesToggles = ({
             </ToggleCard>
           )}
         </ToggleButtonGroupInput>
+        {!!numberOfUnitsInpuError && (
+          <FormHelperText
+            error
+            sx={{
+              position: 'absolute',
+              bottom: (theme) =>
+                theme.spacing(
+                  numberOfUnits === CUSTOM_NR_UNITS_INPUT_VALUE ? 4.5 : -1.5
+                ),
+            }}
+          >
+            {numberOfUnitsInpuError.message}
+          </FormHelperText>
+        )}
         {numberOfUnits === CUSTOM_NR_UNITS_INPUT_VALUE && (
           <TextInput
             name={customNrOfUnitsInputName}
@@ -352,24 +377,38 @@ const ResourcesToggles = ({
           endSuffix="GB"
           numberOfUnits={intNumberOfUnits}
         />
+
         {diskInputName && (
-          <ResourceInput
-            unit={unit}
-            unitPlural={unitPlural}
-            name={diskInputName}
-            disabled={disableDiskInput}
-            label="DISK"
-            helperText={checkResourceText(
-              resourcesInfo?.available?.diskSize,
-              diskUnit,
-              'disk',
-              diskCapacityExceeded
-            )}
-            endSuffix={diskUnit}
-            numberOfUnits={intNumberOfUnits}
-          />
+          <Tooltip
+            title={disableDiskInput ? Messages.disabledDiskInputTooltip : ''}
+            placement="top"
+            arrow
+          >
+            <Box>
+              <ResourceInput
+                unit={unit}
+                unitPlural={unitPlural}
+                name={diskInputName}
+                disabled={disableDiskInput}
+                label="DISK"
+                helperText={checkResourceText(
+                  resourcesInfo?.available?.diskSize,
+                  diskUnit,
+                  'disk',
+                  diskCapacityExceeded
+                )}
+                endSuffix={diskUnit}
+                numberOfUnits={intNumberOfUnits}
+              />
+            </Box>
+          </Tooltip>
         )}
       </Box>
+      {warnForUpscaling && (
+        <Alert sx={{ mt: 2 }} severity="warning">
+          Upscaling disk size is an irreversible action.
+        </Alert>
+      )}
     </FormGroup>
   );
 };
@@ -377,18 +416,33 @@ const ResourcesToggles = ({
 const CustomAccordionSummary = ({
   unitPlural,
   nr,
+  hasError,
 }: {
   unitPlural: string;
   nr: number;
+  hasError?: boolean;
 }) => {
   const text = Number.isNaN(nr) || nr < 1 ? '' : ` (${nr})`;
 
   return (
-    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-      <Typography
-        variant="h5"
-        textTransform="capitalize"
-      >{`${unitPlural} ${text}`}</Typography>
+    <AccordionSummary
+      sx={{
+        paddingLeft: 0,
+      }}
+      expandIcon={<ExpandMoreIcon />}
+    >
+      <Box display="flex" alignItems="center">
+        {hasError && (
+          <ErrorOutlineIcon
+            color="error"
+            sx={{ mr: 1, position: 'relative', bottom: 1 }}
+          />
+        )}
+        <Typography
+          variant="sectionHeading"
+          textTransform="capitalize"
+        >{`${unitPlural} ${text}`}</Typography>
+      </Box>
     </AccordionSummary>
   );
 };
@@ -431,6 +485,7 @@ const ResourcesForm = ({
   showSharding,
   hideProxies = false,
   disableShardingInput = false,
+  defaultValues,
 }: {
   dbType: DbType;
   hideProxies?: boolean;
@@ -439,26 +494,31 @@ const ResourcesForm = ({
   pairProxiesWithNodes?: boolean;
   showSharding?: boolean;
   disableShardingInput?: boolean;
+  defaultValues?: z.infer<ReturnType<typeof resourcesFormSchema>>;
 }) => {
   const [expanded, setExpanded] = useState<'nodes' | 'proxies' | false>(
     'nodes'
   );
-  const { watch, getFieldState, setValue, trigger, clearErrors } =
-    useFormContext();
+  const [showDiskWarning, setShowDiskWarning] = useState(false);
+  const {
+    watch,
+    getFieldState,
+    setValue,
+    trigger,
+    clearErrors,
+    getValues,
+    formState: { errors },
+  } = useFormContext<DbWizardType>();
 
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
 
   const sharding: boolean = watch(DbWizardFormFields.sharding);
-  const shardConfigServers: number = watch(
-    DbWizardFormFields.shardConfigServers
-  );
-  const { error: shardConfigServersError } = getFieldState(
-    DbWizardFormFields.shardConfigServers
-  );
+  const shardConfigServers = watch(DbWizardFormFields.shardConfigServers);
 
   const numberOfProxies: string = watch(DbWizardFormFields.numberOfProxies);
-  const customNrOfNodes: string = watch(DbWizardFormFields.customNrOfNodes);
-  const customNrOfProxies: string = watch(DbWizardFormFields.customNrOfProxies);
+  const customNrOfNodes = watch(DbWizardFormFields.customNrOfNodes);
+  const customNrOfProxies = watch(DbWizardFormFields.customNrOfProxies);
+  const disk: number = watch(DbWizardFormFields.disk);
   const proxyUnitNames = getProxyUnitNamesFromDbType(dbType);
   const nodesAccordionSummaryNumber =
     numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
@@ -469,9 +529,20 @@ const ResourcesForm = ({
       ? customNrOfProxies
       : numberOfProxies;
 
-  const { error: proxyFieldError } = getFieldState(
-    DbWizardFormFields.numberOfProxies
-  );
+  const someErrorInProxies = someErrorInStateFields(getFieldState, [
+    DbWizardFormFields.numberOfProxies,
+    DbWizardFormFields.customNrOfProxies,
+    DbWizardFormFields.proxyCpu,
+    DbWizardFormFields.proxyMemory,
+  ]);
+
+  const someErrorInNodes = someErrorInStateFields(getFieldState, [
+    DbWizardFormFields.numberOfNodes,
+    DbWizardFormFields.customNrOfNodes,
+    DbWizardFormFields.cpu,
+    DbWizardFormFields.memory,
+    DbWizardFormFields.disk,
+  ]);
 
   const handleAccordionChange =
     (panel: 'nodes' | 'proxies') =>
@@ -526,7 +597,9 @@ const ResourcesForm = ({
         clearErrors(DbWizardFormFields.shardConfigServers);
         setValue(
           DbWizardFormFields.shardConfigServers,
-          getDefaultNumberOfconfigServersByNumberOfNodes(+customNrOfNodes)
+          getDefaultNumberOfconfigServersByNumberOfNodes(
+            +(customNrOfNodes || '')
+          )
         );
       }
     }
@@ -540,6 +613,19 @@ const ResourcesForm = ({
     trigger,
     clearErrors,
   ]);
+
+  useEffect(() => {
+    if (defaultValues) {
+      const diskUnit = getValues(DbWizardFormFields.diskUnit);
+      const defaultDiskUnit = defaultValues.diskUnit;
+      const defaultGiValue = memoryParser(
+        `${defaultValues.disk}${defaultDiskUnit}`,
+        'Gi'
+      ).value;
+      const newGiValue = memoryParser(`${disk}${diskUnit}`, 'Gi').value;
+      setShowDiskWarning(newGiValue > defaultGiValue);
+    }
+  }, [defaultValues, disk, getValues]);
 
   useEffect(() => {
     trigger();
@@ -575,11 +661,13 @@ const ResourcesForm = ({
         onChange={handleAccordionChange('nodes')}
         sx={{
           px: 2,
+          pb: 2,
         }}
       >
         <CustomAccordionSummary
-          unitPlural="Nodes"
-          nr={parseInt(nodesAccordionSummaryNumber, 10)}
+          unitPlural={sharding ? `Nodes per shard` : 'Nodes'}
+          nr={parseInt(nodesAccordionSummaryNumber || '', 10)}
+          hasError={someErrorInNodes}
         />
         <Divider />
         <ResourcesToggles
@@ -596,6 +684,7 @@ const ResourcesForm = ({
           disableDiskInput={disableDiskInput}
           allowDiskInputUpdate={allowDiskInputUpdate}
           disableCustom={dbType === DbType.Mysql}
+          warnForUpscaling={showDiskWarning}
         />
       </Accordion>
       {!hideProxies && (
@@ -605,11 +694,13 @@ const ResourcesForm = ({
           onChange={handleAccordionChange('proxies')}
           sx={{
             px: 2,
+            mt: 1,
           }}
         >
           <CustomAccordionSummary
             unitPlural={proxyUnitNames.plural}
-            nr={parseInt(proxiesAccordionSummaryNumber, 10)}
+            nr={parseInt(proxiesAccordionSummaryNumber || '', 10)}
+            hasError={someErrorInProxies}
           />
           <Divider />
           <ResourcesToggles
@@ -626,11 +717,6 @@ const ResourcesForm = ({
             numberOfUnitsInputName={DbWizardFormFields.numberOfProxies}
             customNrOfUnitsInputName={DbWizardFormFields.customNrOfProxies}
           />
-          {proxyFieldError && (
-            <FormHelperText error={true}>
-              {proxyFieldError?.message}
-            </FormHelperText>
-          )}
         </Accordion>
       )}
       {!!showSharding && !!sharding && (
@@ -649,8 +735,9 @@ const ResourcesForm = ({
               toggleButtonGroupProps={{
                 size: 'small',
                 onChange: (_, value) => {
-                  setValue(DbWizardFormFields.shardConfigServers, value);
-                  trigger(DbWizardFormFields.shardConfigServers);
+                  setValue(DbWizardFormFields.shardConfigServers, value, {
+                    shouldValidate: true,
+                  });
                 },
               }}
             >
@@ -674,12 +761,12 @@ const ResourcesForm = ({
                 </ToggleRegularButton>
               ))}
             </ToggleButtonGroupInputRegular>
-            {shardConfigServersError && (
+            {errors.shardConfigServers && (
               <FormHelperText
                 data-testid="shard-config-servers-error"
                 error={true}
               >
-                {shardConfigServersError?.message}
+                {errors.shardConfigServers.message}
               </FormHelperText>
             )}
           </Stack>

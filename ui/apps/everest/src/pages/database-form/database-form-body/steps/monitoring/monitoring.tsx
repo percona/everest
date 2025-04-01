@@ -107,18 +107,20 @@ export const Monitoring = () => {
       if (monitoring && availableMonitoringInstances?.length) {
         setValue(
           DbWizardFormFields.monitoringInstance,
-          availableMonitoringInstances[0].name
+          availableMonitoringInstances[0].name,
+          { shouldValidate: true }
         );
       }
     }
     if (
-      (mode === 'edit' || mode === 'restoreFromBackup') &&
+      mode === 'restoreFromBackup' &&
       availableMonitoringInstances?.length &&
       !selectedInstance
     ) {
       setValue(
         DbWizardFormFields.monitoringInstance,
-        availableMonitoringInstances[0].name
+        availableMonitoringInstances[0].name,
+        { shouldValidate: true }
       );
     }
   }, [monitoring]);

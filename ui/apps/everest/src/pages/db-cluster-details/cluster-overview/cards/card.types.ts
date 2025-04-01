@@ -61,12 +61,11 @@ export type DatabaseDetailsOverviewCardProps =
 export type ResourcesDetailsOverviewProps = {
   dbCluster: DbCluster;
   sharding: DbCluster['spec']['sharding'];
-  canUpdateDb: boolean;
+  canUpdate: boolean;
 } & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {
   schedules: NonNullable<DbCluster['spec']['backup']>['schedules'];
-  backup: DbCluster['spec']['backup'];
   pitrEnabled: NonNullable<
     NonNullable<DbCluster['spec']['backup']>['pitr']
   >['enabled'];

@@ -13,14 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkError, deleteDBCluster, testsNs} from "@tests/tests/helpers";
+import {checkError, deleteDBCluster, testsNs} from '@tests/tests/helpers';
 
 let recommendedVersion
+
 test.setTimeout(120 * 1000)
 
 test.beforeAll(async ({ request }) => {
-  const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-postgresql-operator`)
-  const availableVersions = (await engineResponse.json()).status.availableVersions.engine
+  const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-postgresql-operator`),
+   availableVersions = (await engineResponse.json()).status.availableVersions.engine
 
   for (const k in availableVersions) {
     if (availableVersions[k].status === 'recommended') {
@@ -32,8 +33,8 @@ test.beforeAll(async ({ request }) => {
 })
 
 test('create/edit/delete single node pg cluster', async ({ request, page }) => {
-  const clusterName = 'test-pg-cluster'
-  const pgPayload = {
+  const clusterName = 'test-pg-cluster',
+   pgPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -95,7 +96,7 @@ test('create/edit/delete single node pg cluster', async ({ request, page }) => {
   pgPayload.spec.engine.replicas = 3
 
   // Update PG cluster
-  expect(pgPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(pgPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pgPayload,
@@ -103,7 +104,7 @@ test('create/edit/delete single node pg cluster', async ({ request, page }) => {
 
   await checkError(updatedPGCluster)
 
-  let pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
   await checkError(pgCluster)
 
@@ -113,8 +114,8 @@ test('create/edit/delete single node pg cluster', async ({ request, page }) => {
 })
 
 test('expose pg cluster after creation', async ({ request, page }) => {
-  const clusterName = 'exposed-pg-cluster'
-  const pgPayload = {
+  const clusterName = 'exposed-pg-cluster',
+   pgPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -172,7 +173,7 @@ test('expose pg cluster after creation', async ({ request, page }) => {
   pgPayload.spec.proxy.expose.type = 'external'
 
   // Update PG cluster
-  expect(pgPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(pgPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pgPayload,
@@ -180,7 +181,7 @@ test('expose pg cluster after creation', async ({ request, page }) => {
 
   await checkError(updatedPGCluster)
 
-  let pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
 
   await checkError(pgCluster)
 
@@ -190,8 +191,8 @@ test('expose pg cluster after creation', async ({ request, page }) => {
 })
 
 test('expose pg cluster on EKS to the public internet and scale up', async ({ request, page }) => {
-  const clusterName = 'eks-pg-cluster'
-  const pgPayload = {
+  const clusterName = 'eks-pg-cluster',
+   pgPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -249,7 +250,7 @@ test('expose pg cluster on EKS to the public internet and scale up', async ({ re
   pgPayload.spec.engine.replicas = 5
 
   // Update PG cluster
-  expect(pgPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(pgPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: pgPayload,

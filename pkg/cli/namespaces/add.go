@@ -141,9 +141,9 @@ func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
 
 	// By default, all operators are selected.
 	defaultOpts := []tui.MultiSelectOption{
-		{common.PXCProductName, true},
-		{common.PSMDBProductName, true},
-		{common.PGProductName, true},
+		{common.MySQLProductName, true},
+		{common.MongoDBProductName, true},
+		{common.PostgreSQLProductName, true},
 	}
 
 	var selectedOpts []tui.MultiSelectOption
@@ -159,11 +159,11 @@ func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
 	// Copy user's choice to config.
 	for _, op := range selectedOpts {
 		switch op.Text {
-		case common.PXCProductName:
+		case common.MySQLProductName:
 			cfg.Operators.PXC = op.Selected
-		case common.PSMDBProductName:
+		case common.MongoDBProductName:
 			cfg.Operators.PSMDB = op.Selected
-		case common.PGProductName:
+		case common.PostgreSQLProductName:
 			cfg.Operators.PG = op.Selected
 		}
 	}
@@ -328,7 +328,7 @@ func (n *NamespaceAdder) GetNamespaceInstallSteps(ctx context.Context, dbNSChart
 			err := n.validateNamespaceUpdate(ctx, namespace)
 			if errors.Is(err, ErrCannotRemoveOperators) {
 				msg := "Removal of an installed operator is not supported. Proceeding without removal."
-				_, _ = fmt.Fprint(os.Stdout, output.Warn(msg)) //nolint:govet
+				_, _ = fmt.Fprint(os.Stdout, output.Warn("%s", msg))
 				n.l.Warn(msg)
 				break
 			} else if err != nil {

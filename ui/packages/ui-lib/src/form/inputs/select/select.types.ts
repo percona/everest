@@ -22,9 +22,11 @@ export type SelectInputProps = {
   controllerProps?: UseControllerProps;
   name: string;
   label?: string;
+  helperText?: React.ReactNode;
   labelProps?: LabeledContentProps;
   selectFieldProps?: SelectProps;
   formControlProps?: FormControlProps;
   children?: React.ReactNode | React.ReactNode[];
   isRequired?: boolean;
+  loading?: boolean;
 };

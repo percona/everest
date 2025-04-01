@@ -37,7 +37,6 @@ export const DbClusterContextProvider = ({
     {
       enabled: !!namespace && !!dbClusterName && !clusterDeleted,
       refetchInterval: refetchInterval,
-      retry: false,
     }
   );
 

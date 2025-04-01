@@ -13,30 +13,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Stack } from '@mui/material';
-import { DbType } from '@percona/types';
-import { SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
-import { AffinityListView } from 'components/cluster-form/affinity/affinity-list-view/affinity-list.view';
-import { useFormContext } from 'react-hook-form';
-import { AdvancedConfigurationFields } from './advanced-configuration.types';
-import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
+import {
+  AutoCompleteInput,
+  SwitchInput,
+  TextArray,
+  TextInput,
+} from '@percona/ui-lib';
 import { Messages } from './messages';
-import { DbWizardForm } from 'consts';
+import { AdvancedConfigurationFields } from './advanced-configuration.types';
+import { useFormContext } from 'react-hook-form';
+import { DbType } from '@percona/types';
+import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
+import { Stack } from '@mui/material';
+import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
+import { useCallback, useEffect } from 'react';
+import { DbWizardForm, DbWizardFormFields } from 'consts';
+import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
+import AdvancedCard from 'components/advanced-card';
 import { AffinityRule } from 'shared-types/affinity.types';
-import { useCallback } from 'react';
 import RoundedBox from 'components/rounded-box';
+import { AffinityListView } from '../affinity/affinity-list-view/affinity-list.view';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
+  loadingDefaultsForEdition?: boolean;
   showAffinity?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
   showAffinity = false,
+  loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, setValue } = useFormContext();
-
+  const { watch, setValue, getFieldState } = useFormContext();
+  const mode = useDatabasePageMode();
   const [
     externalAccess,
     engineParametersEnabled,
@@ -48,6 +58,33 @@ export const AdvancedConfigurationForm = ({
     AdvancedConfigurationFields.affinityRules,
     DbWizardForm.sharding,
   ]);
+  const { data: clusterInfo, isLoading: clusterInfoLoading } =
+    useKubernetesClusterInfo(['wizard-k8-info']);
+
+  // setting the storage class default value
+  useEffect(() => {
+    const { isTouched: storageClassTouched } = getFieldState(
+      DbWizardFormFields.storageClass
+    );
+
+    if (
+      !storageClassTouched &&
+      mode === 'new' &&
+      clusterInfo?.storageClassNames &&
+      clusterInfo.storageClassNames.length > 0
+    ) {
+      setValue(
+        DbWizardFormFields.storageClass,
+        clusterInfo?.storageClassNames[0],
+        { shouldValidate: true }
+      );
+    }
+  }, [clusterInfo]);
+  const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
+    if (!hasError && !value.includes('/') && value !== '') {
+      setValue(fieldName, `${value}/32`);
+    }
+  };
 
   const onRulesChange = useCallback(
     (newRules: AffinityRule[]) => {
@@ -68,6 +105,41 @@ export const AdvancedConfigurationForm = ({
           dbType={dbType}
           isShardingEnabled={isShardingEnabled}
         />
+      )}
+      <AdvancedCard
+        title={Messages.cards.storage.title}
+        description={Messages.cards.storage.description}
+        controlComponent={
+          <AutoCompleteInput
+            name={AdvancedConfigurationFields.storageClass}
+            label={Messages.labels.storageClass}
+            loading={clusterInfoLoading}
+            options={clusterInfo?.storageClassNames || []}
+            autoCompleteProps={{
+              disableClearable: true,
+              disabled: loadingDefaultsForEdition,
+              sx: {
+                mt: 0,
+              },
+            }}
+          />
+        }
+      />
+      <SwitchInput
+        label={Messages.enableExternalAccess.title}
+        labelCaption={Messages.enableExternalAccess.caption}
+        name={AdvancedConfigurationFields.externalAccess}
+      />
+      {externalAccess && (
+        <Stack sx={{ ml: 6 }}>
+          <TextArray
+            placeholder={Messages.sourceRangePlaceholder}
+            fieldName={AdvancedConfigurationFields.sourceRanges}
+            fieldKey="sourceRange"
+            label={Messages.sourceRange}
+            handleBlur={handleBlur}
+          />
+        </Stack>
       )}
       <RoundedBox>
         <SwitchInput

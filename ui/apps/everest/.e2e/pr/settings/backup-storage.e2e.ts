@@ -14,16 +14,16 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { findRowAndClickActions } from '@e2e/utils/table';
+import { findRowAndClickActions, waitForDelete } from '@e2e/utils/table';
+
 const {
-  EVEREST_LOCATION_BUCKET_NAME,
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
   EVEREST_LOCATION_REGION,
   EVEREST_LOCATION_URL,
 } = process.env;
 
-test.describe.skip('Backup storage', () => {
+test.describe.serial('Backup storage', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/settings/storage-locations');
     await page.getByTestId('add-backup-storage').waitFor();
@@ -34,13 +34,10 @@ test.describe.skip('Backup storage', () => {
     await page.getByTestId('text-input-name').fill('test-storage-name');
     await page.getByTestId('text-input-description').fill('test-description');
 
-    const namespaces = page.getByTestId('text-input-allowed-namespaces');
-    await namespaces.click();
-    await page.getByRole('option', { name: 'Select All' }).click();
+    await page.getByTestId('text-input-namespace').click();
+    await page.getByRole('option', { name: 'everest-ui' }).click();
     await expect(page.getByTestId('select-input-type')).toHaveValue('s3');
-    await page
-      .getByTestId('text-input-bucket-name')
-      .fill(EVEREST_LOCATION_BUCKET_NAME);
+    await page.getByTestId('text-input-bucket-name').fill('bucket-6');
     await page.getByTestId('text-input-region').fill(EVEREST_LOCATION_REGION);
     await page.getByTestId('text-input-url').fill(EVEREST_LOCATION_URL);
     await page
@@ -53,7 +50,26 @@ test.describe.skip('Backup storage', () => {
     await page.getByTestId('checkbox-force-path-style').setChecked(true);
     await page.getByTestId('form-dialog-add').click();
 
+    await expect(page.getByText('test-storage-name')).toBeVisible();
+  });
+
+  test('Edit backup storage', async ({ page }) => {
+    await findRowAndClickActions(page, 'test-storage-name', 'Edit');
+    await page
+      .getByTestId('text-input-description')
+      .fill('new-test-description');
+    await page.getByTestId('form-dialog-edit').click();
+    await page.reload();
+    await findRowAndClickActions(page, 'test-storage-name', 'Edit');
+    await expect(page.getByTestId('text-input-description')).toHaveValue(
+      'new-test-description'
+    );
+    await page.getByTestId('form-dialog-cancel').click();
+  });
+
+  test('Delete backup storage', async ({ page }) => {
     await findRowAndClickActions(page, 'test-storage-name', 'Delete');
     await page.getByTestId('confirm-dialog-delete').click();
+    await waitForDelete(page, 'test-storage-name', 10000);
   });
 });

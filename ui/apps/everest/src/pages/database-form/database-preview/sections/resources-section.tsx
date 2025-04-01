@@ -1,7 +1,8 @@
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { PreviewContentText } from '../preview-section';
 import { SectionProps } from './section.types';
-import { getProxyUnitNamesFromDbType } from 'utils/db';
+import { getPreviewResourcesText, getProxyUnitNamesFromDbType } from 'utils/db';
+import { DbType } from '@percona/types';
 
 export const ResourcesPreviewSection = ({
   dbType,
@@ -44,43 +45,70 @@ export const ResourcesPreviewSection = ({
   const parsedMemory = Number(memory) * intNumberOfNodes;
   const parsedProxyCPU = Number(proxyCpu) * intNumberOfProxies;
   const parsedProxyMemory = Number(proxyMemory) * intNumberOfProxies;
+  const parsedShardNr = shardNr ? Number.parseInt(shardNr) : undefined;
+  const nodesTotalNumber =
+    sharding && shardNr ? +shardNr * intNumberOfNodes : intNumberOfNodes;
+
+  const nodesText = `${nodesTotalNumber} ${nodesTotalNumber === 1 ? 'node' : 'nodes'}`;
+
+  const nodesCPUText = getPreviewResourcesText(
+    'CPU',
+    parsedCPU,
+    sharding,
+    'CPU',
+    parsedShardNr
+  );
+  const nodesMemoryText = getPreviewResourcesText(
+    'Memory',
+    parsedMemory,
+    sharding,
+    'GB',
+    parsedShardNr
+  );
+  const nodesDiskText = getPreviewResourcesText(
+    'Disk',
+    parsedDisk,
+    sharding,
+    diskUnit,
+    parsedShardNr
+  );
+
+  const proxyText = `${intNumberOfProxies} ${intNumberOfProxies === 1 ? proxyUnitNames.singular : proxyUnitNames.plural}`;
+  const proxyCPUText = getPreviewResourcesText(
+    'CPU',
+    parsedProxyCPU,
+    sharding,
+    'CPU'
+  );
+  const proxyMemoryText = getPreviewResourcesText(
+    'Memory',
+    parsedProxyMemory,
+    sharding,
+    'GB'
+  );
 
   return (
     <>
-      <PreviewContentText text={`Nº nodes: ${intNumberOfNodes}`} />
       {sharding && (
         <>
-          <PreviewContentText text={`Shards: ${shardNr}`} />
-          <PreviewContentText
-            text={`Configuration servers: ${shardConfigServers}`}
-          />
+          <PreviewContentText text={`${shardNr} shards`} />
         </>
       )}
       <PreviewContentText
-        text={`CPU: ${Number.isNaN(parsedCPU) ? '' : `${parsedCPU.toFixed(2)} CPU`}`}
+        text={`${nodesText} - ${nodesCPUText}; ${nodesMemoryText}; ${nodesDiskText}`}
       />
-      <PreviewContentText
-        text={`Memory: ${
-          Number.isNaN(parsedMemory) ? '' : `${parsedMemory.toFixed(2)} GB`
-        }`}
-      />
-      <PreviewContentText
-        text={`Disk: ${Number.isNaN(parsedDisk) ? '' : `${parsedDisk.toFixed(2)} ${diskUnit}`}`}
-      />
-      <PreviewContentText
-        text={`Nº ${proxyUnitNames.plural}: ${intNumberOfProxies}`}
-        mt={2}
-      />
-      <PreviewContentText
-        text={`CPU: ${Number.isNaN(parsedProxyCPU) ? '' : `${parsedProxyCPU.toFixed(2)} CPU`}`}
-      />
-      <PreviewContentText
-        text={`Memory: ${
-          Number.isNaN(parsedProxyMemory)
-            ? ''
-            : `${parsedProxyMemory.toFixed(2)} GB`
-        }`}
-      />
+      {(dbType !== DbType.Mongo || sharding) && (
+        <PreviewContentText
+          text={`${proxyText} - ${proxyCPUText}; ${proxyMemoryText}`}
+        />
+      )}
+      {sharding && (
+        <>
+          <PreviewContentText
+            text={`${shardConfigServers} configuration servers`}
+          />
+        </>
+      )}
     </>
   );
 };

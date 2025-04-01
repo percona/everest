@@ -175,6 +175,7 @@ export const MonitoringEndpoints = () => {
   return (
     <>
       <Table
+        getRowId={(row) => row.name}
         tableName="monitoringEndpoints"
         hideExpandAllIcon
         data={tableData}

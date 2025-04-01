@@ -1,63 +1,99 @@
-# Config
+# Some utilities
+def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")
+
+# ===========================
+# CONSTANTS
+EVEREST_NAMESPACE = 'everest-system'
+EVEREST_MONITORING_NAMESPACE = 'everest-monitoring'
+UI_ADMIN_PASSWORD = 'admin'
+
+# Load Config
 config_yaml=read_yaml('config.yaml')
 
-# Vars
-everest_namespace = 'everest-system'
-everest_monitoring_namespace = 'everest-monitoring'
-pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.16.1')
-print('Using PXC operator version: %s' % pxc_operator_version)
-psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.19.0')
-print('Using PSMDB operator version: %s' % psmdb_operator_version)
-pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.5.0')
-print('Using PG operator version: %s' % pg_operator_version)
+# Load local Envfile with env vars
+load('ext://dotenv', 'dotenv')
 
-# External resources set up
-# uncomment the settings below and insert your k8s context & registry names
-# to get your current context name run `kubectl config view`
-#allow_k8s_contexts("gke_percona-everest_europe-west1-c_everest-dev")
-#default_registry("us-central1-docker.pkg.dev/percona-everest/quickstart-docker-repo")
+local_env_file='{0}/.env'.format(config.main_dir)
+if os.path.exists(local_env_file):
+    print ('Loading local .env file={0}'.format(local_env_file))
+    dotenv(fn=local_env_file)
 
-
-# Check for required env vars
-backend_dir = os.getenv('EVEREST_BACKEND_DIR')
-if not backend_dir:
-  backend_dir = '..'
-backend_dir = os.path.abspath(backend_dir)
+# ===========================
+# VARIABLES
+# ===========================
+# Mandatory env vars
+backend_dir = os.path.realpath('{0}/../'.format(config.main_dir))
 if not os.path.exists(backend_dir):
-  fail('Backend dir does not exist: %s' % backend_dir)
-print('Using backend dir: %s' % backend_dir)
+    fail('Backend dir does not exist: {0}'.format(backend_dir))
+print('Using backend dir: {0}'.format(backend_dir))
 
-frontend_dir = os.getenv('EVEREST_FRONTEND_DIR')
-if not frontend_dir:
-  frontend_dir = '../ui'
-frontend_dir = os.path.abspath(frontend_dir)
+frontend_dir = os.path.realpath('{0}/../ui/'.format(config.main_dir))
 if not os.path.exists(frontend_dir):
-  fail('Frontend dir does not exist: %s' % frontend_dir)
-print('Using frontend dir: %s' % frontend_dir)
-
-cli_dir = os.getenv('EVEREST_CLI_DIR')
-if not cli_dir:
-  cli_dir = '..'
-cli_dir = os.path.abspath(cli_dir)
-if not os.path.exists(cli_dir):
-  fail('cli dir does not exist: %s' % cli_dir)
-print('Using cli dir: %s' % cli_dir)
+    fail('Frontend dir does not exist: {0}'.format(frontend_dir))
+print('Using frontend dir: {0}'.format(frontend_dir))
 
 operator_dir = os.getenv('EVEREST_OPERATOR_DIR')
 if not operator_dir:
-  fail('EVEREST_OPERATOR_DIR must be set')
-operator_dir = os.path.abspath(operator_dir)
+    fail('EVEREST_OPERATOR_DIR must be set')
+operator_dir = os.path.realpath(operator_dir)
 if not os.path.exists(operator_dir):
-  fail('Operator dir does not exist: %s' % operator_dir)
-print('Using operator dir: %s' % operator_dir)
+    fail('Operator dir does not exist: {0}'.format(operator_dir))
+print('Using operator dir: {0}'.format(operator_dir))
 
 everest_chart_dir = os.getenv('EVEREST_CHART_DIR')
 if not everest_chart_dir:
-  fail('EVEREST_CHART_DIR must be set')
-everest_chart_dir = os.path.abspath(everest_chart_dir)
+    fail('EVEREST_CHART_DIR must be set')
+everest_chart_dir = os.path.realpath(everest_chart_dir)
 if not os.path.exists(everest_chart_dir):
-  fail('Chart dir does not exist: %s' % everest_chart_dir)
-print('Using chart dir: %s' % everest_chart_dir)
+    fail('Chart dir does not exist: {0}'.format(everest_chart_dir))
+print('Using chart dir: {0}'.format(everest_chart_dir))
+
+# Optional env vars
+pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.16.1')
+print('Using PXC operator version: {0}'.format(pxc_operator_version))
+psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.19.1')
+print('Using PSMDB operator version: {0}'.format(psmdb_operator_version))
+pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.5.0')
+print('Using PG operator version: {0}'.format(pg_operator_version))
+
+# Check for Everest operator Go build options
+go_default_build_env = 'CGO_ENABLED=0 GOOS=linux'
+everest_operator_build_env = os.getenv('EVEREST_OPERATOR_BUILD_ENV', go_default_build_env)
+print('Using Everest operator build ENV vars: {0}'.format(everest_operator_build_env))
+
+# Check for Everest server backend Go build options
+everest_backend_build_env = os.getenv('EVEREST_BACKEND_BUILD_ENV', go_default_build_env)
+print('Using Everest server backend build ENV vars: {0}'.format(everest_backend_build_env))
+
+# External resources set up
+k8s_context = os.getenv('K8S_CONTEXT', '')
+if k8s_context:
+    print('Using Kubernetes context: {0}'.format(k8s_context))
+    allow_k8s_contexts(k8s_context)
+
+docker_registry_url = os.getenv('DOCKER_REGISTRY_URL', '')
+if docker_registry_url:
+    print('Using Docker registry URL: {0}'.format(docker_registry_url))
+    default_registry(docker_registry_url)
+
+# Check for Everest debug
+everest_debug = str2bool(os.getenv('EVEREST_DEBUG', 'False'))
+print('Using Everest debug: {0}'.format(everest_debug))
+
+# Check for Everest Operator debug
+everest_operator_debug = str2bool(os.getenv('EVEREST_OPERATOR_DEBUG', 'False'))
+print('Using Everest Operator debug: {0}'.format(everest_operator_debug))
+
+# Check whether we need to create backup storage
+need_backup_storage=False
+for namespace in config_yaml['namespaces']:
+    if 'backupStorages' in namespace and len(namespace['backupStorages']) > 0:
+        need_backup_storage=True
+        break
+
+print('Need backup storage: {0}'.format(need_backup_storage))
+# ===========================
 
 watch_settings(
     ignore=[
@@ -69,21 +105,31 @@ watch_settings(
 # Ensure operator's kustomize is installed
 local('[ -x %s/bin/kustomize ] || make -C %s kustomize' % (operator_dir, operator_dir), quiet=True)
 
-# Ensure frontend repo is initialized
-local('make -C %s init' % (frontend_dir), quiet=True)
-# Ensure backend repo is initialized
-local('make -C %s init' % (backend_dir), quiet=True)
+# Need to init tools in order to install Helm
+local_resource(
+    'backend-init',
+    'make -C {0} init'.format(backend_dir),
+    deps=[
+        '{0}/tools'.format(backend_dir),
+    ],
+    labels=["everest"],
+)
 
 # Build helm dependencies
-local('HELM=%s/bin/helm make -C %s deps' % (backend_dir, everest_chart_dir), quiet=True)
-
+local_resource(
+    'everest-chart-deps',
+    'HELM={0}/bin/helm make -C {1} deps'.format(backend_dir, everest_chart_dir),
+    resource_deps = [
+        'backend-init',
+    ],
+)
 
 # Create namespaces
 load('ext://namespace', 'namespace_create', 'namespace_inject')
-namespace_create(everest_namespace)
+namespace_create(EVEREST_NAMESPACE)
 k8s_resource(
   objects=[
-    '%s:namespace' % everest_namespace
+    '{0}:namespace'.format(EVEREST_NAMESPACE)
   ],
   new_name='everest-namespace',
 )
@@ -247,7 +293,7 @@ k8s_yaml(everest_crds)
 everest_yaml = helm(
     everest_chart_dir,
     name='everest',
-    namespace=everest_namespace,
+    namespace=EVEREST_NAMESPACE,
     skip_crds=True,
     set=[
         'dbNamespace.enabled=false',
@@ -256,11 +302,55 @@ everest_yaml = helm(
         'createMonitoringResources=false',
         'monitoring.crds.enabled=true',
         'monitoring.crds.plain=false',
-        'server.initialAdminPassword=admin',
+        'monitoring.namespaceOverride={0}'.format(EVEREST_MONITORING_NAMESPACE),
+        'server.initialAdminPassword={0}'.format(UI_ADMIN_PASSWORD),
     ],
 )
 # we don't need the catalog source
 everest_catalog_source_yaml, everest_yaml = filter_yaml(everest_yaml, kind='CatalogSource', name='everest-catalog')
+
+# Patch Everest Server deployment for running with debugger
+def patch_everest_debug(in_yaml):
+  if not everest_debug:
+    return in_yaml
+
+  print('Patching Everest Server deployment for running with debugger')
+  objects = decode_yaml_stream(in_yaml)
+  for o in objects:
+    if o.get('kind') == 'Deployment' and o.get('metadata').get('name') == 'everest-server':
+      o['spec']['template']['spec']['securityContext']= {'runAsNonRoot': False}
+      for c in o['spec']['template']['spec']['containers']:
+        if c.get('name') == 'everest':
+          c['ports'] = [{'containerPort': 8080}, {'containerPort': 40000}]
+          # In debugger mode the process may be in paused state, need to avoid pod restart
+          c['readinessProbe'] = None
+          c['livenessProbe'] = None
+          c['resources'] = None
+  return encode_yaml_stream(objects)
+
+# Patch Everest Operator deployment for running with debugger
+def patch_everest_operator_debug(in_yaml):
+  if not everest_operator_debug:
+    return in_yaml
+
+  print('Patching Everest operator deployment for running with debugger')
+  objects = decode_yaml_stream(in_yaml)
+  for o in objects:
+    if o.get('kind') == 'Deployment' and o.get('metadata').get('name') == 'everest-operator':
+      o['spec']['template']['spec']['securityContext']= {'runAsNonRoot': False}
+      for c in o['spec']['template']['spec']['containers']:
+        if c.get('name') == 'manager':
+          c['ports'] = [{'containerPort': 40001}]
+          # Need to disable security context for debugger
+          c['securityContext'] = None
+          # In debugger mode the process may be in paused state, need to avoid pod restart
+          c['readinessProbe'] = None
+          c['livenessProbe'] = None
+          c['resources'] = None
+  return encode_yaml_stream(objects)
+
+everest_yaml=patch_everest_debug(everest_yaml)
+everest_yaml=patch_everest_operator_debug(everest_yaml)
 k8s_yaml(everest_yaml)
 
 #################################
@@ -269,14 +359,14 @@ k8s_yaml(everest_yaml)
 
 k8s_resource(
   objects=[
-    '%s:namespace' % everest_monitoring_namespace
+    '{0}:namespace'.format(EVEREST_MONITORING_NAMESPACE)
   ],
   new_name='everest-monitoring-namespace',
 )
 k8s_resource(
     workload='kube-state-metrics',
     objects=[
-        'kube-state-metrics:serviceaccount:%s' % everest_monitoring_namespace,
+        'kube-state-metrics:serviceaccount:{0}'.format(EVEREST_MONITORING_NAMESPACE),
         'kube-state-metrics:clusterrole',
         'kube-state-metrics:clusterrolebinding',
         'customresource-config-ksm:configmap'
@@ -316,8 +406,8 @@ k8s_resource(
         'vm-operator:serviceaccount',
         'vm-operator:role',
         'vm-operator:clusterrole',
-        "victoriametrics\\:admin:clusterrole",
-        "victoriametrics\\:view:clusterrole",
+        "vm-operator-victoriametrics-admin:clusterrole",
+        "vm-operator-victoriametrics-view:clusterrole",
         'vm-operator:clusterrolebinding',
         'vm-operator:rolebinding'
 
@@ -334,32 +424,87 @@ k8s_resource(
 ####### Everest operator #######
 ################################
 
-# Generate the Everest operator manifests
-local_resource(
-  'operator-gen-manifests',
-  'make -C %s fmt manifests generate' % operator_dir,
-  deps=['%s/api' % operator_dir],
-  ignore=['%s/api/*/zz_generated.deepcopy.go' % operator_dir],
-  labels=["everest-operator"]
-)
+everest_operator_build_target='build'
+everest_operator_target='dev'
+everest_operator_entrypoint=["./manager"]
+everest_operator_port_forwards=[]
+if everest_operator_debug:
+    everest_operator_build_target='build-debug'
+    everest_operator_target='debug'
+    everest_operator_entrypoint=[
+        "/dlv",
+        "--listen=:40001",
+        "--headless=true",
+        "--api-version=2",
+        "--continue=true",
+        "--accept-multiclient=true",
+        "exec",
+        "/home/everest/manager",
+        "--",
+    ]
+    everest_operator_port_forwards=[
+        port_forward(40001, 40001, 'Everest Operator debugger'),
+    ]
 
 # Build the Everest operator manager locally to take advantage of the go cache
 local_resource(
+    'operator-init',
+    'make -C {0} init'.format(operator_dir),
+    deps=[
+        '{0}/tools'.format(operator_dir),
+    ],
+    labels=["everest-operator"],
+)
+
+local_resource(
+    'operator-generate',
+    'make -C {0} generate'.format(operator_dir),
+    deps=[
+        '{0}/api'.format(operator_dir),
+    ],
+    ignore=[
+        '{0}/**/*.deepcopy.go*'.format(operator_dir),
+        '{0}/**/mock_*.go*'.format(operator_dir),
+        '{0}/**/*_test.go'.format(operator_dir),
+        '{0}/**/*.gen.go*'.format(operator_dir),
+    ],
+    resource_deps = [
+        'operator-init',
+    ],
+    labels=["everest-operator"],
+)
+
+local_resource(
   'operator-build',
-  'make -C %s fmt; CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C %s -o ./bin/manager ./cmd/main.go' % (operator_dir, operator_dir),
-  deps=['%s/api' % operator_dir, '%s/internal' % operator_dir, '%s/cmd/main.go' % operator_dir],
-  labels=["everest-operator"]
+  '{0} make -C {1} {2}'.format(everest_operator_build_env, operator_dir, everest_operator_build_target),
+  deps=[
+    '{0}/go.mod'.format(operator_dir),
+    '{0}/go.sum'.format(operator_dir),
+    '{0}/internal'.format(operator_dir),
+    '{0}/cmd'.format(operator_dir),
+  ],
+  ignore=[
+      '{0}/**/*.deepcopy.go*'.format(operator_dir),
+      '{0}/**/mock_*.go*'.format(operator_dir),
+      '{0}/**/*_test.go'.format(operator_dir),
+      '{0}/**/*.gen.go*'.format(operator_dir),
+  ],
+  labels=["everest-operator"],
+  resource_deps = [
+    'operator-generate',
+  ],
 )
 
 # Live update the Everest operator manager without generating a new pod
 load('ext://restart_process', 'docker_build_with_restart')
 docker_build_with_restart('perconalab/everest-operator',
-  context='%s' % operator_dir,
+  context=operator_dir,
   dockerfile='./everest-operator.Dockerfile',
-  entrypoint='/home/tilt/manager --system-namespace=%s --monitoring-namespace=%s' % (everest_namespace, everest_monitoring_namespace),
-  only=['%s/bin/manager' % operator_dir],
+  target=everest_operator_target,
+  entrypoint=everest_operator_entrypoint,
+  only=['{0}/bin/manager'.format(operator_dir)],
   live_update=[
-    sync('%s/bin/manager' % operator_dir, '/home/tilt/manager'),
+    sync('{0}/bin/manager'.format(operator_dir), '/home/everest/manager'),
   ]
 )
 
@@ -378,9 +523,9 @@ k8s_resource(
 k8s_resource(
     workload='everest-operator',
     objects=[
-    'everest-operator-controller-manager:serviceaccount:%s' % everest_namespace,
-    'everest-operator-leader-election-role:role:%s' % everest_namespace,
-    'everest-operator-local:rolebinding:%s' % everest_namespace,
+    'everest-operator-controller-manager:serviceaccount:{0}'.format(EVEREST_NAMESPACE),
+    'everest-operator-leader-election-role:role:{0}'.format(EVEREST_NAMESPACE),
+    'everest-operator-local:rolebinding:{0}'.format(EVEREST_NAMESPACE),
     'everest-operator-metrics-reader:clusterrole',
     'everest-operator-metrics-auth-role:clusterrole',
     'everest-operator-metrics-auth-rolebinding:clusterrolebinding',
@@ -392,7 +537,9 @@ k8s_resource(
     resource_deps = [
       'everest-namespace',
       'everest-crds',
+      'operator-build',
     ],
+    port_forwards=everest_operator_port_forwards,
     new_name='everest-operator-deploy',
     labels=["everest-operator"]
 )
@@ -401,51 +548,208 @@ k8s_resource(
 ############ Everest ############
 #################################
 
-# Build backend
-local_resource(
-  'backend-build',
-  'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make -C %s build' % backend_dir,
-  deps=['%s/api' % backend_dir, '%s/cmd' % backend_dir, '%s/pkg' % backend_dir, '%s/public' % backend_dir, '%s/internal' % backend_dir],
-  labels=["everest"]
-)
-
 # Build frontend
 local_resource(
+    'frontend-init',
+    'make -C {0} init'.format(frontend_dir),
+    deps=[
+        '{0}/package.json'.format(frontend_dir),
+    ],
+    labels=["everest"],
+)
+
+local_resource(
   'frontend-build',
-  'make -C %s build EVEREST_OUT_DIR=%s/public/dist' % (frontend_dir, backend_dir),
-  deps=['%s/apps' % frontend_dir],
-  ignore=['%s/apps/*/dist' % frontend_dir, '%s/apps/*/.turbo' % frontend_dir],
+  'make -C {0} build EVEREST_OUT_DIR={1}/public/dist'.format(frontend_dir, backend_dir),
+  deps=[
+      '{0}/apps'.format(frontend_dir),
+  ],
+  ignore=[
+    '{0}/apps/*/dist'.format(frontend_dir),
+    '{0}/**/.e2e'.format(frontend_dir),
+    '{0}/**/.turbo'.format(frontend_dir),
+  ],
+  resource_deps = [
+    'frontend-init',
+  ],
   labels=["everest"]
 )
 
 # Live update the Everest container without generating a new pod
+everest_build_target='build'
+everest_target='dev'
+everest_entrypoint=["./everest-api"]
+everest_port_forwards=[
+    port_forward(8080, 8080, 'Everest Server API'),
+]
+if everest_debug:
+    everest_build_target='build-debug'
+    everest_target='debug'
+    everest_entrypoint=[
+        "/dlv",
+        "--listen=:40000",
+        "--headless=true",
+        "--api-version=2",
+        "--continue=true",
+        "--accept-multiclient=true",
+        "exec",
+        "/home/everest/everest-api",
+        "--",
+    ]
+    everest_port_forwards=[
+        port_forward(40000, 40000, 'Everest Server debugger'),
+        port_forward(8080, 8080, 'Everest Server API'),
+    ]
+
+local_resource(
+    'backend-generate',
+    'make -C {0} gen'.format(backend_dir),
+    deps=[
+        '{0}/api'.format(backend_dir),
+        '{0}/internal/server/handlers'.format(backend_dir),
+        '{0}/pkg/kubernetes'.format(backend_dir),
+        '{0}/pkg/rbac'.format(backend_dir),
+        '{0}/pkg/version_service'.format(backend_dir),
+        ],
+    ignore=[
+        '{0}/**/mocks'.format(backend_dir),
+        '{0}/**/mock_*.go*'.format(backend_dir),
+        '{0}/**/*_test.go'.format(backend_dir),
+        '{0}/**/*.gen.go*'.format(backend_dir),
+        '{0}/**/*.deepcopy.go*'.format(backend_dir),
+    ],
+    resource_deps = [
+        'backend-init',
+    ],
+    labels=["everest"],
+)
+
+local_resource(
+    'backend-build',
+    '{0} make -C {1} {2}'.format(everest_backend_build_env, backend_dir, everest_build_target),
+    deps=[
+        '{0}/go.mod'.format(backend_dir),
+        '{0}/go.sum'.format(backend_dir),
+        '{0}/api'.format(backend_dir),
+        '{0}/cmd'.format(backend_dir),
+        '{0}/pkg'.format(backend_dir),
+        '{0}/public'.format(backend_dir),
+        '{0}/internal'.format(backend_dir),
+    ],
+    ignore=[
+        '{0}/cmd/cli'.format(backend_dir),
+        '{0}/pkg/cli'.format(backend_dir),
+        '{0}/**/mock_*.go*'.format(backend_dir),
+        '{0}/**/mocks'.format(backend_dir),
+        '{0}/**/*_test.go'.format(backend_dir),
+    ],
+    resource_deps = [
+        'frontend-build',
+        'backend-generate',
+    ],
+    labels=["everest"]
+)
+
 docker_build_with_restart('perconalab/everest',
-  context='%s' % backend_dir,
+  context=backend_dir,
   dockerfile='./everest.Dockerfile',
-  entrypoint='/home/tilt/everest-api',
-  only=['%s/bin/everest' % backend_dir],
+  target=everest_target,
+  entrypoint=everest_entrypoint,
+  only=['{0}/bin/everest'.format(backend_dir)],
   live_update=[
-    sync('%s/bin/everest' % backend_dir, '/home/tilt/everest-api'),
+    sync('{0}/bin/everest'.format(backend_dir), '/home/everest/everest-api'),
   ]
 )
 
 k8s_resource(
     workload='everest-server',
     objects=[
-    'everest-accounts:secret:%s' % everest_namespace,
-    'everest-jwt:secret:%s' % everest_namespace,
-    'everest-rbac:configmap:%s' % everest_namespace,
-    'everest-settings:configmap:%s' % everest_namespace,
-    'everest-admin-role:role:%s' % everest_namespace,
+    'everest-accounts:secret:{0}'.format(EVEREST_NAMESPACE),
+    'everest-jwt:secret:{0}'.format(EVEREST_NAMESPACE),
+    'everest-rbac:configmap:{0}'.format(EVEREST_NAMESPACE),
+    'everest-settings:configmap:{0}'.format(EVEREST_NAMESPACE),
+    'everest-admin-role:role:{0}'.format(EVEREST_NAMESPACE),
     'everest-admin-cluster-role:clusterrole',
     'everest-admin-cluster-role-binding:clusterrolebinding',
-    'everest-admin:serviceaccount:%s' % everest_namespace,
+    'everest-admin:serviceaccount:{0}'.format(EVEREST_NAMESPACE),
     'everest-admin-role-binding:rolebinding'
     ],
     resource_deps = [
       'everest-namespace',
+      'backend-build',
     ],
-    port_forwards=8080,
+    port_forwards=everest_port_forwards,
     new_name='everest-server-deploy',
     labels=["everest"]
 )
+
+#################################
+############ Backup Storages ##########
+#################################
+def getBackupStorageNames():
+    to_return = []
+    for ns in config_yaml['namespaces']:
+        to_return.extend([storage_name for storage_name in ns.get('backupStorages', [])])
+    return to_return
+
+if need_backup_storage:
+    # Deploy minIO as backup storage
+    print('Deploying minIO as backup storage')
+    minio_path = os.path.realpath('{0}/.github/minio.conf.yaml'.format(backend_dir))
+    minio_objs=read_yaml_stream(minio_path)
+    bsListStr=','.join(getBackupStorageNames())
+    for minio_obj in minio_objs:
+        if minio_obj['kind'] == 'Deployment' and minio_obj['metadata']['name'] == 'minio':
+            # Redefine the env variable with the list of bucket names
+            minio_obj['spec']['template']['spec']['initContainers'][0]['env'][0]['value']=bsListStr
+            break
+    k8s_yaml(encode_yaml_stream(minio_objs))
+    k8s_resource(
+        workload='minio',
+        objects=[
+            'minio:Namespace',
+            'minio-data:PersistentVolumeClaim:minio',
+            'minio-cert:Secret:minio'
+        ],
+        new_name='minIO-deploy',
+        port_forwards=[
+            port_forward(9090, 9090, 'MinIO Console'),
+        ],
+        labels=["backup-storage"]
+    )
+
+    # Create BackupStorage CRs
+    bs_crd_path = os.path.realpath('{0}/resources/backupstorage.yaml'.format(config.main_dir))
+    for namespace in config_yaml['namespaces']:
+        ns_name = namespace['name']
+        for storage_name in namespace.get('backupStorages', []):
+            bs_objs=read_yaml_stream(bs_crd_path)
+            for obj in bs_objs:
+                if obj['kind'] == 'Secret':
+                    obj.update({
+                        'metadata': {
+                            'namespace': ns_name,
+                            'name': storage_name
+                        }
+                    })
+                elif obj['kind'] == 'BackupStorage':
+                    obj.update({
+                        'metadata': {
+                            'namespace': ns_name,
+                            'name': storage_name
+                        }
+                    })
+                    obj['spec'].update({
+                            'bucket': '{0}'.format(storage_name),
+                            'description': storage_name,
+                            'credentialsSecretName': storage_name,
+                    })
+            k8s_yaml(encode_yaml_stream(bs_objs))
+            k8s_resource(
+                objects=[
+                    '{0}:Secret:{1}'.format(storage_name, ns_name),
+                    '{0}:BackupStorage:{1}'.format(storage_name, ns_name),
+                ],
+                new_name='bs-{0}-{1}'.format(ns_name, storage_name),
+                labels=["backup-storage"]
+            )

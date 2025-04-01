@@ -23,11 +23,11 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { DbActionsProps } from './db-actions.types';
 import { useRBACPermissions } from 'hooks/rbac';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { Messages } from './db-actions.messages';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import DbActionsModals from './db-actions-modals';
 import { useDbActions } from 'hooks';
+import { shouldDbActionsBeBlocked } from 'utils/db';
 
 export const DbActions = ({
   isDetailView = false,
@@ -54,8 +54,7 @@ export const DbActions = ({
   const open = Boolean(anchorEl);
   const dbClusterName = dbCluster.metadata.name;
   const namespace = dbCluster.metadata.namespace;
-  const restoring = dbCluster.status?.status === DbClusterStatus.restoring;
-  const deleting = dbCluster.status?.status === DbClusterStatus.deleting;
+  const actionsBlocked = shouldDbActionsBeBlocked(dbCluster.status?.status);
   const hasSchedules = !!(
     dbCluster.spec.backup && (dbCluster.spec.backup.schedules || []).length > 0
   );
@@ -166,7 +165,7 @@ export const DbActions = ({
         >
           {canUpdate && (
             <MenuItem
-              disabled={restoring || deleting}
+              disabled={actionsBlocked}
               key={2}
               onClick={() => {
                 handleDbRestart(dbCluster);
@@ -179,7 +178,7 @@ export const DbActions = ({
           {canCreateClusterFromBackup && (
             <MenuItem
               data-testid={`${dbClusterName}-create-new-db-from-backup`}
-              disabled={restoring || deleting}
+              disabled={actionsBlocked}
               key={1}
               onClick={() => {
                 setIsNewClusterMode(true);
@@ -193,7 +192,7 @@ export const DbActions = ({
           {canRestore && (
             <MenuItem
               data-testid={`${dbClusterName}-restore`}
-              disabled={restoring || deleting}
+              disabled={actionsBlocked}
               key={3}
               onClick={() => {
                 setIsNewClusterMode(false);
@@ -217,7 +216,7 @@ export const DbActions = ({
           )}
           {canUpdate && (
             <MenuItem
-              disabled={restoring || deleting}
+              disabled={actionsBlocked}
               key={4}
               onClick={() => {
                 handleDbSuspendOrResumed(dbCluster);
@@ -232,7 +231,7 @@ export const DbActions = ({
           )}
           {canDelete && (
             <MenuItem
-              disabled={deleting}
+              disabled={dbCluster?.status?.status === 'deleting'}
               data-testid={`${dbClusterName}-delete`}
               key={5}
               onClick={() => {

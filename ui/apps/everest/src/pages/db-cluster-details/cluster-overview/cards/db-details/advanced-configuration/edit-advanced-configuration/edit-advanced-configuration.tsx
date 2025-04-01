@@ -38,6 +38,7 @@ export const AdvancedConfigurationEditModal = ({
     engineParameters,
     sourceRanges,
     affinityRules,
+    storageClass,
   }) => {
     handleSubmitModal({
       externalAccess,
@@ -45,6 +46,7 @@ export const AdvancedConfigurationEditModal = ({
       engineParameters,
       sourceRanges,
       affinityRules,
+      storageClass,
     });
   };
 

@@ -16,10 +16,15 @@ export const storageLocationAutocompleteEmptyValidationCheck = async (
 };
 
 export const moveForward = async (page: Page) => {
-  await expect(
-    page.getByTestId('db-wizard-continue-button')
-  ).not.toBeDisabled();
+  const currHeader = await page.getByTestId('step-header').textContent();
   await page.getByTestId('db-wizard-continue-button').click();
+
+  do {
+    if ((await page.getByTestId('step-header').textContent()) !== currHeader) {
+      break;
+    }
+    page.waitForTimeout(200);
+  } while (1);
 };
 
 export const moveBack = (page: Page) =>
@@ -51,7 +56,6 @@ export const setPitrEnabledStatus = async (page: Page, checked: boolean) => {
 
 export const submitWizard = async (page: Page) => {
   await page.getByTestId('db-wizard-submit-button').click();
-  await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 };
 
 export const cancelWizard = async (page: Page) => {
@@ -85,6 +89,7 @@ export const goToLastAndSubmit = async (page: Page) => {
  * @param storageClass Storage class to use
  * @param clusterName Database cluster name
  */
+
 export const populateBasicInformation = async (
   page: Page,
   namespace: string,
@@ -128,7 +133,12 @@ export const populateResources = async (
   cpu: number,
   memory: number,
   disk: number,
-  clusterSize: number
+  clusterSize: number,
+  numRouters?: number,
+  routerCpu?: number,
+  routerMemory?: number,
+  numShards?: number,
+  configServers?: number
 ) => {
   await expect(page.getByTestId('step-header')).toBeVisible();
   await expect(page.getByTestId('step-description')).toBeVisible();
@@ -154,6 +164,47 @@ export const populateResources = async (
   await expect(page.getByTestId('disk-resource-sum')).toHaveText(
     expectedDiskText
   );
+
+  if (
+    numRouters !== undefined &&
+    routerCpu !== undefined &&
+    routerMemory !== undefined &&
+    configServers !== undefined &&
+    numShards !== undefined
+  ) {
+    await page.getByTestId('proxies-accordion').click();
+    await expect(page.getByText('Number of routers')).toBeVisible();
+
+    await page.getByTestId('toggle-button-routers-custom').click();
+    await page
+      .getByTestId('text-input-custom-nr-of-proxies')
+      .fill(numRouters.toString());
+
+    await page.getByTestId('router-resources-toggle-button-custom').click();
+
+    await page.getByTestId('text-input-proxy-cpu').fill(routerCpu.toString());
+    await page
+      .getByTestId('text-input-proxy-memory')
+      .fill(routerMemory.toString());
+
+    const expectedRouterCpuText = ` = ${(routerCpu * numRouters).toFixed(2)} CPU`;
+    const expectedRouterMemoryText = ` = ${(routerMemory * numRouters).toFixed(2)} GB`;
+
+    await expect(page.getByTestId('proxyCpu-resource-sum')).toHaveText(
+      expectedRouterCpuText
+    );
+    await expect(page.getByTestId('proxyMemory-resource-sum')).toHaveText(
+      expectedRouterMemoryText
+    );
+
+    const shardsInput = await page.getByTestId('text-input-shard-nr');
+    await shardsInput.fill(numShards.toString());
+
+    const configServerButton = await page.getByTestId(
+      `shard-config-servers-${configServers}`
+    );
+    await expect(configServerButton).toHaveAttribute('aria-pressed', 'true');
+  }
 };
 
 /**
@@ -171,6 +222,10 @@ export const populateAdvancedConfig = async (
   addDefaultEngineParameters: boolean,
   engineParameters: string
 ) => {
+  const combobox = page.getByTestId('text-input-storage-class');
+  await combobox.waitFor({ state: 'visible', timeout: 5000 });
+  await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
+
   if (externalAccess != '') {
     await page.getByLabel('Enable External Access').check();
     await page
@@ -188,10 +243,12 @@ export const populateAdvancedConfig = async (
 
       switch (dbType) {
         case 'psmdb':
-          inputParameters = 'systemLog:\n verbosity: 1';
+          // we set operationProfiling for PMM QAN test
+          inputParameters =
+            'systemLog:\n verbosity: 1\noperationProfiling:\n mode: all\n slowOpThresholdMs: 2\n rateLimit: 5';
           break;
         case 'postgresql':
-          inputParameters = 'log_connections = yes\nshared_buffers = 128MB';
+          inputParameters = 'log_connections = yes\nshared_buffers = 192MB';
           break;
         case 'pxc':
         default:

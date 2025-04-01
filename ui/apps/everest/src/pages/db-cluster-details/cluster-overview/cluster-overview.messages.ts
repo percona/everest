@@ -37,6 +37,7 @@ export const Messages = {
     affinity: 'Affinity',
     enabled: 'Enabled',
     disabled: 'Disabled',
+    noSchedules: '0 active schedules',
     shards: 'Nº of shards',
     configServers: 'Config servers',
     cpu: 'CPU',

@@ -50,11 +50,15 @@ spec:
       initContainers:
         - name: init-minio
           image: busybox
+          env:
+            - name: BUCKET_DIRS
+              value: "bucket-1,bucket-2,bucket-3,bucket-4,bucket-5,bucket-6"
           command:
             - /bin/sh
             - -c
           args:
-            - mkdir -p /data/bucket-1 /data/bucket-2 /data/bucket-3 /data/bucket-4 /data/bucket-5
+            - |
+              IFS=',' ; for i in $BUCKET_DIRS; do mkdir -p /data/$i || true ; done
           volumeMounts:
             - mountPath: /data
               name: minio-data-vol

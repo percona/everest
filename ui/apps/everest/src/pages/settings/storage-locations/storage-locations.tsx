@@ -174,6 +174,7 @@ export const StorageLocations = () => {
   return (
     <>
       <Table
+        getRowId={(row) => row.name}
         tableName="storageLocations"
         noDataMessage={Messages.noData}
         hideExpandAllIcon

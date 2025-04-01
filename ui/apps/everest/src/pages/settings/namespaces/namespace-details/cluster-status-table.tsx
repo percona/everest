@@ -13,13 +13,9 @@ import { ClusterStatusTableProps } from './types';
 import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from 'pages/databases/DbClusterView.constants';
 import { beautifyDbClusterStatus } from 'pages/databases/DbClusterView.utils';
-import {
-  useUpdateDbClusterCrd,
-  useUpdateDbClusterEngine,
-} from 'hooks/api/db-cluster/useUpdateDbCluster';
-import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
-import { Messages } from './messages';
 import StatusField from 'components/status-field';
+import UpdateCrDialog from './update-cr-dialog';
+import UpdateEngineDialog from './update-engine-dialog';
 
 type EnhancedDbList = OperatorUpgradePendingAction & {
   db?: DbCluster;
@@ -38,8 +34,6 @@ const ClusterStatusTable = ({
       ),
     enabled: !!namespace && !!pendingActions.length,
   });
-  const { mutate: updateDbClusterCrd } = useUpdateDbClusterCrd();
-  const { mutate: updateDbClusterEngine } = useUpdateDbClusterEngine();
   const [openUpdateCrDialog, setOpenUpdateCrDialog] = useState(false);
   const [openUpdateEngineDialog, setOpenUpdateEngineDialog] = useState(false);
   const selectedDbCluster = useRef<DbCluster>();
@@ -118,45 +112,6 @@ const ClusterStatusTable = ({
     [dbClusters, dbEngines]
   );
 
-  const onCrdUpdate = async () => {
-    if (
-      !selectedDbCluster.current ||
-      !selectedDbCluster.current.status?.recommendedCRVersion
-    ) {
-      return;
-    }
-
-    const {
-      metadata: { name, namespace },
-    } = selectedDbCluster.current;
-    await updateDbClusterCrd({
-      clusterName: name,
-      namespace,
-      dbCluster: selectedDbCluster.current,
-      newCrdVersion:
-        selectedDbCluster.current.status?.recommendedCRVersion || '',
-    });
-    setOpenUpdateCrDialog(false);
-  };
-
-  const onEngineUpdate = async () => {
-    if (!selectedDbCluster.current || !selectedDbEngineVersion.current) {
-      return;
-    }
-
-    const {
-      metadata: { name, namespace },
-    } = selectedDbCluster.current;
-
-    await updateDbClusterEngine({
-      clusterName: name,
-      namespace,
-      dbCluster: selectedDbCluster.current,
-      newEngineVersion: selectedDbEngineVersion.current,
-    });
-    setOpenUpdateEngineDialog(false);
-  };
-
   const columns = useMemo<MRT_ColumnDef<EnhancedDbList>[]>(
     () => [
       {
@@ -231,37 +186,27 @@ const ClusterStatusTable = ({
   return (
     <>
       <Table
+        getRowId={(row) => row.name}
         tableName={`${namespace}-upgrade-pending-actions`}
         noDataMessage="No pending actions"
         columns={columns}
         data={enhancedDbList}
       />
-      <ConfirmDialog
-        isOpen={openUpdateCrDialog}
-        selectedId={selectedDbCluster.current?.metadata.name || ''}
-        closeModal={() => setOpenUpdateCrDialog(false)}
-        handleConfirm={onCrdUpdate}
-        headerMessage="Upgrade CRD Version"
-        submitMessage="Upgrade"
-      >
-        {Messages.upgradeCRVersion(
-          selectedDbCluster.current?.metadata.name || '',
-          selectedDbCluster.current?.status?.recommendedCRVersion || ''
+      {selectedDbCluster.current && openUpdateCrDialog && (
+        <UpdateCrDialog
+          dbCluster={selectedDbCluster.current}
+          onClose={() => setOpenUpdateCrDialog(false)}
+        />
+      )}
+      {selectedDbCluster.current &&
+        selectedDbEngineVersion.current &&
+        openUpdateEngineDialog && (
+          <UpdateEngineDialog
+            dbCluster={selectedDbCluster.current}
+            newVersion={selectedDbEngineVersion.current}
+            onClose={() => setOpenUpdateEngineDialog(false)}
+          />
         )}
-      </ConfirmDialog>
-      <ConfirmDialog
-        isOpen={openUpdateEngineDialog}
-        selectedId={selectedDbCluster.current?.metadata.name || ''}
-        closeModal={() => setOpenUpdateEngineDialog(false)}
-        handleConfirm={onEngineUpdate}
-        headerMessage="Upgrade Engine Version"
-        submitMessage="Upgrade"
-      >
-        {Messages.upgradeEngineVersion(
-          selectedDbCluster.current?.metadata.name || '',
-          selectedDbEngineVersion.current || ''
-        )}
-      </ConfirmDialog>
     </>
   );
 };

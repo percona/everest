@@ -40,6 +40,7 @@ import DbActions from 'components/db-actions/db-actions';
 import CreateDbButton from './create-db-button/create-db-button';
 import { EmptyStateDatabases } from 'pages/common/empty-state/databases';
 import { EmptyStateNamespaces } from 'pages/common/empty-state/namespaces';
+import { PendingIcon } from '@percona/ui-lib';
 
 export const DbClusterView = () => {
   const { data: namespaces = [], isLoading: loadingNamespaces } = useNamespaces(
@@ -87,6 +88,7 @@ export const DbClusterView = () => {
             dataTestId={cell?.row?.original?.databaseName}
             status={cell.getValue<DbClusterStatus>()}
             statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
+            defaultIcon={PendingIcon}
           >
             {beautifyDbClusterStatus(cell.getValue<DbClusterStatus>())}
           </StatusField>
@@ -158,6 +160,7 @@ export const DbClusterView = () => {
     <Stack direction="column" alignItems="center">
       <Box sx={{ width: '100%' }}>
         <Table
+          getRowId={(row) => row.databaseName}
           tableName="dbClusterView"
           emptyState={
             namespaces.length > 0 ? (

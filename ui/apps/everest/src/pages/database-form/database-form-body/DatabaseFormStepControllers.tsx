@@ -20,11 +20,9 @@ import { DatabaseFormStepControllersProps } from './types';
 
 const DatabaseFormStepControllers = ({
   disableBack,
-  disableNext,
   disableSubmit,
   disableCancel,
   showSubmit,
-  editMode,
   onPreviousClick,
   onNextClick,
   onCancel,
@@ -59,14 +57,13 @@ const DatabaseFormStepControllers = ({
         disabled={disableSubmit}
         data-testid="db-wizard-submit-button"
       >
-        {editMode ? Messages.editDatabase : Messages.createDatabase}
+        {Messages.createDatabase}
       </Button>
     ) : (
       <Button
         onClick={onNextClick}
         variant="contained"
         data-testid="db-wizard-continue-button"
-        disabled={disableNext}
       >
         {Messages.continue}
       </Button>

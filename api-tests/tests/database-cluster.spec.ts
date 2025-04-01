@@ -20,15 +20,16 @@ import {
   createMonitoringConfig,
   suffixedName, deleteMonitoringConfig,
   deleteDBCluster,
-} from "@tests/tests/helpers";
+} from '@tests/tests/helpers';
 
 test.setTimeout(360 * 1000)
 
 test('create db cluster with monitoring config', async ({ request, page }) => {
-  const monitoringConfigName1 = suffixedName("m1")
+  const monitoringConfigName1 = suffixedName('m1')
+
   await createMonitoringConfig(request, monitoringConfigName1, testsNs)
-  const clusterName = 'db-monitoring-create'
-  const data = {
+  const clusterName = 'db-monitoring-create',
+   data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -58,9 +59,9 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
         },
       },
     },
-  }
+  },
 
-  const postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
+   postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
 
   await checkError(postReq)
 
@@ -74,6 +75,7 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
       expect(res?.status?.size).toBeGreaterThanOrEqual(1)
 
       const components = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}/components`)
+
       await checkError(components)
       const resComponents = (await components.json())
 
@@ -89,12 +91,13 @@ test('create db cluster with monitoring config', async ({ request, page }) => {
 })
 
 test('update db cluster with a new monitoring config', async ({ request, page }) => {
-  const monitoringConfigName1 = suffixedName("m1")
-  const monitoringConfigName2 = suffixedName("m2")
+  const monitoringConfigName1 = suffixedName('m1'),
+   monitoringConfigName2 = suffixedName('m2')
+
   await createMonitoringConfig(request, monitoringConfigName1, testsNs)
   await createMonitoringConfig(request, monitoringConfigName2, testsNs)
-  const clusterName = 'dbc-monitoring-put'
-  const data = {
+  const clusterName = 'dbc-monitoring-put',
+   data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -124,9 +127,9 @@ test('update db cluster with a new monitoring config', async ({ request, page })
         },
       },
     },
-  }
+  },
 
-  const postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
+   postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
 
   await checkError(postReq)
 
@@ -148,12 +151,15 @@ test('update db cluster with a new monitoring config', async ({ request, page })
 
     await expect(async () => {
       const req = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+
       res = (await req.json())
       const putData = data
+
       putData.metadata = res.metadata
       putData.spec.monitoring.monitoringConfigName = monitoringConfigName2
 
       const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
+
       expect(putReq.status()).toBe(200)
       res = (await putReq.json())
       expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
@@ -170,8 +176,9 @@ test('update db cluster with a new monitoring config', async ({ request, page })
 })
 
 test('update db cluster without monitoring config with a new monitoring config', async ({ request, page }) => {
-  const clusterName = 'monitoring-put-empty'
-  const monitoringConfigName2 = suffixedName("m2")
+  const clusterName = 'monitoring-put-empty',
+   monitoringConfigName2 = suffixedName('m2')
+
   await createMonitoringConfig(request, monitoringConfigName2, testsNs)
   const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -200,9 +207,9 @@ test('update db cluster without monitoring config with a new monitoring config',
         },
       },
     },
-  }
+  },
 
-  const postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
+   postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
 
   await checkError(postReq)
 
@@ -224,12 +231,15 @@ test('update db cluster without monitoring config with a new monitoring config',
 
     await expect(async () => {
       const req = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+
       res = (await req.json())
       const putData = data
+
       putData.metadata = res.metadata;
       (putData.spec as any).monitoring = { monitoringConfigName: monitoringConfigName2 }
 
       const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
+
       expect(putReq.status()).toBe(200)
       res = (await putReq.json())
       expect(res?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
@@ -246,10 +256,11 @@ test('update db cluster without monitoring config with a new monitoring config',
 })
 
 test('update db cluster monitoring config with an empty monitoring config', async ({ request, page }) => {
-  const monitoringConfigName1 = suffixedName("m1")
+  const monitoringConfigName1 = suffixedName('m1')
+
   await createMonitoringConfig(request, monitoringConfigName1, testsNs)
-  const clusterName = 'monit-put-to-empty'
-  const data = {
+  const clusterName = 'monit-put-to-empty',
+   data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -279,9 +290,9 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
         },
       },
     },
-  }
+  },
 
-  const postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
+   postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
 
   await checkError(postReq)
 
@@ -301,12 +312,15 @@ test('update db cluster monitoring config with an empty monitoring config', asyn
 
     await expect(async () => {
       const req = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+
       res = (await req.json())
       const putData = data
+
       putData.metadata = res.metadata;
       (putData.spec.monitoring as any) = {}
 
       const putReq = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, { data: putData })
+
       expect(putReq.status()).toBe(200)
       res = (await putReq.json())
       expect(res?.spec?.monitoring?.monitoringConfigName).toBeFalsy()

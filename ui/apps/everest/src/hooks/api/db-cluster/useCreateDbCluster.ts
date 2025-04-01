@@ -74,7 +74,6 @@ const formValuesToPayloadMapping = (
     },
     spec: {
       backup: {
-        enabled: dbPayload.schedules?.length > 0,
         ...(dbPayload.pitrEnabled && {
           pitr: {
             enabled: dbPayload.pitrEnabled,
@@ -162,7 +161,7 @@ const formValuesToPayloadMapping = (
 
 export const useCreateDbCluster = (
   options?: UseMutationOptions<
-    unknown,
+    DbCluster,
     unknown,
     CreateDbClusterArgType,
     unknown

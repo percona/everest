@@ -29,7 +29,6 @@ import { Alert, Typography } from '@mui/material';
 import { RestoreDbModal } from 'modals/index.ts';
 import { useContext, useMemo, useState } from 'react';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
-import { DbClusterStatus } from 'shared-types/dbCluster.types.ts';
 import { ScheduleModalContext } from '../backups.context.ts';
 import { BACKUP_STATUS_TO_BASE_STATUS } from './backups-list.constants';
 import { Messages } from './backups-list.messages';
@@ -42,6 +41,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import TableActionsMenu from 'components/table-actions-menu';
 import { BackupActionButtons } from './backups-list-menu-actions';
+import { shouldDbActionsBeBlocked } from 'utils/db.tsx';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -141,8 +141,6 @@ export const BackupsList = () => {
     return null;
   }
 
-  const restoring = dbCluster.status?.status === DbClusterStatus.restoring;
-
   const handleDeleteBackup = (backupName: string) => {
     setSelectedBackup(backupName);
     setOpenDeleteDialog(true);
@@ -205,6 +203,7 @@ export const BackupsList = () => {
         </Typography>
       )}
       <Table
+        getRowId={(row) => row.name}
         tableName="backupList"
         noDataMessage={Messages.noData}
         data={backups}
@@ -228,7 +227,7 @@ export const BackupsList = () => {
         renderRowActions={({ row }) => {
           const menuItems = BackupActionButtons(
             row,
-            restoring,
+            shouldDbActionsBeBlocked(dbCluster.status?.status),
             handleDeleteBackup,
             handleRestoreBackup,
             handleRestoreToNewDbBackup,
