@@ -19,12 +19,13 @@ import { TIME_SELECTION_DEFAULTS } from '../time-selection/time-selection.consta
 import { ScheduleFormData } from './schedule-form/schedule-form-schema';
 import { ScheduleFormFields } from './schedule-form/schedule-form.types';
 import { generateShortUID } from 'utils/generateShortUID';
+import { WizardMode } from '@percona/types';
 
 export const scheduleModalDefaultValues = (
-  mode: 'new' | 'edit',
+  mode: WizardMode,
   selectedSchedule?: Schedule
 ): ScheduleFormData => {
-  if (mode === 'edit' && selectedSchedule) {
+  if (mode === WizardMode.Edit && selectedSchedule) {
     const { name, backupStorageName, schedule, retentionCopies } =
       selectedSchedule;
     const formValues = getFormValuesFromCronExpression(schedule);
@@ -45,11 +46,11 @@ export const scheduleModalDefaultValues = (
 
 export const sameScheduleFunc = (
   schedules: Schedule[],
-  mode: 'edit' | 'new',
+  mode: WizardMode,
   currentSchedule: string,
   scheduleName: string
 ) => {
-  if (mode === 'edit') {
+  if (mode === WizardMode.Edit) {
     return schedules.find(
       (item) => item.schedule === currentSchedule && item.name !== scheduleName
     );
@@ -60,7 +61,7 @@ export const sameScheduleFunc = (
 
 export const sameStorageLocationFunc = (
   schedules: Schedule[],
-  mode: 'edit' | 'new',
+  mode: WizardMode,
   currentBackupStorage: string | { name: string } | undefined | null,
   scheduleName: string
 ) => {
@@ -68,7 +69,7 @@ export const sameStorageLocationFunc = (
     typeof currentBackupStorage === 'object'
       ? currentBackupStorage?.name
       : currentBackupStorage;
-  if (mode === 'edit') {
+  if (mode === WizardMode.Edit) {
     return schedules.find(
       (item) =>
         item.backupStorageName === currentStorage && item.name !== scheduleName

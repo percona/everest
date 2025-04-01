@@ -1,4 +1,4 @@
-import { DbType } from '@percona/types';
+import { DbType, WizardMode } from '@percona/types';
 import { useFormContext } from 'react-hook-form';
 import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
@@ -24,7 +24,7 @@ export const ResourcesStep = () => {
         allowDiskInputUpdate
         showSharding={dbType === DbType.Mongo}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
-        disableShardingInput={mode === 'restoreFromBackup'}
+        disableShardingInput={mode === WizardMode.Restore}
       />
     </>
   );

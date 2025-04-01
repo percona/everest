@@ -1,9 +1,10 @@
+import { ScheduleWizardMode } from '@percona/types';
 import { DbCluster } from 'shared-types/dbCluster.types';
 
 export type ScheduleModalContextType = {
   dbCluster: DbCluster;
-  mode: 'new' | 'edit';
-  setMode: React.Dispatch<React.SetStateAction<'new' | 'edit'>>;
+  mode: ScheduleWizardMode;
+  setMode: React.Dispatch<React.SetStateAction<ScheduleWizardMode>>;
   selectedScheduleName: string;
   setSelectedScheduleName: React.Dispatch<React.SetStateAction<string>>;
   openScheduleModal: boolean;

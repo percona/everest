@@ -29,7 +29,7 @@ import { ScheduleFormDialog } from 'components/schedule-form-dialog';
 import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormData } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { DbType } from '@percona/types';
+import { DbType, ScheduleWizardMode, WizardMode } from '@percona/types';
 import { ActionableLabeledContent } from '@percona/ui-lib';
 import { useDatabasePageMode } from '../../../../useDatabasePageMode';
 import { dbWizardToScheduleFormDialogMap } from 'components/schedule-form-dialog/schedule-form-dialog-context/schedule-form-dialog-context.types';
@@ -49,7 +49,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
     defaultValues: { schedules: defaultDbSchedules },
   } = useDatabasePageDefaultValues(dbWizardMode);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
-  const [mode, setMode] = useState<'new' | 'edit'>('new');
+  const [mode, setMode] = useState<ScheduleWizardMode>(WizardMode.New);
   const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
@@ -92,7 +92,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
       baseSchedules,
       k8sNamespace,
       canCreateBackups,
-      mode === 'new' ? true : canUpdateCluster
+      mode === WizardMode.New ? true : canUpdateCluster
     ).then((newSchedules) => {
       setSchedules(newSchedules);
     });
@@ -113,11 +113,11 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
   };
   const handleEdit = (name: string) => {
     setSelectedScheduleName(name);
-    setMode('edit');
+    setMode(WizardMode.Edit);
     setOpenScheduleModal(true);
   };
   const handleCreate = () => {
-    setMode('new');
+    setMode(WizardMode.New);
     setOpenScheduleModal(true);
   };
 

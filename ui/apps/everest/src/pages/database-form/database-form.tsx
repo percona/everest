@@ -31,6 +31,7 @@ import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
 import { DB_CLUSTERS_QUERY_KEY } from 'hooks';
+import { WizardMode } from '@percona/types';
 
 export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -94,11 +95,11 @@ export const DatabasePage = () => {
   );
 
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
-    if (mode === 'new' || mode === 'restoreFromBackup') {
+    if (mode === WizardMode.New || mode === WizardMode.Restore) {
       addDbCluster(
         {
           dbPayload: data,
-          ...(mode === 'restoreFromBackup' && {
+          ...(mode === WizardMode.Restore && {
             backupDataSource: {
               dbClusterBackupName: location.state?.backupName,
               ...(location.state?.pointInTimeDate && {
@@ -173,7 +174,7 @@ export const DatabasePage = () => {
       return;
     }
 
-    if (mode === 'restoreFromBackup') {
+    if (mode === WizardMode.Restore) {
       reset(defaultValues);
     }
   }, [defaultValues, isDirty, reset, mode]);

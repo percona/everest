@@ -1,21 +1,22 @@
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { ScheduleFormData } from '../schedule-form/schedule-form-schema';
-import { DbWizardMode } from 'pages/database-form/database-form.types';
+import { ScheduleWizardMode, WizardMode } from '@percona/types';
 import { kebabize } from '@percona/utils';
+
 export type ScheduleFormDialogExternalContext =
   | 'db-wizard-new'
   | 'db-wizard-edit'
   | 'db-wizard-restore-from-backup'
   | 'db-details-backups';
-export const dbWizardToScheduleFormDialogMap = (dbWizardMode: DbWizardMode) => {
+export const dbWizardToScheduleFormDialogMap = (dbWizardMode: WizardMode) => {
   return `db-wizard-${kebabize(
     dbWizardMode
   )}` as ScheduleFormDialogExternalContext;
 };
 export type ScheduleFormDialogContextType = {
-  mode: 'new' | 'edit';
+  mode: ScheduleWizardMode;
   externalContext?: ScheduleFormDialogExternalContext;
-  setMode: React.Dispatch<React.SetStateAction<'new' | 'edit'>>;
+  setMode: React.Dispatch<React.SetStateAction<ScheduleWizardMode>>;
   selectedScheduleName: string;
   setSelectedScheduleName: React.Dispatch<React.SetStateAction<string>>;
   openScheduleModal: boolean;

@@ -19,11 +19,12 @@ import { DbEngineType } from 'shared-types/dbEngines.types.ts';
 import { ScheduleFormDialogContext } from '../schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormFields } from '../schedule-form/schedule-form.types';
 import { ScheduleForm } from '../schedule-form/schedule-form';
+import { WizardMode } from '@percona/types';
 
 export const ScheduleFormWrapper = () => {
   const { watch, setValue, trigger } = useFormContext();
   const {
-    mode = 'new',
+    mode = WizardMode.New,
     setSelectedScheduleName,
     dbClusterInfo,
     externalContext,
@@ -43,7 +44,7 @@ export const ScheduleFormWrapper = () => {
   const disableStorageSelection =
     !!activeStorage ||
     (dbEngine === DbEngineType.POSTGRESQL &&
-      mode === 'edit' &&
+      mode === WizardMode.Edit &&
       (externalContext === 'db-details-backups' ||
         (externalContext === 'db-wizard-edit' && !isJustAddedSchedule)));
 
@@ -62,7 +63,7 @@ export const ScheduleFormWrapper = () => {
   }, [amPm, hour, minute, onDay, weekDay, selectedTime]);
 
   useEffect(() => {
-    if (mode === 'edit' && setSelectedScheduleName) {
+    if (mode === WizardMode.Edit && setSelectedScheduleName) {
       setSelectedScheduleName(scheduleName);
     }
   }, [scheduleName, mode, setSelectedScheduleName]);
@@ -79,10 +80,10 @@ export const ScheduleFormWrapper = () => {
   return (
     <ScheduleForm
       showTypeRadio={dbEngine === DbEngineType.PSMDB}
-      allowScheduleSelection={mode === 'edit'}
+      allowScheduleSelection={mode === WizardMode.Edit}
       disableStorageSelection={disableStorageSelection}
-      autoFillLocation={mode === 'new'}
-      disableNameEdit={mode === 'edit'}
+      autoFillLocation={mode === WizardMode.New}
+      disableNameEdit={mode === WizardMode.Edit}
       schedules={schedules}
     />
   );

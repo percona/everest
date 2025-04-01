@@ -22,10 +22,11 @@ import { Messages } from './schedule-form-dialog.messages';
 import { schema } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { scheduleModalDefaultValues } from './schedule-form-dialog.utils';
 import { ScheduleFormWrapper } from './schedule-form-wrapper';
+import { WizardMode } from '@percona/types';
 
 export const ScheduleFormDialog = () => {
   const {
-    mode = 'new',
+    mode = WizardMode.New,
     selectedScheduleName,
     openScheduleModal,
     dbClusterInfo,
@@ -42,7 +43,7 @@ export const ScheduleFormDialog = () => {
   );
 
   const selectedSchedule = useMemo(() => {
-    if (mode === 'edit') {
+    if (mode === WizardMode.Edit) {
       return schedules.find((item) => item?.name === selectedScheduleName);
     }
   }, [mode, schedules, selectedScheduleName]);
@@ -56,24 +57,24 @@ export const ScheduleFormDialog = () => {
       isOpen={!!openScheduleModal}
       closeModal={handleClose}
       headerMessage={
-        mode === 'new'
+        mode === WizardMode.New
           ? Messages.createSchedule.headerMessage
           : Messages.editSchedule.headerMessage
       }
       onSubmit={handleSubmit}
       submitting={isPending}
       submitMessage={
-        mode === 'new'
+        mode === WizardMode.New
           ? Messages.createSchedule.submitMessage
           : Messages.editSchedule.submitMessage
       }
       schema={scheduledBackupSchema}
-      {...(mode === 'edit' && { values })}
+      {...(mode === WizardMode.Edit && { values })}
       defaultValues={values}
       size="XXL"
       dataTestId={`${mode}-scheduled-backup`}
     >
-      {mode === 'new' && (
+      {mode === WizardMode.New && (
         <Typography variant="body1">
           {Messages.createSchedule.subhead}
         </Typography>

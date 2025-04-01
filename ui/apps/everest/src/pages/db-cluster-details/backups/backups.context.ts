@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 import { ScheduleModalContextType } from './backups.types.ts';
 import { DbCluster } from 'shared-types/dbCluster.types.ts';
+import { WizardMode } from '@percona/types';
 
 export const ScheduleModalContext = createContext<ScheduleModalContextType>({
   dbCluster: {} as DbCluster,
@@ -8,7 +9,7 @@ export const ScheduleModalContext = createContext<ScheduleModalContextType>({
   setOpenOnDemandModal: () => {},
   openScheduleModal: false,
   setOpenScheduleModal: () => {},
-  mode: 'new',
+  mode: WizardMode.New,
   setMode: () => {},
   selectedScheduleName: '',
   setSelectedScheduleName: () => {},

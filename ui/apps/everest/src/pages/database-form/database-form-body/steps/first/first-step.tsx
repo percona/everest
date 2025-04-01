@@ -17,7 +17,7 @@ import { Box, FormGroup, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useEffect, useMemo } from 'react';
 import { lt, valid } from 'semver';
-import { DbType } from '@percona/types';
+import { DbType, WizardMode } from '@percona/types';
 import {
   ActionableLabeledContent,
   AutoCompleteInput,
@@ -105,7 +105,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     );
     if (
       !k8sNamespaceTouched &&
-      mode === 'new' &&
+      mode === WizardMode.New &&
       filteredNamespaces.length > 0 &&
       !isLoading
     ) {
@@ -130,7 +130,10 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     ) {
       return;
     }
-    if ((mode === 'restoreFromBackup' && !dbVersion) || mode === 'new') {
+    if (
+      (mode === WizardMode.Restore && !dbVersion) ||
+      mode === WizardMode.New
+    ) {
       const recommendedVersion = dbEngineData.availableVersions.engine.find(
         (version) => version.status === DbEngineToolStatus.RECOMMENDED
       );
@@ -175,7 +178,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           label={Messages.labels.k8sNamespace}
           loading={isLoading}
           options={filteredNamespaces}
-          disabled={mode === 'restoreFromBackup' || loadingDefaultsForEdition}
+          disabled={mode === WizardMode.Restore || loadingDefaultsForEdition}
           onChange={onNamespaceChange}
           autoCompleteProps={{
             disableClearable: true,
@@ -193,7 +196,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         />
         <DbVersion
           selectInputProps={{
-            selectFieldProps: { disabled: mode === 'restoreFromBackup' },
+            selectFieldProps: { disabled: mode === WizardMode.Restore },
           }}
           availableVersions={dbEngineData?.availableVersions.engine}
           loading={dbEnginesFoDbEngineTypesFetching || isLoading}

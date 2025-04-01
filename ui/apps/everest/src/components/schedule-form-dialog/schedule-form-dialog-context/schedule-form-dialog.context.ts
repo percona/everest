@@ -1,13 +1,13 @@
 import { createContext } from 'react';
 import { ScheduleFormDialogContextType } from './schedule-form-dialog-context.types';
-import { DbEngineType } from '@percona/types';
+import { DbEngineType, WizardMode } from '@percona/types';
 
 export const ScheduleFormDialogContext =
   createContext<ScheduleFormDialogContextType>({
     openScheduleModal: false,
     setOpenScheduleModal: () => {},
     handleClose: () => {},
-    mode: 'new',
+    mode: WizardMode.New,
     externalContext: 'db-wizard-new',
     setMode: () => {},
     selectedScheduleName: '',

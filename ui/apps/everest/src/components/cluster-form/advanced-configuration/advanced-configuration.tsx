@@ -22,7 +22,7 @@ import {
 import { Messages } from './messages';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
-import { DbType } from '@percona/types';
+import { DbType, WizardMode } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Stack } from '@mui/material';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
@@ -58,7 +58,7 @@ export const AdvancedConfigurationForm = ({
 
     if (
       !storageClassTouched &&
-      mode === 'new' &&
+      mode === WizardMode.New &&
       clusterInfo?.storageClassNames &&
       clusterInfo.storageClassNames.length > 0
     ) {

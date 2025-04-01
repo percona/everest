@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DbType } from '@percona/types';
+import { DbType, WizardMode } from '@percona/types';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from '../../consts.ts';
 import { Messages } from './database-form.messages.ts';
 import { DbWizardFormFields } from 'consts.ts';
@@ -8,7 +8,6 @@ import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialo
 import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema.ts';
-import { DbWizardMode } from './database-form.types.ts';
 
 const basicInfoSchema = () =>
   z
@@ -31,8 +30,8 @@ const basicInfoSchema = () =>
 
 const stepTwoSchema = (
   defaultValues: Record<string, unknown>,
-  mode: DbWizardMode
-) => resourcesFormSchema(defaultValues, mode === 'new', true, true);
+  mode: WizardMode
+) => resourcesFormSchema(defaultValues, mode === WizardMode.New, true, true);
 
 const backupsStepSchema = () =>
   z
@@ -88,7 +87,7 @@ const stepFiveSchema = () =>
 export const getDBWizardSchema = (
   activeStep: number,
   defaultValues: DbWizardType,
-  mode: DbWizardMode
+  mode: WizardMode
 ) => {
   const schema = [
     basicInfoSchema(),

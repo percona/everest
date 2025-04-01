@@ -18,6 +18,7 @@ import { Messages } from './monitoring.messages.ts';
 import ActionableAlert from 'components/actionable-alert';
 import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils.ts';
 import { useRBACPermissions } from 'hooks/rbac';
+import { WizardMode } from '@percona/types';
 
 export const Monitoring = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
@@ -103,7 +104,7 @@ export const Monitoring = () => {
   useEffect(() => {
     const selectedInstance = getValues(DbWizardFormFields.monitoringInstance);
 
-    if (mode === 'new') {
+    if (mode === WizardMode.New) {
       if (monitoring && availableMonitoringInstances?.length) {
         setValue(
           DbWizardFormFields.monitoringInstance,
@@ -113,7 +114,7 @@ export const Monitoring = () => {
       }
     }
     if (
-      mode === 'restoreFromBackup' &&
+      mode === WizardMode.Restore &&
       availableMonitoringInstances?.length &&
       !selectedInstance
     ) {
