@@ -220,7 +220,12 @@ export const getDbAvailableUpgradeVersionK8S = async (
       : dbSplitVersion[0] + '.' + dbSplitVersion[1];
 
   try {
-    const versions = getVersionServiceDBVersions(dbType, crVersion, request, dbMajorVersion);
+    const versions = getVersionServiceDBVersions(
+      dbType,
+      crVersion,
+      request,
+      dbMajorVersion
+    );
     const dbUpgradeVersion = versions[0];
 
     // return latest version only if different than current one

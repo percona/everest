@@ -26,17 +26,20 @@ export const checkError = async (response) => {
   expect(response.ok()).toBeTruthy();
 };
 
-export const getDbOperatorVersionK8s = async (namespace: string, operator: string) => {
+export const getDbOperatorVersionK8s = async (
+  namespace: string,
+  operator: string
+) => {
   try {
     const command = `kubectl get deployment --namespace ${namespace} ${operator} -o jsonpath="{.spec.template.spec.containers[0].image}"`;
     const output = execSync(command).toString();
-    const version = output.split(":")[1];
+    const version = output.split(':')[1];
     return version;
   } catch (error) {
     console.error(`Error executing command: ${error}`);
     throw error;
   }
-}
+};
 
 export const shouldExecuteDBCombination = (db: string, size: number) => {
   return (

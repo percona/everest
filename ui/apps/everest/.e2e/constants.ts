@@ -17,9 +17,9 @@ export enum EVEREST_CI_NAMESPACES {
 }
 
 export const technologyMap: Record<string, string> = {
-  psmdb: "MongoDB",
-  pxc: "MySQL",
-  postgresql: "PostgreSQL",
+  psmdb: 'MongoDB',
+  pxc: 'MySQL',
+  postgresql: 'PostgreSQL',
 };
 
 export const getBucketNamespacesMap = (): BucketsNamespaceMap =>
