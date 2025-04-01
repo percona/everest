@@ -20,7 +20,8 @@ import { getClusterDetailedInfo } from './storage-class';
 import { getTokenFromLocalStorage } from './localStorage';
 import { getNamespacesFn } from './namespaces';
 import { DbType } from '@percona/types';
-import { checkError, getVersionServiceURL, getDbOperatorVersionK8s } from '@e2e/utils/generic';
+import { checkError, getDbOperatorVersionK8s } from '@e2e/utils/generic';
+import { getVersionServiceDBVersions } from '@e2e/utils/version-service';
 import { Operator } from '@e2e/upgrade/types';
 
 export const createDbClusterFn = async (
@@ -213,42 +214,16 @@ export const getDbAvailableUpgradeVersionK8S = async (
   const dbType = cluster.spec.engine.type;
   const crVersion = cluster.status.crVersion;
 
-  const dbOperatorName =
-    dbType === 'postgresql' ? 'pg-operator' : dbType + '-operator';
-
-  const versionServiceURL = await getVersionServiceURL();
   const dbMajorVersion =
     dbType === 'postgresql'
       ? dbSplitVersion[0]
       : dbSplitVersion[0] + '.' + dbSplitVersion[1];
 
   try {
-    const response = await (
-      await request.get(
-        versionServiceURL +
-          `/versions/v1/${dbOperatorName}/${crVersion}/${dbMajorVersion}-latest`
-      )
-    ).json();
+    const versions = getVersionServiceDBVersions(dbType, crVersion, request, dbMajorVersion);
+    const dbUpgradeVersion = versions[0];
 
-    // Navigate to the versions array
-    const versions = response?.versions;
-    if (!Array.isArray(versions)) return null;
-
-    // Find the first item in the versions array
-    const dbOperator = versions.find(
-      (item: any) => item.product === `${dbOperatorName}`
-    );
-    if (!dbOperator) return null;
-
-    // Access the matrix -> mongod/pxc/postgresql key
-    const vsKey = dbType === 'psmdb' ? 'mongod' : dbType;
-    const vsDatabase = dbOperator?.matrix?.[vsKey];
-
-    if (!vsDatabase || typeof vsDatabase !== 'object') return null;
-
-    // Get the first key in the mongod/pxc/postgresql object (e.g., "7.0.14-8")
-    const dbUpgradeVersion = Object.keys(vsDatabase)[0];
-
+    // return latest version only if different than current one
     return dbUpgradeVersion === dbCurrentVersion ? null : dbUpgradeVersion;
   } catch (error) {
     console.error('Error extracting database version:', error);
@@ -262,52 +237,12 @@ export const getDbNextLatestMajorVersion = async (
   majorVersionRequested: string,
   request: APIRequestContext,
 ) => {
-  const dbOperatorName =
-    dbType === 'postgresql' ? 'pg-operator' : dbType + '-operator';
-
-  const versionServiceURL = await getVersionServiceURL();
-
-  let operatorLongName = '';
-  switch (dbType) {
-    case 'psmdb':
-        operatorLongName = Operator.PSMDB;
-        break;
-      case 'pxc':
-        operatorLongName = Operator.PXC;
-        break;
-      case 'postgresql':
-        operatorLongName = Operator.PG;
-        break;
-  }
+  const operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[dbType] || undefined;
   const crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
 
   try {
-    const response = await (
-      await request.get(
-        versionServiceURL +
-          `/versions/v1/${dbOperatorName}/${crVersion}/${majorVersionRequested}-latest`
-      )
-    ).json();
-
-    // Navigate to the versions array
-    const versions = response?.versions;
-    if (!Array.isArray(versions)) return null;
-
-    // Find the first item in the versions array
-    const dbOperator = versions.find(
-      (item: any) => item.product === `${dbOperatorName}`
-    );
-    if (!dbOperator) return null;
-
-    // Access the matrix -> mongod/pxc/postgresql key
-    const vsKey = dbType === 'psmdb' ? 'mongod' : dbType;
-    const vsDatabase = dbOperator?.matrix?.[vsKey];
-
-    if (!vsDatabase || typeof vsDatabase !== 'object') return null;
-
-    // Get the first key in the mongod/pxc/postgresql object (e.g., "7.0.14-8")
-    const dbUpgradeVersion = Object.keys(vsDatabase)[0];
-
+    const versions = getVersionServiceDBVersions(dbType, crVersion, request, majorVersionRequested);
+    const dbUpgradeVersion = versions[0];
     return dbUpgradeVersion;
   } catch (error) {
     console.error('Error extracting database version:', error);

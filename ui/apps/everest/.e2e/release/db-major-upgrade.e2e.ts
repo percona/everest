@@ -39,11 +39,13 @@ import { prepareTestDB, dropTestDB, queryTestDB, insertTestDB } from '@e2e/utils
 import { getDbClusterAPI, getDbNextLatestMajorVersion } from '@e2e/utils/db-cluster';
 import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
-import { request } from 'http';
+import { getVersionServiceDBVersions } from '@e2e/utils/version-service';
+import { Operator } from '@e2e/upgrade/types';
+import { getDbOperatorVersionK8s } from '@e2e/utils/generic';
 
 let token: string;
 
-const DBVersions = {
+const majorDBVersions = {
   psmdb: ["6.0", "7.0", "8.0"],
 };
 
@@ -89,7 +91,10 @@ test.describe.configure({ retries: 0 });
         await page.getByTestId('add-db-cluster-button').click();
         await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
-        const dbVersion = await getDbNextLatestMajorVersion(db, namespace, DBVersions[db][0], request);
+        const operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[db] || undefined;
+        const crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
+        const dbVersion = await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][0])[1];
+
         await test.step('Populate basic information', async () => {
           await populateBasicInformation(
             page,
@@ -122,15 +127,15 @@ test.describe.configure({ retries: 0 });
           await moveForward(page);
         });
 
-        // await test.step('Populate monitoring', async () => {
-        //   await page.getByTestId('switch-input-monitoring').click();
-        //   await page
-        //     .getByTestId('text-input-monitoring-instance')
-        //     .fill(monitoringName);
-        //   await expect(
-        //     page.getByTestId('text-input-monitoring-instance')
-        //   ).toHaveValue(monitoringName);
-        // });
+        await test.step('Populate monitoring', async () => {
+          await page.getByTestId('switch-input-monitoring').click();
+          await page
+            .getByTestId('text-input-monitoring-instance')
+            .fill(monitoringName);
+          await expect(
+            page.getByTestId('text-input-monitoring-instance')
+          ).toHaveValue(monitoringName);
+        });
 
         await test.step('Submit wizard', async () => {
           await submitWizard(page);
@@ -184,16 +189,42 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
       });
 
+      test(`Run first minor upgrade [${db} size ${size}]`, async ({ page, request }) => {
+        await test.step(`Upgrade to latest minor DB version`, async () => {
+          const operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[db] || undefined;
+          const crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
+          const nextDbMinorVersion = await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][0])[0];
+          await page.goto('/databases');
+          await findDbAndClickRow(page, clusterName);
+          await page.getByTestId('upgrade-db-btn').click();
+          await expect(page.getByText('Upgrade DB version')).toBeVisible();
+          await expect(page.getByTestId('form-dialog-upgrade')).toBeDisabled();
+          await page.getByRole('combobox').click();
+          await page.getByRole('option', { name: `${nextDbMinorVersion}` }).click();
+          await expect(page.getByTestId('form-dialog-cancel')).toBeEnabled();
+          await page.getByTestId('form-dialog-upgrade').click();
+          await page.goto('/databases');
+          await waitForStatus(page, clusterName, 'Upgrading', 15000);
+          await waitForStatus(page, clusterName, 'Up', 300000);
+          const technology = technologyMap[db] || "Unknown";
+          await expect(page.getByText(`${technology} ${nextDbMinorVersion}`)).toBeVisible();
+          await findDbAndClickRow(page, clusterName);
+          await expect(page.getByTestId('upgrade-db-btn')).not.toBeVisible();
+        });
+      });
+
       test(`Run major upgrades [${db} size ${size}]`, async ({ page, request }) => {
         let i = 0;
         let expectedResult: string[] = ['1', '2', '3'];
 
-        for (const dbVersion of DBVersions[db]) {
+        for (const dbVersion of majorDBVersions[db]) {
           if (i !== 0) { // we skip first element because it's just used for initial installation
             expectedResult.push(`${i}+3`);
 
             await test.step(`Upgrade to ${dbVersion}`, async () => {
-              const nextMajorVersion = await getDbNextLatestMajorVersion(db, namespace, dbVersion, request);
+              const operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[db] || undefined;
+              const crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
+              const nextMajorVersion = await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][i])[1];
               await page.goto('/databases');
               await findDbAndClickRow(page, clusterName);
               await page.getByTestId('upgrade-db-btn').click();
@@ -239,7 +270,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Delete all backups [${db} size ${size}]`, async ({ page }) => {
-        for (let i = 1; i <= DBVersions[db].length; i++) {
+        for (let i = 1; i <= majorDBVersions[db].length; i++) {
           // PG doesn't list first backup after second restore
           if (db !== 'postgresql' && i !== 1) {
             await gotoDbClusterBackups(page, clusterName);
