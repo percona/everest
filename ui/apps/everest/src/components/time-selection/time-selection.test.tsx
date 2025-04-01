@@ -158,7 +158,10 @@ describe('TimeSelection', () => {
   it('should render correctly for UTX+X timezone with or without DST when monthly is selected', () => {
     vi.stubEnv('TZ', 'Europe/Amsterdam');
     const today = new Date();
-    const isDST = today.getMonth() > 1 && today.getDate() >= 30 ? true : false;
+    const janOffset = new Date(today.getFullYear(), 0, 1).getTimezoneOffset();
+    const julOffset = new Date(today.getFullYear(), 6, 1).getTimezoneOffset();
+    const isDST = today.getTimezoneOffset() < Math.max(janOffset, julOffset);
+
     render(
       <TestWrapper>
         <FormProviderWrapper>
