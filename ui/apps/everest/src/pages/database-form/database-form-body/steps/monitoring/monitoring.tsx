@@ -107,7 +107,8 @@ export const Monitoring = () => {
       if (monitoring && availableMonitoringInstances?.length) {
         setValue(
           DbWizardFormFields.monitoringInstance,
-          availableMonitoringInstances[0].name
+          availableMonitoringInstances[0].name,
+          { shouldValidate: true }
         );
       }
     }
@@ -118,7 +119,8 @@ export const Monitoring = () => {
     ) {
       setValue(
         DbWizardFormFields.monitoringInstance,
-        availableMonitoringInstances[0].name
+        availableMonitoringInstances[0].name,
+        { shouldValidate: true }
       );
     }
   }, [monitoring]);
