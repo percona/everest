@@ -230,22 +230,3 @@ export const getDbAvailableUpgradeVersionK8S = async (
     return null;
   }
 };
-
-export const getDbNextLatestMajorVersion = async (
-  dbType: string,
-  namespace: string,
-  majorVersionRequested: string,
-  request: APIRequestContext,
-) => {
-  const operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[dbType] || undefined;
-  const crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
-
-  try {
-    const versions = getVersionServiceDBVersions(dbType, crVersion, request, majorVersionRequested);
-    const dbUpgradeVersion = versions[0];
-    return dbUpgradeVersion;
-  } catch (error) {
-    console.error('Error extracting database version:', error);
-    return null;
-  }
-};

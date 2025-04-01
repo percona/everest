@@ -17,7 +17,6 @@ import { expect, test } from '@playwright/test';
 import {
   deleteDbCluster,
   gotoDbClusterBackups,
-  gotoDbClusterRestores,
 } from '@e2e/utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
@@ -35,8 +34,14 @@ import {
   findRowAndClickActions,
 } from '@e2e/utils/table';
 import { clickOnDemandBackup } from '@e2e/pr/db-cluster-details/utils';
-import { prepareTestDB, dropTestDB, queryTestDB, insertTestDB } from '@e2e/utils/db-cmd-line';
-import { getDbClusterAPI, getDbNextLatestMajorVersion } from '@e2e/utils/db-cluster';
+import {
+  prepareTestDB,
+  insertTestDB,
+  prepareMongoDBTestDB,
+  validateMongoDBSharding,
+  configureMongoDBSharding
+} from '@e2e/utils/db-cmd-line';
+import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 import { getVersionServiceDBVersions } from '@e2e/utils/version-service';
@@ -52,8 +57,9 @@ const majorDBVersions = {
 test.describe.configure({ retries: 0 });
 
 [
-  { db: 'psmdb', size: 3 },
-].forEach(({ db, size }) => {
+  { db: 'psmdb', size: 3, sharding: false },
+  { db: 'psmdb', size: 3, sharding: true },
+].forEach(({ db, size, sharding }) => {
   test.describe(
     'Database major upgrade',
     {
@@ -61,14 +67,18 @@ test.describe.configure({ retries: 0 });
     },
     () => {
       test.skip(!shouldExecuteDBCombination(db, size));
-      test.describe.configure({ timeout: 720000 });
+      test.describe.configure({ timeout: 1200000 });
 
-      const clusterName = `${db}-${size}-upgrade`;
+      const shSuffix = sharding ? "-sh" : "";
+      const clusterName = `${db}-${size}${shSuffix}-upg`;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
       const monitoringName = 'e2e-endpoint-0';
-      const baseBackupName = `upgrade-${db}-${size}`;
+      const baseBackupName = `upg-${db}-${size}${shSuffix}`;
+
+      let operatorLongName: string | undefined;
+      let crVersion: string | undefined;
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -78,9 +88,12 @@ test.describe.configure({ retries: 0 });
           request
         );
         storageClasses = storageClassNames;
+
+        operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[db] || undefined;
+        crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
       });
 
-      test(`Cluster creation [${db} size ${size}]`, async ({
+      test(`Cluster creation [${db} size ${size} sharding ${sharding}]`, async ({
         page,
         request,
       }) => {
@@ -91,11 +104,13 @@ test.describe.configure({ retries: 0 });
         await page.getByTestId('add-db-cluster-button').click();
         await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
-        const operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[db] || undefined;
-        const crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
-        const dbVersion = await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][0])[1];
-
         await test.step('Populate basic information', async () => {
+          const dbVersion = (await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][0]))[1];
+
+          if (process.env.DEBUG_TESTS) {
+            console.log('Starting with version: ' + dbVersion);
+          }
+
           await populateBasicInformation(
             page,
             namespace,
@@ -105,6 +120,16 @@ test.describe.configure({ retries: 0 });
             false,
             dbVersion
           );
+
+          if (sharding) {
+            const shardingCheckbox = page.getByTestId('switch-input-sharding');
+            await shardingCheckbox.click();
+            await page.getByTestId('db-wizard-continue-button').isEnabled();
+            await expect(
+              page.getByTestId('db-wizard-continue-button')
+            ).not.toBeDisabled();
+          }
+
           await moveForward(page);
         });
 
@@ -113,8 +138,26 @@ test.describe.configure({ retries: 0 });
             .getByRole('button')
             .getByText(size + ' node')
             .click();
-          await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
-          await populateResources(page, 0.6, 1, 1, size);
+          if (db === 'psmdb' && sharding) {
+            await expect(
+              page.getByText('Nodes Per Shard (' + size + ')')
+            ).toBeVisible();
+            await expect(page.getByText('Routers (3)')).toBeVisible();
+            await expect(page.getByText('2 shards')).toBeVisible();
+            await expect(
+              page.getByText(
+                '6 nodes - CPU - 6.00 CPU; Memory - 24.00 GB; Disk - 150.00 Gi'
+              )
+            ).toBeVisible();
+            await expect(page.getByText('3 configuration servers')).toBeVisible();
+            await expect(
+              page.getByText('3 routers - CPU - 3.00 CPU; Memory - 6.00 GB')
+            ).toBeVisible();
+            await populateResources(page, 0.6, 1, 1, size, 2, 0.6, 1, 2, 3);
+          } else {
+            await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
+            await populateResources(page, 0.6, 1, 1, size);
+          }
           await moveForward(page);
         });
 
@@ -172,11 +215,25 @@ test.describe.configure({ retries: 0 });
         });
       });
 
-      test(`Add data [${db} size ${size}]`, async () => {
-        await prepareTestDB(clusterName, namespace);
+      test(`Add data [${db} size ${size} sharding ${sharding}]`, async () => {
+        if (db === 'psmdb' && sharding) {
+          await prepareMongoDBTestDB(clusterName, namespace);
+        } else {
+          await prepareTestDB(clusterName, namespace);
+        }
       });
 
-      test(`Create demand backup [${db} size ${size}]`, async ({ page }) => {
+      test(`Setup MongoDB-specific sharding [${db} size ${size} sharding ${sharding}]`, async () => {
+        if (db !== 'psmdb' || !sharding) {
+          console.log('Not PSMDB with sharding enabled so skipping sharding collection.');
+          return;
+        }
+        await configureMongoDBSharding(clusterName, namespace);
+        await validateMongoDBSharding(clusterName, namespace, 't1');
+        await validateMongoDBSharding(clusterName, namespace, 't2');
+      });
+
+      test(`Create demand backup [${db} size ${size} sharding ${sharding}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName + '-1');
@@ -189,11 +246,12 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
       });
 
-      test(`Run first minor upgrade [${db} size ${size}]`, async ({ page, request }) => {
+      test(`Run first minor upgrade [${db} size ${size} sharding ${sharding}]`, async ({ page, request }) => {
         await test.step(`Upgrade to latest minor DB version`, async () => {
-          const operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[db] || undefined;
-          const crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
-          const nextDbMinorVersion = await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][0])[0];
+          const nextDbMinorVersion = (await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][0]))[0];
+          if (process.env.DEBUG_TESTS) {
+            console.log('Upgrading to: ' + nextDbMinorVersion);
+          }
           await page.goto('/databases');
           await findDbAndClickRow(page, clusterName);
           await page.getByTestId('upgrade-db-btn').click();
@@ -205,7 +263,7 @@ test.describe.configure({ retries: 0 });
           await page.getByTestId('form-dialog-upgrade').click();
           await page.goto('/databases');
           await waitForStatus(page, clusterName, 'Upgrading', 15000);
-          await waitForStatus(page, clusterName, 'Up', 300000);
+          await waitForStatus(page, clusterName, 'Up', 600000);
           const technology = technologyMap[db] || "Unknown";
           await expect(page.getByText(`${technology} ${nextDbMinorVersion}`)).toBeVisible();
           await findDbAndClickRow(page, clusterName);
@@ -213,18 +271,27 @@ test.describe.configure({ retries: 0 });
         });
       });
 
-      test(`Run major upgrades [${db} size ${size}]`, async ({ page, request }) => {
+      test(`Run major/minor upgrades [${db} size ${size} sharding ${sharding}]`, async ({ page, request }) => {
         let i = 0;
         let expectedResult: string[] = ['1', '2', '3'];
 
         for (const dbVersion of majorDBVersions[db]) {
-          if (i !== 0) { // we skip first element because it's just used for initial installation
-            expectedResult.push(`${i}+3`);
+          if (i !== 0) { // we skip first major version because it's just used for initial installation
+            expectedResult.push((i+3).toString());
 
             await test.step(`Upgrade to ${dbVersion}`, async () => {
-              const operatorLongName = { psmdb: Operator.PSMDB, pxc: Operator.PXC, postgresql: Operator.PG }[db] || undefined;
-              const crVersion = await getDbOperatorVersionK8s(namespace, operatorLongName);
-              const nextMajorVersion = await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][i])[1];
+              // by default we upgrade to non latest version unless only 1 exists (so that later we can do minor upgrade)
+              const dbVersions = (await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][i]));
+              let  versionElement = 1;
+              if (dbVersions.length <= 1) {
+                versionElement = 0;
+              }
+              const nextMajorVersion = (await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][i]))[versionElement];
+
+              if (process.env.DEBUG_TESTS) {
+                console.log('Upgrading to: ' + nextMajorVersion);
+              }
+
               await page.goto('/databases');
               await findDbAndClickRow(page, clusterName);
               await page.getByTestId('upgrade-db-btn').click();
@@ -236,7 +303,7 @@ test.describe.configure({ retries: 0 });
               await page.getByTestId('form-dialog-upgrade').click();
               await page.goto('/databases');
               await waitForStatus(page, clusterName, 'Upgrading', 15000);
-              await waitForStatus(page, clusterName, 'Up', 300000);
+              await waitForStatus(page, clusterName, 'Up', 1200000);
               const technology = technologyMap[db] || "Unknown";
               await expect(page.getByText(`${technology} ${nextMajorVersion}`)).toBeVisible();
               await findDbAndClickRow(page, clusterName);
@@ -247,7 +314,7 @@ test.describe.configure({ retries: 0 });
               await insertTestDB(
                 clusterName,
                 namespace,
-                [`${i}+3`],
+                [ (i+3).toString() ],
                 expectedResult
               );
             });
@@ -255,21 +322,53 @@ test.describe.configure({ retries: 0 });
             await test.step(`Create demand backup after upgrade`, async () => {
               await gotoDbClusterBackups(page, clusterName);
               await clickOnDemandBackup(page);
-              await page.getByTestId('text-input-name').fill(baseBackupName + `${i}+1`);
+              await page.getByTestId('text-input-name').fill(baseBackupName + '-' + (i+1).toString());
               await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
               await expect(
                 page.getByTestId('text-input-storage-location')
               ).not.toBeEmpty();
               await page.getByTestId('form-dialog-create').click();
 
-              await waitForStatus(page, baseBackupName + `${i}+1`, 'Succeeded', 300000);
+              await waitForStatus(page, baseBackupName + '-' + (i+1).toString(), 'Succeeded', 300000);
+            });
+
+            await test.step(`Upgrade to latest minor version if exists`, async () => {
+              const dbMinorVersions = (await getVersionServiceDBVersions(db, crVersion, request, majorDBVersions[db][i]));
+
+              if (dbMinorVersions.length <= 1) {
+                console.log(`Skipping upgrade: Only one minor version exists for ${db} and ${majorDBVersions[db][i]}`);
+                return;
+              }
+
+              const nextDbMinorVersion = dbMinorVersions[0];
+
+              if (process.env.DEBUG_TESTS) {
+                console.log('Upgrading to: ' + nextDbMinorVersion);
+              }
+
+              await page.goto('/databases');
+              await findDbAndClickRow(page, clusterName);
+              await page.getByTestId('upgrade-db-btn').click();
+              await expect(page.getByText('Upgrade DB version')).toBeVisible();
+              await expect(page.getByTestId('form-dialog-upgrade')).toBeDisabled();
+              await page.getByRole('combobox').click();
+              await page.getByRole('option', { name: `${nextDbMinorVersion}` }).click();
+              await expect(page.getByTestId('form-dialog-cancel')).toBeEnabled();
+              await page.getByTestId('form-dialog-upgrade').click();
+              await page.goto('/databases');
+              await waitForStatus(page, clusterName, 'Upgrading', 15000);
+              await waitForStatus(page, clusterName, 'Up', 300000);
+              const technology = technologyMap[db] || "Unknown";
+              await expect(page.getByText(`${technology} ${nextDbMinorVersion}`)).toBeVisible();
+              await findDbAndClickRow(page, clusterName);
+              await expect(page.getByTestId('upgrade-db-btn')).not.toBeVisible();
             });
           }
           i++;
         }
       });
 
-      test(`Delete all backups [${db} size ${size}]`, async ({ page }) => {
+      test(`Delete all backups [${db} size ${size} sharding ${sharding}]`, async ({ page }) => {
         for (let i = 1; i <= majorDBVersions[db].length; i++) {
           // PG doesn't list first backup after second restore
           if (db !== 'postgresql' && i !== 1) {
@@ -286,7 +385,7 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`Delete cluster [${db} size ${size} sharding ${sharding}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 240000);

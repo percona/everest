@@ -17,7 +17,18 @@ import { APIRequestContext } from '@playwright/test';
 import { everestFeatureBuildForUpgrade } from '@e2e/constants';
 import { execSync } from 'child_process';
 
-export const getVersionServiceURL = async () => {
+/**
+ * Retrieves the URL for the version service based on the current environment.
+ *
+ * If the `everestFeatureBuildForUpgrade` global variable is defined and set to `true`,
+ * it returns a hardcoded local URL (`http://localhost:8081`). Otherwise, it attempts
+ * to fetch the URL from the `VERSION_SERVICE_URL` environment variable of the
+ * `everest-server` deployment in the `everest-system` namespace using a `kubectl` command.
+ *
+ * @returns {Promise<string>} A promise that resolves to the version service URL.
+ * @throws Will throw an error if the `kubectl` command fails to execute.
+ */
+export const getVersionServiceURL = async (): Promise<string> => {
     if (
       typeof everestFeatureBuildForUpgrade !== 'undefined' &&
       everestFeatureBuildForUpgrade
@@ -35,6 +46,19 @@ export const getVersionServiceURL = async () => {
     }
 };
 
+/**
+ * Retrieves a list of database versions from the version service based on the provided database type,
+ * custom resource (CR) version, and optionally filters by a major version.
+ *
+ * @param dbType - The type of the database (e.g., 'psmdb', 'postgresql').
+ * @param crVersion - The custom resource version to query the version service for.
+ * @param request - The API request context used to make HTTP requests.
+ * @param majorVersion - (Optional) A specific major version to filter the results by.
+ * @returns A promise that resolves to an array of database versions in descending order (latest first),
+ *          or `null` if an error occurs or the response is invalid.
+ *
+ * @throws Will log an error to the console if the request fails or the response is malformed.
+ */
 export const getVersionServiceDBVersions = async (dbType: string, crVersion: string, request: APIRequestContext, majorVersion?: string): Promise<string[]> => {
     const versions: string[] = [];
     const vsKey = dbType === 'psmdb' ? 'mongod' : dbType;
@@ -49,7 +73,6 @@ export const getVersionServiceDBVersions = async (dbType: string, crVersion: str
           )
         ).json();
 
-        console.log(response);
         response.versions.forEach((versionEntry: any) => {
             const dbVersions = versionEntry.matrix?.[vsKey];
             if (dbVersions) {
