@@ -22,7 +22,7 @@ import { Messages } from './schedule-form-dialog.messages';
 import { schema } from 'components/schedule-form-dialog/schedule-form/schedule-form-schema';
 import { scheduleModalDefaultValues } from './schedule-form-dialog.utils';
 import { ScheduleFormWrapper } from './schedule-form-wrapper';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types';
 
 export const ScheduleFormDialog = () => {
   const {

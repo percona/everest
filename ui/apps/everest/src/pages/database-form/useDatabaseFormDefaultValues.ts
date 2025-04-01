@@ -24,7 +24,7 @@ import {
 } from './database-form.utils';
 import { DbWizardType } from './database-form-schema.ts';
 import { dbEngineToDbType } from '@percona/utils';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const useDatabasePageDefaultValues = (
   mode: WizardMode

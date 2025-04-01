@@ -16,7 +16,7 @@
 import { ScheduleFormData } from './schedule-form-schema';
 import { DbCluster, Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
-import { WizardMode, ScheduleWizardMode } from '@percona/types';
+import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types';
 
 type UpdateScheduleArrayProps = {
   formData: ScheduleFormData;

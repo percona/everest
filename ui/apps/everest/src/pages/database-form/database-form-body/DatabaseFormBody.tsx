@@ -20,7 +20,7 @@ import { useDatabasePageDefaultValues } from '../useDatabaseFormDefaultValues';
 import { DatabaseFormBodyProps } from './types';
 import { steps } from './steps';
 import DatabaseFormStepControllers from './DatabaseFormStepControllers';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types';
 
 const DatabaseFormBody = ({
   activeStep,

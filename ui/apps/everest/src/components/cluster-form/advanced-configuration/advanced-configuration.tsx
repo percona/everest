@@ -22,7 +22,7 @@ import {
 import { Messages } from './messages';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
-import { DbType, WizardMode } from '@percona/types';
+import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Stack } from '@mui/material';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
@@ -30,6 +30,7 @@ import { useEffect } from 'react';
 import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
+import { WizardMode } from 'shared-types/wizard.types';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;

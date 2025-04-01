@@ -19,7 +19,7 @@ import { DbEngineType } from 'shared-types/dbEngines.types.ts';
 import { ScheduleFormDialogContext } from '../schedule-form-dialog-context/schedule-form-dialog.context';
 import { ScheduleFormFields } from '../schedule-form/schedule-form.types';
 import { ScheduleForm } from '../schedule-form/schedule-form';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types';
 
 export const ScheduleFormWrapper = () => {
   const { watch, setValue, trigger } = useFormContext();

@@ -18,7 +18,7 @@ import { Messages } from './monitoring.messages.ts';
 import ActionableAlert from 'components/actionable-alert';
 import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils.ts';
 import { useRBACPermissions } from 'hooks/rbac';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const Monitoring = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);

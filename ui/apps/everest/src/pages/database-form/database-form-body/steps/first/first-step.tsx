@@ -17,7 +17,7 @@ import { Box, FormGroup, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useEffect, useMemo } from 'react';
 import { lt, valid } from 'semver';
-import { DbType, WizardMode } from '@percona/types';
+import { DbType } from '@percona/types';
 import {
   ActionableLabeledContent,
   AutoCompleteInput,
@@ -38,6 +38,7 @@ import { DbVersion } from 'components/cluster-form/db-version';
 import { useDBEnginesForDbEngineTypes } from 'hooks/index.ts';
 import { useDatabasePageDefaultValues } from 'pages/database-form/useDatabaseFormDefaultValues.ts';
 import { getDbWizardDefaultValues } from 'pages/database-form/database-form.utils';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -65,7 +66,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       .filter((item) => item.namespace === dbNamespace)
       .map((item) => item.dbEngine);
     const dbEngine = dbEnginesArray ? dbEnginesArray[0] : undefined;
-    if (mode !== 'new' && dbEngine) {
+    if (mode !== WizardMode.New && dbEngine) {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         dbEngine,
         defaultDbVersion
@@ -87,7 +88,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     lt(dbEngineData?.operatorVersion || '', '1.17.0');
 
   const disableSharding =
-    mode !== 'new' || notSupportedMongoOperatorVersionForSharding;
+    mode !== WizardMode.New || notSupportedMongoOperatorVersionForSharding;
 
   const { canCreate, isLoading } =
     useNamespacePermissionsForResource('database-clusters');

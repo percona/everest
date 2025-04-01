@@ -22,7 +22,7 @@ import { timeSelectionSchemaObject } from '../../time-selection/time-selection-s
 import { Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
 import { sameScheduleFunc } from '../schedule-form-dialog.utils';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const storageLocationZodObject = z
   .string()

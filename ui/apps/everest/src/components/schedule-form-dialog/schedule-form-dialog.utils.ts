@@ -19,7 +19,7 @@ import { TIME_SELECTION_DEFAULTS } from '../time-selection/time-selection.consta
 import { ScheduleFormData } from './schedule-form/schedule-form-schema';
 import { ScheduleFormFields } from './schedule-form/schedule-form.types';
 import { generateShortUID } from 'utils/generateShortUID';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types';
 
 export const scheduleModalDefaultValues = (
   mode: WizardMode,

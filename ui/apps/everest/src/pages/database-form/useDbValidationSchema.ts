@@ -1,4 +1,4 @@
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 import { DbWizardType, getDBWizardSchema } from './database-form-schema.ts';
 
 export const useDbValidationSchema = (

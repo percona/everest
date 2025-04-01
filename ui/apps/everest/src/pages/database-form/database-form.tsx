@@ -31,7 +31,7 @@ import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
 import { DB_CLUSTERS_QUERY_KEY } from 'hooks';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types';
 
 export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);

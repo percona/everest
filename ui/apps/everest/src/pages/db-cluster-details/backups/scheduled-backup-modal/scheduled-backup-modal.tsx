@@ -20,7 +20,7 @@ import { ScheduleFormDialogContext } from 'components/schedule-form-dialog/sched
 import { ScheduleFormDialog } from 'components/schedule-form-dialog';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { backupScheduleFormValuesToDbClusterPayload } from 'components/schedule-form-dialog/schedule-form/schedule-form.utils.ts';
-import { WizardMode } from '@percona/types';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const ScheduledBackupModal = () => {
   const {
