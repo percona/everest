@@ -125,22 +125,6 @@ export const AdvancedConfigurationForm = ({
           />
         }
       />
-      <SwitchInput
-        label={Messages.enableExternalAccess.title}
-        labelCaption={Messages.enableExternalAccess.caption}
-        name={AdvancedConfigurationFields.externalAccess}
-      />
-      {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
-          <TextArray
-            placeholder={Messages.sourceRangePlaceholder}
-            fieldName={AdvancedConfigurationFields.sourceRanges}
-            fieldKey="sourceRange"
-            label={Messages.sourceRange}
-            handleBlur={handleBlur}
-          />
-        </Stack>
-      )}
       <RoundedBox>
         <SwitchInput
           label={Messages.enableExternalAccess.title}
@@ -154,6 +138,7 @@ export const AdvancedConfigurationForm = ({
               fieldName={AdvancedConfigurationFields.sourceRanges}
               fieldKey="sourceRange"
               label={Messages.sourceRange}
+              handleBlur={handleBlur}
             />
           </Stack>
         )}
