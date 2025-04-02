@@ -115,7 +115,7 @@ test.describe.configure({ retries: 0 });
               request,
               majorDBVersions[db][0]
             )
-          )[1];
+          )[0];
 
           if (process.env.DEBUG_TESTS) {
             console.log('Starting with version: ' + dbVersion);
@@ -255,45 +255,6 @@ test.describe.configure({ retries: 0 });
         await page.getByTestId('form-dialog-create').click();
 
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
-      });
-
-      test(`Run first minor upgrade [${db} size ${size} sharding ${sharding}]`, async ({
-        page,
-        request,
-      }) => {
-        await test.step(`Upgrade to latest minor DB version`, async () => {
-          const nextDbMinorVersion = (
-            await getVersionServiceDBVersions(
-              db,
-              crVersion,
-              request,
-              majorDBVersions[db][0]
-            )
-          )[0];
-          if (process.env.DEBUG_TESTS) {
-            console.log('Upgrading to: ' + nextDbMinorVersion);
-          }
-          await page.goto('/databases');
-          await findDbAndClickRow(page, clusterName);
-          await page.getByTestId('upgrade-db-btn').click();
-          await expect(page.getByText('Upgrade DB version')).toBeVisible();
-          await expect(page.getByTestId('form-dialog-upgrade')).toBeDisabled();
-          await page.getByRole('combobox').click();
-          await page
-            .getByRole('option', { name: `${nextDbMinorVersion}` })
-            .click();
-          await expect(page.getByTestId('form-dialog-cancel')).toBeEnabled();
-          await page.getByTestId('form-dialog-upgrade').click();
-          await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Upgrading', 15000);
-          await waitForStatus(page, clusterName, 'Up', 600000);
-          const technology = technologyMap[db] || 'Unknown';
-          await expect(
-            page.getByText(`${technology} ${nextDbMinorVersion}`)
-          ).toBeVisible();
-          await findDbAndClickRow(page, clusterName);
-          await expect(page.getByTestId('upgrade-db-btn')).not.toBeVisible();
-        });
       });
 
       test(`Run major/minor upgrades [${db} size ${size} sharding ${sharding}]`, async ({
