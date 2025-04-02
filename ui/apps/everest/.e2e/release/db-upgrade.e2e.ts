@@ -67,7 +67,7 @@ test.describe.configure({ retries: 0 });
     },
     () => {
       test.skip(!shouldExecuteDBCombination(db, size));
-      test.describe.configure({ timeout: 1200000 });
+      test.describe.configure({ timeout: 720000 });
 
       const shSuffix = sharding ? '-sh' : '';
       const clusterName = `${db}-${size}${shSuffix}-upg`;
@@ -305,6 +305,7 @@ test.describe.configure({ retries: 0 });
         page,
         request,
       }) => {
+        test.setTimeout(2400000);
         let i = 0;
         let expectedResult: string[] = ['1', '2', '3'];
 
