@@ -16,10 +16,11 @@
 import { ScheduleFormData } from './schedule-form-schema';
 import { DbCluster, Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
+import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types';
 
 type UpdateScheduleArrayProps = {
   formData: ScheduleFormData;
-  mode: 'new' | 'edit';
+  mode: ScheduleWizardMode;
   schedules: Schedule[];
 };
 
@@ -49,7 +50,7 @@ export const getSchedulesPayload = ({
   });
   let schedulesPayload: Schedule[] = [];
 
-  if (mode === 'new') {
+  if (mode === WizardMode.New) {
     schedulesPayload = [
       ...(schedules ?? []),
       {
@@ -65,7 +66,7 @@ export const getSchedulesPayload = ({
     ];
   }
 
-  if (mode === 'edit') {
+  if (mode === WizardMode.Edit) {
     const newSchedulesArray = schedules && [...(schedules || [])];
     const editedScheduleIndex = newSchedulesArray?.findIndex(
       (item) => item.name === scheduleName
@@ -97,7 +98,7 @@ export const removeScheduleFromArray = (
 export const backupScheduleFormValuesToDbClusterPayload = (
   dbPayload: ScheduleFormData,
   dbCluster: DbCluster,
-  mode: 'edit' | 'new'
+  mode: WizardMode
 ): DbCluster => {
   const {
     selectedTime,
@@ -119,7 +120,7 @@ export const backupScheduleFormValuesToDbClusterPayload = (
   });
 
   let schedulesPayload: Schedule[] = [];
-  if (mode === 'new') {
+  if (mode === WizardMode.New) {
     schedulesPayload = [
       ...(dbCluster.spec.backup?.schedules || []).map((schedule) => ({
         ...schedule,
@@ -137,7 +138,7 @@ export const backupScheduleFormValuesToDbClusterPayload = (
     ];
   }
 
-  if (mode === 'edit') {
+  if (mode === WizardMode.Edit) {
     const schedulesArray = dbCluster?.spec?.backup?.schedules || [];
     const editedScheduleIndex = schedulesArray?.findIndex(
       (item) => item.name === scheduleName

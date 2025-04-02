@@ -5,6 +5,7 @@ import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './resources-step.messages.ts';
 import { ResourcesForm } from 'components/cluster-form';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const ResourcesStep = () => {
   const { watch } = useFormContext();
@@ -24,7 +25,7 @@ export const ResourcesStep = () => {
         allowDiskInputUpdate
         showSharding={dbType === DbType.Mongo}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
-        disableShardingInput={mode === 'restoreFromBackup'}
+        disableShardingInput={mode === WizardMode.Restore}
       />
     </>
   );
