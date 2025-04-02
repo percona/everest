@@ -1,9 +1,10 @@
 import { DbCluster } from 'shared-types/dbCluster.types';
+import { ScheduleWizardMode } from 'shared-types/wizard.types';
 
 export type ScheduleModalContextType = {
   dbCluster: DbCluster;
-  mode: 'new' | 'edit';
-  setMode: React.Dispatch<React.SetStateAction<'new' | 'edit'>>;
+  mode: ScheduleWizardMode;
+  setMode: React.Dispatch<React.SetStateAction<ScheduleWizardMode>>;
   selectedScheduleName: string;
   setSelectedScheduleName: React.Dispatch<React.SetStateAction<string>>;
   openScheduleModal: boolean;
