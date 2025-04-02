@@ -15,7 +15,7 @@
 
 import { Box, FormGroup, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { lt, valid } from 'semver';
 import { DbType } from '@percona/types';
 import {
@@ -37,6 +37,12 @@ import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { DbVersion } from 'components/cluster-form/db-version';
 import { useDBEnginesForDbEngineTypes } from 'hooks/index.ts';
 import { useDatabasePageDefaultValues } from 'pages/database-form/useDatabaseFormDefaultValues.ts';
+import {
+  AffinityComponent,
+  AffinityRule,
+} from 'shared-types/affinity.types.ts';
+import { filterOutUnavailableAffinityRulesForMongo } from 'pages/database-form/database-form.utils.ts';
+import { generateDefaultAffinityRule } from 'utils/db.tsx';
 import { getDbWizardDefaultValues } from 'pages/database-form/database-form.utils';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
@@ -45,7 +51,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
   } = useDatabasePageDefaultValues(mode);
-  const { watch, setValue, getFieldState, resetField } = useFormContext();
+  const { watch, setValue, getFieldState, resetField, getValues } =
+    useFormContext();
 
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
@@ -160,6 +167,33 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     setValue(DbWizardFormFields.pitrEnabled, false);
   };
 
+  const onShardingToggleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const enabled = e.target.checked;
+      const rules: AffinityRule[] = getValues(DbWizardFormFields.affinityRules);
+      const { isDirty } = getFieldState(DbWizardFormFields.affinityRules);
+
+      if (!enabled) {
+        resetField(DbWizardFormFields.shardNr, {
+          keepError: false,
+        });
+        resetField(DbWizardFormFields.shardConfigServers, {
+          keepError: false,
+        });
+      } else if (!isDirty) {
+        rules.push(generateDefaultAffinityRule(AffinityComponent.Proxy));
+        rules.push(generateDefaultAffinityRule(AffinityComponent.ConfigServer));
+      }
+
+      const filteredRules = filterOutUnavailableAffinityRulesForMongo(
+        rules,
+        enabled
+      );
+      setValue(DbWizardFormFields.affinityRules, filteredRules);
+    },
+    [getFieldState, getValues, resetField, setValue]
+  );
+
   return (
     <>
       <StepHeader
@@ -211,16 +245,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   name={DbWizardFormFields.sharding}
                   switchFieldProps={{
                     disabled: disableSharding,
-                    onChange: (e) => {
-                      if (!e.target.checked) {
-                        resetField(DbWizardFormFields.shardNr, {
-                          keepError: false,
-                        });
-                        resetField(DbWizardFormFields.shardConfigServers, {
-                          keepError: false,
-                        });
-                      }
-                    },
+                    onChange: onShardingToggleChange,
                   }}
                 />
                 {notSupportedMongoOperatorVersionForSharding && (

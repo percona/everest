@@ -26,26 +26,37 @@ import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Stack } from '@mui/material';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
-import { useEffect } from 'react';
-import { DbWizardFormFields } from 'consts';
+import { useCallback, useEffect } from 'react';
+import { DbWizardForm, DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
+import { AffinityRule } from 'shared-types/affinity.types';
+import RoundedBox from 'components/rounded-box';
+import { AffinityListView } from '../affinity/affinity-list-view/affinity-list.view';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
   loadingDefaultsForEdition?: boolean;
+  showAffinity?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
+  showAffinity = false,
   loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState } = useFormContext();
   const mode = useDatabasePageMode();
-  const [externalAccess, engineParametersEnabled] = watch([
+  const [
+    externalAccess,
+    engineParametersEnabled,
+    formAffinityRules,
+    isShardingEnabled,
+  ] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
-    AdvancedConfigurationFields.storageClass,
+    AdvancedConfigurationFields.affinityRules,
+    DbWizardForm.sharding,
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
@@ -75,8 +86,26 @@ export const AdvancedConfigurationForm = ({
     }
   };
 
+  const onRulesChange = useCallback(
+    (newRules: AffinityRule[]) => {
+      setValue(AdvancedConfigurationFields.affinityRules, newRules, {
+        shouldTouch: true,
+        shouldDirty: true,
+      });
+    },
+    [setValue]
+  );
+
   return (
     <>
+      {showAffinity && (
+        <AffinityListView
+          initialRules={formAffinityRules}
+          onRulesChange={onRulesChange}
+          dbType={dbType}
+          isShardingEnabled={isShardingEnabled}
+        />
+      )}
       <AdvancedCard
         title={Messages.cards.storage.title}
         description={Messages.cards.storage.description}
@@ -96,45 +125,49 @@ export const AdvancedConfigurationForm = ({
           />
         }
       />
-      <SwitchInput
-        label={Messages.enableExternalAccess.title}
-        labelCaption={Messages.enableExternalAccess.caption}
-        name={AdvancedConfigurationFields.externalAccess}
-      />
-      {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
-          <TextArray
-            placeholder={Messages.sourceRangePlaceholder}
-            fieldName={AdvancedConfigurationFields.sourceRanges}
-            fieldKey="sourceRange"
-            label={Messages.sourceRange}
-            handleBlur={handleBlur}
-          />
-        </Stack>
-      )}
-      <SwitchInput
-        label={Messages.engineParameters.title}
-        labelCaption={Messages.engineParameters.caption}
-        name={AdvancedConfigurationFields.engineParametersEnabled}
-        formControlLabelProps={{
-          sx: {
-            mt: 1,
-          },
-        }}
-      />
-      {engineParametersEnabled && (
-        <TextInput
-          name={AdvancedConfigurationFields.engineParameters}
-          textFieldProps={{
-            placeholder: getParamsPlaceholderFromDbType(dbType),
-            multiline: true,
-            minRows: 3,
+      <RoundedBox>
+        <SwitchInput
+          label={Messages.enableExternalAccess.title}
+          labelCaption={Messages.enableExternalAccess.caption}
+          name={AdvancedConfigurationFields.externalAccess}
+        />
+        {externalAccess && (
+          <Stack sx={{ ml: 6 }}>
+            <TextArray
+              placeholder={Messages.sourceRangePlaceholder}
+              fieldName={AdvancedConfigurationFields.sourceRanges}
+              fieldKey="sourceRange"
+              label={Messages.sourceRange}
+              handleBlur={handleBlur}
+            />
+          </Stack>
+        )}
+      </RoundedBox>
+      <RoundedBox>
+        <SwitchInput
+          label={Messages.engineParameters.title}
+          labelCaption={Messages.engineParameters.caption}
+          name={AdvancedConfigurationFields.engineParametersEnabled}
+          formControlLabelProps={{
             sx: {
-              ml: 6,
+              mt: 1,
             },
           }}
         />
-      )}
+        {engineParametersEnabled && (
+          <TextInput
+            name={AdvancedConfigurationFields.engineParameters}
+            textFieldProps={{
+              placeholder: getParamsPlaceholderFromDbType(dbType),
+              multiline: true,
+              minRows: 3,
+              sx: {
+                ml: 6,
+              },
+            }}
+          />
+        )}
+      </RoundedBox>
     </>
   );
 };
