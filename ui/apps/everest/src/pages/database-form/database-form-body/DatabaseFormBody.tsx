@@ -20,6 +20,7 @@ import { useDatabasePageDefaultValues } from '../useDatabaseFormDefaultValues';
 import { DatabaseFormBodyProps } from './types';
 import { steps } from './steps';
 import DatabaseFormStepControllers from './DatabaseFormStepControllers';
+import { WizardMode } from 'shared-types/wizard.types';
 
 const DatabaseFormBody = ({
   activeStep,
@@ -40,8 +41,8 @@ const DatabaseFormBody = ({
   return (
     <form style={{ flexGrow: 1 }} onSubmit={onSubmit}>
       <Box>
-        {(mode === 'new' ||
-          (mode === 'restoreFromBackup' &&
+        {(mode === WizardMode.New ||
+          (mode === WizardMode.Restore &&
             dbClusterRequestStatus === 'success')) &&
           React.createElement(steps[activeStep], {
             loadingDefaultsForEdition,
