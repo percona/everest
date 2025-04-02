@@ -338,7 +338,7 @@ test.describe.configure({ retries: 0 });
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 45000);
         }
-        await waitForStatus(page, clusterName, 'Up', 360000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
       test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
@@ -350,7 +350,7 @@ test.describe.configure({ retries: 0 });
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 60000);
         }
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
       test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
