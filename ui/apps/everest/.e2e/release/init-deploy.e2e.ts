@@ -49,9 +49,12 @@ test.describe.configure({ retries: 0 });
 [
   { db: 'psmdb', size: 1 },
   { db: 'psmdb', size: 3 },
+  { db: 'psmdb', size: 5 },
   { db: 'pxc', size: 1 },
   { db: 'pxc', size: 3 },
+  { db: 'pxc', size: 5 },
   { db: 'postgresql', size: 1 },
+  { db: 'postgresql', size: 2 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
