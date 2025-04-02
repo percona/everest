@@ -12,12 +12,13 @@ import { DBClusterComponent } from 'shared-types/components.types';
 import { CustomEdge, CustomNode } from './types';
 import ComponentNode from './component-node';
 import ContainerNode from './container-node';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {
   filterOutInvisibleNodesAndEdges,
   getNodesAndEdgesFromDbClusterComponents,
   selectNode,
 } from './utils';
-import { styled, Button } from '@mui/material';
+import { styled, Button, Box } from '@mui/material';
 import { Messages } from './components-diagram-view.messages';
 
 const ReactFlowStyled = styled(ReactFlow<CustomNode, CustomEdge>)(
@@ -119,14 +120,24 @@ const ComponentsDiagramView = ({
       >
         <Controls showZoom showFitView={false} showInteractive={false} />
       </ReactFlowStyled>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleResetView}
-        sx={{ mt: 2 }}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          padding: '4px 3.6px',
+          mt: 2,
+        }}
       >
-        {Messages.button.resetView}
-      </Button>
+        <Button
+          startIcon={<RestartAltIcon />}
+          variant="text"
+          color="primary"
+          onClick={handleResetView}
+        >
+          {Messages.button.resetView}
+        </Button>
+      </Box>
     </>
   );
 };

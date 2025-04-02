@@ -51,17 +51,19 @@ const Components = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          mb: 1,
+          mt: 1,
         }}
       >
         {!tableView && (
           <TextField
-            label="Search Components"
-            variant="filled"
-            size="medium"
+            label="Search"
+            variant="outlined"
+            size="small"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search"
-            sx={{ mb: 2, width: '300px' }}
+            sx={{ width: '380px' }}
           />
         )}
         <FormControlLabel
