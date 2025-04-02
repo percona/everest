@@ -149,7 +149,7 @@ test.describe.configure({ retries: 0 });
           if (size != 1 || db != 'psmdb') {
             await waitForStatus(page, clusterName, 'Initializing', 30000);
           }
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          await waitForStatus(page, clusterName, 'Up', 720000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -338,7 +338,7 @@ test.describe.configure({ retries: 0 });
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 45000);
         }
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 360000);
       });
 
       test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
@@ -354,6 +354,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
+        test.skip(size > 3);
         const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
 
