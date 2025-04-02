@@ -236,12 +236,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Setup MongoDB-specific sharding [${db} size ${size} sharding ${sharding}]`, async () => {
-        if (db !== 'psmdb' || !sharding) {
-          console.log(
-            'Not PSMDB with sharding enabled so skipping sharding collection.'
-          );
-          return;
-        }
+        test.skip(db !== 'psmdb' || !sharding);
         await configureMongoDBSharding(clusterName, namespace);
         await validateMongoDBSharding(clusterName, namespace, 't1');
         await validateMongoDBSharding(clusterName, namespace, 't2');
