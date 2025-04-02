@@ -1,11 +1,13 @@
 import { Stack, Typography } from '@mui/material';
-import { AffinityRule } from 'shared-types/affinity.types';
+import { AffinityRule, AffinityType } from 'shared-types/affinity.types';
 
 const showRuleProperty = (prop: string | undefined) => {
   return prop ? ` | ${prop}` : '';
 };
 
 export const AffinityItem = ({ rule }: { rule: AffinityRule }) => {
+  const valuesToShow =
+    rule.type === AffinityType.NodeAffinity ? [] : [rule.topologyKey];
   return (
     <Stack
       direction="row"
@@ -21,8 +23,8 @@ export const AffinityItem = ({ rule }: { rule: AffinityRule }) => {
       >
         <Typography variant="body1">
           {rule.type}
-          {[rule.topologyKey, rule.key, rule.operator, rule.values].map(
-            (prop) => showRuleProperty(prop)
+          {[...valuesToShow, rule.key, rule.operator, rule.values].map((prop) =>
+            showRuleProperty(prop)
           )}
         </Typography>
       </Stack>
