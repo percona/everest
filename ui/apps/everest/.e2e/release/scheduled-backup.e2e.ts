@@ -99,7 +99,8 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             clusterName,
             db,
             storageClasses[0],
-            false
+            false,
+            null
           );
           await moveForward(page);
         });
