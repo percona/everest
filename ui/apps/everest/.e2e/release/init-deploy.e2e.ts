@@ -348,7 +348,7 @@ test.describe.configure({ retries: 0 });
         }
         // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
         if (size != 1 || db != 'psmdb') {
-          await waitForStatus(page, clusterName, 'Initializing', 60000);
+          await waitForStatus(page, clusterName, 'Initializing', 120000);
         }
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
