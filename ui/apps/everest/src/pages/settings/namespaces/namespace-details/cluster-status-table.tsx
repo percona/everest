@@ -70,12 +70,25 @@ const ClusterStatusTable = ({
         }
       } else if (pendingTask === 'upgradeEngine') {
         // We try to find the version in the message
-        const coercedVersion = semverCoerce(db.message, {
+        const msg = db.message;
+        const coercedVersion = semverCoerce(msg, {
           includePrerelease: true,
         });
 
         if (coercedVersion) {
-          selectedDbEngineVersion.current = coercedVersion.toString();
+          // If version was coerced, but 0 was added as patch version incorrectly, we remove it
+          if (
+            !msg.includes(coercedVersion.version) &&
+            coercedVersion.patch === 0
+          ) {
+            const version = coercedVersion.version;
+            selectedDbEngineVersion.current = version.slice(
+              0,
+              version.length - 2
+            );
+          } else {
+            selectedDbEngineVersion.current = coercedVersion.toString();
+          }
           setOpenUpdateEngineDialog(true);
         } else {
           // Couldn't find the version in the message. Try to update to the latest version with same major as current and recommended
