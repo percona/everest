@@ -42,6 +42,7 @@ import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBacku
 import TableActionsMenu from 'components/table-actions-menu';
 import { BackupActionButtons } from './backups-list-menu-actions';
 import { shouldDbActionsBeBlocked } from 'utils/db.tsx';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -151,7 +152,7 @@ export const BackupsList = () => {
   };
 
   const handleScheduledBackup = () => {
-    setScheduleModalMode('new');
+    setScheduleModalMode(WizardMode.New);
     setOpenScheduleModal(true);
   };
 
