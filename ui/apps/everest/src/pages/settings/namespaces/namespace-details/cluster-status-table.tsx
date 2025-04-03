@@ -76,19 +76,12 @@ const ClusterStatusTable = ({
         });
 
         if (coercedVersion) {
-          // If version was coerced, but 0 was added as patch version incorrectly, we remove it
-          if (
-            !msg.includes(coercedVersion.version) &&
-            coercedVersion.patch === 0
-          ) {
-            const version = coercedVersion.version;
-            selectedDbEngineVersion.current = version.slice(
-              0,
-              version.length - 2
-            );
-          } else {
-            selectedDbEngineVersion.current = coercedVersion.toString();
-          }
+          // We keep the version exactly as it is in the message
+          msg.split(' ').forEach((original) => {
+            if (semverCoerce(original)) {
+              selectedDbEngineVersion.current = original;
+            }
+          });
           setOpenUpdateEngineDialog(true);
         } else {
           // Couldn't find the version in the message. Try to update to the latest version with same major as current and recommended
