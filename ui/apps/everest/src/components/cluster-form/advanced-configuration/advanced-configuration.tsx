@@ -79,7 +79,9 @@ export const AdvancedConfigurationForm = ({
     <>
       <AdvancedCard
         title={Messages.cards.storage.title}
-        description={Messages.cards.storage.description}
+        description={
+          !loadingDefaultsForEdition ? Messages.cards.storage.description : ''
+        }
         controlComponent={
           <AutoCompleteInput
             name={AdvancedConfigurationFields.storageClass}
