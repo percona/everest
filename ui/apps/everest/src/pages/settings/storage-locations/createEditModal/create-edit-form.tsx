@@ -63,6 +63,7 @@ export const CreateEditStorageForm = ({ isEditMode }: CreateEditFormProps) => {
         textFieldProps={{
           placeholder: Messages.createEditModal.placeholders.type,
           disabled: isEditMode,
+          onChange: (event) => event.target.value.trim(),
         }}
       />
       <TextInput
