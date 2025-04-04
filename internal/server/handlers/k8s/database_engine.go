@@ -308,7 +308,7 @@ func preflightCheckDBEngineVersion(
 	if err != nil {
 		return false, "", err
 	}
-	return currentVersion.GreaterThanOrEqual(minVersion), minVersion.String(), nil
+	return currentVersion.GreaterThanOrEqual(minVersion), minVersion.Original(), nil
 }
 
 func (h *k8sHandler) getDBPostUpgradeTasks(
