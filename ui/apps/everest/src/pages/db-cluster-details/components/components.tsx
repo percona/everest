@@ -21,7 +21,7 @@ import { Table } from '@percona/ui-lib';
 import { MRT_ColumnDef } from 'material-react-table';
 import { DBClusterComponent } from 'shared-types/components.types';
 import StatusField from 'components/status-field';
-import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
+import { format, isValid, formatDuration, intervalToDuration } from 'date-fns';
 import {
   COMPONENT_STATUS,
   COMPONENT_STATUS_WEIGHT,
@@ -32,6 +32,7 @@ import { DATE_FORMAT } from 'consts';
 
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
+  const now = new Date();
 
   const { data: components = [], isLoading } = useDbClusterComponents(
     namespace,
@@ -82,7 +83,17 @@ const Components = () => {
               placement="right"
               arrow
             >
-              <div>{formatDistanceToNowStrict(date)}</div>
+              <div>
+                {formatDuration(
+                  intervalToDuration({
+                    start: date,
+                    end: now,
+                  }),
+                  {
+                    format: ['years', 'months', 'days', 'hours', 'minutes'],
+                  }
+                )}
+              </div>
             </Tooltip>
           ) : (
             ''
