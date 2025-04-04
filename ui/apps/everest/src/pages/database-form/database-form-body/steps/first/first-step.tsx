@@ -69,7 +69,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     if (mode !== WizardMode.New && dbEngine) {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         dbEngine,
-        defaultDbVersion
+        defaultDbVersion,
+        mode
       );
       return {
         ...dbEngine,
