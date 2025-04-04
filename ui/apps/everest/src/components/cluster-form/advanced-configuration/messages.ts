@@ -51,4 +51,7 @@ export const Messages = {
       invalid: 'Invalid',
     },
   },
+  tooltipTexts: {
+    storageClass: 'Storage can’t be changed.',
+  },
 };
