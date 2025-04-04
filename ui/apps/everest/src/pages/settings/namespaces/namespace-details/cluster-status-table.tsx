@@ -70,12 +70,18 @@ const ClusterStatusTable = ({
         }
       } else if (pendingTask === 'upgradeEngine') {
         // We try to find the version in the message
-        const coercedVersion = semverCoerce(db.message, {
+        const msg = db.message;
+        const coercedVersion = semverCoerce(msg, {
           includePrerelease: true,
         });
 
         if (coercedVersion) {
-          selectedDbEngineVersion.current = coercedVersion.toString();
+          // We keep the version exactly as it is in the message
+          msg.split(' ').forEach((original) => {
+            if (semverCoerce(original)) {
+              selectedDbEngineVersion.current = original;
+            }
+          });
           setOpenUpdateEngineDialog(true);
         } else {
           // Couldn't find the version in the message. Try to update to the latest version with same major as current and recommended
