@@ -294,21 +294,40 @@ func preflightCheckDBEngineVersion(
 		return false, "", fmt.Errorf("unsupported engine type %s", engineType)
 	}
 
-	supportedVersions, err := args.versionService.GetSupportedEngineVersions(ctx, operator, args.targetVersion)
+	allSupportedVersions, err := args.versionService.GetSupportedEngineVersions(ctx, operator, args.targetVersion)
 	if err != nil {
 		return false, "", errors.Join(err, errors.New("failed to get supported engine versions"))
-	}
-
-	minVersion, err := goversion.NewVersion(supportedVersions[0]) // supported version will always return a non-zero length result.
-	if err != nil {
-		return false, "", err
 	}
 
 	currentVersion, err := goversion.NewVersion(database.Spec.Engine.Version)
 	if err != nil {
 		return false, "", err
 	}
-	return currentVersion.GreaterThanOrEqual(minVersion), minVersion.Original(), nil
+
+	// We search for the smallest available version greater than or equal to the current major version.
+	var minSupportedMajVersion *goversion.Version
+	for _, supportedVersion := range allSupportedVersions {
+		ver, err := goversion.NewVersion(supportedVersion)
+		if err != nil {
+			return false, "", err
+		}
+		if currentVersion.Segments()[0] > ver.Segments()[0] {
+			continue
+		}
+		if minSupportedMajVersion == nil {
+			minSupportedMajVersion = ver
+			continue
+		}
+		if ver.LessThan(minSupportedMajVersion) {
+			minSupportedMajVersion = ver
+		}
+	}
+
+	if minSupportedMajVersion == nil {
+		return false, "", fmt.Errorf("no minimum supported versions found for %s", operator)
+	}
+
+	return currentVersion.GreaterThanOrEqual(minSupportedMajVersion), minSupportedMajVersion.Original(), nil
 }
 
 func (h *k8sHandler) getDBPostUpgradeTasks(
