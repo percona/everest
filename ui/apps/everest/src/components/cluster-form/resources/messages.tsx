@@ -22,5 +22,5 @@ export const Messages = {
     'You can’t change the disk size as the selected storage class doesn’t support volume expansion.',
   descaling: 'Descaling is not allowed',
   upscalingDiskWarning:
-    'Upscaling disk size is irreversible and may block further resize actions until the current operation completes.',
+    'Disk upscaling is irreversible and may temporarily block further resize actions until complete.',
 };
