@@ -177,7 +177,7 @@ export const DbClusterPayloadToFormValues = (
         ? (backup?.schedules || []).length > 0
         : backup?.pitr?.enabled || false,
     [DbWizardFormFields.pitrStorageLocation]:
-      backup?.pitr?.enabled && mode === WizardMode.New
+      backup?.pitr?.enabled && mode === WizardMode.Restore
         ? backup?.pitr?.backupStorageName || null
         : defaults[DbWizardFormFields.pitrStorageLocation],
     [DbWizardFormFields.schedules]: backup?.schedules || [],
