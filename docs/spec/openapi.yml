@@ -59,6 +59,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal server error
           content:
@@ -72,6 +78,28 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserCredentials'
+    delete:
+      tags:
+        - Authentication & Authorization
+      summary: Everest UI Logout
+      description: |
+        This API invalidates Everest API JWT token.
+      operationId: deleteSession
+      responses:
+        '200':
+          description: Successful operation
+        '429':
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/permissions':
     get:
       tags:

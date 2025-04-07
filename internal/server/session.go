@@ -23,11 +23,13 @@ import (
 	"time"
 
 	"github.com/AlekSi/pointer"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/common"
 )
 
 const (
@@ -64,6 +66,26 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	e.attemptsStore.CleanupVisitor(ctx.RealIP())
 
 	return ctx.JSON(http.StatusOK, map[string]string{"token": jwtToken})
+}
+
+// DeleteSession deletes session.
+func (e *EverestServer) DeleteSession(ctx echo.Context) error {
+	e.attemptsStore.IncreaseTimeout(ctx.RealIP())
+	// add token to blacklist
+	c := ctx.Request().Context()
+	token, ok := c.Value(common.UserCtxKey).(*jwt.Token)
+	if !ok {
+		return ctx.JSON(http.StatusUnauthorized, errors.New("failed to get token from context"))
+	}
+	if token != nil {
+		err := e.blacklist.Add(c, token)
+		if err != nil {
+			return ctx.JSON(http.StatusRequestTimeout, api.Error{
+				Message: pointer.To("Incorrect username or password provided"),
+			})
+		}
+	}
+	return ctx.JSON(http.StatusOK, nil)
 }
 
 func sessionErrToHTTPRes(ctx echo.Context, err error) error {
