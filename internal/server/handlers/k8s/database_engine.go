@@ -312,13 +312,9 @@ func preflightCheckDBEngineVersion(
 			return false, "", err
 		}
 		if currentVersion.Segments()[0] > ver.Segments()[0] {
-			continue
+			continue // ignore if major version is less than the current major version.
 		}
-		if minSupportedMajVersion == nil {
-			minSupportedMajVersion = ver
-			continue
-		}
-		if ver.LessThan(minSupportedMajVersion) {
+		if minSupportedMajVersion == nil || ver.LessThan(minSupportedMajVersion) {
 			minSupportedMajVersion = ver
 		}
 	}
