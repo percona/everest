@@ -1,10 +1,13 @@
 package session
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/percona/everest/pkg/logger"
@@ -121,4 +124,39 @@ func TestAddDataToSecret(t *testing.T) {
 			assert.Equal(t, tc.expected, result)
 		})
 	}
+}
+
+/*
+This benchmark measures how much time does it take to clean up a long lists of tokens.
+On an Apple M3 Pro it takes ~0.69 ms to perform a cleanup for a list of 10,000 tokens, which is acceptable.
+
+goos: darwin
+goarch: arm64
+pkg: github.com/percona/everest/pkg/session
+cpu: Apple M3 Pro
+BenchmarkCleanupOld
+BenchmarkCleanupOld-12    	    1500	    671899 ns/op
+*/
+func BenchmarkCleanupOld(b *testing.B) {
+	numTokens := 10000
+	list := generateTestList(numTokens)
+	thresholdDate := time.Date(2025, 4, 3, 13, 33, 1, 0, time.UTC)
+	l := zap.L().Sugar()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		cleanupOld(l, list, thresholdDate)
+	}
+}
+
+func generateTestList(numTokens int) string {
+	var builder strings.Builder
+	expDate := time.Date(2070, 4, 3, 13, 33, 1, 0, time.UTC).Unix()
+	for i := 0; i < numTokens; i++ {
+		// expiration date is year 2070 which is long ahead, so all the tokens should be kept
+		builder.WriteString("21669bd9-2374-4dc1-9238-77d5cad01fed" + fmt.Sprintf("%d", expDate))
+		if i < numTokens-1 {
+			builder.WriteString(sep)
+		}
+	}
+	return builder.String()
 }

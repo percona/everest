@@ -86,7 +86,7 @@ paths:
         This API invalidates Everest API JWT token.
       operationId: deleteSession
       responses:
-        '200':
+        '204':
           description: Successful operation
         '429':
           description: Too many attempts

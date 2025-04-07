@@ -71,7 +71,6 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 // DeleteSession deletes session.
 func (e *EverestServer) DeleteSession(ctx echo.Context) error {
 	e.attemptsStore.IncreaseTimeout(ctx.RealIP())
-	// add token to blacklist
 	c := ctx.Request().Context()
 	token, ok := c.Value(common.UserCtxKey).(*jwt.Token)
 	if !ok {
@@ -85,7 +84,7 @@ func (e *EverestServer) DeleteSession(ctx echo.Context) error {
 			})
 		}
 	}
-	return ctx.JSON(http.StatusOK, nil)
+	return ctx.NoContent(http.StatusNoContent)
 }
 
 func sessionErrToHTTPRes(ctx echo.Context, err error) error {

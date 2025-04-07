@@ -7,12 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestShrinkToken(t *testing.T) {
+func TestShortenToken(t *testing.T) {
 	type tcase struct {
-		name        string
-		claims      jwt.MapClaims
-		shrunkToken string
-		error       error
+		name           string
+		claims         jwt.MapClaims
+		shortenedToken string
+		error          error
 	}
 	tcases := []tcase{
 		{
@@ -21,32 +21,32 @@ func TestShrinkToken(t *testing.T) {
 				"jti": "9d1c1f98-a479-41e3-8939-c7cb3edefa",
 				"exp": float64(331743679478),
 			},
-			shrunkToken: "9d1c1f98-a479-41e3-8939-c7cb3edefa331743679478",
-			error:       nil,
+			shortenedToken: "9d1c1f98-a479-41e3-8939-c7cb3edefa331743679478",
+			error:          nil,
 		},
 		{
 			name: "no jti",
 			claims: jwt.MapClaims{
 				"exp": float64(331743679478),
 			},
-			shrunkToken: "",
-			error:       errExtractJti,
+			shortenedToken: "",
+			error:          errExtractJti,
 		},
 		{
 			name: "no exp",
 			claims: jwt.MapClaims{
 				"jti": "9d1c1f98-a479-41e3-8939-c7cb3e049a",
 			},
-			shrunkToken: "",
-			error:       errExtractExp,
+			shortenedToken: "",
+			error:          errExtractExp,
 		},
 	}
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			result, err := shrinkToken(jwt.NewWithClaims(jwt.SigningMethodHS256, tc.claims))
+			result, err := shortenToken(jwt.NewWithClaims(jwt.SigningMethodHS256, tc.claims))
 			assert.Equal(t, tc.error, err)
-			assert.Equal(t, tc.shrunkToken, result)
+			assert.Equal(t, tc.shortenedToken, result)
 		})
 	}
 }

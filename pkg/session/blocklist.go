@@ -25,7 +25,7 @@ type Blocklist interface {
 
 type blocklist struct {
 	secretsManager SecretsManager
-	content        Content
+	content        ContentProcessor
 	l              *zap.SugaredLogger
 }
 
@@ -38,13 +38,13 @@ type SecretsManager interface {
 	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
 }
 
-type Content interface {
+type ContentProcessor interface {
 	Add(l *zap.SugaredLogger, secret *corev1.Secret, tokenData string) (*corev1.Secret, bool)
-	IsIn(secret *corev1.Secret, tokenData string) bool
+	IsBlocked(secret *corev1.Secret, tokenData string) bool
 }
 
 func (b *blocklist) Add(ctx context.Context, token *jwt.Token) error {
-	shrunkToken, err := shrinkToken(token)
+	shortenedToken, err := shortenToken(token)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (b *blocklist) Add(ctx context.Context, token *jwt.Token) error {
 		secret, err := b.secretsManager.GetSecret(ctx, common.SystemNamespace, common.EverestBlocklistSecretName)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
-				_, err = b.secretsManager.CreateSecret(ctx, blockListSecretTemplate(shrunkToken))
+				_, err = b.secretsManager.CreateSecret(ctx, blockListSecretTemplate(shortenedToken))
 				if err != nil {
 					b.l.Errorf("failed to create %s secret: %v", common.EverestBlocklistSecretName, err)
 					continue
@@ -61,7 +61,7 @@ func (b *blocklist) Add(ctx context.Context, token *jwt.Token) error {
 				return nil
 			}
 		}
-		secret, retryNeeded := b.content.Add(b.l, secret, shrunkToken)
+		secret, retryNeeded := b.content.Add(b.l, secret, shortenedToken)
 		if retryNeeded {
 			continue
 		}
@@ -104,18 +104,18 @@ func (b *blocklist) Allow(ctx context.Context) (bool, error) {
 		return false, errors.Wrap(err, "failed to get secret")
 	}
 
-	shrunkToken, err := shrinkToken(token)
+	shortenedToken, err := shortenToken(token)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to shrink token")
 	}
 
-	return !b.content.IsIn(secret, shrunkToken), nil
+	return !b.content.IsBlocked(secret, shortenedToken), nil
 }
 
 func NewBlocklist(secretsManager SecretsManager, logger *zap.SugaredLogger) Blocklist {
 	return &blocklist{
 		secretsManager: secretsManager,
-		content:        newDataProcessor(),
+		content:        newContentProcessor(),
 		l:              logger,
 	}
 }

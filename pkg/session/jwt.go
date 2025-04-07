@@ -23,7 +23,7 @@ type JWTContent struct {
 	Payload map[string]interface{} `json:"payload"`
 }
 
-func shrinkToken(token *jwt.Token) (string, error) {
+func shortenToken(token *jwt.Token) (string, error) {
 	l := log.FromContext(context.Background())
 	content, err := extractContent(token)
 	if err != nil {
