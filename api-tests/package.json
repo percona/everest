@@ -24,7 +24,7 @@
     "openapi-typescript": "^7.6.1"
   },
   "dependencies": {
-    "@playwright/test": "^1.51.0",
+    "@playwright/test": "^1.51.1",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.26.1",
     "eslint-config-prettier": "^10.1.1",
