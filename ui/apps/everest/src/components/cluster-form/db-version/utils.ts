@@ -14,11 +14,12 @@
 
 import { gt, gte, coerce } from 'semver';
 import { DbEngine, DbEngineType } from 'shared-types/dbEngines.types';
+import { WizardMode } from 'shared-types/wizard.types';
 
 export const filterAvailableDbVersionsForDbEngineEdition = (
   dbEngine: DbEngine,
   currentVersion: string,
-  mode: 'new' | 'edit' | 'restoreFromBackup'
+  mode: WizardMode
 ) => {
   let versions = dbEngine.availableVersions.engine || [];
   const currentSemverVersion = coerce(currentVersion);
@@ -34,7 +35,7 @@ export const filterAvailableDbVersionsForDbEngineEdition = (
   versions = versions.filter(({ version }) => {
     const semverVersion = coerce(version);
     const checkVersion =
-      mode === 'restoreFromBackup'
+      mode === WizardMode.Restore
         ? gte(semverVersion!, currentSemverVersion)
         : gt(semverVersion!, currentSemverVersion);
     return semverVersion ? checkVersion : true;

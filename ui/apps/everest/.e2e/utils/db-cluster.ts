@@ -20,9 +20,8 @@ import { getClusterDetailedInfo } from './storage-class';
 import { getTokenFromLocalStorage } from './localStorage';
 import { getNamespacesFn } from './namespaces';
 import { DbType } from '@percona/types';
-import { checkError, getDbOperatorVersionK8s } from '@e2e/utils/generic';
+import { checkError } from '@e2e/utils/generic';
 import { getVersionServiceDBVersions } from '@e2e/utils/version-service';
-import { Operator } from '@e2e/upgrade/types';
 
 export const createDbClusterFn = async (
   request: APIRequestContext,
@@ -88,14 +87,17 @@ export const createDbClusterFn = async (
         backup: customOptions?.backup,
       }),
       // TODO return monitoring to tests
-      monitoring: {
-        // ...(!!dbPayload.monitoring && {
-        //     monitoringConfigName:
-        //         typeof dbPayload.monitoringInstance === 'string'
-        //             ? dbPayload.monitoringInstance
-        //             : dbPayload?.monitoringInstance!.name,
-        // }),
-      },
+      ...(customOptions?.monitoring && {
+        monitoring: customOptions?.monitoring,
+        // monitoring: {
+        //   // ...(!!dbPayload.monitoring && {
+        //   //     monitoringConfigName:
+        //   //         typeof dbPayload.monitoringInstance === 'string'
+        //   //             ? dbPayload.monitoringInstance
+        //   //             : dbPayload?.monitoringInstance!.name,
+        //   // }),
+        // },
+      }),
       proxy: {
         type: dbTypeToProxyType(dbType),
         replicas: +(customOptions?.numberOfProxies || 1),

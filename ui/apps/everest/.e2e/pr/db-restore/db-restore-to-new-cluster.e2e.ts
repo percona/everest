@@ -21,6 +21,7 @@ import {
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getBucketNamespacesMap } from '@e2e/constants';
+import { moveForward } from '@e2e/utils/db-wizard';
 
 const dbClusterName = 'restore-to-new-cluster';
 
@@ -28,9 +29,15 @@ test.describe('DB Cluster Restore to the new cluster', () => {
   test.beforeAll(async ({ request }) => {
     await createDbClusterFn(request, {
       dbName: dbClusterName,
-      dbType: 'mysql',
-      dbVersion: '8.0.36-28.1',
+      dbType: 'mongodb',
+      dbVersion: '8.0.4-1',
       numberOfNodes: '1',
+      numberOfProxies: '3',
+      cpu: '1',
+      storageClass: 'my-storage-class',
+      sharding: true,
+      shards: 2,
+      configServerReplicas: 3,
       backup: {
         enabled: true,
         schedules: [
@@ -41,6 +48,13 @@ test.describe('DB Cluster Restore to the new cluster', () => {
             schedule: '0 * * * *',
           },
         ],
+        pitr: {
+          enabled: true,
+          backupStorageName: 'minio',
+        },
+      },
+      monitoring: {
+        monitoringConfigName: 'pmm',
       },
     });
   });
@@ -109,8 +123,48 @@ test.describe('DB Cluster Restore to the new cluster', () => {
       page.getByText('Basic information', { exact: true })
     ).toBeVisible();
     await expect(page.getByTestId('select-input-db-version')).toBeDisabled();
-    await expect(page.getByTestId('select-input-db-version')).toHaveValue(
-      '8.0.36-28.1'
+
+    const comboboxes = page.getByRole('combobox');
+    const dbVersionCombobox = comboboxes.nth(1);
+    expect(await dbVersionCombobox.textContent()).toBe('8.0.4-1');
+
+    await moveForward(page);
+
+    await expect(page.getByTestId('text-input-shard-nr')).toHaveValue('2');
+    await expect(
+      page.getByText(
+        '2 nodes - CPU - 2.00 CPU; Memory - 4.00 GB; Disk - 50.00 Gi'
+      )
+    ).toBeVisible();
+    await expect(
+      page.getByText('3 routers - CPU - 3.00 CPU; Memory - 3.00 GB')
+    ).toBeVisible();
+    await expect(page.getByTestId('toggle-button-nodes-1')).toHaveAttribute(
+      'aria-pressed',
+      'true'
     );
+    await expect(
+      page.getByTestId('node-resources-toggle-button-custom')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('text-input-cpu')).toHaveValue('1');
+    await expect(page.getByTestId('text-input-memory')).toHaveValue('2');
+    await expect(page.getByTestId('text-input-disk')).toHaveValue('25');
+    await page.getByTestId('proxies-accordion').click();
+    await expect(page.getByTestId('toggle-button-routers-3')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await expect(page.getByTestId('text-input-proxy-cpu')).toHaveValue('1');
+    await expect(page.getByTestId('text-input-proxy-memory')).toHaveValue('1');
+    await expect(page.getByTestId('shard-config-servers-3')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    await moveForward(page);
+
+    const schedule = page.getByTestId('editable-item');
+    await expect(schedule).toHaveText(/.*Every hour at minute 0.*/);
+    await expect(page.getByRole('checkbox')).toBeChecked();
   });
 });
