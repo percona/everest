@@ -53,6 +53,12 @@ test.describe('DB Cluster Restore to the new cluster', () => {
           backupStorageName: 'minio',
         },
       },
+      externalAccess: true,
+      sourceRanges: [
+        {
+          sourceRange: '192.168.1.1/32',
+        },
+      ],
       monitoring: {
         monitoringConfigName: 'pmm',
       },
@@ -169,5 +175,18 @@ test.describe('DB Cluster Restore to the new cluster', () => {
     await expect(
       page.getByTestId('switch-input-pitr-enabled-label')
     ).toHaveText(new RegExp(`.*Storage: ${getBucketNamespacesMap()[0][0]}.*`));
+
+    await moveForward(page);
+
+    await expect(page.getByTestId('text-input-storage-class')).toHaveValue(
+      'my-storage-class'
+    );
+    await expect(
+      page.getByTestId('text-input-source-ranges.0.source-range')
+    ).toHaveValue('192.168.1.1/32');
+
+    await moveForward(page);
+
+    await expect(page.getByRole('checkbox')).toBeChecked();
   });
 });
