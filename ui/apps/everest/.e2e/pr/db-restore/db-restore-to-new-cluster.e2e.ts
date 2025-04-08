@@ -166,5 +166,8 @@ test.describe('DB Cluster Restore to the new cluster', () => {
     const schedule = page.getByTestId('editable-item');
     await expect(schedule).toHaveText(/.*Every hour at minute 0.*/);
     await expect(page.getByRole('checkbox')).toBeChecked();
+    await expect(
+      page.getByTestId('switch-input-pitr-enabled-label')
+    ).toHaveText(new RegExp(`.*Storage: ${getBucketNamespacesMap()[0][0]}.*`));
   });
 });

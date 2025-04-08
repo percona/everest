@@ -15,6 +15,7 @@
 
 import { DbEngine, DbEngineType } from 'shared-types/dbEngines.types';
 import { filterAvailableDbVersionsForDbEngineEdition } from './utils';
+import { WizardMode } from 'shared-types/wizard.types';
 
 const generateDbEngineWithVersions = (
   versions: string[],
@@ -43,7 +44,7 @@ describe('DBVersion Available filter test', () => {
             DbEngineType.PXC
           ),
           '8.0.39-30.1',
-          'edit'
+          WizardMode.Edit
         ).map(({ version }) => version)
       ).toEqual(['8.0.40']);
       expect(
@@ -53,7 +54,7 @@ describe('DBVersion Available filter test', () => {
             DbEngineType.PSMDB
           ),
           '7.0.15-9',
-          'edit'
+          WizardMode.Edit
         ).map(({ version }) => version)
       ).toEqual([]);
       expect(
@@ -63,7 +64,7 @@ describe('DBVersion Available filter test', () => {
             DbEngineType.POSTGRESQL
           ),
           '16.4',
-          'edit'
+          WizardMode.Edit
         ).map(({ version }) => version)
       ).toEqual(['16.6']);
     });
@@ -76,7 +77,7 @@ describe('DBVersion Available filter test', () => {
             DbEngineType.POSTGRESQL
           ),
           '14.1',
-          'edit'
+          WizardMode.Edit
         ).map(({ version }) => version)
       ).toEqual([]);
     });
@@ -89,7 +90,7 @@ describe('DBVersion Available filter test', () => {
             DbEngineType.PSMDB
           ),
           '6.0.18-15',
-          'edit'
+          WizardMode.Edit
         ).map(({ version }) => version)
       ).toEqual(['7.0.15-9', '7.0.14-8', '6.0.19-16']);
     });
@@ -102,7 +103,7 @@ describe('DBVersion Available filter test', () => {
             DbEngineType.PXC
           ),
           '8.0.36-28.1',
-          'edit'
+          WizardMode.Edit
         ).map(({ version }) => version)
       ).toEqual(['8.4.2-2.1', '8.0.39-30.1']);
       expect(
@@ -112,7 +113,7 @@ describe('DBVersion Available filter test', () => {
             DbEngineType.POSTGRESQL
           ),
           '15.7',
-          'edit'
+          WizardMode.Edit
         ).map(({ version }) => version)
       ).toEqual(['15.8']);
     });
