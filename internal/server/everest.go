@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/AlekSi/pointer"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -61,6 +62,7 @@ type EverestServer struct {
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
 	handler       handlers.Handler
+	blocklist     session.Blocklist
 	oidcProvider  *oidc.ProviderConfig
 }
 
@@ -110,6 +112,11 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed to get OIDC provider config"))
 	}
 
+	blockList, err := session.NewBlocklist(ctx, kubeClient, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
+	}
+
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -117,6 +124,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		kubeClient:    kubeClient,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
+		blocklist:     blockList,
 		oidcProvider:  oidcProvider,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
@@ -201,6 +209,12 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return err
 	}
 	apiGroup.Use(jwtMW)
+
+	blocklistMW, err := e.blocklistMiddleWare()
+	if err != nil {
+		return err
+	}
+	apiGroup.Use(blocklistMW)
 
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	api.RegisterHandlers(apiGroup, e)
@@ -363,7 +377,7 @@ func (e *EverestServer) getBodyFromContext(ctx echo.Context, into any) error {
 
 func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore) {
 	allButSession := func(c echo.Context) bool {
-		return c.Request().Method != echo.POST || c.Request().URL.Path != "/v1/session"
+		return c.Request().URL.Path != "/v1/session"
 	}
 	config := echomiddleware.DefaultRateLimiterConfig
 	config.Skipper = allButSession
@@ -413,4 +427,27 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
+}
+
+func (e *EverestServer) blocklistMiddleWare() (echo.MiddlewareFunc, error) {
+	skipper, err := newSkipperFunc()
+	if err != nil {
+		return nil, err
+	}
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if skipper(c) {
+				return next(c)
+			}
+			if isBlocked, err := e.blocklist.IsBlocked(c.Request().Context()); err != nil {
+				e.l.Error(err)
+				return err
+			} else if isBlocked {
+				return c.JSON(http.StatusUnauthorized, api.Error{
+					Message: pointer.ToString("Invalid token"),
+				})
+			}
+			return next(c)
+		}
+	}, nil
 }

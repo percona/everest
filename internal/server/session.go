@@ -66,6 +66,20 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{"token": jwtToken})
 }
 
+// DeleteSession invalidates the user token by adding it to the blocklist
+func (e *EverestServer) DeleteSession(ctx echo.Context) error {
+	e.attemptsStore.IncreaseTimeout(ctx.RealIP())
+	err := e.blocklist.Block(ctx.Request().Context())
+	if err != nil {
+		e.l.Errorf("blocklist error: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.To("Failed to logout user"),
+		})
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
+}
+
 func sessionErrToHTTPRes(ctx echo.Context, err error) error {
 	if errors.Is(err, accounts.ErrAccountNotFound) ||
 		errors.Is(err, accounts.ErrIncorrectPassword) {
