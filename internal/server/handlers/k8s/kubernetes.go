@@ -55,8 +55,21 @@ func (h *k8sHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.Kuberne
 	if err != nil {
 		return nil, fmt.Errorf("failed to ListStorageClasses: %w", err)
 	}
+
+	// convert k8s storage class to api storage class
+	storagesListApi := []api.StorageClass{}
+	for _, storageClass := range storagesList.Items {
+		apiObj := api.StorageClass{}
+		apiObj.FromCR(&storageClass)
+		storagesListApi = append(storagesListApi, apiObj)
+	}
+
 	classNames := storageClasses(storagesList)
-	return &api.KubernetesClusterInfo{ClusterType: string(clusterType), StorageClassNames: classNames}, nil
+	return &api.KubernetesClusterInfo{
+		ClusterType:       string(clusterType),
+		StorageClassNames: classNames,
+		StorageClasses:    &storagesListApi,
+	}, nil
 }
 
 func (h *k8sHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissions, error) {

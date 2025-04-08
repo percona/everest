@@ -30,6 +30,7 @@ import { useEffect } from 'react';
 import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
+import { WizardMode } from 'shared-types/wizard.types';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -58,13 +59,14 @@ export const AdvancedConfigurationForm = ({
 
     if (
       !storageClassTouched &&
-      mode === 'new' &&
+      mode === WizardMode.New &&
       clusterInfo?.storageClassNames &&
       clusterInfo.storageClassNames.length > 0
     ) {
       setValue(
         DbWizardFormFields.storageClass,
-        clusterInfo?.storageClassNames[0]
+        clusterInfo?.storageClassNames[0],
+        { shouldValidate: true }
       );
     }
   }, [clusterInfo]);
