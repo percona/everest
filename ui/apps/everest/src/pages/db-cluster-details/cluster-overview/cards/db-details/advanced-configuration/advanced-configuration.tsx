@@ -31,6 +31,7 @@ export const AdvancedConfiguration = ({
   loading,
   externalAccess,
   parameters,
+  storageClass,
 }: AdvancedConfigurationOverviewCardProps) => {
   const {
     canUpdateDb,
@@ -104,7 +105,10 @@ export const AdvancedConfiguration = ({
           parameters ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
-
+      <OverviewSectionRow
+        label={Messages.fields.storageClass}
+        contentString={storageClass}
+      />
       {openEditModal && dbCluster && (
         <AdvancedConfigurationEditModal
           open={openEditModal}
