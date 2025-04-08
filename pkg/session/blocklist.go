@@ -2,11 +2,11 @@ package session
 
 import (
 	"context"
+	"fmt"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/kubernetes/informer"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -92,12 +92,12 @@ func blockListSecretTemplate(stringData string) *corev1.Secret {
 func (b *blocklist) IsAllowed(ctx context.Context) (bool, error) {
 	token, ok := ctx.Value(common.UserCtxKey).(*jwt.Token)
 	if !ok {
-		return false, errors.New("failed to get token from context")
+		return false, fmt.Errorf("failed to get token from context")
 	}
 
 	shortenedToken, err := shortenToken(token)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to shrink token")
+		return false, fmt.Errorf("failed to shorten token: %w", err)
 	}
 
 	return !b.content.IsBlocked(shortenedToken), nil
@@ -108,12 +108,12 @@ func NewBlocklist(ctx context.Context, kubeClient kubernetes.KubernetesConnector
 	secret, err := kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestBlocklistSecretName)
 	if err != nil {
 		if !k8serrors.IsNotFound(err) {
-			return nil, errors.Wrap(err, "failed to get secret")
+			return nil, fmt.Errorf("failed to get secret: %w", err)
 		}
 		var createErr error
 		secret, createErr = kubeClient.CreateSecret(ctx, blockListSecretTemplate(""))
 		if createErr != nil {
-			return nil, errors.Wrap(createErr, "failed to create secret")
+			return nil, fmt.Errorf("failed to create secret: %w", createErr)
 		}
 	}
 	return &blocklist{
