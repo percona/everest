@@ -17,7 +17,8 @@ import { INVALID_SOURCE_RANGE_ERROR, SOURCE_RANGE_PLACEHOLDER } from 'consts';
 
 export const Messages = {
   enableExternalAccess: {
-    title: 'Enable External Access',
+    title: 'External Access',
+    label: 'Enable',
     caption: `
       Enable this to make this database available outside of the Kubernetes cluster network.
       Exposing your database to remote access poses severe risks, including unauthorized access, data breaches and compliance violations.
@@ -26,9 +27,11 @@ export const Messages = {
   sourceRange: 'Source Range',
   sourceRangePlaceholder: SOURCE_RANGE_PLACEHOLDER,
   engineParameters: {
-    title: 'Set database engine parameters',
+    title: 'Database engine parameters',
+    label: 'Apply Percona’s optimized configuration',
     caption:
       'Set your database engine configuration to adjust your database system to your workload and performance needs. For configuration format and specific parameters, check your database type documentation.',
+    inputLabel: 'Engine parameters',
   },
   labels: {
     storageClass: 'Storage class',

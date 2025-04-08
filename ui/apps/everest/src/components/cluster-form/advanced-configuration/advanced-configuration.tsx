@@ -91,51 +91,63 @@ export const AdvancedConfigurationForm = ({
               disableClearable: true,
               disabled: loadingDefaultsForEdition,
               sx: {
-                mt: 0,
+                minWidth: 135,
               },
             }}
           />
         }
       />
-      <SwitchInput
-        label={Messages.enableExternalAccess.title}
-        labelCaption={Messages.enableExternalAccess.caption}
-        name={AdvancedConfigurationFields.externalAccess}
-      />
-      {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
-          <TextArray
-            placeholder={Messages.sourceRangePlaceholder}
-            fieldName={AdvancedConfigurationFields.sourceRanges}
-            fieldKey="sourceRange"
-            label={Messages.sourceRange}
-            handleBlur={handleBlur}
+      <AdvancedCard
+        title={Messages.enableExternalAccess.title}
+        description={Messages.enableExternalAccess.caption}
+        controlComponent={
+          <SwitchInput
+            label={Messages.enableExternalAccess.label}
+            name={AdvancedConfigurationFields.externalAccess}
           />
-        </Stack>
-      )}
-      <SwitchInput
-        label={Messages.engineParameters.title}
-        labelCaption={Messages.engineParameters.caption}
-        name={AdvancedConfigurationFields.engineParametersEnabled}
-        formControlLabelProps={{
-          sx: {
-            mt: 1,
-          },
-        }}
+        }
+        optionalRenderComponent={
+          <>
+            {externalAccess && (
+              <Stack>
+                <TextArray
+                  placeholder={Messages.sourceRangePlaceholder}
+                  fieldName={AdvancedConfigurationFields.sourceRanges}
+                  fieldKey="sourceRange"
+                  label={Messages.sourceRange}
+                  handleBlur={handleBlur}
+                />
+              </Stack>
+            )}
+          </>
+        }
       />
-      {engineParametersEnabled && (
-        <TextInput
-          name={AdvancedConfigurationFields.engineParameters}
-          textFieldProps={{
-            placeholder: getParamsPlaceholderFromDbType(dbType),
-            multiline: true,
-            minRows: 3,
-            sx: {
-              ml: 6,
-            },
-          }}
-        />
-      )}
+      <AdvancedCard
+        title={Messages.engineParameters.title}
+        description={Messages.engineParameters.caption}
+        controlComponent={
+          <SwitchInput
+            label={Messages.engineParameters.label}
+            name={AdvancedConfigurationFields.engineParametersEnabled}
+          />
+        }
+        optionalRenderComponent={
+          engineParametersEnabled && (
+            <TextInput
+              name={AdvancedConfigurationFields.engineParameters}
+              textFieldProps={{
+                placeholder: getParamsPlaceholderFromDbType(dbType),
+                label: Messages.engineParameters.inputLabel,
+                multiline: true,
+                minRows: 3,
+                sx: {
+                  width: '100%',
+                },
+              }}
+            />
+          )
+        }
+      />
     </>
   );
 };
