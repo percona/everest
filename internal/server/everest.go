@@ -439,10 +439,10 @@ func (e *EverestServer) blocklistMiddleWare() (echo.MiddlewareFunc, error) {
 			if skipper(c) {
 				return next(c)
 			}
-			if allow, err := e.blocklist.IsAllowed(c.Request().Context()); err != nil {
+			if isBlocked, err := e.blocklist.IsBlocked(c.Request().Context()); err != nil {
 				e.l.Error(err)
 				return err
-			} else if !allow {
+			} else if isBlocked {
 				return c.JSON(http.StatusUnauthorized, api.Error{
 					Message: pointer.ToString("Invalid token"),
 				})

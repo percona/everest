@@ -1,13 +1,11 @@
 package session
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/golang-jwt/jwt/v5"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
@@ -24,21 +22,16 @@ type JWTContent struct {
 }
 
 func shortenToken(token *jwt.Token) (string, error) {
-	l := log.FromContext(context.Background())
 	content, err := extractContent(token)
 	if err != nil {
-		l.Error(err, "could not extract content")
 		return "", err
 	}
-	l.Info("payload", "content", content.Payload)
 	jti, ok := content.Payload["jti"].(string)
 	if !ok {
-		l.Error(err, "could not extract jti")
 		return "", errExtractJti
 	}
 	exp, ok := content.Payload["exp"].(float64)
 	if !ok {
-		l.Error(err, "could not extract exp")
 		return "", errExtractExp
 	}
 	return jti + strconv.FormatFloat(exp, 'f', 0, 64), nil

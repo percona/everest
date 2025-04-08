@@ -23,13 +23,11 @@ import (
 	"time"
 
 	"github.com/AlekSi/pointer"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/accounts"
-	"github.com/percona/everest/pkg/common"
 )
 
 const (
@@ -68,22 +66,17 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{"token": jwtToken})
 }
 
-// DeleteSession deletes session.
+// DeleteSession invalidates the user token by adding it to the blocklist
 func (e *EverestServer) DeleteSession(ctx echo.Context) error {
 	e.attemptsStore.IncreaseTimeout(ctx.RealIP())
-	c := ctx.Request().Context()
-	token, ok := c.Value(common.UserCtxKey).(*jwt.Token)
-	if !ok {
-		return ctx.JSON(http.StatusUnauthorized, errors.New("failed to get token from context"))
+	err := e.blocklist.Block(ctx.Request().Context())
+	if err != nil {
+		e.l.Errorf("blocklist error: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.To("Failed to logout user"),
+		})
 	}
-	if token != nil {
-		err := e.blocklist.Add(c, token)
-		if err != nil {
-			return ctx.JSON(http.StatusRequestTimeout, api.Error{
-				Message: pointer.To("Incorrect username or password provided"),
-			})
-		}
-	}
+
 	return ctx.NoContent(http.StatusNoContent)
 }
 
