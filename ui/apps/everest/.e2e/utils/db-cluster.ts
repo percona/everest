@@ -87,17 +87,17 @@ export const createDbClusterFn = async (
         backup: customOptions?.backup,
       }),
       // TODO return monitoring to tests
-      ...(customOptions?.monitoring && {
-        monitoring: customOptions?.monitoring,
-        // monitoring: {
-        //   // ...(!!dbPayload.monitoring && {
-        //   //     monitoringConfigName:
-        //   //         typeof dbPayload.monitoringInstance === 'string'
-        //   //             ? dbPayload.monitoringInstance
-        //   //             : dbPayload?.monitoringInstance!.name,
-        //   // }),
-        // },
-      }),
+      monitoring: {
+        ...(customOptions?.monitoringConfigName && {
+          monitoringConfigName: customOptions?.monitoringConfigName,
+        }),
+        // ...(!!dbPayload.monitoring && {
+        //     monitoringConfigName:
+        //         typeof dbPayload.monitoringInstance === 'string'
+        //             ? dbPayload.monitoringInstance
+        //             : dbPayload?.monitoringInstance!.name,
+        // }),
+      },
       proxy: {
         type: dbTypeToProxyType(dbType),
         replicas: +(customOptions?.numberOfProxies || 1),

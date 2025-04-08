@@ -59,9 +59,7 @@ test.describe('DB Cluster Restore to the new cluster', () => {
           sourceRange: '192.168.1.1/32',
         },
       ],
-      monitoring: {
-        monitoringConfigName: 'pmm',
-      },
+      monitoringConfigName: 'pmm',
     });
   });
 
@@ -222,9 +220,7 @@ test.describe('DB Cluster Restore to the new cluster', () => {
           sourceRange: '192.168.1.1/32',
         },
       ],
-      monitoring: {
-        monitoringConfigName: 'pmm',
-      },
+      monitoringConfigName: 'pmm',
     });
     await page.route(
       '/v1/namespaces/**/database-clusters/**/backups',
