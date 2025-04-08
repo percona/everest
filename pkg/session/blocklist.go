@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/kubernetes/informer"
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
@@ -28,7 +27,6 @@ type Blocklist interface {
 type blocklist struct {
 	kubeClient   kubernetes.KubernetesConnector
 	content      ContentProcessor
-	informer     *informer.Informer
 	cachedSecret *corev1.Secret
 	l            *zap.SugaredLogger
 }
