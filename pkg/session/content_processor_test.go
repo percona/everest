@@ -2,16 +2,14 @@ package session
 
 import (
 	"fmt"
-	"go.uber.org/zap/zaptest"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 	corev1 "k8s.io/api/core/v1"
-
-	"github.com/percona/everest/pkg/logger"
 )
 
 func TestCleanupOld(t *testing.T) {
@@ -21,8 +19,7 @@ func TestCleanupOld(t *testing.T) {
 		thresholdDate time.Time
 		expected      []string
 	}
-	logger := logger.MustInitLogger(true, "everest")
-	l := logger.Sugar()
+	l := zaptest.NewLogger(t).Sugar()
 	tcases := []tcase{
 		{
 			name:          "one outdated",
@@ -66,8 +63,7 @@ func TestAddDataToSecret(t *testing.T) {
 		thresholdDate time.Time
 		expected      *corev1.Secret
 	}
-	logger := logger.MustInitLogger(true, "everest")
-	l := logger.Sugar()
+	l := zaptest.NewLogger(t).Sugar()
 	tcases := []tcase{
 		{
 			name:          "empty secret",
@@ -153,7 +149,7 @@ func TestAddDataToSecret(t *testing.T) {
 
 /*
 This benchmark measures how much time does it take to clean up a long lists of tokens.
-On an Apple M3 Pro it takes ~0.69 ms to perform a cleanup for a list of 10,000 tokens, which is acceptable.
+On an Apple M3 Pro it takes ~0.67 ms to perform a cleanup for a list of 10,000 tokens, which is acceptable.
 
 goos: darwin
 goarch: arm64
