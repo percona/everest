@@ -403,9 +403,7 @@ test.describe.configure({ retries: 0 });
         // after all major/minor upgrades done Edit/Upgrade button should not be visible
         await page.goto('/databases');
         await findDbAndClickRow(page, clusterName);
-        await expect(
-          page.getByTestId('upgrade-db-btn')
-        ).not.toBeVisible();
+        await expect(page.getByTestId('upgrade-db-btn')).not.toBeVisible();
       });
 
       test(`Delete all backups [${db} size ${size} sharding ${sharding}]`, async ({
