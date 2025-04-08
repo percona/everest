@@ -18,7 +18,7 @@ func TestCleanupOld(t *testing.T) {
 		name          string
 		data          string
 		thresholdDate time.Time
-		expected      string
+		expected      []string
 	}
 	logger := logger.MustInitLogger(true, "everest")
 	l := logger.Sugar()
@@ -27,25 +27,25 @@ func TestCleanupOld(t *testing.T) {
 			name:          "one outdated",
 			data:          "id123AAA1743687192,id2323BBB1743687194",
 			thresholdDate: time.Date(2025, 4, 3, 13, 33, 13, 0, time.UTC),
-			expected:      "id2323BBB1743687194",
+			expected:      []string{"id2323BBB1743687194"},
 		},
 		{
 			name:          "two outdated",
 			data:          "id123AAA1743687192,id2323BBB1743687193,id2323BBB1743687194",
 			thresholdDate: time.Date(2025, 4, 3, 13, 33, 13, 0, time.UTC),
-			expected:      "id2323BBB1743687194",
+			expected:      []string{"id2323BBB1743687194"},
 		},
 		{
 			name:          "all outdated",
 			data:          "id123AAA1743687191,id2323BBB1743687192,id2323BBB1743687193",
 			thresholdDate: time.Date(2025, 4, 3, 13, 33, 13, 0, time.UTC),
-			expected:      "",
+			expected:      []string{},
 		},
 		{
 			name:          "all fresh",
 			data:          "id123AAA1743687194,id2323BBB1743687195,id2323BBB1743687196",
 			thresholdDate: time.Date(2025, 4, 3, 13, 33, 13, 0, time.UTC),
-			expected:      "id123AAA1743687194,id2323BBB1743687195,id2323BBB1743687196",
+			expected:      []string{"id123AAA1743687194", "id2323BBB1743687195", "id2323BBB1743687196"},
 		},
 	}
 
