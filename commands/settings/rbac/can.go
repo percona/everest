@@ -88,7 +88,7 @@ func settingsRBACCanPreRunE(cmd *cobra.Command, args []string) error { //nolint:
 }
 
 func settingsRBACCanRun(cmd *cobra.Command, args []string) {
-	var k *kubernetes.Kubernetes
+	var k kubernetes.KubernetesConnector
 	if rbacCanPolicyFilePath == "" {
 		// check over policy in Everest deployment (ConfigMap).
 		var l *zap.SugaredLogger

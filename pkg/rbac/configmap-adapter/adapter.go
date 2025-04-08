@@ -25,12 +25,13 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	rbacutils "github.com/percona/everest/pkg/rbac/utils"
 )
 
 type k8s interface {
-	GetConfigMap(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error)
+	GetConfigMap(ctx context.Context, key ctrlclient.ObjectKey) (*corev1.ConfigMap, error)
 }
 
 // Adapter is the ConfigMap adapter for Casbin.
@@ -56,20 +57,12 @@ func New(
 
 // ConfigMap returns the configmap used for RBAC.
 func (a *Adapter) ConfigMap(ctx context.Context) (*corev1.ConfigMap, error) {
-	return a.kubeClient.GetConfigMap(
-		ctx,
-		a.namespacedName.Namespace,
-		a.namespacedName.Name,
-	)
+	return a.kubeClient.GetConfigMap(ctx, a.namespacedName)
 }
 
 // LoadPolicy loads all policy rules from the storage.
 func (a *Adapter) LoadPolicy(model model.Model) error {
-	cm, err := a.kubeClient.GetConfigMap(
-		context.Background(),
-		a.namespacedName.Namespace,
-		a.namespacedName.Name,
-	)
+	cm, err := a.kubeClient.GetConfigMap(context.Background(), a.namespacedName)
 	if err != nil {
 		return err
 	}
