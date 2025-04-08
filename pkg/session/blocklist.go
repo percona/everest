@@ -73,8 +73,8 @@ func (b *blocklist) Block(ctx context.Context) error {
 			return err
 		}
 
-		secret, retryNeeded := b.contentProcessor.Block(b.l, secret, shortenedToken)
-		if retryNeeded {
+		secret, ok := b.contentProcessor.Block(b.l, secret, shortenedToken)
+		if !ok {
 			b.l.Infof("failed to block token, retrying")
 			continue
 		}

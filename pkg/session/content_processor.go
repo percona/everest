@@ -17,7 +17,8 @@ const (
 
 // ContentProcessor knows how to work with actual data in the blocklist.
 type ContentProcessor interface {
-	// Block adds the token to the blacklist, cleans up the outdated data from the secret and returns the updated secret
+	// Block adds the token to the blacklist, cleans up the outdated data from the secret.
+	// The method returns the updated secret and a bool that indicates if the attempt was successful.
 	Block(l *zap.SugaredLogger, secret *corev1.Secret, shortenedToken string) (*corev1.Secret, bool)
 	// IsBlocked returns true if the given shortened token is in the blocklist.
 	IsBlocked(shortenedToken string) bool
@@ -36,14 +37,15 @@ func newContentProcessor(secret *corev1.Secret) ContentProcessor {
 	}
 }
 
-// Block adds the token to the blacklist, cleans up the outdated data from the secret and returns the updated secret
+// Block adds the token to the blacklist, cleans up the outdated data from the secret.
+// The method returns the updated secret and a bool that indicates if the attempt was successful.
 func (d *contentProcessor) Block(l *zap.SugaredLogger, secret *corev1.Secret, shortenedToken string) (*corev1.Secret, bool) {
 	if d.mutex.TryLock() {
 		defer d.mutex.Unlock()
 		updatedSecret := addDataToSecret(l, secret, shortenedToken, time.Now().UTC())
-		return updatedSecret, false
+		return updatedSecret, true
 	}
-	return secret, true
+	return secret, false
 }
 
 // IsBlocked returns true if the given shortened token is in the blocklist.
