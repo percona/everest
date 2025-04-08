@@ -12,31 +12,32 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import {expect, test} from '@fixtures';
+import { expect, test } from '@fixtures';
+import { checkError } from '@tests/tests/helpers';
 
-test('auth header fails with invalid token', async ({request}) => {
-    const version = await request.get('/v1/version', {
-        headers: {
-            Authorization: 'Bearer 123',
-        },
-    });
+test('auth header fails with invalid token', async ({ request }) => {
+  const version = await request.get('/v1/version', {
+    headers: {
+      Authorization: 'Bearer 123',
+    },
+  });
 
-    expect(version.status()).toEqual(401);
+  expect(version.status()).toEqual(401);
 });
 
 test.describe('no authorization header', () => {
-    test.use({
-        extraHTTPHeaders: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-        },
-    });
+  test.use({
+    extraHTTPHeaders: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  });
 
-    test('auth header fails with no content', async ({request}) => {
-        const version = await request.get('/v1/version');
+  test('auth header fails with no content', async ({ request }) => {
+    const version = await request.get('/v1/version');
 
-        expect(version.status()).toEqual(400);
-    });
+    expect(version.status()).toEqual(400);
+  });
 });
 
 test.describe('logout', () => {
