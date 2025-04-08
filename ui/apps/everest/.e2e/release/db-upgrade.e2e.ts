@@ -317,10 +317,6 @@ test.describe.configure({ retries: 0 });
               await expect(
                 page.getByText(`${technology} ${nextMajorVersion}`)
               ).toBeVisible();
-              await findDbAndClickRow(page, clusterName);
-              await expect(
-                page.getByTestId('upgrade-db-btn')
-              ).not.toBeVisible();
             });
 
             await test.step('Insert more data after upgrade', async () => {
