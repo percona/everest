@@ -21,7 +21,7 @@ import {
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getBucketNamespacesMap } from '@e2e/constants';
-import { moveForward } from '@e2e/utils/db-wizard';
+import { goToStep, moveForward } from '@e2e/utils/db-wizard';
 
 const dbClusterName = 'restore-to-new-cluster';
 
@@ -188,5 +188,133 @@ test.describe('DB Cluster Restore to the new cluster', () => {
     await moveForward(page);
 
     await expect(page.getByRole('checkbox')).toBeChecked();
+    await expect(page.getByTestId('db-wizard-submit-button')).toBeEnabled();
+    await expect(page.getByTestId('preview-error-resources')).not.toBeVisible();
+  });
+
+  test('PG Cluster correct schedules restore', async ({ page, request }) => {
+    const dbName = 'pg-cluster-restore';
+    await createDbClusterFn(request, {
+      dbName,
+      dbType: 'postgresql',
+      dbVersion: '16.3',
+      numberOfNodes: '4',
+      numberOfProxies: '1',
+      storageClass: 'my-storage-class',
+      backup: {
+        enabled: true,
+        schedules: [
+          {
+            backupStorageName: getBucketNamespacesMap()[0][0],
+            enabled: true,
+            name: 'backup-1',
+            schedule: '0 * * * *',
+          },
+        ],
+        pitr: {
+          enabled: true,
+          backupStorageName: 'minio',
+        },
+      },
+      externalAccess: true,
+      sourceRanges: [
+        {
+          sourceRange: '192.168.1.1/32',
+        },
+      ],
+      monitoring: {
+        monitoringConfigName: 'pmm',
+      },
+    });
+    await page.route(
+      '/v1/namespaces/**/database-clusters/**/backups',
+      async (route) => {
+        await route.fulfill({
+          json: {
+            items: [
+              {
+                metadata: {
+                  name: 'backup-1',
+                },
+                spec: {
+                  dbName,
+                  backupStorageName: getBucketNamespacesMap()[0][0],
+                },
+                status: {
+                  state: 'Succeeded',
+                  created: '2024-12-20T11:57:41Z',
+                  completed: '2024-12-20T11:58:07Z',
+                },
+              },
+            ],
+          },
+        });
+      }
+    );
+    await findDbAndClickRow(page, dbName);
+    const actionButton = page.getByTestId('actions-button');
+    await actionButton.click();
+
+    const restoreButton = page.getByTestId(
+      `${dbName}-create-new-db-from-backup`
+    );
+    await restoreButton.click();
+
+    await expect(
+      page
+        .getByTestId('select-backup-name-button')
+        .getByText(Messages.selectBackup)
+    ).toBeVisible();
+    await page.getByTestId('select-backup-name-button').click();
+    await page.getByText('backup-1').click();
+    await page.getByText('Create', { exact: true }).click();
+    await expect(page.getByTestId('select-input-db-version')).toBeDisabled();
+
+    const comboboxes = page.getByRole('combobox');
+    const dbVersionCombobox = comboboxes.nth(1);
+    expect(await dbVersionCombobox.textContent()).toBe('16.3');
+
+    await moveForward(page);
+
+    await expect(
+      page.getByText(
+        '4 nodes - CPU - 4.00 CPU; Memory - 8.00 GB; Disk - 100.00 Gi'
+      )
+    ).toBeVisible();
+    await expect(
+      page.getByText('1 PG Bouncer - CPU - 1.00 CPU; Memory - 1.00 GB')
+    ).toBeVisible();
+    await expect(
+      page.getByTestId('toggle-button-nodes-custom')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('text-input-custom-nr-of-nodes')).toHaveValue(
+      '4'
+    );
+    await expect(
+      page.getByTestId('node-resources-toggle-button-small')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('proxies-accordion').click();
+    await expect(
+      page.getByTestId('toggle-button-PG Bouncers-1')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('text-input-proxy-cpu')).toHaveValue('1');
+    await expect(page.getByTestId('text-input-proxy-memory')).toHaveValue('1');
+
+    await moveForward(page);
+
+    await expect(
+      page.getByText('Backup schedules', { exact: true })
+    ).toBeVisible();
+    const schedule = page.getByTestId('editable-item');
+    await expect(schedule).toHaveText(/.*Every hour at minute 0.*/);
+    await expect(page.getByRole('checkbox')).toBeChecked();
+    await expect(page.getByRole('checkbox')).toBeDisabled();
+
+    await moveForward(page);
+    await moveForward(page);
+    await expect(page.getByTestId('db-wizard-submit-button')).toBeEnabled();
+    await expect(page.getByTestId('preview-error-resources')).not.toBeVisible();
+
+    await deleteDbClusterFn(request, dbName);
   });
 });
