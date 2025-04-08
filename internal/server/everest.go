@@ -62,7 +62,7 @@ type EverestServer struct {
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
 	handler       handlers.Handler
-	blacklist     session.Blocklist
+	blocklist     session.Blocklist
 	oidcProvider  *oidc.ProviderConfig
 }
 
@@ -112,6 +112,11 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed to get OIDC provider config"))
 	}
 
+	blockList, err := session.NewBlocklist(ctx, kubeClient, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
+	}
+
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -119,7 +124,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		kubeClient:    kubeClient,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
-		blacklist:     session.NewBlocklist(kubeClient, l),
+		blocklist:     blockList,
 		oidcProvider:  oidcProvider,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
@@ -434,7 +439,7 @@ func (e *EverestServer) blocklistMiddleWare() (echo.MiddlewareFunc, error) {
 			if skipper(c) {
 				return next(c)
 			}
-			if allow, err := e.blacklist.Allow(c.Request().Context()); err != nil {
+			if allow, err := e.blocklist.IsAllowed(c.Request().Context()); err != nil {
 				e.l.Error(err)
 				return err
 			} else if !allow {

@@ -2,6 +2,8 @@ package session
 
 import (
 	"context"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/kubernetes/informer"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
@@ -20,27 +22,21 @@ const (
 
 type Blocklist interface {
 	Add(ctx context.Context, token *jwt.Token) error
-	Allow(ctx context.Context) (bool, error)
+	IsAllowed(ctx context.Context) (bool, error)
 }
 
 type blocklist struct {
-	secretsManager SecretsManager
-	content        ContentProcessor
-	l              *zap.SugaredLogger
-}
-
-type SecretsManager interface {
-	// GetSecret returns a secret by name.
-	GetSecret(ctx context.Context, namespace, name string) (*corev1.Secret, error)
-	// CreateSecret creates a secret.
-	CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
-	// UpdateSecret updates a secret.
-	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	kubeClient   kubernetes.KubernetesConnector
+	content      ContentProcessor
+	informer     *informer.Informer
+	cachedSecret *corev1.Secret
+	l            *zap.SugaredLogger
 }
 
 type ContentProcessor interface {
 	Add(l *zap.SugaredLogger, secret *corev1.Secret, tokenData string) (*corev1.Secret, bool)
-	IsBlocked(secret *corev1.Secret, tokenData string) bool
+	IsBlocked(shortenedToken string) bool
+	UpdateCache(secret *corev1.Secret)
 }
 
 func (b *blocklist) Add(ctx context.Context, token *jwt.Token) error {
@@ -50,10 +46,10 @@ func (b *blocklist) Add(ctx context.Context, token *jwt.Token) error {
 	}
 
 	for attempts := 0; attempts < maxRetries; attempts++ {
-		secret, err := b.secretsManager.GetSecret(ctx, common.SystemNamespace, common.EverestBlocklistSecretName)
+		secret, err := b.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestBlocklistSecretName)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
-				_, err = b.secretsManager.CreateSecret(ctx, blockListSecretTemplate(shortenedToken))
+				_, err = b.kubeClient.CreateSecret(ctx, blockListSecretTemplate(shortenedToken))
 				if err != nil {
 					b.l.Errorf("failed to create %s secret: %v", common.EverestBlocklistSecretName, err)
 					continue
@@ -61,14 +57,17 @@ func (b *blocklist) Add(ctx context.Context, token *jwt.Token) error {
 				return nil
 			}
 		}
+		b.cachedSecret = secret
 		secret, retryNeeded := b.content.Add(b.l, secret, shortenedToken)
 		if retryNeeded {
 			continue
 		}
-		if _, err := b.secretsManager.UpdateSecret(ctx, secret); err != nil {
-			b.l.Errorf("failed to update %s secret: %v", common.EverestBlocklistSecretName, err)
+		updatedSecret, updateErr := b.kubeClient.UpdateSecret(ctx, secret)
+		if updateErr != nil {
+			b.l.Errorf("failed to update %s secret: %v", common.EverestBlocklistSecretName, updateErr)
 			continue
 		}
+		b.content.UpdateCache(updatedSecret)
 		return nil
 	}
 	return nil
@@ -90,18 +89,10 @@ func blockListSecretTemplate(stringData string) *corev1.Secret {
 	}
 }
 
-func (b *blocklist) Allow(ctx context.Context) (bool, error) {
+func (b *blocklist) IsAllowed(ctx context.Context) (bool, error) {
 	token, ok := ctx.Value(common.UserCtxKey).(*jwt.Token)
 	if !ok {
 		return false, errors.New("failed to get token from context")
-	}
-
-	secret, err := b.secretsManager.GetSecret(ctx, common.SystemNamespace, common.EverestBlocklistSecretName)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return true, nil
-		}
-		return false, errors.Wrap(err, "failed to get secret")
 	}
 
 	shortenedToken, err := shortenToken(token)
@@ -109,13 +100,25 @@ func (b *blocklist) Allow(ctx context.Context) (bool, error) {
 		return false, errors.Wrap(err, "failed to shrink token")
 	}
 
-	return !b.content.IsBlocked(secret, shortenedToken), nil
+	return !b.content.IsBlocked(shortenedToken), nil
 }
 
-func NewBlocklist(secretsManager SecretsManager, logger *zap.SugaredLogger) Blocklist {
-	return &blocklist{
-		secretsManager: secretsManager,
-		content:        newContentProcessor(),
-		l:              logger,
+func NewBlocklist(ctx context.Context, kubeClient kubernetes.KubernetesConnector, logger *zap.SugaredLogger) (Blocklist, error) {
+	// read the existing blocklist token or create it
+	secret, err := kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestBlocklistSecretName)
+	if err != nil {
+		if !k8serrors.IsNotFound(err) {
+			return nil, errors.Wrap(err, "failed to get secret")
+		}
+		var createErr error
+		secret, createErr = kubeClient.CreateSecret(ctx, blockListSecretTemplate(""))
+		if createErr != nil {
+			return nil, errors.Wrap(createErr, "failed to create secret")
+		}
 	}
+	return &blocklist{
+		kubeClient: kubeClient,
+		content:    newContentProcessor(secret),
+		l:          logger,
+	}, nil
 }

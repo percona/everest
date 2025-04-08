@@ -69,7 +69,7 @@ func TestAddDataToSecret(t *testing.T) {
 	l := logger.Sugar()
 	tcases := []tcase{
 		{
-			name:          "no data in secret",
+			name:          "empty secret",
 			data:          "id123AAA1743687192",
 			secret:        &corev1.Secret{},
 			thresholdDate: time.Date(2025, 4, 3, 13, 33, 10, 0, time.UTC),
@@ -89,6 +89,8 @@ func TestAddDataToSecret(t *testing.T) {
 			},
 			thresholdDate: time.Date(2025, 4, 3, 13, 33, 10, 0, time.UTC),
 			expected: &corev1.Secret{
+				// the Data field is updated only when the object is applied to k8s, so for this test
+				// only the write-only StringData field is expected to be changed.
 				Data: map[string][]byte{
 					dataKey: []byte("id123AAA1743687191"),
 				},
@@ -107,11 +109,33 @@ func TestAddDataToSecret(t *testing.T) {
 			},
 			thresholdDate: time.Date(2025, 4, 3, 13, 33, 12, 0, time.UTC),
 			expected: &corev1.Secret{
+				// the Data field is updated only when the object is applied to k8s, so for this test
+				// only the write-only StringData field is expected to be changed.
 				Data: map[string][]byte{
 					dataKey: []byte("id123AAA1743687191,id123AAA1743687193"),
 				},
 				StringData: map[string]string{
 					dataKey: "id123AAA1743687193,id123AAA1743687194",
+				},
+			},
+		},
+		{
+			name: "deleted all old data, add newer data",
+			data: "id123AAA1743687195",
+			secret: &corev1.Secret{
+				Data: map[string][]byte{
+					dataKey: []byte("id123AAA1743687191,id123AAA1743687193"),
+				},
+			},
+			thresholdDate: time.Date(2025, 4, 3, 13, 33, 14, 0, time.UTC),
+			expected: &corev1.Secret{
+				// the Data field is updated only when the object is applied to k8s, so for this test
+				// only the write-only StringData field is expected to be changed.
+				Data: map[string][]byte{
+					dataKey: []byte("id123AAA1743687191,id123AAA1743687193"),
+				},
+				StringData: map[string]string{
+					dataKey: "id123AAA1743687195",
 				},
 			},
 		},

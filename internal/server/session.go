@@ -77,7 +77,7 @@ func (e *EverestServer) DeleteSession(ctx echo.Context) error {
 		return ctx.JSON(http.StatusUnauthorized, errors.New("failed to get token from context"))
 	}
 	if token != nil {
-		err := e.blacklist.Add(c, token)
+		err := e.blocklist.Add(c, token)
 		if err != nil {
 			return ctx.JSON(http.StatusRequestTimeout, api.Error{
 				Message: pointer.To("Incorrect username or password provided"),
