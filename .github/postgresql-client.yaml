@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: postgresql-client
-          image: percona/percona-distribution-postgresql:16
+          image: percona/percona-distribution-postgresql:17
           imagePullPolicy: Always
           command:
           - sleep
