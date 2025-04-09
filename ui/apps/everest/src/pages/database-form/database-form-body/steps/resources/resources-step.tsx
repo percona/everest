@@ -21,7 +21,7 @@ export const ResourcesStep = () => {
       />
       <ResourcesForm
         dbType={dbType}
-        pairProxiesWithNodes
+        pairProxiesWithNodes={mode === WizardMode.New}
         allowDiskInputUpdate
         showSharding={dbType === DbType.Mongo}
         hideProxies={dbType === DbType.Mongo && !shardingEnabled}
