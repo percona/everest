@@ -30,6 +30,7 @@ import { useEffect } from 'react';
 import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
+import { WizardMode } from 'shared-types/wizard.types';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -58,7 +59,7 @@ export const AdvancedConfigurationForm = ({
 
     if (
       !storageClassTouched &&
-      mode === 'new' &&
+      mode === WizardMode.New &&
       clusterInfo?.storageClassNames &&
       clusterInfo.storageClassNames.length > 0
     ) {
@@ -86,11 +87,16 @@ export const AdvancedConfigurationForm = ({
             label={Messages.labels.storageClass}
             loading={clusterInfoLoading}
             options={clusterInfo?.storageClassNames || []}
+            disabled={loadingDefaultsForEdition}
+            tooltipText={
+              loadingDefaultsForEdition
+                ? Messages.tooltipTexts.storageClass
+                : undefined
+            }
             autoCompleteProps={{
-              disableClearable: true,
-              disabled: loadingDefaultsForEdition,
               sx: {
                 mt: 0,
+                width: '135px',
               },
             }}
           />

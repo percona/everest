@@ -253,6 +253,7 @@ export const insertTestDB = async (
     }
     case 'psmdb': {
       const jsonData = data.map((d) => `{ a: ${d} }`).join(', ');
+
       await queryPSMDB(
         cluster,
         namespace,
@@ -261,6 +262,7 @@ export const insertTestDB = async (
       );
       const result = await queryTestDB(cluster, namespace);
       const expected_result = expected.map((d) => `{"a":${d}}`).join(',');
+
       expect(result.trim()).toBe('[' + expected_result + ']');
       break;
     }

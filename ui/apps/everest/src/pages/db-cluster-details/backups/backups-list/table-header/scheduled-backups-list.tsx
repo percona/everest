@@ -14,6 +14,7 @@ import {
   transformSchedulesIntoManageableSchedules,
 } from 'utils/db';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
+import { WizardMode } from 'shared-types/wizard.types';
 
 type Props = {
   emptyBackups: boolean;
@@ -51,7 +52,7 @@ const ScheduledBackupsList = ({ emptyBackups }: Props) => {
   };
 
   const handleEdit = (scheduleName: string) => {
-    setScheduleModalMode('edit');
+    setScheduleModalMode(WizardMode.Edit);
     setSelectedScheduleToModalContext(scheduleName);
     setOpenScheduleModal(true);
   };
