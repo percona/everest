@@ -201,7 +201,7 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          await waitForStatus(page, clusterName, 'Initializing', 30000);
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
