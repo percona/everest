@@ -17,7 +17,7 @@ export const schema = (gaps: boolean, minDate?: Date, maxDate?: Date) =>
     .object({
       [RestoreDbFields.backupType]: z.nativeEnum(BackuptypeValues),
       [RestoreDbFields.backupName]: z.string().optional(),
-      [RestoreDbFields.pitrBackup]: z.date().optional(),
+      [RestoreDbFields.pitrBackup]: z.string().optional(),
     })
     .superRefine(({ backupType, backupName, pitrBackup }, ctx) => {
       if (backupType === BackuptypeValues.fromBackup) {
@@ -59,7 +59,7 @@ export const schema = (gaps: boolean, minDate?: Date, maxDate?: Date) =>
 export const defaultValues = {
   [RestoreDbFields.backupType]: BackuptypeValues.fromBackup,
   [RestoreDbFields.backupName]: '',
-  [RestoreDbFields.pitrBackup]: new Date(),
+  [RestoreDbFields.pitrBackup]: '',
 };
 
 export type RestoreDbFormData = z.infer<ReturnType<typeof schema>>;
