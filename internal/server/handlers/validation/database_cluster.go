@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
@@ -30,6 +31,15 @@ func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, db *everest
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
+
+	if currentDB, err := h.kubeClient.GetDatabaseCluster(ctx, db.GetNamespace(), db.GetName()); err != nil {
+		if !k8serrors.IsNotFound(err) {
+			return nil, fmt.Errorf("failed to check if DB cluster with name already exists in namespace: %w", err)
+		}
+	} else if currentDB.GetName() != "" {
+		return nil, fmt.Errorf("db cluster with name '%s' already exists in namespace '%s'", db.GetName(), db.GetNamespace())
+	}
+
 	return h.next.CreateDatabaseCluster(ctx, db)
 }
 
@@ -522,10 +532,14 @@ func validateMetadata(obj metav1.Object) error {
 func (h *validateHandler) validateDatabaseClusterOnUpdate(
 	dbc, oldDB *everestv1alpha1.DatabaseCluster,
 ) error {
+	if !isDatabaseClusterUpdateAllowed(oldDB) {
+		return fmt.Errorf("db operations are not allowed in current db state: %s", oldDB.Status.Status)
+	}
+
 	newVersion := dbc.Spec.Engine.Version
 	oldVersion := oldDB.Spec.Engine.Version
 	if newVersion != "" && newVersion != oldVersion {
-		if err := validateDBEngineVersionUpgrade(newVersion, oldVersion); err != nil {
+		if err := validateDBEngineVersionUpgrade(oldDB.Spec.Engine.Type, newVersion, oldVersion); err != nil {
 			return err
 		}
 	}
@@ -539,6 +553,11 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 		return fmt.Errorf("cannot scale down %d node cluster to 1. The operation is not supported", oldDB.Spec.Engine.Replicas)
 	}
 
+	// Do not allow shrinking storage size.
+	if dbc.Spec.Engine.Storage.Size.Cmp(oldDB.Spec.Engine.Storage.Size) < 0 {
+		return errCannotShrinkStorageSize
+	}
+
 	if err := validateShardingOnUpdate(dbc, oldDB); err != nil {
 		return err
 	}
@@ -546,7 +565,7 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 }
 
 // validateDBEngineVersionUpgrade validates if upgrade of DBEngine from `oldVersion` to `newVersion` is allowed.
-func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
+func validateDBEngineVersionUpgrade(engineType everestv1alpha1.EngineType, newVersion, oldVersion string) error {
 	// Ensure a "v" prefix so that it is a valid semver.
 	if !strings.HasPrefix(newVersion, "v") {
 		newVersion = "v" + newVersion
@@ -564,14 +583,20 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	if semver.Compare(newVersion, oldVersion) < 0 {
 		return errDBEngineDowngrade
 	}
-	// We will not allow major upgrades.
-	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
-	// For example:
-	// - PXC operator allows major upgrades.
-	// - PSMDB operator allows major upgrades, but we need to handle FCV.
-	// - PG operator does not allow major upgrades.
-	if semver.Major(oldVersion) != semver.Major(newVersion) {
+	// We will not allow major upgrades for PXC and PG.
+	// - PXC: Major upgrades are not supported.
+	// - PG: Major upgrades are in technical preview. https://docs.percona.com/percona-operator-for-postgresql/2.0/update.html#major-version-upgrade
+	if engineType != everestv1alpha1.DatabaseEnginePSMDB && semver.Major(oldVersion) != semver.Major(newVersion) {
 		return errDBEngineMajorVersionUpgrade
+	}
+
+	// It's fine to ignore the errors here because we have already validated the version.
+	newMajorInt, _ := strconv.Atoi(semver.Major(newVersion)[1:])
+	oldMajorInt, _ := strconv.Atoi(semver.Major(oldVersion)[1:])
+	// We will not allow major upgrades if the versions are not sequential.
+	if newMajorInt-oldMajorInt > 1 {
+		fmt.Println("errDBEngineMajorUpgradeNotSeq")
+		return errDBEngineMajorUpgradeNotSeq
 	}
 	return nil
 }
@@ -587,4 +612,26 @@ func validateShardingOnUpdate(dbc, oldDB *everestv1alpha1.DatabaseCluster) error
 		return errDisableShardingNotSupported
 	}
 	return validateSharding(dbc)
+}
+
+// isDatabaseClusterUpdateAllowed checks if the requested change is allowed for the database cluster.
+// The returns false in case DB cluster is in one of the following states:
+// - restoring
+// - deleting
+// - upgrading
+// - resizingVolumes
+func isDatabaseClusterUpdateAllowed(currentDB *everestv1alpha1.DatabaseCluster) bool {
+	if currentDB == nil {
+		return false
+	}
+
+	switch currentDB.Status.Status {
+	case everestv1alpha1.AppStateRestoring,
+		everestv1alpha1.AppStateDeleting,
+		everestv1alpha1.AppStateUpgrading,
+		everestv1alpha1.AppStateResizingVolumes:
+		return false
+	}
+
+	return true
 }

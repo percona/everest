@@ -13,29 +13,95 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SwitchInput, TextArray, TextInput } from '@percona/ui-lib';
+import {
+  AutoCompleteInput,
+  SwitchInput,
+  TextArray,
+  TextInput,
+} from '@percona/ui-lib';
 import { Messages } from './messages';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Stack } from '@mui/material';
+import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
+import { useEffect } from 'react';
+import { DbWizardFormFields } from 'consts';
+import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
+import AdvancedCard from 'components/advanced-card';
+import { WizardMode } from 'shared-types/wizard.types';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
+  loadingDefaultsForEdition?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
+  loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
-  const { watch } = useFormContext();
+  const { watch, setValue, getFieldState } = useFormContext();
+  const mode = useDatabasePageMode();
   const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
+    AdvancedConfigurationFields.storageClass,
   ]);
+  const { data: clusterInfo, isLoading: clusterInfoLoading } =
+    useKubernetesClusterInfo(['wizard-k8-info']);
+
+  // setting the storage class default value
+  useEffect(() => {
+    const { isTouched: storageClassTouched } = getFieldState(
+      DbWizardFormFields.storageClass
+    );
+
+    if (
+      !storageClassTouched &&
+      mode === WizardMode.New &&
+      clusterInfo?.storageClassNames &&
+      clusterInfo.storageClassNames.length > 0
+    ) {
+      setValue(
+        DbWizardFormFields.storageClass,
+        clusterInfo?.storageClassNames[0],
+        { shouldValidate: true }
+      );
+    }
+  }, [clusterInfo]);
+  const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
+    if (!hasError && !value.includes('/') && value !== '') {
+      setValue(fieldName, `${value}/32`);
+    }
+  };
 
   return (
     <>
+      <AdvancedCard
+        title={Messages.cards.storage.title}
+        description={Messages.cards.storage.description}
+        controlComponent={
+          <AutoCompleteInput
+            name={AdvancedConfigurationFields.storageClass}
+            label={Messages.labels.storageClass}
+            loading={clusterInfoLoading}
+            options={clusterInfo?.storageClassNames || []}
+            disabled={loadingDefaultsForEdition}
+            tooltipText={
+              loadingDefaultsForEdition
+                ? Messages.tooltipTexts.storageClass
+                : undefined
+            }
+            autoCompleteProps={{
+              sx: {
+                mt: 0,
+                width: '135px',
+              },
+            }}
+          />
+        }
+      />
       <SwitchInput
         label={Messages.enableExternalAccess.title}
         labelCaption={Messages.enableExternalAccess.caption}
@@ -48,6 +114,7 @@ export const AdvancedConfigurationForm = ({
             fieldName={AdvancedConfigurationFields.sourceRanges}
             fieldKey="sourceRange"
             label={Messages.sourceRange}
+            handleBlur={handleBlur}
           />
         </Stack>
       )}

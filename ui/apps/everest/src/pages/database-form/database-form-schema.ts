@@ -8,28 +8,19 @@ import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialo
 import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema.ts';
-import { DbWizardMode } from './database-form.types.ts';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 const basicInfoSchema = () =>
   z
     .object({
       [DbWizardFormFields.dbType]: z.nativeEnum(DbType),
-      [DbWizardFormFields.dbName]: rfc_123_schema('database name')
+      [DbWizardFormFields.dbName]: rfc_123_schema({
+        fieldName: 'database name',
+      })
         .max(MAX_DB_CLUSTER_NAME_LENGTH, Messages.errors.dbName.tooLong)
         .nonempty(),
       [DbWizardFormFields.k8sNamespace]: z.string().nullable(),
       ...dbVersionSchemaObject,
-      [DbWizardFormFields.storageClass]: z
-        .string()
-        .nullable()
-        .superRefine((input, ctx) => {
-          if (!input) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: Messages.errors.storageClass.invalid,
-            });
-          }
-        }),
       [DbWizardFormFields.sharding]: z.boolean(),
     })
     .passthrough();
@@ -40,8 +31,8 @@ const basicInfoSchema = () =>
 
 const stepTwoSchema = (
   defaultValues: Record<string, unknown>,
-  mode: DbWizardMode
-) => resourcesFormSchema(defaultValues, mode === 'new');
+  mode: WizardMode
+) => resourcesFormSchema(defaultValues, mode === WizardMode.New, true, true);
 
 const backupsStepSchema = () =>
   z
@@ -97,7 +88,7 @@ const stepFiveSchema = () =>
 export const getDBWizardSchema = (
   activeStep: number,
   defaultValues: DbWizardType,
-  mode: DbWizardMode
+  mode: WizardMode
 ) => {
   const schema = [
     basicInfoSchema(),

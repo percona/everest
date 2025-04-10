@@ -4,7 +4,7 @@ import {
   PausedIcon,
   PendingIcon,
   SuccessIcon,
-  UknownIcon,
+  UnknownIcon,
 } from '@percona/ui-lib';
 import { BaseStatus } from './status-field.types';
 
@@ -16,6 +16,8 @@ export const STATUS_TO_ICON: Record<
   error: ErrorIcon,
   pending: PendingIcon,
   paused: PausedIcon,
-  unknown: UknownIcon,
+  unknown: UnknownIcon,
   deleting: PendingIcon,
+  creating: PendingIcon,
+  upgrading: PendingIcon,
 };

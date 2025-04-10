@@ -71,9 +71,6 @@ let token: string;
 
         await test.step('Submit form', async () => {
           await submitWizard(page);
-          await expect(
-            page.getByText('Awesome! Your database is being created!')
-          ).toBeVisible();
         });
 
         await test.step('Check db list and status', async () => {
@@ -115,7 +112,7 @@ let token: string;
 
           //check result
           await expect(page.getByTestId(`${clusterName}-status`)).toHaveText(
-            'Initializing',
+            'Upgrading',
             { timeout: 15000 }
           );
           await expect(

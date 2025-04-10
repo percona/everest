@@ -12,12 +12,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-export const Messages = {
-  dbBeingCreated: 'Awesome! Your database is being created!',
-  dbBeingUpdated: 'Your database is being updated',
-  sitTight: `
-    Everest is now hard at work creating your new database, tailored to your specifications.
-    Sit tight and relax while we handle the setup for you.
-  `,
-  goToList: 'Go to list of my databases',
-};
+
+import { test } from '@playwright/test';
+import { checkK8sMetrics } from '@e2e/utils/monitoring-instance';
+
+test(`Check PMM K8s metrics`, async () => {
+  await checkK8sMetrics('kube_node_info', 'admin:admin');
+  await checkK8sMetrics('kube_pod_status_phase', 'admin:admin');
+});

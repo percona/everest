@@ -20,7 +20,6 @@ import {
 } from '@e2e/utils/database-engines';
 import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
-import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { advancedConfigurationStepCheck } from './steps/advanced-configuration-step';
 import { backupsStepCheck } from './steps/backups-step';
 import { basicInformationStepCheck } from './steps/basic-information-step';
@@ -55,19 +54,12 @@ test.describe('DB Cluster creation', () => {
     psmdb: [],
     postgresql: [],
   };
-  let storageClasses = [];
   // let monitoringInstancesList = [];
   const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
 
   test.beforeAll(async ({ request }) => {
     const token = await getTokenFromLocalStorage();
     engineVersions = await getEnginesVersions(token, namespace, request);
-
-    const { storageClassNames = [] } = await getClusterDetailedInfo(
-      token,
-      request
-    );
-    storageClasses = storageClassNames;
   });
 
   test.beforeEach(async ({ page }) => {
@@ -120,14 +112,12 @@ test.describe('DB Cluster creation', () => {
       request
     );
 
-    expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
 
     await basicInformationStepCheck(
       page,
       engineVersions,
       recommendedEngineVersions,
-      storageClasses,
       clusterName
     );
 
@@ -201,9 +191,6 @@ test.describe('DB Cluster creation', () => {
 
     // await monitoringStepCheck(page, monitoringInstancesList);
     await submitWizard(page);
-    await expect(
-      page.getByText('Awesome! Your database is being created!')
-    ).toBeVisible();
 
     const response = await request.get(
       `/v1/namespaces/${namespace}/database-clusters`,
@@ -227,9 +214,9 @@ test.describe('DB Cluster creation', () => {
     expect(addedCluster).not.toBeUndefined();
     expect(addedCluster?.spec.engine.type).toBe('psmdb');
     expect(addedCluster?.spec.engine.replicas).toBe(3);
-    expect(addedCluster?.spec.engine.resources?.cpu.toString()).toBe('1');
-    expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('4G');
-    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('25Gi');
+    expect(addedCluster?.spec.engine.resources?.cpu.toString()).toBe('600m');
+    expect(addedCluster?.spec.engine.resources?.memory.toString()).toBe('1G');
+    expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
     expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
     // TODO commented, because we use only psmdb in this test
     // expect(addedCluster?.spec.proxy.replicas).toBe(1);
@@ -240,7 +227,6 @@ test.describe('DB Cluster creation', () => {
     //   '192.168.1.1/24',
     //   '192.168.1.0',
     // ]);
-    expect(addedCluster?.spec.engine.storage.class).toBe(storageClasses[0]);
     expect(addedCluster?.spec.backup.schedules[0].retentionCopies).toBe(1);
     // Verify timezone conversion was applied to the schedule cron
     // Day 10, 1h05 in IST timezone is day 9, 19h35 UTC
@@ -250,8 +236,6 @@ test.describe('DB Cluster creation', () => {
   test('PITR should be disabled when backups has no schedules checked', async ({
     page,
   }) => {
-    expect(storageClasses.length).toBeGreaterThan(0);
-
     await selectDbEngine(page, 'pxc');
     // go to resources page
     await moveForward(page);
@@ -278,7 +262,6 @@ test.describe('DB Cluster creation', () => {
   test.skip('Cancel wizard', async ({ page }) => {
     await page.getByTestId('mongodb-toggle-button').click();
     await page.getByTestId('text-input-db-name').fill('new-cluster');
-    await page.getByTestId('text-input-storage-class').click();
     await page.getByRole('option').first().click();
     await moveForward(page);
 
@@ -332,7 +315,6 @@ test.describe('DB Cluster creation', () => {
       page,
       engineVersions,
       recommendedEngineVersions,
-      storageClasses,
       clusterName
     );
     await moveForward(page);
@@ -347,7 +329,6 @@ test.describe('DB Cluster creation', () => {
     await advancedConfigurationStepCheck(page);
     await moveForward(page);
     await submitWizard(page);
-    await expect(page.getByTestId('db-wizard-goto-db-clusters')).toBeVisible();
 
     await page.goto('/databases');
     await waitForInitializingState(page, clusterName);
@@ -374,10 +355,9 @@ test.describe('DB Cluster creation', () => {
     await deleteDbClusterFn(request, clusterName, namespace);
   });
 
-  test('Warning should appears for schedule with the same date and storage', async ({
+  test('Warning should appears for schedule with the same date', async ({
     page,
   }) => {
-    expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
 
     // Resources Step
@@ -395,9 +375,7 @@ test.describe('DB Cluster creation', () => {
   test('Reset schedules, PITR and monitoring when changing namespace', async ({
     page,
   }) => {
-    expect(storageClasses.length).toBeGreaterThan(0);
     await selectDbEngine(page, 'psmdb');
-    await expect(page.getByText(storageClasses[0])).toBeVisible();
     await moveForward(page);
     await moveForward(page);
     await addFirstScheduleInDBWizard(page);

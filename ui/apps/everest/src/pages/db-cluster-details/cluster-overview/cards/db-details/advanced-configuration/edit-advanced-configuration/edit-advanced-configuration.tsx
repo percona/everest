@@ -37,12 +37,14 @@ export const AdvancedConfigurationEditModal = ({
     engineParametersEnabled,
     engineParameters,
     sourceRanges,
+    storageClass,
   }) => {
     handleSubmitModal({
       externalAccess,
       engineParametersEnabled,
       engineParameters,
       sourceRanges,
+      storageClass,
     });
   };
 
@@ -61,6 +63,7 @@ export const AdvancedConfigurationEditModal = ({
     >
       <AdvancedConfigurationForm
         dbType={dbEngineToDbType(dbCluster?.spec?.engine?.type)}
+        loadingDefaultsForEdition
       />
     </FormDialog>
   );

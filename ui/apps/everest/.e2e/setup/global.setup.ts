@@ -42,8 +42,17 @@ const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
       return Promise.resolve();
     }
 
-    if (response.status() === 409) {
+    if (
+      response.status() === 409 ||
+      (response.status() === 400 &&
+        statusText?.message &&
+        statusText?.message.includes('same url'))
+    ) {
       return Promise.resolve();
+    }
+
+    if (response.status() !== 201 && response.status() !== 200) {
+      return Promise.reject();
     }
 
     if (statusText && statusText.message) {

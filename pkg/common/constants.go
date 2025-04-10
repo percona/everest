@@ -22,20 +22,20 @@ const (
 	// Everest ...
 	Everest = "everest"
 
-	// PXCProductName holds the name of the product.
-	PXCProductName = "MySQL"
-	// PXCOperatorName holds operator name in k8s.
-	PXCOperatorName = "percona-xtradb-cluster-operator"
+	// MySQLProductName holds the name of the product.
+	MySQLProductName = "MySQL"
+	// MySQLOperatorName holds operator name in k8s.
+	MySQLOperatorName = "percona-xtradb-cluster-operator"
 
-	// PSMDBProductName holds the name of the product.
-	PSMDBProductName = "MongoDB"
-	// PSMDBOperatorName holds operator name in k8s.
-	PSMDBOperatorName = "percona-server-mongodb-operator"
+	// MongoDBProductName holds the name of the product.
+	MongoDBProductName = "MongoDB"
+	// MongoDBOperatorName holds operator name in k8s.
+	MongoDBOperatorName = "percona-server-mongodb-operator"
 
-	// PGProductName holds the name of the product.
-	PGProductName = "PostgreSQL"
-	// PGOperatorName holds operator name in k8s.
-	PGOperatorName = "percona-postgresql-operator"
+	// PostgreSQLProductName holds the name of the product.
+	PostgreSQLProductName = "PostgreSQL"
+	// PostgreSQLOperatorName holds operator name in k8s.
+	PostgreSQLOperatorName = "percona-postgresql-operator"
 
 	// DefaultDBNamespaceName is the name of the default DB namespace during installation.
 	DefaultDBNamespaceName = "everest"
@@ -98,9 +98,9 @@ const (
 //
 //nolint:gochecknoglobals
 var OperatorTypeToName = map[everestv1alpha1.EngineType]string{
-	everestv1alpha1.DatabaseEnginePXC:        PXCOperatorName,
-	everestv1alpha1.DatabaseEnginePSMDB:      PSMDBOperatorName,
-	everestv1alpha1.DatabaseEnginePostgresql: PGOperatorName,
+	everestv1alpha1.DatabaseEnginePXC:        MySQLOperatorName,
+	everestv1alpha1.DatabaseEnginePSMDB:      MongoDBOperatorName,
+	everestv1alpha1.DatabaseEnginePostgresql: PostgreSQLOperatorName,
 }
 
 // InitialPasswordWarningMessage is the message that is shown to the user after the installation/upgrade,

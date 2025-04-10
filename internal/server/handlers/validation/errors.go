@@ -15,6 +15,7 @@ var (
 	minCPUQuantity     = resource.MustParse("600m") //nolint:gochecknoglobals
 	minMemQuantity     = resource.MustParse("512M") //nolint:gochecknoglobals
 
+	errCannotShrinkStorageSize       = errors.New("cannot shrink storage size")
 	errNotEnoughMemory               = fmt.Errorf("memory limits should be above %s", minMemQuantity.String())
 	errNotEnoughCPU                  = fmt.Errorf("CPU limits should be above %s", minCPUQuantity.String())
 	errNotEnoughDiskSize             = fmt.Errorf("storage size should be above %s", minStorageQuantity.String())
@@ -39,6 +40,7 @@ var (
 	errInvalidBucketName             = fmt.Errorf("invalid bucketName")
 	errInvalidVersion                = errors.New("invalid database engine version provided")
 	errDBEngineMajorVersionUpgrade   = errors.New("database engine cannot be upgraded to a major version")
+	errDBEngineMajorUpgradeNotSeq    = errors.New("database engine major version upgrade is not supported for non-sequential versions")
 	errDBEngineDowngrade             = errors.New("database engine version cannot be downgraded")
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")

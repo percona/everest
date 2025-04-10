@@ -44,6 +44,7 @@ import {
   queryTestDB,
 } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
+import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
 
 let token: string;
 
@@ -92,7 +93,8 @@ test.describe(
           clusterName,
           db,
           storageClasses[0],
-          false
+          false,
+          null
         );
       });
 
@@ -152,16 +154,12 @@ test.describe(
 
       await test.step('Submit wizard', async () => {
         await submitWizard(page);
-
-        await expect(
-          page.getByText('Awesome! Your database is being created!')
-        ).toBeVisible();
       });
 
       // go to db list and check status
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Initializing', 15000);
+        await waitForStatus(page, clusterName, 'Initializing', 30000);
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
@@ -204,6 +202,49 @@ test.describe(
     test(`Validate Sharding for MongoDB [${db} size ${size}]`, async () => {
       await validateMongoDBSharding(clusterName, namespace, 't1');
       await validateMongoDBSharding(clusterName, namespace, 't2');
+    });
+
+    test(`Check PMM DB metrics [${db} size ${size}]`, async () => {
+      const replicas = ['rs0', 'rs1', 'cfg'];
+
+      for (const replica of replicas) {
+        for (let i = 0; i < size; i++) {
+          await checkDBMetrics(
+            'node_boot_time_seconds',
+            `everest-ui-${clusterName}-${replica}-${i}`,
+            'admin:admin'
+          );
+          await checkDBMetrics(
+            'mongodb_connections',
+            `everest-ui-${clusterName}-${replica}-${i}`,
+            'admin:admin'
+          );
+        }
+      }
+
+      // check mongos metrics
+      for (let i = 0; i < 2; i++) {
+        await checkDBMetrics(
+          'node_boot_time_seconds',
+          `everest-ui-${clusterName}-mongos-${i}`,
+          'admin:admin'
+        );
+      }
+    });
+
+    test(`Check PMM QAN [${db} size ${size}]`, async () => {
+      // Wait for 90 seconds for QAN to get data
+      await new Promise((resolve) => setTimeout(resolve, 90000));
+
+      const replicas = ['rs0', 'rs1'];
+
+      for (const replica of replicas) {
+        await checkQAN(
+          'mongodb',
+          `everest-ui-${clusterName}-${replica}-0`,
+          'admin:admin'
+        );
+      }
     });
 
     test(`Create demand backup [${db} size ${size}]`, async ({ page }) => {
