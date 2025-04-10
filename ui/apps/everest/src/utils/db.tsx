@@ -13,6 +13,7 @@ import { can } from './rbac';
 import { getProxySpec } from 'hooks/api/db-cluster/utils';
 import { dbEngineToDbType } from '@percona/utils';
 import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
+import cronConverter from './cron-converter';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -324,4 +325,37 @@ export const shouldDbActionsBeBlocked = (status?: DbClusterStatus) => {
     DbClusterStatus.resizingVolumes,
     DbClusterStatus.upgrading,
   ].includes(status || ('' as DbClusterStatus));
+};
+
+export const mergeNewDbClusterData = (
+  oldDbClusterData: DbCluster = {} as DbCluster,
+  newDbClusterData: DbCluster,
+  // When using setQueryData, the data is already in UTC and will be used by queryClient BEFORE `select`, so it has to be in UTC, as if coming from the API
+  // In those cases, we don't want to convert the schedule to local timezone
+  convertToLocalTimezone: boolean
+): DbCluster => {
+  const newCluster = {
+    ...oldDbClusterData,
+    ...newDbClusterData,
+    spec: {
+      ...newDbClusterData.spec,
+      ...(newDbClusterData.spec?.backup?.schedules && {
+        backup: {
+          ...newDbClusterData.spec.backup,
+          schedules: newDbClusterData.spec.backup.schedules.map((schedule) => ({
+            ...schedule,
+            schedule: convertToLocalTimezone
+              ? cronConverter(
+                  schedule.schedule,
+                  'UTC',
+                  Intl.DateTimeFormat().resolvedOptions().timeZone
+                )
+              : schedule.schedule,
+          })),
+        },
+      }),
+    },
+  };
+
+  return newCluster;
 };
