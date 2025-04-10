@@ -28,7 +28,7 @@ export const Messages = {
   sourceRangePlaceholder: SOURCE_RANGE_PLACEHOLDER,
   engineParameters: {
     title: 'Database engine parameters',
-    label: 'Apply Percona’s optimized configuration',
+    label: 'Set database engine parameters',
     caption:
       'Set your database engine configuration to adjust your database system to your workload and performance needs. For configuration format and specific parameters, check your database type documentation.',
     inputLabel: 'Engine parameters',
