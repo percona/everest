@@ -21,9 +21,12 @@ import { DbWizardFormFields } from 'consts.ts';
 import { useFormContext } from 'react-hook-form';
 import PitrStorage from './pitr-storage';
 import { useEffect } from 'react';
+import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
+import { WizardMode } from 'shared-types/wizard.types';
 
 const PITR = () => {
-  const { control, watch, setValue } = useFormContext();
+  const { control, watch, setValue, getValues } = useFormContext();
+  const mode = useDatabasePageMode();
   const [dbType, schedules] = watch([
     DbWizardFormFields.dbType,
     DbWizardFormFields.schedules,
@@ -47,12 +50,24 @@ const PITR = () => {
   }, [backupsEnabled]);
 
   useEffect(() => {
-    if (dbType !== DbType.Mysql && schedules?.length > 0) {
+    if (mode === WizardMode.Restore) {
+      const pitrStorageLocation = getValues(
+        DbWizardFormFields.pitrStorageLocation
+      );
+
+      if (!pitrStorageLocation) {
+        setValue(
+          DbWizardFormFields.pitrStorageLocation,
+          schedules[0]?.backupStorageName
+        );
+      }
+    } else if (dbType !== DbType.Mysql && schedules?.length > 0) {
       setValue(
         DbWizardFormFields.pitrStorageLocation,
         schedules[0]?.backupStorageName
       );
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schedules, dbType]);
 

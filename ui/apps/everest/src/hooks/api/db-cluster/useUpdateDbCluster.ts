@@ -25,6 +25,7 @@ import { updateDbClusterFn } from 'api/dbClusterApi';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { DB_CLUSTER_QUERY, useDbCluster } from './useDbCluster';
 import cronConverter from 'utils/cron-converter';
+import { mergeNewDbClusterData } from 'utils/db';
 
 const UPDATE_RETRY_TIMEOUT_MS = 5000;
 const UPDATE_RETRY_DELAY_MS = 200;
@@ -149,10 +150,7 @@ export const useUpdateDbClusterWithConflictRetry = (
       watchStartTime.current = null;
       queryClient.setQueryData<DbCluster>(
         [DB_CLUSTER_QUERY, dbClusterName],
-        (oldData) => ({
-          ...oldData,
-          ...data,
-        })
+        (oldData) => mergeNewDbClusterData(oldData, data, false)
       );
       ownOnSuccess?.(data, vars, ctx);
     },
