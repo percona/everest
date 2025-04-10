@@ -436,9 +436,6 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
           '&.MuiIconButton-root:focus-visible:focus': {
             backgroundColor: 'rgba(18, 119, 227, 0.3)',
           },
-          '&.MuiIconButton-root[aria-expanded="true"]': {
-            backgroundColor: 'rgba(18, 119, 227, 0.3)',
-          },
           '&.MuiIconButton-root:focus-visible': {
             backgroundColor: 'rgba(18, 119, 227, 0.3)',
           },
