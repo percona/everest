@@ -33,7 +33,7 @@ export const DB_CLUSTERS_QUERY_KEY = 'dbClusters';
 
 export const dbClustersQuerySelect = ({
   items,
-}: GetDbClusterPayload): DbCluster[] =>
+}: Pick<GetDbClusterPayload, 'items'>): DbCluster[] =>
   items
     .map(({ ...props }) => ({
       ...props,
@@ -64,8 +64,18 @@ export const useDbClusters = (
     queryKey: [DB_CLUSTERS_QUERY_KEY],
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
-    select: dbClustersQuerySelect,
     ...options,
+    select: (clusters) => {
+      const transformedClusters: DbCluster[] = options?.select
+        ? options.select(clusters)
+        : clusters.items;
+
+      const querySelectedClusters = dbClustersQuerySelect({
+        items: transformedClusters,
+      });
+
+      return querySelectedClusters;
+    },
   });
 };
 
