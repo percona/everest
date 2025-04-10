@@ -40,7 +40,7 @@ require (
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/operator-lifecycle-manager v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20250408103821-238475bf8caa
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250410085924-77ccbb5a67f7
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250410143440-baa4adaf2c02
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -53,7 +53,7 @@ require (
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.17.2
+	helm.sh/helm/v3 v3.17.3
 	k8s.io/api v0.32.3
 	k8s.io/apiextensions-apiserver v0.32.2
 	k8s.io/apimachinery v0.32.3
