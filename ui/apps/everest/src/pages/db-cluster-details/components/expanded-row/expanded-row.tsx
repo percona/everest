@@ -16,7 +16,7 @@
 import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import { MRT_ColumnDef, MRT_Row } from 'material-react-table';
 import { DBClusterComponent } from 'shared-types/components.types';
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDuration, intervalToDuration } from 'date-fns';
 import {
   CONTAINER_STATUS,
   containerStatusToBaseStatus,
@@ -30,6 +30,7 @@ import { DATE_FORMAT } from 'consts';
 const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
   const { containers, name } = row.original;
   const theme = useTheme();
+  const now = new Date();
 
   const columns = useMemo<MRT_ColumnDef<Container>[]>(() => {
     return [
@@ -93,7 +94,16 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
                 variant="caption"
                 color={theme.palette.text.secondary}
               >
-                {formatDistanceToNowStrict(date)} ago{' '}
+                {formatDuration(
+                  intervalToDuration({
+                    start: date,
+                    end: now,
+                  }),
+                  {
+                    format: ['years', 'months', 'days', 'hours', 'minutes'],
+                  }
+                )}{' '}
+                ago{' '}
               </Typography>
             </Tooltip>
           ) : (
