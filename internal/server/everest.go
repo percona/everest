@@ -161,7 +161,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return c.Render(http.StatusOK, "index.html",
 			map[string]interface{}{"CSPNonce": secure.CSPNonce(c.Request().Context())},
 		)
-	}, securityHeaders(e.oidcProvider))
+	}, e.securityHeaders())
 
 	// Serve static files.
 	fsys, err := fs.Sub(public.Static, "dist")
@@ -169,7 +169,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return errors.Join(err, errors.New("error reading filesystem"))
 	}
 	staticFilesHandler := http.FileServer(http.FS(fsys))
-	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler), securityHeaders(e.oidcProvider))
+	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler), e.securityHeaders())
 
 	// Middlewares
 	e.echo.Use(echomiddleware.LoggerWithConfig(echomiddleware.LoggerConfig{
