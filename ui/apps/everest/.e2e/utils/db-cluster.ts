@@ -222,7 +222,7 @@ export const getDbAvailableUpgradeVersionK8S = async (
       : dbSplitVersion[0] + '.' + dbSplitVersion[1];
 
   try {
-    const versions = getVersionServiceDBVersions(
+    const versions = await getVersionServiceDBVersions(
       dbType,
       crVersion,
       request,
