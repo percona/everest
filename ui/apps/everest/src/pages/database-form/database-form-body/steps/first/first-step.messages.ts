@@ -21,7 +21,6 @@ export const Messages = {
     k8sNamespace: 'Namespace',
     dbEnvironment: 'Database environment',
     dbVersion: 'Database version',
-    storageClass: 'Storage class',
     shardedCluster: 'Sharded Cluster',
   },
   placeholders: {
@@ -29,7 +28,5 @@ export const Messages = {
   },
   disableShardingTooltip:
     'Sharding cannot be enabled unless the PSMDB operator version is 1.17.0 or higher',
-  disableShardingInEditMode:
-    'Sharding cannot be enabled/disabled after the database is created',
   noEnginesAvailable: 'No engines available for any namespace',
 };

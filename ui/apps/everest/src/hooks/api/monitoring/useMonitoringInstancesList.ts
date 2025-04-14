@@ -18,6 +18,7 @@ import {
   UseQueryResult,
   useMutation,
   useQueries,
+  useQuery,
 } from '@tanstack/react-query';
 import {
   getMonitoringInstancesFn,
@@ -60,7 +61,6 @@ export const useMonitoringInstancesList = (
   >(({ namespace, options }) => {
     return {
       queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-      retry: false,
       queryFn: () => getMonitoringInstancesFn(namespace),
       refetchInterval: 5 * 1000,
       ...options,
@@ -76,6 +76,14 @@ export const useMonitoringInstancesList = (
   );
 
   return results;
+};
+
+export const useMonitoringInstancesForNamespace = (namespace: string) => {
+  return useQuery({
+    queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
+    queryFn: () => getMonitoringInstancesFn(namespace),
+    refetchInterval: 5 * 1000,
+  });
 };
 
 export const useCreateMonitoringInstance = (

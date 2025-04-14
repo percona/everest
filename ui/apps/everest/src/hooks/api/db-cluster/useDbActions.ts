@@ -1,6 +1,4 @@
 import { useDeleteDbCluster } from 'hooks/api/db-cluster/useDeleteDbCluster';
-import { usePausedDbCluster } from 'hooks/api/db-cluster/usePausedDbCluster';
-import { useRestartDbCluster } from 'hooks/api/db-cluster/useRestartDbCluster';
 import { DB_CLUSTERS_QUERY_KEY } from 'hooks/api/db-clusters/useDbClusters';
 import { enqueueSnackbar } from 'notistack';
 import { Messages } from 'pages/databases/dbClusterView.messages';
@@ -13,6 +11,12 @@ import {
   GetDbClusterPayload,
 } from 'shared-types/dbCluster.types';
 import { DB_CLUSTER_QUERY } from './useDbCluster';
+import { useUpdateDbClusterWithConflictRetry } from './useUpdateDbCluster';
+import {
+  mergeNewDbClusterData,
+  setDbClusterPausedStatus,
+  setDbClusterRestart,
+} from 'utils/db';
 
 export const useDbActions = (dbCluster: DbCluster) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -20,8 +24,65 @@ export const useDbActions = (dbCluster: DbCluster) => {
   const [openRestoreDialog, setOpenRestoreDialog] = useState(false);
   const deleteMutation = useDeleteDbCluster(dbCluster.metadata.name);
   const { mutate: deleteDbCluster } = deleteMutation;
-  const { mutate: suspendDbCluster } = usePausedDbCluster();
-  const { mutate: restartDbCluster } = useRestartDbCluster();
+  const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster,
+    {
+      onSuccess: (updatedObject) => {
+        queryClient.setQueryData<GetDbClusterPayload | undefined>(
+          [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
+          (oldData) => {
+            if (!oldData) {
+              return undefined;
+            }
+
+            return {
+              ...oldData,
+              items: oldData.items.map((value) =>
+                value.metadata.name === updatedObject.metadata.name
+                  ? updatedObject
+                  : value
+              ),
+            };
+          }
+        );
+        enqueueSnackbar(
+          updatedObject.spec.paused
+            ? Messages.responseMessages.pause
+            : Messages.responseMessages.resume,
+          {
+            variant: 'success',
+          }
+        );
+      },
+    }
+  );
+  const { mutate: restartDbCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster,
+    {
+      onSuccess: (updatedObject) => {
+        queryClient.setQueryData<GetDbClusterPayload | undefined>(
+          [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
+          (oldData) => {
+            if (!oldData) {
+              return undefined;
+            }
+
+            return {
+              ...oldData,
+              items: oldData.items.map((value) =>
+                value.metadata.name === updatedObject.metadata.name
+                  ? updatedObject
+                  : value
+              ),
+            };
+          }
+        );
+        enqueueSnackbar(Messages.responseMessages.restart, {
+          variant: 'success',
+        });
+      },
+    }
+  );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -29,71 +90,11 @@ export const useDbActions = (dbCluster: DbCluster) => {
 
   const handleDbSuspendOrResumed = (dbCluster: DbCluster) => {
     const shouldBePaused = !isPaused(dbCluster);
-
-    suspendDbCluster(
-      { shouldBePaused, dbCluster },
-      {
-        onSuccess: (data) => {
-          const updatedObject = data as DbCluster;
-          queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
-            (oldData) => {
-              if (!oldData) {
-                return undefined;
-              }
-
-              return {
-                ...oldData,
-                items: oldData.items.map((value) =>
-                  value.metadata.name === updatedObject.metadata.name
-                    ? updatedObject
-                    : value
-                ),
-              };
-            }
-          );
-          enqueueSnackbar(
-            shouldBePaused
-              ? Messages.responseMessages.pause
-              : Messages.responseMessages.resume,
-            {
-              variant: 'success',
-            }
-          );
-        },
-      }
-    );
+    updateCluster(setDbClusterPausedStatus(dbCluster, shouldBePaused));
   };
 
   const handleDbRestart = (dbCluster: DbCluster) => {
-    restartDbCluster(
-      { dbCluster },
-      {
-        onSuccess: (data) => {
-          const updatedObject = data as DbCluster;
-          queryClient.setQueryData<GetDbClusterPayload | undefined>(
-            [DB_CLUSTERS_QUERY_KEY, updatedObject.metadata.namespace],
-            (oldData) => {
-              if (!oldData) {
-                return undefined;
-              }
-
-              return {
-                ...oldData,
-                items: oldData.items.map((value) =>
-                  value.metadata.name === updatedObject.metadata.name
-                    ? updatedObject
-                    : value
-                ),
-              };
-            }
-          );
-          enqueueSnackbar(Messages.responseMessages.restart, {
-            variant: 'success',
-          });
-        },
-      }
-    );
+    restartDbCluster(setDbClusterRestart(dbCluster));
   };
 
   const handleDeleteDbCluster = () => {
@@ -135,6 +136,7 @@ export const useDbActions = (dbCluster: DbCluster) => {
                       ...item,
                       status: {
                         ...item.status,
+                        conditions: item.status?.conditions || [],
                         crVersion: item.status?.crVersion || '',
                         hostname: item.status?.hostname || '',
                         port: item.status?.port || 0,
@@ -156,9 +158,10 @@ export const useDbActions = (dbCluster: DbCluster) => {
               }
 
               return {
-                ...oldData,
+                ...mergeNewDbClusterData(undefined, oldData, false),
                 status: {
                   ...oldData.status,
+                  conditions: oldData.status?.conditions || [],
                   hostname: oldData.status?.hostname || '',
                   port: oldData.status?.port || 0,
                   crVersion: oldData.status?.crVersion || '',

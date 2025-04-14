@@ -22,6 +22,7 @@ import { timeSelectionSchemaObject } from '../../time-selection/time-selection-s
 import { Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
 import { sameScheduleFunc } from '../schedule-form-dialog.utils';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const storageLocationZodObject = z
   .string()
@@ -56,18 +57,18 @@ export const storageLocationScheduleFormSchema = (
   };
 };
 
-export const schema = (schedules: Schedule[], mode: 'edit' | 'new') => {
+export const schema = (schedules: Schedule[], mode: WizardMode) => {
   const schedulesNamesList = schedules.map((item) => item?.name);
   return z
     .object({
-      [ScheduleFormFields.scheduleName]: rfc_123_schema(
-        `${Messages.scheduleName.label.toLowerCase()} name`
-      )
+      [ScheduleFormFields.scheduleName]: rfc_123_schema({
+        fieldName: `${Messages.scheduleName.label.toLowerCase()} name`,
+      })
         .nonempty()
         .max(MAX_SCHEDULE_NAME_LENGTH, Messages.scheduleName.tooLong)
         .superRefine((input, ctx) => {
           if (
-            mode === 'new' &&
+            mode === WizardMode.New &&
             !!schedulesNamesList.find((item) => item === input)
           ) {
             ctx.addIssue({

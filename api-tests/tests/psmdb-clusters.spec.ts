@@ -13,19 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkError, deleteDBCluster, testsNs} from "@tests/tests/helpers";
-
+import {checkError, deleteDBCluster, testsNs} from '@tests/tests/helpers';
 
 test.setTimeout(240 * 1000)
 
 test.beforeAll(async ({ request }) => {
   const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`)
-  const availableVersions = (await engineResponse.json()).status.availableVersions.engine
 })
 
 test('create/edit/delete single node psmdb cluster', async ({ request, page }) => {
-  const clusterName = 'test-psmdb'
-  const psmdbPayload = {
+  const clusterName = 'test-psmdb',
+   psmdbPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -87,7 +85,7 @@ test('create/edit/delete single node psmdb cluster', async ({ request, page }) =
   psmdbPayload.metadata = result.metadata
 
   // Update PSMDB cluster
-  expect(psmdbPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(psmdbPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPSMDBCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: psmdbPayload,
@@ -105,8 +103,8 @@ test('create/edit/delete single node psmdb cluster', async ({ request, page }) =
 })
 
 test('expose psmdb cluster after creation', async ({ request, page }) => {
-  const clusterName = 'expose-psmdb'
-  const psmdbPayload = {
+  const clusterName = 'expose-psmdb',
+   psmdbPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -169,7 +167,7 @@ test('expose psmdb cluster after creation', async ({ request, page }) => {
   psmdbPayload.spec.proxy.expose.type = 'external'
 
   // Update PSMDB cluster
-  expect(psmdbPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(psmdbPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPSMDBCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: psmdbPayload,
@@ -188,8 +186,8 @@ test('expose psmdb cluster after creation', async ({ request, page }) => {
 })
 
 test('expose psmdb cluster on EKS to the public internet and scale up', async ({ request, page }) => {
-  const clusterName = 'eks-psmdb'
-  const psmdbPayload = {
+  const clusterName = 'eks-psmdb',
+   psmdbPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -250,7 +248,7 @@ test('expose psmdb cluster on EKS to the public internet and scale up', async ({
   psmdbPayload.metadata = result.metadata
 
   // Update PSMDB cluster
-  expect(psmdbPayload.metadata["resourceVersion"]).toBeDefined()
+  expect(psmdbPayload.metadata['resourceVersion']).toBeDefined()
 
   const updatedPSMDBCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
     data: psmdbPayload,
@@ -266,8 +264,8 @@ test('expose psmdb cluster on EKS to the public internet and scale up', async ({
 })
 
 test('sharded psmdb cluster', async ({ request, page }) => {
-  const clusterName = 'sharding-psmdb'
-  const psmdbPayload = {
+  const clusterName = 'sharding-psmdb',
+   psmdbPayload = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -283,7 +281,7 @@ test('sharded psmdb cluster', async ({ request, page }) => {
         },
       },
       engine: {
-        version: '7.0.14-8',
+        version: '8.0.4-1',
         type: 'psmdb',
         replicas: 1,
         storage: {
@@ -302,11 +300,12 @@ test('sharded psmdb cluster', async ({ request, page }) => {
         },
       },
     },
-  }
+  },
 
-  const created = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
+   created = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
     data: psmdbPayload,
   })
+
   await checkError(created)
 
   for (let i = 0; i < 30; i++) {

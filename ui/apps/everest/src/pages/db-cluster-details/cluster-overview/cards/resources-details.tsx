@@ -17,7 +17,6 @@ import { useState } from 'react';
 import { DatabaseIcon, OverviewCard } from '@percona/ui-lib';
 import { Button, Stack } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { useQueryClient } from '@tanstack/react-query';
 import { SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import {
@@ -39,21 +38,25 @@ import {
   memoryParser,
 } from 'utils/k8ResourceParser';
 import { dbEngineToDbType } from '@percona/utils';
-import { DB_CLUSTER_QUERY, useUpdateDbClusterResources } from 'hooks';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { DbType } from '@percona/types';
-import { isProxy } from 'utils/db';
+import { changeDbClusterResources, isProxy } from 'utils/db';
 import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
 
 export const ResourcesDetails = ({
   dbCluster,
   loading,
   sharding,
-  canUpdateDb,
+  canUpdate,
 }: ResourcesDetailsOverviewProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
-  const { mutate: updateDbClusterResources } = useUpdateDbClusterResources();
-  const queryClient = useQueryClient();
+  const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster,
+    {
+      onSuccess: () => setOpenEditModal(false),
+    }
+  );
+  const storageClass = dbCluster.spec.engine.storage.class;
   const cpu = dbCluster.spec.engine.resources?.cpu || 0;
   const proxyCpu = isProxy(dbCluster.spec.proxy)
     ? dbCluster.spec.proxy.resources?.cpu || 0
@@ -72,14 +75,16 @@ export const ResourcesDetails = ({
     ? (dbCluster.spec.proxy.replicas || 0).toString()
     : '';
   const numberOfProxiesInt = parseInt(proxies, 10);
-  const numberOfNodesStr = NODES_DB_TYPE_MAP[dbType].includes(replicas)
+  const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
+  const numberOfNodesStr =
+    sharding?.enabled && sharding?.shards
+      ? (+replicas * sharding?.shards).toString()
+      : replicas;
   const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
-  const restoring = dbCluster?.status?.status === DbClusterStatus.restoring;
-  const deleting = dbCluster?.status?.status === DbClusterStatus.deleting;
 
   const onSubmit: SubmitHandler<
     z.infer<ReturnType<typeof resourcesFormSchema>>
@@ -97,10 +102,10 @@ export const ResourcesDetails = ({
     shardConfigServers,
     shardNr,
   }) => {
-    updateDbClusterResources(
-      {
+    updateCluster(
+      changeDbClusterResources(
         dbCluster,
-        newResources: {
+        {
           cpu,
           disk,
           diskUnit,
@@ -120,18 +125,10 @@ export const ResourcesDetails = ({
             10
           ),
         },
-        sharding: sharding?.enabled,
-        shardConfigServers,
+        sharding?.enabled,
         shardNr,
-      },
-      {
-        onSuccess: () => {
-          setOpenEditModal(false);
-          queryClient.invalidateQueries({
-            queryKey: [DB_CLUSTER_QUERY, dbCluster.metadata.name],
-          });
-        },
-      }
+        shardConfigServers
+      )
     );
   };
 
@@ -149,7 +146,7 @@ export const ResourcesDetails = ({
                 startIcon={<EditOutlinedIcon />}
                 onClick={() => setOpenEditModal(true)}
                 data-testid="edit-resources-button"
-                disabled={!canUpdateDb || restoring || deleting}
+                disabled={!canUpdate}
               >
                 Edit
               </Button>
@@ -186,7 +183,7 @@ export const ResourcesDetails = ({
             </OverviewSection>
           )}
           <OverviewSection
-            title={`${replicas} node${+replicas > 1 ? 's' : ''}`}
+            title={`${numberOfNodesStr} node${+numberOfNodesStr > 1 ? 's' : ''}`}
             loading={loading}
           >
             <OverviewSectionRow
@@ -195,7 +192,9 @@ export const ResourcesDetails = ({
               contentString={getTotalResourcesDetailedString(
                 cpuParser(cpu.toString() || '0'),
                 parseInt(replicas, 10),
-                'CPU'
+                'CPU',
+                sharding?.shards,
+                sharding?.enabled
               )}
             />
             <OverviewSectionRow
@@ -203,7 +202,9 @@ export const ResourcesDetails = ({
               contentString={getTotalResourcesDetailedString(
                 parsedMemoryValues.value,
                 parseInt(replicas, 10),
-                parsedMemoryValues.originalUnit
+                parsedMemoryValues.originalUnit,
+                sharding?.shards,
+                sharding?.enabled
               )}
             />
             <OverviewSectionRow
@@ -211,7 +212,9 @@ export const ResourcesDetails = ({
               contentString={getTotalResourcesDetailedString(
                 parsedDiskValues.value,
                 parseInt(replicas, 10),
-                parsedDiskValues.originalUnit
+                parsedDiskValues.originalUnit,
+                sharding?.shards,
+                sharding?.enabled
               )}
             />
           </OverviewSection>
@@ -244,6 +247,8 @@ export const ResourcesDetails = ({
       {openEditModal && (
         <ResourcesEditModal
           dbType={dbType}
+          storageClass={storageClass || ''}
+          allowDiskDescaling={false}
           shardingEnabled={!!sharding?.enabled}
           handleCloseModal={() => setOpenEditModal(false)}
           onSubmit={onSubmit}
@@ -260,7 +265,7 @@ export const ResourcesDetails = ({
               shardConfigServers: sharding?.configServer?.replicas,
               shardNr: sharding?.shards.toString(),
             }),
-            numberOfNodes: numberOfNodesStr,
+            numberOfNodes: numberOfNodes,
             numberOfProxies: numberOfProxiesStr,
             customNrOfNodes: replicas,
             customNrOfProxies: proxies,

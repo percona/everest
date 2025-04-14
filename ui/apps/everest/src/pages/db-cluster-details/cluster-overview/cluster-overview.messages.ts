@@ -34,11 +34,13 @@ export const Messages = {
     parameters: 'Parameters',
     enabled: 'Enabled',
     disabled: 'Disabled',
+    noSchedules: '0 active schedules',
     shards: 'Nº of shards',
     configServers: 'Config servers',
     cpu: 'CPU',
     disk: 'Disk',
     memory: 'Memory',
     backupStorages: 'Backup\u00A0storage',
+    storageClass: 'Storage class',
   },
 };

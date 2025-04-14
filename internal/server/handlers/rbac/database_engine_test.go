@@ -27,24 +27,25 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				Items: []everestv1alpha1.DatabaseEngine{
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      common.PXCOperatorName,
+							Name:      common.MySQLOperatorName,
 							Namespace: "default",
 						},
 					},
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      common.PGOperatorName,
+							Name:      common.PostgreSQLOperatorName,
 							Namespace: "default",
 						},
 					},
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      common.PSMDBOperatorName,
+							Name:      common.MongoDBOperatorName,
 							Namespace: "default",
 						},
 					},
 				},
-			}, nil)
+			}, nil,
+			)
 			return &h
 		}
 
@@ -61,13 +62,13 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
 					return len(list.Items) == 3 &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PXCOperatorName
+							return engine.GetName() == common.MySQLOperatorName
 						}) &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PGOperatorName
+							return engine.GetName() == common.PostgreSQLOperatorName
 						}) &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PSMDBOperatorName
+							return engine.GetName() == common.MongoDBOperatorName
 						})
 				},
 			},
@@ -80,13 +81,13 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
 					return len(list.Items) == 3 &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PXCOperatorName
+							return engine.GetName() == common.MySQLOperatorName
 						}) &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PGOperatorName
+							return engine.GetName() == common.PostgreSQLOperatorName
 						}) &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PSMDBOperatorName
+							return engine.GetName() == common.MongoDBOperatorName
 						})
 				},
 			},
@@ -99,13 +100,13 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
 					return len(list.Items) == 3 &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PXCOperatorName
+							return engine.GetName() == common.MySQLOperatorName
 						}) &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PGOperatorName
+							return engine.GetName() == common.PostgreSQLOperatorName
 						}) &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PSMDBOperatorName
+							return engine.GetName() == common.MongoDBOperatorName
 						})
 				},
 			},
@@ -118,7 +119,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
 					return len(list.Items) == 1 &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PXCOperatorName
+							return engine.GetName() == common.MySQLOperatorName
 						})
 				},
 			},
@@ -131,7 +132,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
 					return len(list.Items) == 1 &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PGOperatorName
+							return engine.GetName() == common.PostgreSQLOperatorName
 						})
 				},
 			},
@@ -144,7 +145,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
 					return len(list.Items) == 1 &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PSMDBOperatorName
+							return engine.GetName() == common.MongoDBOperatorName
 						})
 				},
 			},
@@ -158,10 +159,10 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
 					return len(list.Items) == 2 &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PSMDBOperatorName
+							return engine.GetName() == common.MongoDBOperatorName
 						}) &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PSMDBOperatorName
+							return engine.GetName() == common.MongoDBOperatorName
 						})
 				},
 			},
@@ -174,7 +175,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 				assert: func(list *everestv1alpha1.DatabaseEngineList) bool {
 					return len(list.Items) == 1 &&
 						slices.ContainsFunc(list.Items, func(engine everestv1alpha1.DatabaseEngine) bool {
-							return engine.GetName() == common.PSMDBOperatorName
+							return engine.GetName() == common.MongoDBOperatorName
 						})
 				},
 			},
@@ -273,7 +274,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 					userGetter: testUserGetter,
 				}
 
-				_, err = h.GetDatabaseEngine(ctx, "default", common.PXCOperatorName)
+				_, err = h.GetDatabaseEngine(ctx, "default", common.MySQLOperatorName)
 				assert.ErrorIs(t, tc.wantErr, err)
 			})
 		}
@@ -331,7 +332,7 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 
 				_, err = h.UpdateDatabaseEngine(ctx, &everestv1alpha1.DatabaseEngine{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      common.PXCOperatorName,
+						Name:      common.MySQLOperatorName,
 						Namespace: "default",
 					},
 				})
@@ -345,11 +346,12 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 			h := handlers.MockHandler{}
 			h.On("GetUpgradePlan", mock.Anything, "default").Return(&api.UpgradePlan{
 				Upgrades: &[]api.Upgrade{
-					{Name: pointer.ToString(common.PXCOperatorName)},
-					{Name: pointer.ToString(common.PGOperatorName)},
-					{Name: pointer.ToString(common.PSMDBOperatorName)},
+					{Name: pointer.ToString(common.MySQLOperatorName)},
+					{Name: pointer.ToString(common.PostgreSQLOperatorName)},
+					{Name: pointer.ToString(common.MongoDBOperatorName)},
 				},
-			}, nil)
+			}, nil,
+			)
 			return &h
 		}
 
@@ -368,13 +370,13 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 					upgrades := pointer.Get(up.Upgrades)
 					return len(upgrades) == 3 &&
 						slices.ContainsFunc(upgrades, func(upgrade api.Upgrade) bool {
-							return pointer.GetString(upgrade.Name) == common.PXCOperatorName
+							return pointer.GetString(upgrade.Name) == common.MySQLOperatorName
 						}) &&
 						slices.ContainsFunc(upgrades, func(upgrade api.Upgrade) bool {
-							return pointer.GetString(upgrade.Name) == common.PGOperatorName
+							return pointer.GetString(upgrade.Name) == common.PostgreSQLOperatorName
 						}) &&
 						slices.ContainsFunc(upgrades, func(upgrade api.Upgrade) bool {
-							return pointer.GetString(upgrade.Name) == common.PSMDBOperatorName
+							return pointer.GetString(upgrade.Name) == common.MongoDBOperatorName
 						})
 				},
 			},
@@ -391,13 +393,13 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 					upgrades := pointer.Get(up.Upgrades)
 					return len(upgrades) == 3 &&
 						slices.ContainsFunc(upgrades, func(upgrade api.Upgrade) bool {
-							return pointer.GetString(upgrade.Name) == common.PXCOperatorName
+							return pointer.GetString(upgrade.Name) == common.MySQLOperatorName
 						}) &&
 						slices.ContainsFunc(upgrades, func(upgrade api.Upgrade) bool {
-							return pointer.GetString(upgrade.Name) == common.PGOperatorName
+							return pointer.GetString(upgrade.Name) == common.PostgreSQLOperatorName
 						}) &&
 						slices.ContainsFunc(upgrades, func(upgrade api.Upgrade) bool {
-							return pointer.GetString(upgrade.Name) == common.PSMDBOperatorName
+							return pointer.GetString(upgrade.Name) == common.MongoDBOperatorName
 						})
 				},
 			},
@@ -480,11 +482,12 @@ func TestRBAC_DatabaseEngines(t *testing.T) {
 			h := handlers.MockHandler{}
 			h.On("GetUpgradePlan", mock.Anything, "default").Return(&api.UpgradePlan{
 				Upgrades: &[]api.Upgrade{
-					{Name: pointer.ToString(common.PXCOperatorName)},
-					{Name: pointer.ToString(common.PGOperatorName)},
-					{Name: pointer.ToString(common.PSMDBOperatorName)},
+					{Name: pointer.ToString(common.MySQLOperatorName)},
+					{Name: pointer.ToString(common.PostgreSQLOperatorName)},
+					{Name: pointer.ToString(common.MongoDBOperatorName)},
 				},
-			}, nil)
+			}, nil,
+			)
 			h.On("ApproveUpgradePlan", mock.Anything, "default").Return(nil)
 			return &h
 		}

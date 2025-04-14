@@ -127,4 +127,117 @@ describe('TimeSelection', () => {
       screen.queryByTestId('select-input-week-day')
     ).not.toBeInTheDocument();
   });
+
+  it('should render correctly for monthly values for UTX+X:30 timezone', () => {
+    vi.stubEnv('TZ', 'Asia/Calcutta');
+    render(
+      <TestWrapper>
+        <FormProviderWrapper>
+          <TimeSelection shouldRestrictSelectableHours />
+        </FormProviderWrapper>
+      </TestWrapper>
+    );
+
+    const selectTimeValue = screen.getByTestId('select-input-selected-time');
+    expect(selectTimeValue).toBeInTheDocument();
+
+    fireEvent.change(selectTimeValue, { target: { value: 'month' } });
+
+    expect(selectTimeValue.getAttribute('value')).toBe('month');
+
+    expect(screen.getByTestId('select-input-hour')).toHaveAttribute(
+      'value',
+      '5'
+    );
+    expect(screen.getByTestId('select-input-minute')).toHaveAttribute(
+      'value',
+      '30'
+    );
+  });
+
+  it('should render correctly for UTX+X timezone with or without DST when monthly is selected', () => {
+    vi.stubEnv('TZ', 'Europe/Amsterdam');
+    const today = new Date();
+    const janOffset = new Date(today.getFullYear(), 0, 1).getTimezoneOffset();
+    const julOffset = new Date(today.getFullYear(), 6, 1).getTimezoneOffset();
+    const isDST = today.getTimezoneOffset() < Math.max(janOffset, julOffset);
+
+    render(
+      <TestWrapper>
+        <FormProviderWrapper>
+          <TimeSelection shouldRestrictSelectableHours />
+        </FormProviderWrapper>
+      </TestWrapper>
+    );
+
+    const selectTimeValue = screen.getByTestId('select-input-selected-time');
+    expect(selectTimeValue).toBeInTheDocument();
+
+    fireEvent.change(selectTimeValue, { target: { value: 'month' } });
+
+    expect(selectTimeValue.getAttribute('value')).toBe('month');
+
+    expect(screen.getByTestId('select-input-hour')).toHaveAttribute(
+      'value',
+      isDST ? '2' : '1'
+    );
+    expect(screen.getByTestId('select-input-minute')).toHaveAttribute(
+      'value',
+      '0'
+    );
+  });
+
+  it('should render correctly for UTX-X timezone if monthly is selected ', () => {
+    vi.stubEnv('TZ', 'America/Los_Angeles');
+    render(
+      <TestWrapper>
+        <FormProviderWrapper>
+          <TimeSelection shouldRestrictSelectableHours />
+        </FormProviderWrapper>
+      </TestWrapper>
+    );
+
+    const selectTimeValue = screen.getByTestId('select-input-selected-time');
+    expect(selectTimeValue).toBeInTheDocument();
+
+    fireEvent.change(selectTimeValue, { target: { value: 'month' } });
+
+    expect(selectTimeValue.getAttribute('value')).toBe('month');
+
+    expect(screen.getByTestId('select-input-hour')).toHaveAttribute(
+      'value',
+      '12'
+    );
+    expect(screen.getByTestId('select-input-minute')).toHaveAttribute(
+      'value',
+      '0'
+    );
+  });
+
+  it('should render normally if monthly is selected and selectable hours are not restricted', () => {
+    vi.stubEnv('TZ', 'Asia/Calcutta');
+    render(
+      <TestWrapper>
+        <FormProviderWrapper>
+          <TimeSelection shouldRestrictSelectableHours={false} />
+        </FormProviderWrapper>
+      </TestWrapper>
+    );
+
+    const selectTimeValue = screen.getByTestId('select-input-selected-time');
+    expect(selectTimeValue).toBeInTheDocument();
+
+    fireEvent.change(selectTimeValue, { target: { value: 'month' } });
+
+    expect(selectTimeValue.getAttribute('value')).toBe('month');
+
+    expect(screen.getByTestId('select-input-hour')).toHaveAttribute(
+      'value',
+      '12'
+    );
+    expect(screen.getByTestId('select-input-minute')).toHaveAttribute(
+      'value',
+      '0'
+    );
+  });
 });

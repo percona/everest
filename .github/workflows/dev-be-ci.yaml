@@ -26,11 +26,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.23.x ]
+        go-version: [ 1.24.x ]
         may-fail: [ false ]
 
     continue-on-error: ${{ matrix.may-fail }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Set up Go release
@@ -109,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [1.23.x]
+        go-version: [1.24.x]
         may-fail: [false]
 
     continue-on-error: ${{ matrix.may-fail }}
@@ -202,11 +202,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.23.x ]
+        go-version: [ 1.24.x ]
         may-fail: [ false ]
 
     name: API Integration Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
     steps:
@@ -245,6 +245,14 @@ jobs:
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
             ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
 
+      # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
+      - name: Switch docker-daemon data directory to /mnt
+        run: |
+          sudo systemctl stop docker
+          echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' | sudo tee /etc/docker/daemon.json
+          sudo mkdir /mnt/docker-data
+          sudo systemctl start docker
+
       - name: Start local Kubernetes cluster with the local registry
         uses: medyagh/setup-minikube@latest
         id: minikube
@@ -261,6 +269,11 @@ jobs:
       - name: Build Everest API Server
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
+
+      - name: Build Everest CLI
+        shell: bash
+        run: |
+          make build-cli
 
       - name: Build Everest docker container
         uses: docker/metadata-action@v5
@@ -319,13 +332,13 @@ jobs:
       - name: Provision Everest using CLI
         shell: bash
         run: |
-          make build-cli
           ./bin/everestctl install -v \
+            --disable-telemetry \
             --version 0.0.0 \
             --version-metadata-url https://check-dev.percona.com \
-            --operator.mongodb \
-            --operator.postgresql \
-            --operator.xtradb-cluster \
+            --operator.mongodb=true \
+            --operator.postgresql=true \
+            --operator.mysql=true \
             --skip-wizard \
             --namespaces everest \
             --helm.set server.image=localhost:5000/perconalab/everest \
@@ -346,10 +359,14 @@ jobs:
           kubectl patch configmap everest-rbac -n everest-system --patch "$(kubectl get configmap everest-rbac -n everest-system -o json | jq '.data["policy.csv"] += "\ng, everest_ci, role:admin"' | jq '{data: { "policy.csv": .data["policy.csv"] } }')"
           kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
 
-      - name: Run integration tests
+      - name: Init integration tests
         run: |
           cd api-tests
           make init
+
+      - name: Run integration tests
+        run: |
+          cd api-tests
           make test
 
       - name: Run debug commands on failure
@@ -360,18 +377,15 @@ jobs:
           kubectl -n everest describe pods
           kubectl -n everest-system logs deploy/everest-server
 
-
-
-
   integration_tests_cli:
     name: CLI Integration Tests
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.23.x ]
+        go-version: [ 1.24.x ]
         may-fail: [ false ]
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
     steps:
@@ -418,9 +432,9 @@ jobs:
         uses: helm/kind-action@v1.12.0
 
       - name: Run integration tests
-        working-directory: cli-tests
         id: cli-tests
         run: |
+          cd cli-tests
           make init
           make install-operators
           make test-cli
@@ -453,7 +467,7 @@ jobs:
     needs: [ test, check, integration_tests_api, integration_tests_flows, integration_tests_cli]
     name: Merge Gatekeeper
     if: ${{ always() }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Run Merge Gatekeeper
         uses: upsidr/merge-gatekeeper@v1.2.1
@@ -461,6 +475,6 @@ jobs:
           self: Merge Gatekeeper
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
-          timeout: 300
+          timeout: 600
           ignored: "license/snyk (Percona Everest), security/snyk (Percona Everest)"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}

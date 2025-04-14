@@ -14,12 +14,13 @@
 // limitations under the License.
 
 import { ScheduleFormData } from './schedule-form-schema';
-import { Schedule } from 'shared-types/dbCluster.types';
+import { DbCluster, Schedule } from 'shared-types/dbCluster.types';
 import { getCronExpressionFromFormValues } from '../../time-selection/time-selection.utils';
+import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types';
 
 type UpdateScheduleArrayProps = {
   formData: ScheduleFormData;
-  mode: 'new' | 'edit';
+  mode: ScheduleWizardMode;
   schedules: Schedule[];
 };
 
@@ -49,7 +50,7 @@ export const getSchedulesPayload = ({
   });
   let schedulesPayload: Schedule[] = [];
 
-  if (mode === 'new') {
+  if (mode === WizardMode.New) {
     schedulesPayload = [
       ...(schedules ?? []),
       {
@@ -65,7 +66,7 @@ export const getSchedulesPayload = ({
     ];
   }
 
-  if (mode === 'edit') {
+  if (mode === WizardMode.Edit) {
     const newSchedulesArray = schedules && [...(schedules || [])];
     const editedScheduleIndex = newSchedulesArray?.findIndex(
       (item) => item.name === scheduleName
@@ -92,4 +93,81 @@ export const removeScheduleFromArray = (
   schedules: Schedule[]
 ) => {
   return schedules.filter((item) => item.name !== name);
+};
+
+export const backupScheduleFormValuesToDbClusterPayload = (
+  dbPayload: ScheduleFormData,
+  dbCluster: DbCluster,
+  mode: WizardMode
+): DbCluster => {
+  const {
+    selectedTime,
+    minute,
+    hour,
+    amPm,
+    onDay,
+    weekDay,
+    scheduleName,
+    retentionCopies,
+  } = dbPayload;
+  const schedule = getCronExpressionFromFormValues({
+    selectedTime,
+    minute,
+    hour,
+    amPm,
+    onDay,
+    weekDay,
+  });
+
+  let schedulesPayload: Schedule[] = [];
+  if (mode === WizardMode.New) {
+    schedulesPayload = [
+      ...(dbCluster.spec.backup?.schedules || []).map((schedule) => ({
+        ...schedule,
+      })),
+      {
+        enabled: true,
+        retentionCopies: parseInt(retentionCopies, 10),
+        name: scheduleName,
+        backupStorageName:
+          typeof dbPayload.storageLocation === 'string'
+            ? dbPayload.storageLocation
+            : dbPayload.storageLocation!.name,
+        schedule,
+      },
+    ];
+  }
+
+  if (mode === WizardMode.Edit) {
+    const schedulesArray = dbCluster?.spec?.backup?.schedules || [];
+    const editedScheduleIndex = schedulesArray?.findIndex(
+      (item) => item.name === scheduleName
+    );
+    if (schedulesArray && editedScheduleIndex !== undefined) {
+      schedulesArray[editedScheduleIndex] = {
+        enabled: true,
+        name: scheduleName,
+        retentionCopies: parseInt(retentionCopies, 10),
+        backupStorageName:
+          typeof dbPayload.storageLocation === 'string'
+            ? dbPayload.storageLocation
+            : dbPayload.storageLocation!.name,
+        schedule,
+      };
+      schedulesPayload = schedulesArray;
+    }
+  }
+
+  return {
+    apiVersion: 'everest.percona.com/v1alpha1',
+    kind: 'DatabaseCluster',
+    metadata: dbCluster.metadata,
+    spec: {
+      ...dbCluster?.spec,
+      backup: {
+        ...dbCluster.spec.backup,
+        schedules: schedulesPayload.length > 0 ? schedulesPayload : undefined,
+      },
+    },
+  };
 };

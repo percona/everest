@@ -21,7 +21,7 @@ import { api } from './api';
 import { DBClusterComponentsList } from 'shared-types/components.types';
 
 export const createDbClusterFn = async (data: DbCluster, namespace: string) => {
-  const response = await api.post(
+  const response = await api.post<DbCluster>(
     `namespaces/${namespace}/database-clusters`,
     data
   );
@@ -36,7 +36,10 @@ export const updateDbClusterFn = async (
 ) => {
   const response = await api.put(
     `namespaces/${namespace}/database-clusters/${dbClusterName}`,
-    data
+    data,
+    {
+      disableNotifications: (e) => e.status === 409,
+    }
   );
 
   return response.data;

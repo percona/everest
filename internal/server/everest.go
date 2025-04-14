@@ -22,6 +22,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
+	"io"
 	"io/fs"
 	"net/http"
 	"path"
@@ -33,6 +35,7 @@ import (
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/unrolled/secure"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -61,6 +64,30 @@ type EverestServer struct {
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
 	handler       handlers.Handler
+	oidcProvider  *oidc.ProviderConfig
+}
+
+func getOIDCProviderConfig(ctx context.Context, kubeClient *kubernetes.Kubernetes) (*oidc.ProviderConfig, error) {
+	settings, err := kubeClient.GetEverestSettings(ctx)
+	if client.IgnoreNotFound(err) != nil {
+		return nil, errors.Join(err, errors.New("failed to get Everest settings"))
+	}
+
+	if settings.OIDCConfigRaw == "" {
+		return nil, nil //nolint:nilnil
+	}
+
+	oidcConfig, err := settings.OIDCConfig()
+	if err != nil {
+		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
+	}
+
+	oidcProvider, err := oidc.NewProviderConfig(ctx, oidcConfig.IssuerURL)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to create OIDC provider config"))
+	}
+
+	return &oidcProvider, nil
 }
 
 // NewEverestServer creates and configures everest API.
@@ -86,6 +113,11 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
 
+	oidcProvider, err := getOIDCProviderConfig(ctx, kubeClient)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get OIDC provider config"))
+	}
+
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -93,6 +125,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		kubeClient:    kubeClient,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
+		oidcProvider:  oidcProvider,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
@@ -106,29 +139,39 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	return e, err
 }
 
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
 // initHTTPServer configures http server for the current EverestServer instance.
 func (e *EverestServer) initHTTPServer(ctx context.Context) error {
-	swagger, err := api.GetSwagger()
-	if err != nil {
-		return err
+	// Serve the index.html file.
+	indexFS := echo.MustSubFS(public.Index, "dist")
+	e.echo.Renderer = &Template{
+		templates: template.Must(template.ParseFS(indexFS, "index.html")),
 	}
+	e.echo.GET("/*", func(c echo.Context) error {
+		// Embed the CSP nonce into the template. This nonce was auto-generated
+		// for this request and stored in the context by the secure middleware.
+		// See the securityHeaders middleware for more information.
+		return c.Render(http.StatusOK, "index.html",
+			map[string]interface{}{"CSPNonce": secure.CSPNonce(c.Request().Context())},
+		)
+	}, securityHeaders(e.oidcProvider))
+
+	// Serve static files.
 	fsys, err := fs.Sub(public.Static, "dist")
 	if err != nil {
 		return errors.Join(err, errors.New("error reading filesystem"))
 	}
 	staticFilesHandler := http.FileServer(http.FS(fsys))
-	indexFS := echo.MustSubFS(public.Index, "dist")
-	// FIXME: Ideally it should be redirected to /everest/ and FE app should be served using this endpoint.
-	//
-	// We tried to do this with Fabio and FE app requires the following changes to be implemented:
-	// 1. Add basePath configuration for react router
-	// 2. Add apiUrl configuration for FE app
-	//
-	// Once it'll be implemented we can serve FE app on /everest/ location
-	e.echo.FileFS("/*", "index.html", indexFS)
-	e.echo.GET("/favicon.ico", echo.WrapHandler(staticFilesHandler))
-	e.echo.GET("/assets-manifest.json", echo.WrapHandler(staticFilesHandler))
-	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler))
+	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler), securityHeaders(e.oidcProvider))
+
+	// Middlewares
 	e.echo.Use(echomiddleware.LoggerWithConfig(echomiddleware.LoggerConfig{
 		Format:           echomiddleware.DefaultLoggerConfig.Format,
 		CustomTimeFormat: echomiddleware.DefaultLoggerConfig.CustomTimeFormat,
@@ -138,6 +181,11 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}))
 	e.echo.Pre(echomiddleware.RemoveTrailingSlash())
 
+	// Setup the API handlers.
+	swagger, err := api.GetSwagger()
+	if err != nil {
+		return err
+	}
 	basePath, err := swagger.Servers.BasePath()
 	if err != nil {
 		return errors.Join(err, errors.New("could not get base path"))
@@ -154,6 +202,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 			AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
 		},
 	}))
+
 	// Setup and use JWT middleware.
 	jwtMW, err := e.jwtMiddleWare(ctx)
 	if err != nil {
@@ -201,25 +250,14 @@ func newHandlerChain(hs ...handlers.Handler) handlers.Handler { //nolint:ireturn
 	return hs[0]
 }
 
-func (e *EverestServer) oidcKeyFn(ctx context.Context) (jwt.Keyfunc, error) {
-	settings, err := e.kubeClient.GetEverestSettings(ctx)
-	if err = client.IgnoreNotFound(err); err != nil {
-		return nil, err
-	}
-	if settings.OIDCConfigRaw == "" {
-		return nil, nil //nolint:nilnil
-	}
-	oidcConfig, err := settings.OIDCConfig()
-	if err != nil {
-		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
-	}
-	return oidc.NewKeyFunc(ctx, oidcConfig.IssuerURL)
-}
-
 func (e *EverestServer) newJWTKeyFunc(ctx context.Context) (jwt.Keyfunc, error) {
-	oidcKeyFn, err := e.oidcKeyFn(ctx)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to get OIDC key function"))
+	var oidcKeyFn jwt.Keyfunc
+	if e.oidcProvider != nil {
+		fn, err := e.oidcProvider.NewKeyFunc(ctx)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to get OIDC key function"))
+		}
+		oidcKeyFn = fn
 	}
 
 	return func(token *jwt.Token) (interface{}, error) {

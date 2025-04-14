@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -32,18 +33,22 @@ import (
 
 var (
 	namespacesUpdateCmd = &cobra.Command{
-		Use:     "update <namespaces> [flags] ",
-		Args:    cobra.ExactArgs(1),
-		Long:    "Add database operator to existing namespace managed by Everest",
-		Short:   "Add database operator to existing namespace managed by Everest",
-		Example: `everestctl namespaces update ns-1,ns-2 --skip-wizard --operator.xtradb-cluster=true --operator.postgresql=false --operator.mongodb=false`,
-		PreRun:  namespacesUpdatePreRun,
-		Run:     namespacesUpdateRun,
+		Use:   "update <namespaces> [flags] ",
+		Args:  cobra.ExactArgs(1),
+		Long:  "Add database operator to existing namespace managed by Everest",
+		Short: "Add database operator to existing namespace managed by Everest",
+		Example: fmt.Sprintf("everestctl namespaces update ns-1,ns-2 --%s --%s=true --%s=false --%s=false",
+			cli.FlagSkipWizard, cli.FlagOperatorMySQL, cli.FlagOperatorPostgresql, cli.FlagOperatorMongoDB,
+		),
+		PreRun: namespacesUpdatePreRun,
+		Run:    namespacesUpdateRun,
 	}
-	namespacesUpdateCfg = &namespaces.NamespaceAddConfig{}
+	namespacesUpdateCfg = namespaces.NewNamespaceAddConfig()
 )
 
 func init() {
+	namespacesUpdateCfg.Update = true
+
 	// local command flags
 	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.DisableTelemetry, cli.FlagDisableTelemetry, false, "Disable telemetry")
 	_ = namespacesUpdateCmd.Flags().MarkHidden(cli.FlagDisableTelemetry) //nolint:errcheck,gosec
@@ -51,36 +56,55 @@ func init() {
 	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.SkipEnvDetection, cli.FlagSkipEnvDetection, false, "Skip detecting Kubernetes environment where Everest is installed")
 
 	// --helm.* flags
-	namespacesUpdateCmd.Flags().StringVar(&namespacesUpdateCfg.CLIOptions.ChartDir, helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
+	namespacesUpdateCmd.Flags().StringVar(&namespacesUpdateCfg.HelmConfig.ChartDir, helm.FlagChartDir, "", "Path to the chart directory. If not set, the chart will be downloaded from the repository")
 	_ = namespacesUpdateCmd.Flags().MarkHidden(helm.FlagChartDir) //nolint:errcheck,gosec
-	namespacesUpdateCmd.Flags().StringVar(&namespacesUpdateCfg.CLIOptions.RepoURL, helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
-	namespacesUpdateCmd.Flags().StringSliceVar(&namespacesUpdateCfg.CLIOptions.Values.Values, helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
-	namespacesUpdateCmd.Flags().StringSliceVarP(&namespacesUpdateCfg.CLIOptions.Values.ValueFiles, helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
+	namespacesUpdateCmd.Flags().StringVar(&namespacesUpdateCfg.HelmConfig.RepoURL, helm.FlagRepository, helm.DefaultHelmRepoURL, "Helm chart repository to download the Everest charts from")
+	namespacesUpdateCmd.Flags().StringSliceVar(&namespacesUpdateCfg.HelmConfig.Values.Values, helm.FlagHelmSet, []string{}, "Set helm values on the command line (can specify multiple values with commas: key1=val1,key2=val2)")
+	namespacesUpdateCmd.Flags().StringSliceVarP(&namespacesUpdateCfg.HelmConfig.Values.ValueFiles, helm.FlagHelmValues, "f", []string{}, "Specify values in a YAML file or a URL (can specify multiple)")
 
 	// --operator.* flags
-	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operator.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
-	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operator.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
-	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operator.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PSMDB, cli.FlagOperatorMongoDB, true, "Install MongoDB operator")
+	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PG, cli.FlagOperatorPostgresql, true, "Install PostgreSQL operator")
+	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
+	_ = namespacesUpdateCmd.Flags().MarkDeprecated(cli.FlagOperatorXtraDBCluster, fmt.Sprintf("please use --%s instead", cli.FlagOperatorMySQL))
+	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PXC, cli.FlagOperatorMySQL, true, "Install MySQL operator")
 }
 
 func namespacesUpdatePreRun(cmd *cobra.Command, args []string) { //nolint:revive
-	namespacesUpdateCfg.Namespaces = args[0]
-	namespacesUpdateCfg.Update = true
-
 	// Copy global flags to config
 	namespacesUpdateCfg.Pretty = !(cmd.Flag(cli.FlagVerbose).Changed || cmd.Flag(cli.FlagJSON).Changed)
 	namespacesUpdateCfg.KubeconfigPath = cmd.Flag(cli.FlagKubeconfig).Value.String()
 
+	{
+		// Parse and validate provided namespaces
+		nsList := namespaces.ParseNamespaceNames(args[0])
+		if err := namespacesUpdateCfg.ValidateNamespaces(cmd.Context(), nsList); err != nil {
+			output.PrintError(err, logger.GetLogger(), namespacesUpdateCfg.Pretty)
+			os.Exit(1)
+		}
+
+		namespacesUpdateCfg.NamespaceList = nsList
+	}
+
 	// If user doesn't pass any --operator.* flags - need to ask explicitly.
-	namespacesUpdateCfg.AskOperators = !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
+	askOperators := !(cmd.Flags().Lookup(cli.FlagOperatorMongoDB).Changed ||
 		cmd.Flags().Lookup(cli.FlagOperatorPostgresql).Changed ||
-		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed)
+		cmd.Flags().Lookup(cli.FlagOperatorXtraDBCluster).Changed ||
+		cmd.Flags().Lookup(cli.FlagOperatorMySQL).Changed)
+
+	if askOperators {
+		// need to ask user to provide operators to be installed in interactive mode.
+		if err := namespacesUpdateCfg.PopulateOperators(cmd.Context()); err != nil {
+			output.PrintError(err, logger.GetLogger(), namespacesUpdateCfg.Pretty)
+			os.Exit(1)
+		}
+	}
 }
 
 func namespacesUpdateRun(cmd *cobra.Command, _ []string) {
-	op, err := namespaces.NewNamespaceAdd(*namespacesUpdateCfg, logger.GetLogger())
+	op, err := namespaces.NewNamespaceAdd(namespacesUpdateCfg, logger.GetLogger())
 	if err != nil {
-		logger.GetLogger().Error(err)
+		output.PrintError(err, logger.GetLogger(), namespacesUpdateCfg.Pretty)
 		os.Exit(1)
 	}
 
@@ -89,11 +113,11 @@ func namespacesUpdateRun(cmd *cobra.Command, _ []string) {
 			err = fmt.Errorf("%w. HINT: use 'everestctl namespaces add --%s %s' first to make namespace managed by Everest",
 				err,
 				cli.FlagTakeNamespaceOwnership,
-				namespacesUpdateCfg.Namespaces,
+				strings.Join(namespacesUpdateCfg.NamespaceList, ", "),
 			)
 		}
 
-		output.PrintError(err, logger.GetLogger(), namespacesAddCfg.Pretty)
+		output.PrintError(err, logger.GetLogger(), namespacesUpdateCfg.Pretty)
 		os.Exit(1)
 	}
 }

@@ -33,26 +33,28 @@ export const DB_CLUSTERS_QUERY_KEY = 'dbClusters';
 
 export const dbClustersQuerySelect = ({
   items,
-}: GetDbClusterPayload): DbCluster[] =>
-  items.map(({ ...props }) => ({
-    ...props,
-    spec: {
-      ...props.spec,
-      ...(props.spec?.backup?.schedules && {
-        backup: {
-          ...props.spec.backup,
-          schedules: props.spec.backup.schedules.map((schedule) => ({
-            ...schedule,
-            schedule: cronConverter(
-              schedule.schedule,
-              'UTC',
-              Intl.DateTimeFormat().resolvedOptions().timeZone
-            ),
-          })),
-        },
-      }),
-    },
-  }));
+}: Pick<GetDbClusterPayload, 'items'>): DbCluster[] =>
+  items
+    .map(({ ...props }) => ({
+      ...props,
+      spec: {
+        ...props.spec,
+        ...(props.spec?.backup?.schedules && {
+          backup: {
+            ...props.spec.backup,
+            schedules: props.spec.backup.schedules.map((schedule) => ({
+              ...schedule,
+              schedule: cronConverter(
+                schedule.schedule,
+                'UTC',
+                Intl.DateTimeFormat().resolvedOptions().timeZone
+              ),
+            })),
+          },
+        }),
+      },
+    }))
+    .sort((a, b) => a.metadata.name.localeCompare(b.metadata.name));
 
 export const useDbClusters = (
   namespace: string,
@@ -62,8 +64,18 @@ export const useDbClusters = (
     queryKey: [DB_CLUSTERS_QUERY_KEY],
     queryFn: () => getDbClustersFn(namespace),
     refetchInterval: 5 * 1000,
-    select: dbClustersQuerySelect,
     ...options,
+    select: (clusters) => {
+      const transformedClusters: DbCluster[] = options?.select
+        ? options.select(clusters)
+        : clusters.items;
+
+      const querySelectedClusters = dbClustersQuerySelect({
+        items: transformedClusters,
+      });
+
+      return querySelectedClusters;
+    },
   });
 };
 
@@ -78,7 +90,6 @@ export const useDBClustersForNamespaces = (
   >(({ namespace, options }) => {
     return {
       queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
-      retry: false,
       queryFn: () => getDbClustersFn(namespace),
       refetchInterval: 5 * 1000,
       select: dbClustersQuerySelect,

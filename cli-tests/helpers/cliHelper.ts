@@ -45,7 +45,7 @@ export class CliHelper {
    * @return      {@link Output} instance
    */
   async exec(command: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return test.step(`Run "${command}" command`, async () => {
       return this.execute(command);
     });
@@ -58,7 +58,7 @@ export class CliHelper {
    * @return      {@link Output} instance
    */
   async everestExec(command: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return test.step(`Run "${command}" command`, async () => {
       return this.execute(`${this.pathToBinary} ${command}`);
     });
@@ -71,28 +71,28 @@ export class CliHelper {
    * @return      {@link Output} instance
    */
   async everestExecSkipWizard(command: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return test.step(`Run "${command}" command with --skip-wizard`, async () => {
-      return this.execute(`${this.pathToBinary} ${command} --skip-wizard --version 0.0.0 --version-metadata-url https://check-dev.percona.com`);
+      return this.execute(`${this.pathToBinary} ${command} --disable-telemetry --skip-wizard --version 0.0.0 --version-metadata-url https://check-dev.percona.com`);
     });
   }
 
   async everestExecSkipWizardWithEnv(command, env: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return test.step(`Run "${command}" command with env variables`, async () => {
-      return this.execute(`${env} ${this.pathToBinary} ${command} --skip-wizard --version 0.0.0 --version-metadata-url https://check-dev.percona.com`);
+      return this.execute(`${env} ${this.pathToBinary} ${command} --disable-telemetry --skip-wizard --version 0.0.0 --version-metadata-url https://check-dev.percona.com`);
     });
   }
 
   async everestExecNamespacesSkipWizard(command: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return test.step(`Run "namespaces ${command}" command with --skip-wizard`, async () => {
       return this.execute(`${this.pathToBinary} namespaces ${command} --skip-wizard`);
     });
   }
 
   async everestExecNamespaces(command: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return test.step(`Run "namespaces ${command}" command`, async () => {
       return this.execute(`${this.pathToBinary} namespaces ${command}`);
     });
@@ -112,7 +112,6 @@ export class CliHelper {
       });
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return new Output(command, code, stdout, stderr);
   }
 
@@ -130,7 +129,6 @@ export class CliHelper {
       });
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return new Output(command, code, stdout, stderr);
   }
 }

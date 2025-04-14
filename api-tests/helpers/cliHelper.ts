@@ -38,7 +38,7 @@ export class CliHelper {
    * @return      {@link Output} instance
    */
   async exec(command: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return test.step(`Run "${command}" command`, async () => {
       return this.execute(command)
     })

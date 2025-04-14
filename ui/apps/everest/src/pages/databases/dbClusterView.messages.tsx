@@ -15,7 +15,6 @@
 
 export const Messages = {
   createDatabase: 'Create database',
-  loading: 'Loading...',
   statusProvider: {
     up: 'Up',
     down: 'Down',
@@ -23,9 +22,11 @@ export const Messages = {
     pausing: 'Pausing',
     stopping: 'Stopping',
     paused: 'Paused',
-    unknown: 'Unknown',
     restoring: 'Restoring',
     deleting: 'Deleting',
+    resizingVolumes: 'Resizing volumes',
+    creating: 'Creating',
+    upgrading: 'Upgrading',
   },
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',

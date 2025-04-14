@@ -2,6 +2,7 @@ package validation
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/AlekSi/pointer"
@@ -272,33 +273,21 @@ func TestValidateBackupSpec(t *testing.T) {
 			err:     nil,
 		},
 		{
-			name: "disabled backup is allowed",
+			name: "allow no schedules",
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: false,
+						Schedules: []everestv1alpha1.BackupSchedule{},
 					},
 				},
 			},
 			err: nil,
 		},
 		{
-			name: "errNoSchedules",
-			cluster: &everestv1alpha1.DatabaseCluster{
-				Spec: everestv1alpha1.DatabaseClusterSpec{
-					Backup: everestv1alpha1.Backup{
-						Enabled: true,
-					},
-				},
-			},
-			err: errNoSchedules,
-		},
-		{
 			name: "errNoNameInSchedule",
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled: true,
@@ -314,7 +303,6 @@ func TestValidateBackupSpec(t *testing.T) {
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled: true,
@@ -331,7 +319,6 @@ func TestValidateBackupSpec(t *testing.T) {
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -356,7 +343,6 @@ func TestValidateBackupSpec(t *testing.T) {
 			cluster: &everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -394,7 +380,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -426,7 +411,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -456,7 +440,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						Schedules: []everestv1alpha1.BackupSchedule{
 							{
 								Enabled:           true,
@@ -486,7 +469,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("storage"),
@@ -520,7 +502,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: true,
 						},
@@ -553,7 +534,6 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("storage"),
@@ -620,7 +600,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("name"),
@@ -635,7 +614,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: false,
 						},
@@ -648,9 +626,7 @@ func TestValidatePitrSpec(t *testing.T) {
 			name: "valid spec no pitr",
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
-					Backup: everestv1alpha1.Backup{
-						Enabled: true,
-					},
+					Backup: everestv1alpha1.Backup{},
 				},
 			},
 			err: nil,
@@ -660,7 +636,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: true,
 						},
@@ -677,7 +652,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: true,
 						},
@@ -694,7 +668,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled: true,
 						},
@@ -711,7 +684,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("name"),
@@ -727,7 +699,6 @@ func TestValidatePitrSpec(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
-						Enabled: true,
 						PITR: everestv1alpha1.PITRSpec{
 							Enabled:           true,
 							BackupStorageName: pointer.To("name"),
@@ -1660,6 +1631,139 @@ func TestValidateSharding(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tc.expected, validateSharding(tc.cluster))
+		})
+	}
+}
+
+func TestIsDatabaseClusterUpdateAllowed(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name      string
+		currentDB *everestv1alpha1.DatabaseCluster
+		expected  bool
+	}{
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateUnknown),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateUnknown,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateCreating),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateCreating,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateInit),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateInit,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStatePaused),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStatePaused,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStatePausing),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStatePausing,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateStopping),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateStopping,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateReady),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateReady,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateError),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateError,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateRestoring),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateRestoring,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateDeleting),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateDeleting,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateUpgrading),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateUpgrading,
+				},
+			},
+			expected: false,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateNew),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateNew,
+				},
+			},
+			expected: true,
+		},
+		{
+			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateResizingVolumes),
+			currentDB: &everestv1alpha1.DatabaseCluster{
+				Status: everestv1alpha1.DatabaseClusterStatus{
+					Status: everestv1alpha1.AppStateResizingVolumes,
+				},
+			},
+			expected: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.expected, isDatabaseClusterUpdateAllowed(tt.currentDB))
 		})
 	}
 }

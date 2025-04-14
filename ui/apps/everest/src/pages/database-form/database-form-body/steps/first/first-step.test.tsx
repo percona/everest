@@ -1,17 +1,82 @@
 import { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { DbType } from '@percona/types';
+import { DbEngineType, DbType } from '@percona/types';
 import { TestWrapper } from 'utils/test';
 import { FirstStep } from './first-step';
 import { DbWizardFormFields } from 'consts';
+import {
+  DbEngineStatus,
+  DbEngineToolStatus,
+} from 'shared-types/dbEngines.types';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const mocks = vi.hoisted(() => {
+  return {
+    getDbEnginesFn: vi.fn(() =>
+      Promise.resolve({
+        items: [
+          {
+            spec: { type: DbEngineType.PXC },
+            status: {
+              status: DbEngineStatus.INSTALLED,
+              availableVersions: {
+                engine: {
+                  '8.0': {
+                    version: '8.0',
+                    description: '8.0',
+                    status: DbEngineToolStatus.AVAILABLE,
+                  },
+                  '8.0.31-23.2': {
+                    version: '8.0.31-23.2',
+                    description: '8.0.31-23.2',
+                    status: DbEngineToolStatus.RECOMMENDED,
+                  },
+                  '9.0.0': {
+                    version: '9.0.0',
+                    description: '8.0.31-23.2',
+                    status: DbEngineToolStatus.AVAILABLE,
+                  },
+                  '8.1': {
+                    version: '8.1',
+                    description: '8.1',
+                    status: DbEngineToolStatus.RECOMMENDED,
+                  },
+                  '8.4': {
+                    version: '8.4',
+                    description: '8.4',
+                    status: DbEngineToolStatus.AVAILABLE,
+                  },
+                },
+              },
+            },
+            metadata: { name: 'pxc-1' },
+          },
+        ],
+      })
+    ),
+  };
+});
 
 vi.mock('./utils', () => ({
   generateShortUID: vi.fn(() => '123'),
 }));
 
-vi.mock('hooks/api/db-engines/useDbEngines');
-vi.mock('hooks/api/kubernetesClusters/useKubernetesClusterInfo');
+vi.mock('api/kubernetesClusterApi', () => ({
+  getKubernetesClusterInfoFn: vi.fn(() =>
+    Promise.resolve({
+      clusterType: 'generic',
+    })
+  ),
+}));
+
+vi.mock('api/namespaces', () => ({
+  getNamespacesFn: vi.fn(() => Promise.resolve(['namespace-1'])),
+}));
+
+vi.mock('api/dbEngineApi', () => ({
+  getDbEnginesFn: mocks.getDbEnginesFn,
+}));
 
 interface FormProviderWrapperProps {
   handleSubmit: () => void;
@@ -21,47 +86,120 @@ const FormProviderWrapper = ({
   children,
   handleSubmit,
 }: FormProviderWrapperProps) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
   const methods = useForm({
     defaultValues: {
-      [DbWizardFormFields.dbType]: DbType.Postresql,
-      [DbWizardFormFields.dbName]: 'postgresql-123',
-      // [DbWizardFormFields.k8sNamespace]: '',
-      // [DbWizardFormFields.dbEnvironment]: '',
-      [DbWizardFormFields.dbVersion]: '',
+      [DbWizardFormFields.dbType]: DbType.Mysql,
+      [DbWizardFormFields.dbName]: 'mysql-123',
+      [DbWizardFormFields.dbVersion]: '8.0',
     },
   });
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(handleSubmit)}>{children}</form>
-    </FormProvider>
+    <QueryClientProvider client={queryClient}>
+      <FormProvider {...methods}>
+        <form onSubmit={methods.handleSubmit(handleSubmit)}>{children}</form>
+      </FormProvider>
+    </QueryClientProvider>
   );
 };
 
-describe('First Step', () => {
-  it.skip('should set default values', async () => {
-    const handleSubmitMock = vi.fn();
-
+describe('First Step', async () => {
+  it('should show sorted db versions with selected recommended version', async () => {
     render(
       <TestWrapper>
-        <FormProviderWrapper handleSubmit={handleSubmitMock}>
+        <FormProviderWrapper handleSubmit={vi.fn()}>
           <FirstStep loadingDefaultsForEdition={false} alreadyVisited={false} />
-          <button data-testid="submitButton" type="submit">
-            submit
-          </button>
         </FormProviderWrapper>
       </TestWrapper>
     );
-    await waitFor(() => fireEvent.submit(screen.getByTestId('submitButton')));
 
-    expect(handleSubmitMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dbType: DbType.Postresql,
-        dbName: 'postgresql-123',
-      }),
-      expect.anything()
+    // 8.1 is the latest recommended version, therefore it should be the selected option after loading
+    await waitFor(() =>
+      expect(screen.getByTestId('select-input-db-version')).toHaveValue('8.1')
     );
+
+    const dbVersionComboBox = screen
+      .getAllByRole('combobox')
+      .find((el) => el.id === 'mui-component-select-dbVersion');
+
+    expect(dbVersionComboBox).toBeDefined();
+
+    fireEvent.mouseDown(dbVersionComboBox!);
+    await waitFor(() =>
+      expect(screen.getByRole('listbox')).toBeInTheDocument()
+    );
+    const versionOptions = screen.getAllByRole('option');
+
+    expect(versionOptions).toHaveLength(5);
+    expect(versionOptions.map((option) => option.textContent)).toEqual([
+      '9.0.0',
+      '8.4',
+      '8.1',
+      '8.0.31-23.2',
+      '8.0',
+    ]);
   });
 
-  // TODO it should be disabled if monitoring instances list length <=0 or undefined
+  it('should show highest version if recommended version is not available', async () => {
+    mocks.getDbEnginesFn.mockResolvedValue({
+      items: [
+        {
+          spec: { type: DbEngineType.PXC },
+          status: {
+            status: DbEngineStatus.INSTALLED,
+            availableVersions: {
+              engine: {
+                '8.0': {
+                  version: '8.0',
+                  description: '8.0',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+                '8.0.31-23.2': {
+                  version: '8.0.31-23.2',
+                  description: '8.0.31-23.2',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+                '9.0.0': {
+                  version: '9.0.0',
+                  description: '8.0.31-23.2',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+                '8.1': {
+                  version: '8.1',
+                  description: '8.1',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+                '8.4': {
+                  version: '8.4',
+                  description: '8.4',
+                  status: DbEngineToolStatus.AVAILABLE,
+                },
+              },
+            },
+          },
+          metadata: { name: 'pxc-1' },
+        },
+      ],
+    });
+
+    render(
+      <TestWrapper>
+        <FormProviderWrapper handleSubmit={vi.fn()}>
+          <FirstStep loadingDefaultsForEdition={false} alreadyVisited={false} />
+        </FormProviderWrapper>
+      </TestWrapper>
+    );
+
+    // no version is recommended, therefore 9.0.0 should be the selected option after loading
+    await waitFor(() =>
+      expect(screen.getByTestId('select-input-db-version')).toHaveValue('9.0.0')
+    );
+  });
 });

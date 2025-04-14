@@ -16,6 +16,8 @@
 import { expect } from '@playwright/test';
 import { execSync } from 'child_process';
 
+const { SELECT_DB, SELECT_SIZE } = process.env;
+
 export const checkError = async (response) => {
   if (!response.ok()) {
     console.log(`${response.url()}: `, await response.json());
@@ -24,13 +26,24 @@ export const checkError = async (response) => {
   expect(response.ok()).toBeTruthy();
 };
 
-export const getVersionServiceURL = async () => {
+export const getDbOperatorVersionK8s = async (
+  namespace: string,
+  operator: string
+) => {
   try {
-    const command = `kubectl get deployment everest-server --namespace everest-system -o jsonpath="{.spec.template.spec.containers[0].env[?(@.name=='VERSION_SERVICE_URL')].value}"`;
+    const command = `kubectl get deployment --namespace ${namespace} ${operator} -o jsonpath="{.spec.template.spec.containers[0].image}"`;
     const output = execSync(command).toString();
-    return output;
+    const version = output.split(':')[1];
+    return version;
   } catch (error) {
     console.error(`Error executing command: ${error}`);
     throw error;
   }
+};
+
+export const shouldExecuteDBCombination = (db: string, size: number) => {
+  return (
+    (SELECT_DB ? SELECT_DB === db : true) &&
+    (SELECT_SIZE ? SELECT_SIZE === size.toString() : true)
+  );
 };

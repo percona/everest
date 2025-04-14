@@ -27,7 +27,6 @@ import {
   populateBasicInformation,
   populateResources,
   populateAdvancedConfig,
-  populateMonitoringModalForm,
 } from '@e2e/utils/db-wizard';
 import {
   fillScheduleModalForm,
@@ -39,21 +38,11 @@ import {
   waitForDelete,
   findRowAndClickActions,
 } from '@e2e/utils/table';
-import {
-  deleteMonitoringInstance,
-  listMonitoringInstances,
-} from '@e2e/utils/monitoring-instance';
 import { clickCreateSchedule } from '@e2e/pr/db-cluster-details/utils';
 import { prepareTestDB, dropTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-  SELECT_DB,
-  SELECT_SIZE,
-} = process.env;
 let token: string;
 
 test.describe.configure({ retries: 0 });
@@ -76,18 +65,14 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       tag: '@release',
     },
     () => {
-      test.skip(
-        () =>
-          (SELECT_DB !== db && !!SELECT_DB) ||
-          (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-      );
+      test.skip(!shouldExecuteDBCombination(db, size));
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-schbkp`;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-      const monitoringName = `${db}-${size}-pmm`;
+      const monitoringName = 'e2e-endpoint-0';
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -97,24 +82,6 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           request
         );
         storageClasses = storageClassNames;
-      });
-
-      test.afterAll(async ({ request }) => {
-        // we try to delete all monitoring instances because cluster creation expects that none exist
-        // (monitoring instance is added in the form where the warning that none exist is visible)
-        const monitoringInstances = await listMonitoringInstances(
-          request,
-          namespace,
-          token
-        );
-        for (const instance of monitoringInstances) {
-          await deleteMonitoringInstance(
-            request,
-            namespace,
-            instance.name,
-            token
-          );
-        }
       });
 
       test(`Create cluster [${db} size ${size}]`, async ({ page, request }) => {
@@ -132,7 +99,8 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             clusterName,
             db,
             storageClasses[0],
-            false
+            false,
+            null
           );
           await moveForward(page);
         });
@@ -143,7 +111,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             .getByText(size + ' node')
             .click();
 
-          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+          await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
           await populateResources(page, 0.6, 1, 1, size);
           await moveForward(page);
         });
@@ -158,16 +126,10 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
 
         await test.step('Populate monitoring', async () => {
-          await populateMonitoringModalForm(
-            page,
-            monitoringName,
-            namespace,
-            MONITORING_URL,
-            MONITORING_USER,
-            MONITORING_PASSWORD,
-            false
-          );
           await page.getByTestId('switch-input-monitoring').click();
+          await page
+            .getByTestId('text-input-monitoring-instance')
+            .fill(monitoringName);
           await expect(
             page.getByTestId('text-input-monitoring-instance')
           ).toHaveValue(monitoringName);
@@ -175,15 +137,11 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Submit wizard', async () => {
           await submitWizard(page);
-
-          await expect(
-            page.getByText('Awesome! Your database is being created!')
-          ).toBeVisible();
         });
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          await waitForStatus(page, clusterName, 'Initializing', 30000);
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
@@ -349,7 +307,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             expect(result.trim()).toBe('1\n2\n3');
             break;
           case 'psmdb':
-            expect(result.trim()).toBe('[ { a: 1 }, { a: 2 }, { a: 3 } ]');
+            expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
             break;
           case 'postgresql':
             expect(result.trim()).toBe('1\n 2\n 3');

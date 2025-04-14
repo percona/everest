@@ -2,7 +2,13 @@ import { expect, test } from '@playwright/test';
 import fs from 'fs';
 import { EVEREST_CI_NAMESPACES, TIMEOUTS } from '@e2e/constants';
 import {
-  expectedEverestUpgradeLog,
+  expectedEverestUpgradeAPILine,
+  expectedEverestUpgradeCatalogLine,
+  expectedEverestUpgradeCRDLine,
+  expectedEverestUpgradeFirstLine,
+  expectedEverestUpgradeHelmLine,
+  expectedEverestUpgradeLastLine,
+  expectedEverestUpgradeOperatorLine,
   mongoDBCluster,
   postgresDBCluster,
   pxcDBCluster,
@@ -37,10 +43,29 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
   });
 
   test('Verify upgrade.log file', async () => {
+    let expectedText: string;
     const filePath = `/tmp/everest-upgrade.log`;
     const data = fs.readFileSync(filePath, 'utf8');
 
-    const expectedText = expectedEverestUpgradeLog();
+    expectedText = expectedEverestUpgradeFirstLine();
+    expect(data.trim()).toContain(expectedText);
+
+    expectedText = expectedEverestUpgradeCRDLine();
+    expect(data.trim()).toContain(expectedText);
+
+    expectedText = expectedEverestUpgradeHelmLine();
+    expect(data.trim()).toContain(expectedText);
+
+    expectedText = expectedEverestUpgradeAPILine();
+    expect(data.trim()).toContain(expectedText);
+
+    expectedText = expectedEverestUpgradeOperatorLine();
+    expect(data.trim()).toContain(expectedText);
+
+    expectedText = expectedEverestUpgradeCatalogLine();
+    expect(data.trim()).toContain(expectedText);
+
+    expectedText = expectedEverestUpgradeLastLine();
     expect(data.trim()).toContain(expectedText);
   });
 
@@ -162,7 +187,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
           page,
           `${operator.shortName}-db-cluster`,
           'Up',
-          TIMEOUTS.ThreeMinutes
+          TIMEOUTS.FifteenMinutes
         );
       });
     }
@@ -229,7 +254,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
           'Initializing',
           TIMEOUTS.ThreeMinutes
         );
-        await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.ThreeMinutes);
+        await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.FifteenMinutes);
       });
     }
 

@@ -19,6 +19,7 @@ import {
   suspendDbCluster,
   resumeDbCluster,
   restartDbCluster,
+  findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
@@ -28,23 +29,19 @@ import {
   populateBasicInformation,
   populateResources,
   populateAdvancedConfig,
-  populateMonitoringModalForm,
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
-import {
-  deleteMonitoringInstance,
-  listMonitoringInstances,
-} from '@e2e/utils/monitoring-instance';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
+import {
+  queryPG,
+  queryPSMDB,
+  queryMySQL,
+  getPGStsName,
+} from '@e2e/utils/db-cmd-line';
+import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD,
-  SELECT_DB,
-  SELECT_SIZE,
-} = process.env;
 let token: string;
 
 test.describe.configure({ retries: 0 });
@@ -52,9 +49,12 @@ test.describe.configure({ retries: 0 });
 [
   { db: 'psmdb', size: 1 },
   { db: 'psmdb', size: 3 },
+  { db: 'psmdb', size: 5 },
   { db: 'pxc', size: 1 },
   { db: 'pxc', size: 3 },
+  { db: 'pxc', size: 5 },
   { db: 'postgresql', size: 1 },
+  { db: 'postgresql', size: 2 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
@@ -63,18 +63,14 @@ test.describe.configure({ retries: 0 });
       tag: '@release',
     },
     () => {
-      test.skip(
-        () =>
-          (SELECT_DB !== db && !!SELECT_DB) ||
-          (SELECT_SIZE !== size.toString() && !!SELECT_SIZE)
-      );
+      test.skip(!shouldExecuteDBCombination(db, size));
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-deploy`;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
-      const monitoringName = `${db}-${size}-pmm`;
+      const monitoringName = 'e2e-endpoint-0';
 
       test.beforeAll(async ({ request }) => {
         token = await getTokenFromLocalStorage();
@@ -84,24 +80,6 @@ test.describe.configure({ retries: 0 });
           request
         );
         storageClasses = storageClassNames;
-      });
-
-      test.afterAll(async ({ request }) => {
-        // we try to delete all monitoring instances because cluster creation expects that none exist
-        // (monitoring instance is added in the form where the warning that none exist is visible)
-        const monitoringInstances = await listMonitoringInstances(
-          request,
-          namespace,
-          token
-        );
-        for (const instance of monitoringInstances) {
-          await deleteMonitoringInstance(
-            request,
-            namespace,
-            instance.name,
-            token
-          );
-        }
       });
 
       test(`Cluster creation [${db} size ${size}]`, async ({
@@ -125,7 +103,8 @@ test.describe.configure({ retries: 0 });
             clusterName,
             db,
             storageClasses[0],
-            false
+            false,
+            null
           );
           await moveForward(page);
         });
@@ -135,7 +114,8 @@ test.describe.configure({ retries: 0 });
             .getByRole('button')
             .getByText(size + ' node')
             .click();
-          await expect(page.getByText('Nº nodes: ' + size)).toBeVisible();
+
+          await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
           await populateResources(page, 0.6, 1, 1, size);
           await moveForward(page);
         });
@@ -150,16 +130,10 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Populate monitoring', async () => {
-          await populateMonitoringModalForm(
-            page,
-            monitoringName,
-            namespace,
-            MONITORING_URL,
-            MONITORING_USER,
-            MONITORING_PASSWORD,
-            false
-          );
           await page.getByTestId('switch-input-monitoring').click();
+          await page
+            .getByTestId('text-input-monitoring-instance')
+            .fill(monitoringName);
           await expect(
             page.getByTestId('text-input-monitoring-instance')
           ).toHaveValue(monitoringName);
@@ -167,19 +141,15 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Submit wizard', async () => {
           await submitWizard(page);
-
-          await expect(
-            page.getByText('Awesome! Your database is being created!')
-          ).toBeVisible();
         });
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
           // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
           if (size != 1 || db != 'psmdb') {
-            await waitForStatus(page, clusterName, 'Initializing', 15000);
+            await waitForStatus(page, clusterName, 'Initializing', 30000);
           }
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          await waitForStatus(page, clusterName, 'Up', 720000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -206,13 +176,160 @@ test.describe.configure({ retries: 0 });
         });
       });
 
+      test(`Check DB custom option [${db} size ${size}]`, async () => {
+        let result: string;
+
+        switch (db) {
+          case 'pxc': {
+            result = await queryMySQL(
+              clusterName,
+              namespace,
+              `SHOW variables LIKE "max_connections";`
+            );
+            expect(result.trim()).toBe('max_connections	250');
+            break;
+          }
+          case 'psmdb': {
+            result = await queryPSMDB(
+              clusterName,
+              namespace,
+              'admin',
+              `db.serverCmdLineOpts().parsed.systemLog;`
+            );
+            expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
+            break;
+          }
+          case 'postgresql': {
+            result = await queryPG(
+              clusterName,
+              namespace,
+              'postgres',
+              `SHOW shared_buffers;`
+            );
+            expect(result.trim()).toBe('192MB');
+            break;
+          }
+        }
+      });
+
+      test(`Check PMM DB metrics [${db} size ${size}]`, async () => {
+        switch (db) {
+          case 'psmdb': {
+            for (let i = 0; i < size; i++) {
+              await checkDBMetrics(
+                'node_boot_time_seconds',
+                `everest-ui-${clusterName}-rs0-${i}`,
+                'admin:admin'
+              );
+              await checkDBMetrics(
+                'mongodb_connections',
+                `everest-ui-${clusterName}-rs0-${i}`,
+                'admin:admin'
+              );
+            }
+            break;
+          }
+          case 'pxc': {
+            const nodeTypes = ['pxc', 'haproxy'];
+
+            for (const nodeType of nodeTypes) {
+              for (let i = 0; i < size; i++) {
+                switch (nodeType) {
+                  case 'pxc': {
+                    await checkDBMetrics(
+                      'node_boot_time_seconds',
+                      `everest-ui-${clusterName}-${nodeType}-${i}`,
+                      'admin:admin'
+                    );
+                    await checkDBMetrics(
+                      'mysql_global_status_uptime',
+                      `everest-ui-${clusterName}-${nodeType}-${i}`,
+                      'admin:admin'
+                    );
+                    break;
+                  }
+                  case 'haproxy': {
+                    await checkDBMetrics(
+                      'haproxy_backend_status',
+                      `everest-ui-${clusterName}-${nodeType}-${i}`,
+                      'admin:admin'
+                    );
+                    await checkDBMetrics(
+                      'haproxy_backend_active_servers',
+                      `everest-ui-${clusterName}-${nodeType}-${i}`,
+                      'admin:admin'
+                    );
+                    break;
+                  }
+                }
+              }
+            }
+            break;
+          }
+          case 'postgresql': {
+            const pgSts = await getPGStsName(clusterName, namespace);
+            for (let i = 0; i < size; i++) {
+              await checkDBMetrics(
+                'node_boot_time_seconds',
+                `everest-ui-${pgSts[i]}-0`,
+                'admin:admin'
+              );
+              await checkDBMetrics(
+                'pg_postmaster_uptime_seconds',
+                `everest-ui-${pgSts[i]}-0`,
+                'admin:admin'
+              );
+            }
+            break;
+          }
+        }
+      });
+
+      test(`Check PMM QAN [${db} size ${size}]`, async () => {
+        // Wait for 90 seconds for QAN to get data
+        await new Promise((resolve) => setTimeout(resolve, 90000));
+
+        switch (db) {
+          case 'psmdb': {
+            // for PSMDB we see QAN only for the first node (primary)
+            await checkQAN(
+              'mongodb',
+              `everest-ui-${clusterName}-rs0-0`,
+              'admin:admin'
+            );
+            break;
+          }
+          case 'pxc': {
+            for (let i = 0; i < size; i++) {
+              await checkQAN(
+                'mysql',
+                `everest-ui-${clusterName}-pxc-${i}`,
+                'admin:admin'
+              );
+            }
+            break;
+          }
+          case 'postgresql': {
+            const pgSts = await getPGStsName(clusterName, namespace);
+            for (let i = 0; i < size; i++) {
+              await checkQAN(
+                'postgresql',
+                `everest-ui-${pgSts[i]}-0`,
+                'admin:admin'
+              );
+            }
+            break;
+          }
+        }
+      });
+
       test(`Suspend cluster [${db} size ${size}]`, async ({ page }) => {
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
-          await waitForStatus(page, clusterName, 'Stopping', 45000);
+          await waitForStatus(page, clusterName, 'Stopping', 60000);
         }
-        await waitForStatus(page, clusterName, 'Paused', 180000);
+        await waitForStatus(page, clusterName, 'Paused', 240000);
       });
 
       test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
@@ -221,7 +338,7 @@ test.describe.configure({ retries: 0 });
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 45000);
         }
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
       test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
@@ -231,9 +348,70 @@ test.describe.configure({ retries: 0 });
         }
         // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
         if (size != 1 || db != 'psmdb') {
-          await waitForStatus(page, clusterName, 'Initializing', 60000);
+          await waitForStatus(page, clusterName, 'Initializing', 120000);
         }
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
+      });
+
+      test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
+        test.skip(size > 3);
+        const newSize = size + 2;
+        let customProxyTestId = 'toggle-button-proxies-custom';
+
+        await test.step('Change options', async () => {
+          await page.goto('databases');
+          await findDbAndClickRow(page, clusterName);
+          await page.getByTestId('edit-resources-button').click();
+          if (db !== 'pxc') {
+            await page.getByTestId('toggle-button-nodes-custom').click();
+            await page
+              .getByTestId('text-input-custom-nr-of-nodes')
+              .fill(newSize.toString());
+          } else {
+            await page.getByTestId(`toggle-button-nodes-${newSize}`).click();
+          }
+
+          if (db === 'postgresql') {
+            customProxyTestId = 'toggle-button-PG Bouncers-custom';
+          }
+          if (db === 'pxc' || db === 'postgresql') {
+            await page.getByTestId('ExpandMoreIcon').last().click();
+            await page.getByTestId(customProxyTestId).click();
+            await page.getByTestId('text-input-custom-nr-of-proxies').fill('2');
+          }
+          await page.getByTestId('form-dialog-save').click();
+        });
+
+        await test.step('Check new values', async () => {
+          if (db === 'pxc') {
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: '2 proxies' })
+            ).toBeVisible({ timeout: 10000 });
+          } else if (db === 'postgresql') {
+            await expect(
+              page
+                .getByTestId('overview-section')
+                .filter({ hasText: '2 PG Bouncers' })
+            ).toBeVisible({ timeout: 10000 });
+          }
+
+          await expect(
+            page
+              .getByTestId('overview-section')
+              .filter({ hasText: `${newSize} nodes` })
+          ).toBeVisible({ timeout: 10000 });
+        });
+
+        await test.step('Wait for cluster status', async () => {
+          await page.goto('databases');
+          // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
+          if (size != 1 || db != 'psmdb') {
+            await waitForStatus(page, clusterName, 'Initializing', 60000);
+          }
+          await waitForStatus(page, clusterName, 'Up', 300000);
+        });
       });
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {

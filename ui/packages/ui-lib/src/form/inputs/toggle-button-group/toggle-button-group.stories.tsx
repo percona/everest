@@ -2,8 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { ToggleButtonGroupInputProps } from './toggle-button-group.types';
 import ToggleButtonGroupInput from './toggle-button-group';
-import { DbType } from '@percona/types';
-import DbToggleCard from '../../../db-toggle-card';
+import ToggleCard from '../../../buttons/toggle-card';
 
 type CustomArgs = ToggleButtonGroupInputProps & {
   disabled?: boolean;
@@ -45,12 +44,12 @@ const meta = {
           toggleButtonGroupProps={{ disabled, size, sx: { width } }}
           controllerProps={{
             name: 'toggle-button-group-input',
-            defaultValue: DbType.Mysql,
+            defaultValue: 'small',
           }}
         >
-          <DbToggleCard key={DbType.Mysql} value={DbType.Mysql} />
-          <DbToggleCard key={DbType.Mongo} value={DbType.Mongo} />
-          <DbToggleCard key={DbType.Postresql} value={DbType.Postresql} />
+          <ToggleCard value={'small'}> small </ToggleCard>
+          <ToggleCard value={'medium'}> medium </ToggleCard>
+          <ToggleCard value={'large'}> large </ToggleCard>
         </ToggleButtonGroupInput>
       </FormProvider>
     );
@@ -63,7 +62,7 @@ type Story = StoryObj<CustomArgs>;
 
 export const Basic: Story = {
   args: {
-    label: 'Database type',
+    label: 'Resource size',
     disabled: false,
     size: 'medium',
     width: '50rem',

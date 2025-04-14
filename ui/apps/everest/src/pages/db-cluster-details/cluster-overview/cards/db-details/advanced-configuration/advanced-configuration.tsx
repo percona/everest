@@ -20,14 +20,18 @@ import OverviewSectionRow from '../../../overview-section-row';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 import { useContext, useState } from 'react';
 import { AdvancedConfigurationEditModal } from './edit-advanced-configuration';
-import { useUpdateDbClusterAdvancedConfiguration } from 'hooks';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import {
+  changeDbClusterAdvancedConfig,
+  shouldDbActionsBeBlocked,
+} from 'utils/db';
 
 export const AdvancedConfiguration = ({
   loading,
   externalAccess,
   parameters,
+  storageClass,
 }: AdvancedConfigurationOverviewCardProps) => {
   const {
     canUpdateDb,
@@ -36,16 +40,22 @@ export const AdvancedConfiguration = ({
   } = useContext(DbClusterContext);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const { mutate: updateDbClusterAdvancedConfiguration } =
-    useUpdateDbClusterAdvancedConfiguration();
+  const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster!,
+    {
+      onSuccess: async () => {
+        await refetch();
+        handleCloseModal();
+        setUpdating(false);
+      },
+      onError: () => setUpdating(false),
+    }
+  );
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
-  const restoringOrDeleting = [
-    DbClusterStatus.restoring,
-    DbClusterStatus.deleting,
-  ].includes(dbCluster?.status?.status!);
-  const editable = canUpdateDb && !restoringOrDeleting;
+  const editable =
+    canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
   const handleSubmit = async ({
     externalAccess,
@@ -54,26 +64,14 @@ export const AdvancedConfiguration = ({
     engineParameters,
   }: AdvancedConfigurationFormType) => {
     setUpdating(true);
-    updateDbClusterAdvancedConfiguration(
-      {
-        clusterName: dbCluster!.metadata?.name,
-        namespace: dbCluster!.metadata?.namespace,
-        dbCluster: dbCluster!,
-        externalAccess: externalAccess,
-        sourceRanges: sourceRanges,
-        engineParametersEnabled: engineParametersEnabled,
-        engineParameters: engineParameters,
-      },
-      {
-        onSuccess: async () => {
-          await refetch();
-          handleCloseModal();
-          setUpdating(false);
-        },
-        onError: () => {
-          setUpdating(false);
-        },
-      }
+    updateCluster(
+      changeDbClusterAdvancedConfig(
+        dbCluster!,
+        engineParametersEnabled,
+        externalAccess,
+        engineParameters,
+        sourceRanges
+      )
     );
   };
 
@@ -107,7 +105,10 @@ export const AdvancedConfiguration = ({
           parameters ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
-
+      <OverviewSectionRow
+        label={Messages.fields.storageClass}
+        contentString={storageClass}
+      />
       {openEditModal && dbCluster && (
         <AdvancedConfigurationEditModal
           open={openEditModal}

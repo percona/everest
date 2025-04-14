@@ -12,8 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { test, expect } from '@fixtures';
-// eslint-disable-next-line import/no-extraneous-dependencies
+import { test } from '@fixtures';
 
 test.describe('Everest CLI install', async () => {
   test.beforeEach(async ({ cli }) => {
@@ -46,18 +45,18 @@ test.describe('Everest CLI install', async () => {
 
     await test.step('run everest install command (pretty))', async () => {
       const out = await cli.everestExecSkipWizard(
-        `install --operator.mongodb=false --operator.postgresql=true --operator.xtradb-cluster=false --namespaces=everest-operators`,
+        `install --operator.mongodb=false --operator.postgresql=true --operator.mysql=false --namespaces=everest-operators`,
       );
 
       await out.assertSuccess();
       await out.outContainsNormalizedMany([
-        '✓ Installing Everest Helm chart',
-        '✓ Ensuring Everest API deployment is ready',
-        '✓ Ensuring Everest operator deployment is ready',
-        '✓ Ensuring OLM components are ready',
-        '✓ Ensuring Everest CatalogSource is ready',
-        '✓ Ensuring monitoring stack is ready',
-        '✓ Provisioning database namespaces (everest-operators)',
+        '✅ Installing Everest Helm chart',
+        '✅ Ensuring Everest API deployment is ready',
+        '✅ Ensuring Everest operator deployment is ready',
+        '✅ Ensuring OLM components are ready',
+        '✅ Ensuring Everest CatalogSource is ready',
+        '✅ Ensuring monitoring stack is ready',
+        '✅ Provisioning database namespace \'everest-operators\'',
         'Thank you for installing Everest',
       ]);
     });

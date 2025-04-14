@@ -1,13 +1,10 @@
 import { useLocation } from 'react-router-dom';
-import { DbWizardMode } from './database-form.types';
+import { WizardMode } from 'shared-types/wizard.types';
 
-export const useDatabasePageMode = (): DbWizardMode => {
+export const useDatabasePageMode = (): WizardMode => {
   const { state } = useLocation();
-  if (state?.selectedDbCluster) {
-    if (state?.backupName) {
-      return 'restoreFromBackup';
-    }
-    return 'edit';
+  if (state?.selectedDbCluster && state?.backupName) {
+    return WizardMode.Restore;
   }
-  return 'new';
+  return WizardMode.New;
 };

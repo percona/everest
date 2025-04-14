@@ -13,15 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkError, testsNs} from "@tests/tests/helpers";
-
-// testPrefix is used to differentiate between several workers
-// running this test to avoid conflicts in instance names
-const testPrefix = `t${(Math.random() + 1).toString(36).substring(10)}`
+import {checkError} from '@tests/tests/helpers';
 
 test('get resource usage', async ({ request }) => {
-  const r = await request.get(`/v1/resources`)
-  const resources = await r.json()
+  const r = await request.get(`/v1/resources`),
+   resources = await r.json()
 
   await checkError(r)
 
@@ -32,8 +28,8 @@ test('get resource usage', async ({ request }) => {
 })
 
 test('get cluster info', async ({ request }) => {
-  const r = await request.get(`/v1/cluster-info`)
-  const info = await r.json()
+  const r = await request.get(`/v1/cluster-info`),
+   info = await r.json()
 
   await checkError(r)
 
@@ -42,4 +38,6 @@ test('get cluster info', async ({ request }) => {
   expect(info?.clusterType).toBeTruthy()
   expect(info?.storageClassNames).toBeTruthy()
   expect(info?.storageClassNames).toHaveLength(1)
+  expect(info?.storageClasses).toBeTruthy()
+  expect(info?.storageClasses).toHaveLength(1)
 })

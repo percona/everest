@@ -20,11 +20,11 @@ import { useDatabasePageDefaultValues } from '../useDatabaseFormDefaultValues';
 import { DatabaseFormBodyProps } from './types';
 import { steps } from './steps';
 import DatabaseFormStepControllers from './DatabaseFormStepControllers';
+import { WizardMode } from 'shared-types/wizard.types';
 
 const DatabaseFormBody = ({
   activeStep,
   longestAchievedStep,
-  disableNext,
   isSubmitting,
   hasErrors,
   onCancel,
@@ -41,8 +41,8 @@ const DatabaseFormBody = ({
   return (
     <form style={{ flexGrow: 1 }} onSubmit={onSubmit}>
       <Box>
-        {(mode === 'new' ||
-          ((mode === 'edit' || mode === 'restoreFromBackup') &&
+        {(mode === WizardMode.New ||
+          (mode === WizardMode.Restore &&
             dbClusterRequestStatus === 'success')) &&
           React.createElement(steps[activeStep], {
             loadingDefaultsForEdition,
@@ -52,12 +52,10 @@ const DatabaseFormBody = ({
           })}
       </Box>
       <DatabaseFormStepControllers
-        disableBack={isFirstStep || hasErrors}
-        disableNext={disableNext}
+        disableBack={isFirstStep}
         disableSubmit={isSubmitting || hasErrors}
         disableCancel={isSubmitting}
         showSubmit={activeStep === steps.length - 1}
-        editMode={mode === 'edit'}
         onPreviousClick={handlePreviousStep}
         onNextClick={handleNextStep}
         onCancel={onCancel}

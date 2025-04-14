@@ -20,36 +20,36 @@ import OverviewSectionRow from '../../../overview-section-row';
 import { useContext, useState } from 'react';
 import { MonitoringEditModal } from './edit-monitoring';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
-import { useUpdateDbClusterMonitoring } from 'hooks/api/db-cluster/useUpdateDbCluster';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks/api/db-cluster/useUpdateDbCluster';
+import { changeDbClusterMonitoring, shouldDbActionsBeBlocked } from 'utils/db';
 
 export const MonitoringDetails = ({
   loading,
   monitoring,
 }: MonitoringConfigurationOverviewCardProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
-  const { dbCluster, canUpdateDb, canUpdateMonitoring } =
-    useContext(DbClusterContext);
-  const restoringOrDeleting = [
-    DbClusterStatus.restoring,
-    DbClusterStatus.deleting,
-  ].includes(dbCluster?.status?.status!);
-  const editable = canUpdateDb && !restoringOrDeleting && canUpdateMonitoring;
+  const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
+  const editable =
+    canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
-  const { mutate: updateDbClusterMonitoring } = useUpdateDbClusterMonitoring();
+  const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster!,
+    {
+      onSuccess: () => handleCloseModal(),
+    }
+  );
 
   const handleCloseModal = () => {
     setOpenEditModal(false);
   };
 
   const handleSubmit = (monitoringName: string, enabled: boolean) => {
-    updateDbClusterMonitoring({
-      clusterName: dbCluster!.metadata?.name,
-      namespace: dbCluster!.metadata?.namespace,
-      dbCluster: dbCluster!,
-      monitoringName: enabled ? monitoringName : undefined,
-    });
-    handleCloseModal();
+    updateCluster(
+      changeDbClusterMonitoring(
+        dbCluster!,
+        enabled ? monitoringName : undefined
+      )
+    );
   };
 
   return (
