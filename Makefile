@@ -100,3 +100,12 @@ CHART_BRANCH ?= main
 update-dev-chart:
 	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@$(CHART_BRANCH)
 	go mod tidy
+
+
+bin/ginkgo:
+	go build -o bin/ginkgo github.com/onsi/ginkgo/v2/ginkgo
+
+GINKGO := bin/ginkgo
+integration: $(GINKGO)
+	$(GINKGO) -r -v ./integration
+
