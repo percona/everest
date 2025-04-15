@@ -15,10 +15,8 @@
 
 import { DbEngineType, DbType } from '@percona/types';
 import { DbCluster } from 'shared-types/dbCluster.types';
-import { DbWizardMode } from './database-form.types';
 import { DbWizardFormFields } from 'consts.ts';
 import { dbEngineToDbType } from '@percona/utils';
-
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { MAX_DB_CLUSTER_NAME_LENGTH } from 'consts';
 import { DbWizardType } from './database-form-schema.ts';
@@ -39,6 +37,7 @@ import {
   AffinityComponent,
   AffinityRule,
 } from 'shared-types/affinity.types.ts';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
@@ -95,7 +94,7 @@ const replicasToNodes = (replicas: string, dbType: DbType): string => {
 
 export const DbClusterPayloadToFormValues = (
   dbCluster: DbCluster,
-  mode: DbWizardMode,
+  mode: WizardMode,
   namespace: string
 ): DbWizardType => {
   const defaults = getDbWizardDefaultValues(
@@ -124,7 +123,7 @@ export const DbClusterPayloadToFormValues = (
       dbCluster?.spec?.engine?.type
     ),
     [DbWizardFormFields.dbName]:
-      mode === 'restoreFromBackup'
+      mode === WizardMode.Restore
         ? `${dbCluster?.metadata?.name}-${generateShortUID()}`.slice(
             0,
             MAX_DB_CLUSTER_NAME_LENGTH
@@ -186,7 +185,7 @@ export const DbClusterPayloadToFormValues = (
         ? (backup?.schedules || []).length > 0
         : backup?.pitr?.enabled || false,
     [DbWizardFormFields.pitrStorageLocation]:
-      backup?.pitr?.enabled && mode === 'new'
+      backup?.pitr?.enabled && mode === WizardMode.Restore
         ? backup?.pitr?.backupStorageName || null
         : defaults[DbWizardFormFields.pitrStorageLocation],
     [DbWizardFormFields.schedules]: backup?.schedules || [],

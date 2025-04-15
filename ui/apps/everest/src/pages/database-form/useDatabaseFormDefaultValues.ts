@@ -17,7 +17,6 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { DbCluster } from 'shared-types/dbCluster.types';
-import { DbWizardMode } from './database-form.types';
 
 import {
   DbClusterPayloadToFormValues,
@@ -25,9 +24,10 @@ import {
 } from './database-form.utils';
 import { DbWizardType } from './database-form-schema.ts';
 import { dbEngineToDbType } from '@percona/utils';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const useDatabasePageDefaultValues = (
-  mode: DbWizardMode
+  mode: WizardMode
 ): {
   defaultValues: DbWizardType;
   dbClusterData: DbCluster | undefined;
@@ -36,7 +36,7 @@ export const useDatabasePageDefaultValues = (
 } => {
   const { state } = useLocation();
   const shouldRetrieveDbClusterData =
-    mode === 'restoreFromBackup' && !!state?.selectedDbCluster;
+    mode === WizardMode.Restore && !!state?.selectedDbCluster;
   const namespace = shouldRetrieveDbClusterData ? state?.namespace : null;
   const {
     data: dbCluster,
@@ -50,7 +50,7 @@ export const useDatabasePageDefaultValues = (
     const dbType = dbEngineToDbType(state?.selectedDbEngine);
     const defaults = getDbWizardDefaultValues(dbType);
 
-    if (mode === 'new') {
+    if (mode === WizardMode.New) {
       return getDbWizardDefaultValues(dbType);
     } else {
       return dbClusterRequestStatus === 'success'

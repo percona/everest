@@ -44,6 +44,7 @@ import {
 import { filterOutUnavailableAffinityRulesForMongo } from 'pages/database-form/database-form.utils.ts';
 import { generateDefaultAffinityRule } from 'utils/db.tsx';
 import { getDbWizardDefaultValues } from 'pages/database-form/database-form.utils';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
@@ -72,10 +73,11 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       .filter((item) => item.namespace === dbNamespace)
       .map((item) => item.dbEngine);
     const dbEngine = dbEnginesArray ? dbEnginesArray[0] : undefined;
-    if (mode !== 'new' && dbEngine) {
+    if (mode !== WizardMode.New && dbEngine) {
       const validVersions = filterAvailableDbVersionsForDbEngineEdition(
         dbEngine,
-        defaultDbVersion
+        defaultDbVersion,
+        mode
       );
       return {
         ...dbEngine,
@@ -94,7 +96,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     lt(dbEngineData?.operatorVersion || '', '1.17.0');
 
   const disableSharding =
-    mode !== 'new' || notSupportedMongoOperatorVersionForSharding;
+    mode !== WizardMode.New || notSupportedMongoOperatorVersionForSharding;
 
   const { canCreate, isLoading } =
     useNamespacePermissionsForResource('database-clusters');
@@ -112,7 +114,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     );
     if (
       !k8sNamespaceTouched &&
-      mode === 'new' &&
+      mode === WizardMode.New &&
       filteredNamespaces.length > 0 &&
       !isLoading
     ) {
@@ -137,7 +139,10 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     ) {
       return;
     }
-    if ((mode === 'restoreFromBackup' && !dbVersion) || mode === 'new') {
+    if (
+      (mode === WizardMode.Restore && !dbVersion) ||
+      mode === WizardMode.New
+    ) {
       const recommendedVersion = dbEngineData.availableVersions.engine.find(
         (version) => version.status === DbEngineToolStatus.RECOMMENDED
       );
@@ -209,7 +214,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
           label={Messages.labels.k8sNamespace}
           loading={isLoading}
           options={filteredNamespaces}
-          disabled={mode === 'restoreFromBackup' || loadingDefaultsForEdition}
+          disabled={mode === WizardMode.Restore || loadingDefaultsForEdition}
           onChange={onNamespaceChange}
           autoCompleteProps={{
             disableClearable: true,
@@ -227,7 +232,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         />
         <DbVersion
           selectInputProps={{
-            selectFieldProps: { disabled: mode === 'restoreFromBackup' },
+            selectFieldProps: { disabled: mode === WizardMode.Restore },
           }}
           availableVersions={dbEngineData?.availableVersions.engine}
           loading={dbEnginesFoDbEngineTypesFetching || isLoading}

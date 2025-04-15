@@ -45,6 +45,7 @@ export type AdvancedConfigurationOverviewCardProps = {
   externalAccess: boolean;
   parameters: boolean;
   affinityRules: AffinityRule[];
+  storageClass: string;
 } & OverviewCardProps;
 
 export type MonitoringConfigurationOverviewCardProps = {
