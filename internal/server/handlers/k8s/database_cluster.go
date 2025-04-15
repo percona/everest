@@ -195,7 +195,8 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 	}
 
 	response := &api.DatabaseClusterPitr{}
-	if !databaseCluster.Spec.Backup.PITR.Enabled {
+	// for PG there is no such thing as enabling PITR, it is always enabled
+	if !databaseCluster.Spec.Backup.PITR.Enabled && databaseCluster.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePostgresql {
 		return response, nil
 	}
 
