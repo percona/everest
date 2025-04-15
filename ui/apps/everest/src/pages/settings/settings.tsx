@@ -21,19 +21,17 @@ export const Settings = () => {
           allowScrollButtonsMobile
           aria-label="nav tabs"
         >
-          {Object.keys(SettingsTabs).map((item) => (
-            <Tab
-              // @ts-ignore
-              label={Messages[item]}
-              // @ts-ignore
-              key={SettingsTabs[item]}
-              // @ts-ignore
-              value={SettingsTabs[item]}
-              // @ts-ignore
-              to={SettingsTabs[item]}
-              component={Link}
-            />
-          ))}
+          {(Object.keys(SettingsTabs) as Array<keyof typeof SettingsTabs>).map(
+            (item) => (
+              <Tab
+                label={Messages.tabs[item]}
+                key={SettingsTabs[item]}
+                value={SettingsTabs[item]}
+                to={SettingsTabs[item]}
+                component={Link}
+              />
+            )
+          )}
         </Tabs>
       </Box>
       <Outlet />
