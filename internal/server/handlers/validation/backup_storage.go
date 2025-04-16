@@ -19,6 +19,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -39,7 +41,7 @@ func (h *validateHandler) GetBackupStorage(ctx context.Context, namespace, name 
 }
 
 func (h *validateHandler) CreateBackupStorage(ctx context.Context, namespace string, req *api.CreateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
-	existing, err := h.kubeClient.ListBackupStorages(ctx, namespace)
+	existing, err := h.kubeConnector.ListBackupStorages(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to ListBackupStorages: %w", err)
 	}
@@ -50,11 +52,11 @@ func (h *validateHandler) CreateBackupStorage(ctx context.Context, namespace str
 }
 
 func (h *validateHandler) UpdateBackupStorage(ctx context.Context, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
-	bs, err := h.kubeClient.GetBackupStorage(ctx, namespace, name)
+	bs, err := h.kubeConnector.GetBackupStorage(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetBackupStorage: %w", err)
 	}
-	secret, err := h.kubeClient.GetSecret(ctx, namespace, bs.Spec.CredentialsSecretName)
+	secret, err := h.kubeConnector.GetSecret(ctx, types.NamespacedName{Namespace: namespace, Name: bs.Spec.CredentialsSecretName})
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetSecret: %w", err)
 	}
@@ -329,7 +331,7 @@ func (h *validateHandler) validateUpdateBackupStorageRequest(
 	existing *everestv1alpha1.BackupStorage,
 	secret *corev1.Secret,
 ) error {
-	used, err := h.kubeClient.IsBackupStorageUsed(ctx, existing.GetNamespace(), existing.GetName())
+	used, err := h.kubeConnector.IsBackupStorageUsed(ctx, types.NamespacedName{Namespace: existing.GetNamespace(), Name: existing.GetName()})
 	if err != nil {
 		return err
 	}
@@ -337,7 +339,7 @@ func (h *validateHandler) validateUpdateBackupStorageRequest(
 		return errEditBackupStorageInUse
 	}
 
-	existingStorages, err := h.kubeClient.ListBackupStorages(ctx, existing.GetNamespace())
+	existingStorages, err := h.kubeConnector.ListBackupStorages(ctx, ctrlclient.InNamespace(existing.GetNamespace()))
 	if err != nil {
 		return err
 	}
