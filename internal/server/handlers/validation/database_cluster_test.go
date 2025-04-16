@@ -7,14 +7,16 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
@@ -368,16 +370,18 @@ func TestValidateBackupSpec(t *testing.T) {
 func TestValidateBackupStoragesFor(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
-		name      string
-		namespace string
-		cluster   everestv1alpha1.DatabaseCluster
-		storage   everestv1alpha1.BackupStorage
-		err       error
+		name    string
+		cluster everestv1alpha1.DatabaseCluster
+		storage everestv1alpha1.BackupStorage
+		err     error
 	}{
 		{
-			name:      "errPSMDBMultipleStorages",
-			namespace: "everest",
+			name: "errPSMDBMultipleStorages",
 			cluster: everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "psmdb-try",
+					Namespace: "ns-1",
+				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
 						Schedules: []everestv1alpha1.BackupSchedule{
@@ -399,6 +403,10 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 			},
 			storage: everestv1alpha1.BackupStorage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "storage1",
+					Namespace: "ns-1",
+				},
 				Spec: everestv1alpha1.BackupStorageSpec{
 					Type: everestv1alpha1.BackupStorageTypeS3,
 				},
@@ -406,9 +414,12 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err: errPSMDBMultipleStorages,
 		},
 		{
-			name:      "errPSMDBViolateActiveStorage",
-			namespace: "everest",
+			name: "errPSMDBViolateActiveStorage",
 			cluster: everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "psmdb-try",
+					Namespace: "ns-2",
+				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
 						Schedules: []everestv1alpha1.BackupSchedule{
@@ -428,6 +439,10 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 			},
 			storage: everestv1alpha1.BackupStorage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "storage2",
+					Namespace: "ns-2",
+				},
 				Spec: everestv1alpha1.BackupStorageSpec{
 					Type: everestv1alpha1.BackupStorageTypeS3,
 				},
@@ -435,9 +450,12 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err: errPSMDBViolateActiveStorage,
 		},
 		{
-			name:      "no errPSMDBViolateActiveStorage",
-			namespace: "everest",
+			name: "no errPSMDBViolateActiveStorage",
 			cluster: everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "psmdb-try",
+					Namespace: "ns-3",
+				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
 						Schedules: []everestv1alpha1.BackupSchedule{
@@ -457,6 +475,10 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 			},
 			storage: everestv1alpha1.BackupStorage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "storage1",
+					Namespace: "ns-3",
+				},
 				Spec: everestv1alpha1.BackupStorageSpec{
 					Type: everestv1alpha1.BackupStorageTypeS3,
 				},
@@ -464,9 +486,12 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err: nil,
 		},
 		{
-			name:      "errPXCPitrS3Only",
-			namespace: "everest",
+			name: "errPXCPitrS3Only",
 			cluster: everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pxc-try",
+					Namespace: "ns-4",
+				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
 						PITR: everestv1alpha1.PITRSpec{
@@ -490,6 +515,10 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 			},
 			storage: everestv1alpha1.BackupStorage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "storage",
+					Namespace: "ns-4",
+				},
 				Spec: everestv1alpha1.BackupStorageSpec{
 					Type: everestv1alpha1.BackupStorageTypeAzure,
 				},
@@ -497,9 +526,12 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err: errPXCPitrS3Only,
 		},
 		{
-			name:      "errPitrNoBackupStorageName",
-			namespace: "everest",
+			name: "errPitrNoBackupStorageName",
 			cluster: everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pxc-try",
+					Namespace: "ns-5",
+				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
 						PITR: everestv1alpha1.PITRSpec{
@@ -522,6 +554,10 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 			},
 			storage: everestv1alpha1.BackupStorage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "storage1",
+					Namespace: "ns-5",
+				},
 				Spec: everestv1alpha1.BackupStorageSpec{
 					Type: everestv1alpha1.BackupStorageTypeS3,
 				},
@@ -529,9 +565,12 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 			err: errPitrNoBackupStorageName,
 		},
 		{
-			name:      "valid",
-			namespace: "everest",
+			name: "valid",
 			cluster: everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pxc-try",
+					Namespace: "ns-6",
+				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
 						PITR: everestv1alpha1.PITRSpec{
@@ -555,6 +594,10 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 				},
 			},
 			storage: everestv1alpha1.BackupStorage{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "storage",
+					Namespace: "ns-6",
+				},
 				Spec: everestv1alpha1.BackupStorageSpec{
 					Type: everestv1alpha1.BackupStorageTypeS3,
 				},
@@ -566,19 +609,15 @@ func TestValidateBackupStoragesFor(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			k := &kubernetes.Kubernetes{}
-			mockConnector := &client.MockKubeClientConnector{}
-			mockConnector.On("GetBackupStorage", mock.Anything, mock.Anything, mock.Anything).
-				Return(&tc.storage, nil)
-			k.WithClient(mockConnector)
-
+			mockClient := fakeclient.NewClientBuilder().WithScheme(kubernetes.CreateScheme()).WithObjects(&tc.cluster, &tc.storage)
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient.Build())
 			h := validateHandler{
-				kubeClient: k,
+				kubeConnector: k,
 			}
 
 			err := h.validateBackupStoragesFor(
 				context.Background(),
-				tc.namespace,
+				tc.cluster.GetNamespace(),
 				&tc.cluster,
 			)
 
@@ -944,32 +983,28 @@ func TestValidateDataSource(t *testing.T) {
 func TestValidatePGReposForAPIDB(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
-		name           string
-		cluster        everestv1alpha1.DatabaseCluster
-		getBackupsFunc func(ctx context.Context, ns string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error)
-		err            error
+		name             string
+		cluster          everestv1alpha1.DatabaseCluster
+		dbClusterBackups []ctrlclient.Object
+		err              error
 	}{
 		{
 			name: "ok: no schedules no backups",
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-1",
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{},
-				}, nil
-			},
-			err: nil,
+			dbClusterBackups: []ctrlclient.Object{},
+			err:              nil,
 		},
 		{
 			name: "ok: 2 schedules 2 backups with the same storages",
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-2",
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
@@ -980,13 +1015,21 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					},
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
+			dbClusterBackups: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-1",
+						Namespace: "ns-2",
 					},
-				}, nil
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-2",
+						Namespace: "ns-2",
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
+				},
 			},
 			err: nil,
 		},
@@ -995,7 +1038,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-3",
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
@@ -1007,12 +1050,15 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					},
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"}},
+			dbClusterBackups: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-4",
+						Namespace: "ns-3",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
-				}, nil
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"},
+				},
 			},
 			err: errTooManyPGStorages,
 		},
@@ -1021,7 +1067,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-4",
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
@@ -1033,29 +1079,42 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					},
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{},
-				}, nil
-			},
-			err: nil,
+			dbClusterBackups: []ctrlclient.Object{},
+			err:              nil,
 		},
 		{
 			name: "ok: 3 backups with different storages",
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-5",
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"}},
+			dbClusterBackups: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-1",
+						Namespace: "ns-5",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
-				}, nil
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-2",
+						Namespace: "ns-5",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-3",
+						Namespace: "ns-5",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"},
+				},
 			},
 			err: nil,
 		},
@@ -1064,19 +1123,50 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-6",
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
+			dbClusterBackups: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-1",
+						Namespace: "ns-6",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
-				}, nil
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-2",
+						Namespace: "ns-6",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-3",
+						Namespace: "ns-6",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-1-1",
+						Namespace: "ns-6",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-2-1",
+						Namespace: "ns-6",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
+				},
 			},
 			err: nil,
 		},
@@ -1085,18 +1175,42 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-7",
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"}},
+			dbClusterBackups: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-1",
+						Namespace: "ns-7",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
-				}, nil
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-2",
+						Namespace: "ns-7",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-3",
+						Namespace: "ns-7",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-4",
+						Namespace: "ns-7",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"},
+				},
 			},
 			err: errTooManyPGStorages,
 		},
@@ -1105,18 +1219,42 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-8",
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"}},
+			dbClusterBackups: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-1-1",
+						Namespace: "ns-8",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
-				}, nil
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-1-2",
+						Namespace: "ns-8",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs1"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-2-1",
+						Namespace: "ns-8",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-2-2",
+						Namespace: "ns-8",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs2"},
+				},
 			},
 			err: nil,
 		},
@@ -1125,7 +1263,7 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-9",
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
@@ -1138,19 +1276,15 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					},
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{},
-				}, nil
-			},
-			err: errTooManyPGStorages,
+			dbClusterBackups: []ctrlclient.Object{},
+			err:              errTooManyPGStorages,
 		},
 		{
 			name: "error: 2 schedules 2 backups with different storages",
 			cluster: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "some",
-					Namespace: "ns",
+					Namespace: "ns-10",
 				},
 				Spec: everestv1alpha1.DatabaseClusterSpec{
 					Backup: everestv1alpha1.Backup{
@@ -1161,13 +1295,23 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 					},
 				},
 			},
-			getBackupsFunc: func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-				return &everestv1alpha1.DatabaseClusterBackupList{
-					Items: []everestv1alpha1.DatabaseClusterBackup{
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"}},
-						{Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"}},
+			dbClusterBackups: []ctrlclient.Object{
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-3",
+						Namespace: "ns-10",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
 					},
-				}, nil
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs3"},
+				},
+				&everestv1alpha1.DatabaseClusterBackup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bc-bs-4",
+						Namespace: "ns-10",
+						Labels:    map[string]string{common.DatabaseClusterNameLabel: "some"},
+					},
+					Spec: everestv1alpha1.DatabaseClusterBackupSpec{BackupStorageName: "bs4"},
+				},
 			},
 			err: errTooManyPGStorages,
 		},
@@ -1175,7 +1319,12 @@ func TestValidatePGReposForAPIDB(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.err, validatePGReposForAPIDB(context.Background(), &tc.cluster, tc.getBackupsFunc))
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(&tc.cluster).
+				WithObjects(tc.dbClusterBackups...)
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient.Build())
+			assert.Equal(t, tc.err, validatePGReposForAPIDB(context.Background(), &tc.cluster, k.ListDatabaseClusterBackups))
 		})
 	}
 }

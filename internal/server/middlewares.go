@@ -24,6 +24,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -65,7 +66,7 @@ func (e *EverestServer) shouldAllowRequestDuringEngineUpgrade(c echo.Context) (b
 	}
 
 	// Check if there's an engine in this namespace that is upgrading the operator?
-	engines, err := e.kubeClient.ListDatabaseEngines(c.Request().Context(), namespace)
+	engines, err := e.kubeConnector.ListDatabaseEngines(c.Request().Context(), ctrlclient.InNamespace(namespace))
 	if err != nil {
 		e.l.Error(err)
 		return false, err
