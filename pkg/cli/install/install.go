@@ -29,6 +29,7 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/cli/helm"
@@ -82,7 +83,7 @@ type (
 	Installer struct {
 		l              *zap.SugaredLogger
 		cfg            InstallConfig
-		kubeClient     *kubernetes.Kubernetes
+		kubeClient     kubernetes.KubernetesConnector
 		versionService versionservice.Interface
 		// these are set only when Run is called.
 		installVersion string
@@ -107,7 +108,7 @@ func (cfg *InstallConfig) detectKubernetesEnv(ctx context.Context, l *zap.Sugare
 		return nil
 	}
 
-	kubeClient, err := cliutils.NewKubeclient(l, cfg.KubeconfigPath)
+	kubeClient, err := cliutils.NewKubeConnector(l, cfg.KubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
@@ -145,7 +146,7 @@ func NewInstall(c InstallConfig, l *zap.SugaredLogger) (*Installer, error) {
 	cli.cfg = c
 
 	var err error
-	cli.kubeClient, err = cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
+	cli.kubeClient, err = cliutils.NewKubeConnector(cli.l, c.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +366,7 @@ func (o *Installer) latestVersion(meta *versionpb.MetadataResponse) (*goversion.
 }
 
 func (o *Installer) namespaceExists(ctx context.Context, namespace string) (bool, error) {
-	_, err := o.kubeClient.GetNamespace(ctx, namespace)
+	_, err := o.kubeClient.GetNamespace(ctx, types.NamespacedName{Name: namespace})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return false, nil
@@ -377,7 +378,7 @@ func (o *Installer) namespaceExists(ctx context.Context, namespace string) (bool
 
 // CheckEverestAlreadyinstalled checks if Everest is already installed.
 func CheckEverestAlreadyinstalled(ctx context.Context, l *zap.SugaredLogger, kubeConfig string) error {
-	kubeClient, err := cliutils.NewKubeclient(l, kubeConfig)
+	kubeClient, err := cliutils.NewKubeConnector(l, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
