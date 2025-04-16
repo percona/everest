@@ -21,6 +21,7 @@ import LoginCallback from 'components/login-callback/LoginCallback';
 import { DbClusterContextProvider } from 'pages/db-cluster-details/dbCluster.context';
 import Logout from 'pages/logout';
 import PodSchedulingPolicies from 'pages/settings/pod-scheduling-policies';
+import PolicyDetails from 'pages/settings/pod-scheduling-policies/policy-details';
 
 const router = createBrowserRouter([
   {
@@ -101,6 +102,12 @@ const router = createBrowserRouter([
           {
             path: SettingsTabs.podSchedulingPolicies,
             element: <PodSchedulingPolicies />,
+            children: [
+              {
+                path: ':name',
+                element: <PolicyDetails />,
+              },
+            ],
           },
         ],
       },

@@ -9,8 +9,6 @@ import {
 } from 'shared-types/affinity.types';
 import EditableItem from 'components/editable-item';
 import { Fragment, useEffect, useState } from 'react';
-import { AffinityFormDialog } from '../affinity-form-dialog/affinity-form-dialog';
-import { AffinityFormDialogContext } from '../affinity-form-dialog/affinity-form-dialog-context/affinity-form-context';
 import { AffinityFormData } from '../affinity-form-dialog/affinity-form/affinity-form.types';
 import { availableComponentsType } from '../affinity-utils';
 import { AffinityItem } from './affinity-item';
@@ -181,7 +179,7 @@ export const AffinityListView = ({
         )}
       </ActionableLabeledContent>
 
-      <AffinityFormDialogContext.Provider
+      {/* <AffinityFormDialogContext.Provider
         value={{
           selectedAffinityUid,
           handleSubmit: onSubmit,
@@ -194,7 +192,7 @@ export const AffinityListView = ({
         }}
       >
         {openAffinityModal && <AffinityFormDialog />}
-      </AffinityFormDialogContext.Provider>
+      </AffinityFormDialogContext.Provider> */}
       <ConfirmDialog
         isOpen={openDeleteModal}
         selectedId={selectedAffinityUid!}

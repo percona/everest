@@ -14,9 +14,10 @@ const schema = z.object({
 type Props = {
   open: boolean;
   onClose: () => void;
+  onSubmit: (data: z.infer<typeof schema>) => void;
 };
 
-const PoliciesDialog = ({ open, onClose }: Props) => {
+const PoliciesDialog = ({ open, onClose, onSubmit }: Props) => {
   const [availableDbTypes] = useDBEnginesForDbEngineTypes(undefined, {
     refetchInterval: 30 * 1000,
   });
@@ -26,7 +27,7 @@ const PoliciesDialog = ({ open, onClose }: Props) => {
       isOpen={open}
       closeModal={onClose}
       headerMessage="Create policy"
-      onSubmit={() => {}}
+      onSubmit={onSubmit}
       schema={schema}
       defaultValues={{
         name: '',

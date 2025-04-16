@@ -5,7 +5,7 @@ import { Messages } from './settings.messages';
 import { SettingsTabs } from './settings.types';
 
 export const Settings = () => {
-  const routeMatch = useMatch('/settings/:tabs');
+  const routeMatch = useMatch('/settings/:tabs/:detail?');
   const currentTab = routeMatch?.params?.tabs;
 
   if (!currentTab) {
