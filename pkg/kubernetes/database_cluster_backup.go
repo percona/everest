@@ -18,32 +18,48 @@ package kubernetes
 import (
 	"context"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-// GetDatabaseClusterBackup returns database cluster backup by name.
-func (k *Kubernetes) GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	return k.client.GetDatabaseClusterBackup(ctx, namespace, name)
+// GetDatabaseClusterBackup returns database cluster backup that matches the criteria.
+// This method returns a list of full objects (meta and spec).
+func (k *Kubernetes) GetDatabaseClusterBackup(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	result := &everestv1alpha1.DatabaseClusterBackup{}
+	if err := k.k8sClient.Get(ctx, key, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-// ListDatabaseClusterBackups returns database cluster backups.
-func (k *Kubernetes) ListDatabaseClusterBackups(ctx context.Context, namespace string, options metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-	return k.client.ListDatabaseClusterBackups(ctx, namespace, options)
+// ListDatabaseClusterBackups returns database cluster backups that match the criteria.
+// This method returns a list of full objects (meta and spec).
+func (k *Kubernetes) ListDatabaseClusterBackups(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterBackupList, error) {
+	result := &everestv1alpha1.DatabaseClusterBackupList{}
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // UpdateDatabaseClusterBackup updates database cluster backup.
 func (k *Kubernetes) UpdateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	return k.client.UpdateDatabaseClusterBackup(ctx, backup)
+	if err := k.k8sClient.Update(ctx, backup); err != nil {
+		return nil, err
+	}
+	return backup, nil
 }
 
-// DeleteDatabaseClusterBackup deletes database cluster backup.
-func (k *Kubernetes) DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string) error {
-	return k.client.DeleteDatabaseClusterBackup(ctx, namespace, name)
+// DeleteDatabaseClusterBackup deletes database cluster backup that matches the criteria.
+func (k *Kubernetes) DeleteDatabaseClusterBackup(ctx context.Context, obj *everestv1alpha1.DatabaseClusterBackup) error {
+	return k.k8sClient.Delete(ctx, obj)
 }
 
 // CreateDatabaseClusterBackup creates database cluster backup.
 func (k *Kubernetes) CreateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	return k.client.CreateDatabaseClusterBackup(ctx, backup.GetNamespace(), backup)
+	if err := k.k8sClient.Create(ctx, backup); err != nil {
+		return nil, err
+	}
+	return backup, nil
 }

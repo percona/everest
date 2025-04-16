@@ -20,7 +20,9 @@ import (
 	"fmt"
 
 	"github.com/AlekSi/pointer"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
@@ -58,7 +60,7 @@ func (o *Installer) newStepEnsureEverestOLM() steps.Step {
 	return steps.Step{
 		Desc: "Ensuring OLM components are ready",
 		F: func(ctx context.Context) error {
-			depls, err := o.kubeClient.ListDeployments(ctx, kubernetes.OLMNamespace)
+			depls, err := o.kubeClient.ListDeployments(ctx, client.InNamespace(kubernetes.OLMNamespace))
 			if err != nil {
 				return err
 			}
@@ -102,7 +104,7 @@ func (o *Installer) newStepEnsureCatalogSource() steps.Step {
 				return fmt.Errorf("could not get Everest CatalogSource namespace: %w", err)
 			}
 			return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, false, func(ctx context.Context) (bool, error) {
-				cs, err := o.kubeClient.GetCatalogSource(ctx, common.PerconaEverestCatalogName, catalogNs)
+				cs, err := o.kubeClient.GetCatalogSource(ctx, types.NamespacedName{Namespace: catalogNs, Name: common.PerconaEverestCatalogName})
 				if err != nil {
 					return false, fmt.Errorf("cannot get CatalogSource: %w", err)
 				}
@@ -114,7 +116,7 @@ func (o *Installer) newStepEnsureCatalogSource() steps.Step {
 
 func (o *Installer) waitForDeployment(ctx context.Context, name, namespace string) error {
 	o.l.Infof("Waiting for Deployment '%s' in namespace '%s'", name, namespace)
-	if err := o.kubeClient.WaitForRollout(ctx, name, namespace); err != nil {
+	if err := o.kubeClient.WaitForRollout(ctx, types.NamespacedName{Namespace: namespace, Name: name}); err != nil {
 		return err
 	}
 	o.l.Infof("Deployment '%s' in namespace '%s' is ready", name, namespace)
