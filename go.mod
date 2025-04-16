@@ -42,6 +42,7 @@ require (
 	github.com/percona/everest-operator v0.6.0-dev1.0.20250408103821-238475bf8caa
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250410143440-baa4adaf2c02
 	github.com/rodaine/table v1.3.0
+	github.com/smarty/gunit v1.5.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/unrolled/secure v1.17.0

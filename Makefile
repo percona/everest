@@ -100,3 +100,7 @@ CHART_BRANCH ?= main
 update-dev-chart:
 	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@$(CHART_BRANCH)
 	go mod tidy
+
+
+integration-tests:
+	go test -v ./integration/... -count=1 -timeout=20m
