@@ -49,7 +49,7 @@ func validatePolicy(enforcer *casbin.Enforcer) error {
 // ValidatePolicy validates a policy from either Kubernetes or local file.
 func ValidatePolicy(
 	ctx context.Context,
-	k *kubernetes.Kubernetes,
+	k kubernetes.KubernetesConnector,
 	filepath string,
 ) error {
 	enforcer, err := newKubeOrFileEnforcer(ctx, k, filepath)
@@ -111,7 +111,7 @@ func validateTerms(terms []string) error {
 //nolint:nonamedreturns
 func newKubeOrFileEnforcer(
 	ctx context.Context,
-	kubeClient *kubernetes.Kubernetes,
+	kubeClient kubernetes.KubernetesConnector,
 	filePath string,
 ) (e *casbin.Enforcer, err error) {
 	defer func() {

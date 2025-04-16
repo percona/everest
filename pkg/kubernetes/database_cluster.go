@@ -27,106 +27,117 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-// ListDatabaseClusters returns list of managed database clusters.
-func (k *Kubernetes) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
-	return k.client.ListDatabaseClusters(ctx, namespace, metav1.ListOptions{})
+// ListDatabaseClusters returns list of managed database clusters that match the criteria.
+// This method returns a list of full objects (meta and spec).
+func (k *Kubernetes) ListDatabaseClusters(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterList, error) {
+	result := &everestv1alpha1.DatabaseClusterList{}
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-// GetDatabaseCluster returns database clusters by provided name.
-func (k *Kubernetes) GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
-	return k.client.GetDatabaseCluster(ctx, namespace, name)
+// ListDatabaseClusters returns list of managed database clusters that match the criteria.
+// This method returns a list of simplified objects (meta only).
+func (k *Kubernetes) listDatabaseClustersMeta(ctx context.Context, opts ...ctrlclient.ListOption) (*metav1.PartialObjectMetadataList, error) {
+	result := &metav1.PartialObjectMetadataList{}
+	result.SetGroupVersionKind(everestv1alpha1.GroupVersion.WithKind("DatabaseClusterList"))
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-// DeleteDatabaseCluster deletes database cluster.
-func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, namespace, name string) error {
-	return k.client.DeleteDatabaseCluster(ctx, namespace, name)
+// GetDatabaseCluster returns database cluster that matches the criteria.
+func (k *Kubernetes) GetDatabaseCluster(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.DatabaseCluster, error) {
+	result := &everestv1alpha1.DatabaseCluster{}
+	if err := k.k8sClient.Get(ctx, key, result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// DeleteDatabaseCluster deletes database cluster that matches the criteria.
+func (k *Kubernetes) DeleteDatabaseCluster(ctx context.Context, obj *everestv1alpha1.DatabaseCluster) error {
+	return k.k8sClient.Delete(ctx, obj)
 }
 
 // CreateDatabaseCluster creates database cluster.
 func (k *Kubernetes) CreateDatabaseCluster(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	return k.client.CreateDatabaseCluster(ctx, cluster.GetNamespace(), cluster)
+	if err := k.k8sClient.Create(ctx, cluster); err != nil {
+		return nil, err
+	}
+	return cluster, nil
 }
 
 // UpdateDatabaseCluster updates database cluster.
 func (k *Kubernetes) UpdateDatabaseCluster(ctx context.Context, cluster *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	return k.client.UpdateDatabaseCluster(ctx, cluster.GetNamespace(), cluster)
+	if err := k.k8sClient.Update(ctx, cluster); err != nil {
+		return nil, err
+	}
+	return cluster, nil
 }
 
-// DeleteDatabaseClusters deletes all database clusters in provided namespace.
+// DeleteDatabaseClusters deletes all database clusters that match the criteria.
 // This function will wait until all clusters are deleted.
-func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, namespace string) error {
-	timeout := pollTimeout
-	list, err := k.ListDatabaseClusters(ctx, namespace)
+func (k *Kubernetes) DeleteDatabaseClusters(ctx context.Context, opts ...ctrlclient.ListOption) error {
+	// No need to fetch full objects, we only need the fact there are objects that match the criteria(opts).
+	delList, err := k.listDatabaseClustersMeta(ctx, opts...)
 	if err != nil {
-		k.l.Debugf("Could not list db clusters: %s", err)
-	}
-	if list != nil && len(list.Items) > 0 {
-		// We increase the timeout if there's too many DB clusters.
-		const dbsCountTimeoutMultiply = 3
-		newTimeout := pollTimeout * time.Duration(len(list.Items)/dbsCountTimeoutMultiply)
-		if newTimeout > timeout {
-			timeout = newTimeout
-		}
+		k.l.Errorf("Could not list DB clusters: %s", err)
+		return err
 	}
 
-	k.l.Debugf("Setting DB cluster removal timeout to %s", timeout)
+	if delList == nil || len(delList.Items) == 0 {
+		// Nothing to delete.
+		return nil
+	}
 
+	// We increase the timeout if there's too many DB clusters.
+	const countTimeoutMultiply = 3
+	timeout := max(pollTimeout, pollTimeout*time.Duration(len(delList.Items)/countTimeoutMultiply))
+
+	// need to convert ListOptions to DeleteAllOfOptions
+	delOpts := &ctrlclient.DeleteAllOfOptions{}
+	for _, opt := range opts {
+		opt.ApplyToList(&delOpts.ListOptions)
+	}
+
+	k.l.Debugf("Setting DB clusters removal timeout to %s", timeout)
 	return wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, func(ctx context.Context) (bool, error) {
-		list, err := k.ListDatabaseClusters(ctx, namespace)
-		if err != nil {
-			return false, err
-		}
-		if len(list.Items) == 0 {
-			return true, nil
-		}
-		for _, cluster := range list.Items {
-			if err := k.DeleteDatabaseCluster(ctx, cluster.GetNamespace(), cluster.GetName()); ctrlclient.IgnoreNotFound(err) != nil {
+		// Skip fetching the list of objects to delete again, we already have it (see code above).
+		if delList == nil {
+			var err error
+			if delList, err = k.listDatabaseClustersMeta(ctx, opts...); err != nil {
+				k.l.Errorf("Could not list DB clusters in polling: %s", err)
 				return false, err
 			}
+
+			if delList == nil || len(delList.Items) == 0 {
+				// Nothing to delete.
+				return true, nil
+			}
+		}
+
+		// Reset the list to nil to fetch it again on the next iteration.
+		delList = nil
+
+		if err := k.k8sClient.DeleteAllOf(ctx, &everestv1alpha1.DatabaseCluster{}, delOpts); err != nil {
+			return false, err
 		}
 		return false, nil
 	})
 }
 
-// PatchDatabaseCluster patches CR of managed Database cluster.
-func (k *Kubernetes) PatchDatabaseCluster(cluster *everestv1alpha1.DatabaseCluster) error {
-	return k.client.ApplyObject(cluster)
-}
-
-// DatabasesExist checks if databases exist in provided at least one of the provided namespaces.
-// If namespaces are not provided, it checks in all namespaces.
-func (k *Kubernetes) DatabasesExist(ctx context.Context, namespaces ...string) (bool, error) {
-	all, err := k.getAllDatabases(ctx)
+// DatabasesExist checks if there are databases that match criteria exist.
+func (k *Kubernetes) DatabasesExist(ctx context.Context, opts ...ctrlclient.ListOption) (bool, error) {
+	list, err := k.listDatabaseClustersMeta(ctx, opts...)
 	if err != nil {
 		return false, err
 	}
-	if len(namespaces) == 0 {
-		return len(all) > 0, nil
-	}
 
-	for _, ns := range namespaces {
-		if _, ok := all[ns]; ok {
-			return true, nil
-		}
+	if list != nil && len(list.Items) > 0 {
+		return true, nil
 	}
 	return false, nil
-}
-
-func (k *Kubernetes) getAllDatabases(ctx context.Context) (map[string]everestv1alpha1.DatabaseClusterList, error) {
-	res := make(map[string]everestv1alpha1.DatabaseClusterList)
-	namespaces, err := k.GetDBNamespaces(ctx)
-	if ctrlclient.IgnoreNotFound(err) != nil {
-		return nil, err
-	}
-	for _, ns := range namespaces {
-		clusters, err := k.ListDatabaseClusters(ctx, ns)
-		if err != nil {
-			return nil, err
-		}
-		if len(clusters.Items) == 0 {
-			continue
-		}
-		res[ns] = *clusters
-	}
-	return res, nil
 }
