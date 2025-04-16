@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/cmd/config"
 	"github.com/percona/everest/pkg/version"
@@ -104,13 +105,13 @@ func (e *EverestServer) collectMetrics(ctx context.Context, config config.Everes
 	if config.DisableTelemetry {
 		return nil
 	}
-	everestID, err := e.kubeClient.GetEverestID(ctx)
+	everestID, err := e.kubeConnector.GetEverestID(ctx)
 	if err != nil {
 		e.l.Error(errors.Join(err, errors.New("failed to get Everest settings")))
 		return err
 	}
 
-	namespaces, err := e.kubeClient.GetDBNamespaces(ctx)
+	namespaces, err := e.kubeConnector.GetDBNamespaces(ctx)
 	if err != nil {
 		e.l.Error(errors.Join(err, errors.New("failed to get watched namespaces")))
 		return err
@@ -124,8 +125,8 @@ func (e *EverestServer) collectMetrics(ctx context.Context, config config.Everes
 		Value: version.Version,
 	})
 
-	for _, ns := range namespaces {
-		clusters, err := e.kubeClient.ListDatabaseClusters(ctx, ns)
+	for _, ns := range namespaces.Items {
+		clusters, err := e.kubeConnector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(ns.GetName()))
 		if err != nil {
 			e.l.Error(errors.Join(err, errors.New("failed to list database clusters")))
 			return err
