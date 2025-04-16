@@ -19,7 +19,7 @@ export interface FormDialogProps<T extends FieldValues> {
   onSubmit: (data: T) => void;
   children: ((formMethods: UseFormReturn<T>) => ReactNode) | ReactNode;
   cancelMessage?: string;
-  submitMessage: string;
+  submitMessage?: string;
   validationMode?: keyof ValidationMode;
   size?: 'L' | 'XL' | 'XXL' | 'XXXL';
   subHead2?: string;

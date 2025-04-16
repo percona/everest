@@ -1,13 +1,15 @@
-import {
-  AppBar,
-  Box,
-  Button,
-  Dialog,
-  IconButton,
-  Toolbar,
-  Typography,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { MenuItem } from '@mui/material';
+import { SelectInput, TextInput } from '@percona/ui-lib';
+import { useDBEnginesForDbEngineTypes } from 'hooks';
+import { humanizeDbType } from 'utils/db';
+import { dbEngineToDbType } from '@percona/utils';
+import { FormDialog } from 'components/form-dialog';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  type: z.string().min(1),
+});
 
 type Props = {
   open: boolean;
@@ -15,25 +17,36 @@ type Props = {
 };
 
 const PoliciesDialog = ({ open, onClose }: Props) => {
+  const [availableDbTypes] = useDBEnginesForDbEngineTypes(undefined, {
+    refetchInterval: 30 * 1000,
+  });
+
   return (
-    <Dialog fullScreen open={open} onClose={onClose}>
-      <AppBar sx={{ position: 'relative' }}>
-        <Toolbar>
-          <IconButton edge="start" onClick={onClose} aria-label="close">
-            <CloseIcon />
-          </IconButton>
-          <Typography color="text.primary" sx={{ ml: 2, flex: 1 }} variant="h5">
-            Create pod scheduling policy
-          </Typography>
-          <Box sx={{ display: 'flex', gap: '10px' }}>
-            <Button onClick={onClose}>Cancel</Button>
-            <Button variant="contained" onClick={onClose}>
-              Save
-            </Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
-    </Dialog>
+    <FormDialog
+      isOpen={open}
+      closeModal={onClose}
+      headerMessage="Create policy"
+      onSubmit={() => {}}
+      schema={schema}
+      defaultValues={{
+        name: '',
+        type: availableDbTypes.length ? availableDbTypes[0].type : '',
+      }}
+    >
+      <TextInput name="name" label="Policy name" />
+      <SelectInput name="type" label="Technology">
+        {availableDbTypes.map((item) => (
+          <MenuItem
+            data-testid={`add-db-cluster-button-${item.type}`}
+            disabled={!item.available}
+            key={item.type}
+            value={item.type}
+          >
+            {humanizeDbType(dbEngineToDbType(item.type))}
+          </MenuItem>
+        ))}
+      </SelectInput>
+    </FormDialog>
   );
 };
 
