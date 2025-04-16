@@ -1,4 +1,4 @@
-import { useMatch } from 'react-router-dom';
+import { Outlet, useMatch } from 'react-router-dom';
 import { SettingsTabs } from '../settings.types';
 import PoliciesList from './policies-list/policies-list';
 
@@ -8,7 +8,7 @@ const PodSchedulingPolicies = () => {
   );
   const isDetailsPage = !!routeMatch?.params.name;
 
-  return isDetailsPage ? <></> : <PoliciesList />;
+  return isDetailsPage ? <Outlet /> : <PoliciesList />;
 };
 
 export default PodSchedulingPolicies;
