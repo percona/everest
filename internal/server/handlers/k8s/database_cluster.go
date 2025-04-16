@@ -15,6 +15,8 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -35,17 +37,17 @@ const (
 )
 
 func (h *k8sHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	return h.kubeClient.CreateDatabaseCluster(ctx, db)
+	return h.kubeConnector.CreateDatabaseCluster(ctx, db)
 }
 
 func (h *k8sHandler) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
-	return h.kubeClient.ListDatabaseClusters(ctx, namespace)
+	return h.kubeConnector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
 }
 
 func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
 	cleanupStorage := pointer.Get(req.CleanupBackupStorage)
 
-	backups, err := h.kubeClient.ListDatabaseClusterBackups(ctx, namespace, metav1.ListOptions{})
+	backups, err := h.kubeConnector.ListDatabaseClusterBackups(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return err
 	}
@@ -73,23 +75,30 @@ func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name 
 			return errors.Join(err, errors.New("could not ensure foreground deletion"))
 		}
 	}
-	return h.kubeClient.DeleteDatabaseCluster(ctx, namespace, name)
+
+	delObj := &everestv1alpha1.DatabaseCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+	}
+	return h.kubeConnector.DeleteDatabaseCluster(ctx, delObj)
 }
 
 func (h *k8sHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	return h.kubeClient.UpdateDatabaseCluster(ctx, db)
+	return h.kubeConnector.UpdateDatabaseCluster(ctx, db)
 }
 
 func (h *k8sHandler) GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
-	return h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
+	return h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 }
 
 func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error) {
-	databaseCluster, err := h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
+	databaseCluster, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database cluster %s/%s: %w", namespace, name, err)
 	}
-	secret, err := h.kubeClient.GetSecret(ctx, namespace, databaseCluster.Spec.Engine.UserSecretsName)
+	secret, err := h.kubeConnector.GetSecret(ctx, types.NamespacedName{Namespace: namespace, Name: databaseCluster.Spec.Engine.UserSecretsName})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get secret %s/%s: %w", namespace, databaseCluster.Spec.Engine.UserSecretsName, err)
 	}
@@ -114,9 +123,7 @@ func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, namespac
 
 //nolint:funlen
 func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error) {
-	pods, err := h.kubeClient.GetPods(ctx, namespace, &metav1.LabelSelector{
-		MatchLabels: map[string]string{"app.kubernetes.io/instance": name},
-	})
+	pods, err := h.kubeConnector.ListPods(ctx, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels{"app.kubernetes.io/instance": name})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods for database cluster %s/%s: %w", namespace, name, err)
 	}
@@ -182,7 +189,7 @@ func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, namespace
 }
 
 func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error) {
-	databaseCluster, err := h.kubeClient.GetDatabaseCluster(ctx, namespace, name)
+	databaseCluster, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database cluster %s/%s: %w", namespace, name, err)
 	}
@@ -193,14 +200,10 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 		return response, nil
 	}
 
-	options := metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				"clusterName": name,
-			},
-		}),
-	}
-	backups, err := h.kubeClient.ListDatabaseClusterBackups(ctx, namespace, options)
+	backups, err := h.kubeConnector.ListDatabaseClusterBackups(ctx,
+		ctrlclient.InNamespace(namespace),
+		ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: name},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list database cluster backups: %w", err)
 	}
@@ -243,13 +246,13 @@ var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOf
 func (h *k8sHandler) ensureBackupStorageProtection(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
 	// We wrap this logic in a retry loop to reduce the chances of resource conflicts.
 	return backoff.Retry(func() error {
-		backup, err := h.kubeClient.GetDatabaseClusterBackup(ctx, backup.GetNamespace(), backup.GetName())
+		backup, err := h.kubeConnector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: backup.GetNamespace(), Name: backup.GetName()})
 		if err != nil {
 			return err
 		}
 		controllerutil.AddFinalizer(backup, everestv1alpha1.DBBackupStorageProtectionFinalizer)
 		controllerutil.AddFinalizer(backup, common.ForegroundDeletionFinalizer)
-		_, err = h.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
+		_, err = h.kubeConnector.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
@@ -259,12 +262,12 @@ func (h *k8sHandler) ensureBackupStorageProtection(ctx context.Context, backup *
 func (h *k8sHandler) ensureBackupForegroundDeletion(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
 	// We wrap this logic in a retry loop to reduce the chances of resource conflicts.
 	return backoff.Retry(func() error {
-		backup, err := h.kubeClient.GetDatabaseClusterBackup(ctx, backup.GetNamespace(), backup.GetName())
+		backup, err := h.kubeConnector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: backup.GetNamespace(), Name: backup.GetName()})
 		if err != nil {
 			return err
 		}
 		controllerutil.AddFinalizer(backup, common.ForegroundDeletionFinalizer)
-		_, err = h.kubeClient.UpdateDatabaseClusterBackup(ctx, backup)
+		_, err = h.kubeConnector.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
@@ -281,7 +284,7 @@ func (h *k8sHandler) connectionURL(ctx context.Context, db *everestv1alpha1.Data
 	case everestv1alpha1.DatabaseEnginePXC:
 		url = queryEscapedURL("jdbc:mysql", user, password, defaultHost)
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		hosts, err := psmdbHosts(ctx, db, h.kubeClient.GetPods)
+		hosts, err := psmdbHosts(ctx, db, h.kubeConnector.ListPods)
 		if err != nil {
 			h.log.Error(err)
 			return nil
@@ -303,7 +306,7 @@ func queryEscapedURL(scheme, user, password, hosts string) string {
 func psmdbHosts(
 	ctx context.Context,
 	db *everestv1alpha1.DatabaseCluster,
-	getPods func(ctx context.Context, namespace string, labelSelector *metav1.LabelSelector) (*corev1.PodList, error),
+	getPods func(ctx context.Context, opts ...ctrlclient.ListOption) (*corev1.PodList, error),
 ) (string, error) {
 	// for sharded clusters use a single entry point (mongos)
 	if db.Spec.Sharding != nil && db.Spec.Sharding.Enabled {
@@ -315,10 +318,13 @@ func psmdbHosts(
 	}
 
 	// for non-sharded internal clusters use a list of comma-separated host:port pairs from each node
-	pods, err := getPods(ctx, db.Namespace, &metav1.LabelSelector{MatchLabels: map[string]string{
-		"app.kubernetes.io/instance":  db.Name,
-		"app.kubernetes.io/component": "mongod",
-	}})
+	pods, err := getPods(ctx,
+		ctrlclient.InNamespace(db.GetNamespace()),
+		ctrlclient.MatchingLabels{
+			"app.kubernetes.io/instance":  db.GetName(),
+			"app.kubernetes.io/component": "mongod",
+		},
+	)
 	if err != nil {
 		return "", err
 	}
