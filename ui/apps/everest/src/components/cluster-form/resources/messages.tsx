@@ -21,4 +21,5 @@ export const Messages = {
   disabledDiskInputTooltip:
     'You can’t change the disk size as the selected storage class doesn’t support volume expansion.',
   descaling: 'Descaling is not allowed',
+  integerNumber: 'Disk size must be an integer number.',
 };

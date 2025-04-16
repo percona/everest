@@ -383,6 +383,7 @@ const ResourcesToggles = ({
             title={disableDiskInput ? Messages.disabledDiskInputTooltip : ''}
             placement="top"
             arrow
+            data-testid="disk-tooltip"
           >
             <Box>
               <ResourceInput
