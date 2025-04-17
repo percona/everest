@@ -22,12 +22,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"io/fs"
 	"net/http"
 	"path"
 	"slices"
+	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
@@ -60,14 +60,14 @@ type EverestServer struct {
 	config        *config.EverestConfig
 	l             *zap.SugaredLogger
 	echo          *echo.Echo
-	kubeClient    *kubernetes.Kubernetes
+	kubeConnector kubernetes.KubernetesConnector
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
 	handler       handlers.Handler
 	oidcProvider  *oidc.ProviderConfig
 }
 
-func getOIDCProviderConfig(ctx context.Context, kubeClient *kubernetes.Kubernetes) (*oidc.ProviderConfig, error) {
+func getOIDCProviderConfig(ctx context.Context, kubeClient kubernetes.KubernetesConnector) (*oidc.ProviderConfig, error) {
 	settings, err := kubeClient.GetEverestSettings(ctx)
 	if client.IgnoreNotFound(err) != nil {
 		return nil, errors.Join(err, errors.New("failed to get Everest settings"))
@@ -92,7 +92,7 @@ func getOIDCProviderConfig(ctx context.Context, kubeClient *kubernetes.Kubernete
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeClient, err := kubernetes.NewInCluster(l)
+	kubeConnector, err := kubernetes.NewInCluster(l)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
@@ -107,13 +107,13 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
 	sessMgr, err := session.New(
-		session.WithAccountManager(kubeClient.Accounts()),
+		session.WithAccountManager(kubeConnector.Accounts()),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
 
-	oidcProvider, err := getOIDCProviderConfig(ctx, kubeClient)
+	oidcProvider, err := getOIDCProviderConfig(ctx, kubeConnector)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get OIDC provider config"))
 	}
@@ -122,14 +122,14 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		config:        c,
 		l:             l,
 		echo:          echoServer,
-		kubeClient:    kubeClient,
+		kubeConnector: kubeConnector,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
 		oidcProvider:  oidcProvider,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
-	if err := e.setupHandlers(ctx, l, kubeClient, c.VersionServiceURL); err != nil {
+	if err := e.setupHandlers(ctx, l, kubeConnector, c.VersionServiceURL); err != nil {
 		return nil, err
 	}
 
@@ -219,12 +219,12 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 func (e *EverestServer) setupHandlers(
 	ctx context.Context,
 	log *zap.SugaredLogger,
-	kubeClient *kubernetes.Kubernetes,
+	kubeConnector kubernetes.KubernetesConnector,
 	vsURL string,
 ) error {
-	k8sH := k8shandler.New(log, kubeClient, vsURL)
-	valH := valhandler.New(log, kubeClient)
-	rbacH, err := rbachandler.New(ctx, log, kubeClient)
+	k8sH := k8shandler.New(log, kubeConnector, vsURL)
+	valH := valhandler.New(log, kubeConnector)
+	rbacH, err := rbachandler.New(ctx, log, kubeConnector)
 	if err != nil {
 		return errors.Join(err, errors.New("could not create rbac handler"))
 	}
