@@ -129,7 +129,6 @@ func (e *EverestServer) securityHeaders() echo.MiddlewareFunc {
 	}
 
 	opts := secure.Options{
-		ContentSecurityPolicy:         cspBuilder.MustBuild(),
 		ContentTypeNosniff:            true,
 		CrossOriginEmbedderPolicy:     "require-corp",
 		CrossOriginOpenerPolicy:       "same-origin",
@@ -147,6 +146,7 @@ func (e *EverestServer) securityHeaders() echo.MiddlewareFunc {
 
 		cspBuilder.Directives[cspbuilder.UpgradeInsecureRequests] = []string{}
 	}
+	opts.ContentSecurityPolicy = cspBuilder.MustBuild()
 
 	secureMiddleware := secure.New(opts)
 
