@@ -124,11 +124,7 @@ func (e *EverestServer) securityHeaders() echo.MiddlewareFunc {
 			cspbuilder.BaseURI:        {CSPSelf},
 			cspbuilder.ObjectSrc:      {CSPNone},
 			cspbuilder.FrameAncestors: {CSPNone},
-			// TODO (EVEREST-1180): Once we have native support for TLS, we
-			// should probably redirect all HTTP traffic to HTTPS and set the
-			// upgrade-insecure-requests directive.
-			// cspbuilder.UpgradeInsecureRequests: {},
-			cspbuilder.ConnectSrc: connectSrc,
+			cspbuilder.ConnectSrc:     connectSrc,
 		},
 	}
 
@@ -148,6 +144,8 @@ func (e *EverestServer) securityHeaders() echo.MiddlewareFunc {
 		opts.SSLRedirect = true
 		opts.STSIncludeSubdomains = true
 		opts.STSSeconds = 31536000
+
+		cspBuilder.Directives[cspbuilder.UpgradeInsecureRequests] = []string{}
 	}
 
 	secureMiddleware := secure.New(opts)
