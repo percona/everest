@@ -13,11 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ArrowOutward } from '@mui/icons-material';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useContext, useEffect } from 'react';
 import { AffinityPriority, AffinityType } from 'shared-types/affinity.types';
-import { Messages } from '../../../advanced-configuration/affinity/affinity-form.messages';
 import { AffinityFormDialogContext } from '../affinity-form-dialog-context/affinity-form-context';
 import { AffinityFormFields } from './affinity-form.types';
 import { useFormContext } from 'react-hook-form';
@@ -49,22 +47,10 @@ export const AffinityForm = () => {
     <>
       <Box sx={{ display: 'flex' }}>
         <Typography variant="body2">
-          {Messages.description}
-          <Button
-            data-testid="learn-more-button"
-            size="small"
-            sx={{ fontWeight: '600', paddingTop: 0 }}
-            onClick={() => {
-              window.open(
-                'https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity',
-                '_blank',
-                'noopener'
-              );
-            }}
-            endIcon={<ArrowOutward />}
-          >
-            {Messages.learnMore}
-          </Button>
+          Create a new affinity rule to control how your database workloads are
+          allocated across your system. Use this rule to enhance performance,
+          improve resource management, or ensure high availability based on your
+          deployment needs.
         </Typography>
       </Box>
       <RuleTypeSection

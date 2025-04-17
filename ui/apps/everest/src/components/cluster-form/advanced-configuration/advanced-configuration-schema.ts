@@ -17,7 +17,6 @@ import { z } from 'zod';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { IP_REGEX } from 'consts';
 import { Messages } from './messages';
-import { AffinityRule } from 'shared-types/affinity.types';
 
 export const advancedConfigurationsSchema = () =>
   z
@@ -39,7 +38,6 @@ export const advancedConfigurationsSchema = () =>
       ),
       [AdvancedConfigurationFields.engineParametersEnabled]: z.boolean(),
       [AdvancedConfigurationFields.engineParameters]: z.string().optional(),
-      [AdvancedConfigurationFields.affinityRules]: z.custom<AffinityRule[]>(),
     })
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {

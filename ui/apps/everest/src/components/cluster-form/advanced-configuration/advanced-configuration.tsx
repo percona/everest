@@ -26,38 +26,27 @@ import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Stack } from '@mui/material';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
-import { useCallback, useEffect } from 'react';
-import { DbWizardForm, DbWizardFormFields } from 'consts';
+import { useEffect } from 'react';
+import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
-import { AffinityRule } from 'shared-types/affinity.types';
 import { WizardMode } from 'shared-types/wizard.types';
 import RoundedBox from 'components/rounded-box';
-import { AffinityListView } from '../affinity/affinity-list-view/affinity-list.view';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
   loadingDefaultsForEdition?: boolean;
-  showAffinity?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
-  showAffinity = false,
   loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState } = useFormContext();
   const mode = useDatabasePageMode();
-  const [
-    externalAccess,
-    engineParametersEnabled,
-    formAffinityRules,
-    isShardingEnabled,
-  ] = watch([
+  const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
-    AdvancedConfigurationFields.affinityRules,
-    DbWizardForm.sharding,
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
@@ -81,32 +70,15 @@ export const AdvancedConfigurationForm = ({
       );
     }
   }, [clusterInfo]);
+
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
       setValue(fieldName, `${value}/32`);
     }
   };
 
-  const onRulesChange = useCallback(
-    (newRules: AffinityRule[]) => {
-      setValue(AdvancedConfigurationFields.affinityRules, newRules, {
-        shouldTouch: true,
-        shouldDirty: true,
-      });
-    },
-    [setValue]
-  );
-
   return (
     <>
-      {showAffinity && (
-        <AffinityListView
-          initialRules={formAffinityRules}
-          onRulesChange={onRulesChange}
-          dbType={dbType}
-          isShardingEnabled={isShardingEnabled}
-        />
-      )}
       <AdvancedCard
         title={Messages.cards.storage.title}
         description={Messages.cards.storage.description}

@@ -41,7 +41,6 @@ export const AdvancedConfigurations = ({
       >
         <AdvancedConfigurationForm
           dbType={dbType}
-          showAffinity
           loadingDefaultsForEdition={loadingDefaultsForEdition}
         />
       </FormGroup>

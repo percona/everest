@@ -20,12 +20,10 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
-import { affinityRulesToDbPayload } from 'utils/db';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   MIN_NUMBER_OF_SHARDS,
 } from 'components/cluster-form';
-import { AffinityComponent, AffinityRule } from 'shared-types/affinity.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
@@ -48,22 +46,12 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
-  const affinityRules = dbPayload.affinityRules || [];
-  const affinityRulesMap: Record<AffinityComponent, AffinityRule[]> = {
-    [AffinityComponent.Proxy]: [],
-    [AffinityComponent.DbNode]: [],
-    [AffinityComponent.ConfigServer]: [],
-  };
   const numberOfNodes = parseInt(
     dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
       ? dbPayload.customNrOfNodes || ''
       : dbPayload.numberOfNodes,
     10
   );
-
-  affinityRules.forEach((rule) => {
-    affinityRulesMap[rule.component].push(rule);
-  });
 
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -110,9 +98,6 @@ const formValuesToPayloadMapping = (
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
           : '',
-        affinity: affinityRulesToDbPayload(
-          affinityRulesMap[AffinityComponent.DbNode]
-        ),
       },
       monitoring: {
         ...(!!dbPayload.monitoring && {
@@ -127,8 +112,7 @@ const formValuesToPayloadMapping = (
         dbPayload.proxyCpu,
         dbPayload.proxyMemory,
         dbPayload.sharding,
-        dbPayload.sourceRanges || [],
-        affinityRulesToDbPayload(affinityRulesMap[AffinityComponent.Proxy])
+        dbPayload.sourceRanges || []
       ),
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
@@ -136,9 +120,6 @@ const formValuesToPayloadMapping = (
           shards: +(dbPayload.shardNr ?? MIN_NUMBER_OF_SHARDS),
           configServer: {
             replicas: +(dbPayload.shardConfigServers ?? 3),
-            affinity: affinityRulesToDbPayload(
-              affinityRulesMap[AffinityComponent.ConfigServer]
-            ),
           },
         },
       }),

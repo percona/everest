@@ -37,12 +37,6 @@ import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { DbVersion } from 'components/cluster-form/db-version';
 import { useDBEnginesForDbEngineTypes } from 'hooks/index.ts';
 import { useDatabasePageDefaultValues } from 'pages/database-form/useDatabaseFormDefaultValues.ts';
-import {
-  AffinityComponent,
-  AffinityRule,
-} from 'shared-types/affinity.types.ts';
-import { filterOutUnavailableAffinityRulesForMongo } from 'pages/database-form/database-form.utils.ts';
-import { generateDefaultAffinityRule } from 'utils/db.tsx';
 import { getDbWizardDefaultValues } from 'pages/database-form/database-form.utils';
 import { WizardMode } from 'shared-types/wizard.types.ts';
 
@@ -175,8 +169,6 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const onShardingToggleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const enabled = e.target.checked;
-      const rules: AffinityRule[] = getValues(DbWizardFormFields.affinityRules);
-      const { isDirty } = getFieldState(DbWizardFormFields.affinityRules);
 
       if (!enabled) {
         resetField(DbWizardFormFields.shardNr, {
@@ -185,16 +177,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
         resetField(DbWizardFormFields.shardConfigServers, {
           keepError: false,
         });
-      } else if (!isDirty) {
-        rules.push(generateDefaultAffinityRule(AffinityComponent.Proxy));
-        rules.push(generateDefaultAffinityRule(AffinityComponent.ConfigServer));
       }
-
-      const filteredRules = filterOutUnavailableAffinityRulesForMongo(
-        rules,
-        enabled
-      );
-      setValue(DbWizardFormFields.affinityRules, filteredRules);
     },
     [getFieldState, getValues, resetField, setValue]
   );

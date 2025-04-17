@@ -13,20 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ArrowOutward } from '@mui/icons-material';
 import { Messages } from '../../../cluster-overview.messages';
 import OverviewSection from '../../../overview-section';
 import { AdvancedConfigurationOverviewCardProps } from '../../card.types';
 import OverviewSectionRow from '../../../overview-section-row';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useState } from 'react';
 import { AdvancedConfigurationEditModal } from './edit-advanced-configuration';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { AdvancedConfigurationFormType } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
-import { IconButton } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { dbEngineToDbType } from '@percona/utils';
-import { areAffinityRulesDefault } from 'utils/db';
 import {
   changeDbClusterAdvancedConfig,
   shouldDbActionsBeBlocked,
@@ -36,7 +31,6 @@ export const AdvancedConfiguration = ({
   loading,
   externalAccess,
   parameters,
-  affinityRules,
   storageClass,
 }: AdvancedConfigurationOverviewCardProps) => {
   const {
@@ -46,17 +40,6 @@ export const AdvancedConfiguration = ({
   } = useContext(DbClusterContext);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const navigate = useNavigate();
-
-  const usingDefaultAffinityRules = useMemo(
-    () =>
-      areAffinityRulesDefault(
-        affinityRules,
-        dbEngineToDbType(dbCluster!.spec.engine.type),
-        dbCluster?.spec.sharding?.enabled
-      ),
-    [affinityRules, dbCluster]
-  );
 
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
@@ -115,31 +98,6 @@ export const AdvancedConfiguration = ({
         label={Messages.fields.externalAccess}
         contentString={
           externalAccess ? Messages.fields.enabled : Messages.fields.disabled
-        }
-      />
-      <OverviewSectionRow
-        label={Messages.fields.affinity}
-        contentString={
-          <>
-            {usingDefaultAffinityRules
-              ? Messages.titles.default
-              : Messages.titles.custom}
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={() =>
-                navigate(
-                  `/databases/${dbCluster?.metadata.namespace}/${dbCluster?.metadata.name}/components`
-                )
-              }
-              sx={{
-                position: 'absolute',
-                bottom: '-4px',
-              }}
-            >
-              <ArrowOutward />
-            </IconButton>
-          </>
         }
       />
       <OverviewSectionRow

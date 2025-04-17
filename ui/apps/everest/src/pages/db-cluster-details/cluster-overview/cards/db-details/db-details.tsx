@@ -40,7 +40,6 @@ export const DbDetails = ({
   monitoring,
   externalAccess,
   parameters,
-  affinityRules,
   storageClass,
 }: DatabaseDetailsOverviewCardProps) => {
   const { data: monitoringInstances } =
@@ -93,7 +92,6 @@ export const DbDetails = ({
         <AdvancedConfiguration
           externalAccess={externalAccess}
           parameters={parameters}
-          affinityRules={affinityRules}
           storageClass={storageClass}
         />
       </Stack>

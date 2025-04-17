@@ -17,7 +17,7 @@ import { DbType } from '@percona/types';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { AdvancedConfigurationFormType } from './advanced-configuration-schema';
-import { dbPayloadToAffinityRules, isProxy } from 'utils/db';
+import { isProxy } from 'utils/db';
 
 export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
   let dynamicText = '';
@@ -62,7 +62,5 @@ export const advancedConfigurationModalDefaultValues = (
     [AdvancedConfigurationFields.sourceRanges]: sourceRangesSource
       ? sourceRangesSource.map((sourceRange) => ({ sourceRange }))
       : [{ sourceRange: '' }],
-    [AdvancedConfigurationFields.affinityRules]:
-      dbPayloadToAffinityRules(dbCluster),
   };
 };

@@ -14,7 +14,6 @@
 // limitations under the License.
 
 import { DbType } from '@percona/types';
-import { AffinityRule } from 'shared-types/affinity.types';
 import { DbCluster } from 'shared-types/dbCluster.types';
 
 export type OverviewCardProps = {
@@ -44,7 +43,6 @@ export type ConnectionDetailsOverviewCardProps = {
 export type AdvancedConfigurationOverviewCardProps = {
   externalAccess: boolean;
   parameters: boolean;
-  affinityRules: AffinityRule[];
   storageClass: string;
 } & OverviewCardProps;
 

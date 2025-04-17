@@ -34,7 +34,6 @@ export const Messages = {
     status: 'Status',
     externalAccess: 'Ext.access',
     parameters: 'Parameters',
-    affinity: 'Affinity',
     enabled: 'Enabled',
     disabled: 'Disabled',
     noSchedules: '0 active schedules',

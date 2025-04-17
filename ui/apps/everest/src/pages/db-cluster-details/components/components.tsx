@@ -20,7 +20,7 @@ import { DATE_FORMAT } from 'consts';
 import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
 import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
 import { MRT_ColumnDef } from 'material-react-table';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { DBClusterComponent } from 'shared-types/components.types';
 import {
@@ -29,31 +29,15 @@ import {
   componentStatusToBaseStatus,
 } from './components.constants';
 import ExpandedRow from './expanded-row';
-import { AffinityListView } from 'components/cluster-form/affinity/affinity-list-view/affinity-list.view';
-import { AffinityComponent, AffinityRule } from 'shared-types/affinity.types';
-import { DbClusterContext } from '../dbCluster.context';
-import {
-  changeDbClusterAffinityRules,
-  dbPayloadToAffinityRules,
-} from 'utils/db';
-import { dbEngineToDbType } from '@percona/utils';
-import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 
 const Components = () => {
   const { dbClusterName, namespace = '' } = useParams();
-  const [updatingAffinityRules, setUpdatingAffinityRules] = useState(false);
 
   const { data: components = [], isLoading } = useDbClusterComponents(
     namespace,
     dbClusterName!
   );
-  const { dbCluster } = useContext(DbClusterContext);
-  const { mutate: update } = useUpdateDbClusterWithConflictRetry(dbCluster!, {
-    onSuccess: () => {
-      setUpdatingAffinityRules(false);
-    },
-    onError: () => setUpdatingAffinityRules(false),
-  });
+
   const columns = useMemo<MRT_ColumnDef<DBClusterComponent>[]>(() => {
     return [
       {
@@ -111,65 +95,34 @@ const Components = () => {
       },
     ];
   }, []);
-  const affinityRules = useMemo(
-    () => dbPayloadToAffinityRules(dbCluster!),
-    [dbCluster]
-  );
-
-  const onRulesChange = useCallback(
-    (newRules: AffinityRule[]) => {
-      const filteredRules: Record<AffinityComponent, AffinityRule[]> = {
-        [AffinityComponent.DbNode]: [],
-        [AffinityComponent.Proxy]: [],
-        [AffinityComponent.ConfigServer]: [],
-      };
-      setUpdatingAffinityRules(true);
-
-      newRules.forEach((rule) => {
-        filteredRules[rule.component].push(rule);
-      });
-      update(changeDbClusterAffinityRules(dbCluster!, newRules));
-    },
-    [dbCluster, update]
-  );
 
   return (
-    <>
-      <Table
-        getRowId={(row) => row.name}
-        initialState={{
-          sorting: [
-            {
-              id: 'status',
-              desc: true,
-            },
-          ],
-        }}
-        state={{ isLoading }}
-        tableName={`${dbClusterName}-components`}
-        columns={columns}
-        data={components}
-        noDataMessage={'No components'}
-        renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
-        muiTableDetailPanelProps={{
-          sx: {
-            padding: 0,
-            width: '100%',
-            '.MuiCollapse-root': {
-              width: '100%',
-            },
+    <Table
+      getRowId={(row) => row.name}
+      initialState={{
+        sorting: [
+          {
+            id: 'status',
+            desc: true,
           },
-        }}
-      />
-      <AffinityListView
-        rules={affinityRules}
-        onRulesChange={onRulesChange}
-        dbType={dbEngineToDbType(dbCluster!.spec.engine.type)}
-        isShardingEnabled={!!dbCluster!.spec.sharding?.enabled}
-        disableActions={updatingAffinityRules}
-        boxProps={{ sx: { mt: 3 } }}
-      />
-    </>
+        ],
+      }}
+      state={{ isLoading }}
+      tableName={`${dbClusterName}-components`}
+      columns={columns}
+      data={components}
+      noDataMessage={'No components'}
+      renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
+      muiTableDetailPanelProps={{
+        sx: {
+          padding: 0,
+          width: '100%',
+          '.MuiCollapse-root': {
+            width: '100%',
+          },
+        },
+      }}
+    />
   );
 };
 

@@ -31,12 +31,8 @@ import {
   NODES_DEFAULT_SIZES,
   PROXIES_DEFAULT_SIZES,
 } from 'components/cluster-form';
-import { getDefaultAffinityRules, isProxy } from 'utils/db.tsx';
+import { isProxy } from 'utils/db.tsx';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
-import {
-  AffinityComponent,
-  AffinityRule,
-} from 'shared-types/affinity.types.ts';
 import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
@@ -75,10 +71,6 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
     getDefaultNumberOfconfigServersByNumberOfNodes(
       parseInt(DEFAULT_NODES[DbType.Mongo], 10)
     ),
-  [DbWizardFormFields.affinityRules]: getDefaultAffinityRules(
-    DbType.Mongo,
-    false
-  ),
 });
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
@@ -200,11 +192,3 @@ export const DbClusterPayloadToFormValues = (
       dbCluster?.spec?.monitoring?.monitoringConfigName || '',
   };
 };
-
-export const filterOutUnavailableAffinityRulesForMongo = (
-  rules: AffinityRule[],
-  sharding: boolean
-) =>
-  rules.filter((rule) =>
-    sharding ? true : rule.component === AffinityComponent.DbNode
-  );
