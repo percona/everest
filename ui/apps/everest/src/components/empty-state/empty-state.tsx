@@ -35,6 +35,7 @@ type EmptyStateProps = {
   contentSlot?: React.ReactNode;
   buttonSlot?: React.ReactNode;
   buttonText?: string;
+  onButtonClick?: () => void;
 };
 
 const EmptyState = ({
@@ -42,6 +43,7 @@ const EmptyState = ({
   contentSlot,
   buttonSlot,
   buttonText,
+  onButtonClick = () => {},
 }: EmptyStateProps) => {
   return (
     <>
@@ -62,7 +64,7 @@ const EmptyState = ({
         {buttonSlot
           ? buttonSlot
           : showCreationButton && (
-              <Button variant="contained" onClick={() => {}}>
+              <Button variant="contained" onClick={onButtonClick}>
                 {buttonText || 'Create'}
               </Button>
             )}

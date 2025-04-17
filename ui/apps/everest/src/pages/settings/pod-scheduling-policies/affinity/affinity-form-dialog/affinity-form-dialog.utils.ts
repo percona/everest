@@ -7,7 +7,7 @@ import {
 import {
   AffinityFormData,
   AffinityFormFields,
-} from 'components/cluster-form/affinity/affinity-form-dialog/affinity-form/affinity-form.types';
+} from './affinity-form/affinity-form.types';
 
 export const affinityModalDefaultValues = (
   selectedRule?: AffinityRule

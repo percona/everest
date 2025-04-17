@@ -1,46 +1,43 @@
 import { FormDialog } from 'components/form-dialog';
 import { Messages } from './affinity-form-dialog.messages';
-import { AffinityFormDialogContext } from './affinity-form-dialog-context/affinity-form-context';
 import { affinityFormSchema } from './affinity-form/affinity-form.types';
-import { affinityModalDefaultValues } from './affinity-form-dialog.utils';
 import { AffinityForm } from './affinity-form/affinity-form';
-import { useContext, useMemo } from 'react';
+import { DbType } from '@percona/types';
+import { affinityModalDefaultValues } from './affinity-form-dialog.utils';
 
-export const AffinityFormDialog = () => {
-  const {
-    openAffinityModal,
-    handleClose,
-    handleSubmit,
-    affinityRules,
-    selectedAffinityUid,
-  } = useContext(AffinityFormDialogContext);
+type Props = {
+  isOpen: boolean;
+  dbType: DbType;
+  handleClose?: () => void;
+  handleSubmit?: () => void;
+};
 
-  const isEditing = selectedAffinityUid !== null;
+export const AffinityFormDialog = ({
+  isOpen,
+  dbType,
+  handleClose = () => {},
+  handleSubmit = () => {},
+}: Props) => {
+  const isEditing = false;
 
-  const selectedAffinityRule = useMemo(() => {
-    if (isEditing) {
-      return affinityRules.find(({ uid }) => uid === selectedAffinityUid);
-    }
-  }, [affinityRules, isEditing, selectedAffinityUid]);
-
-  const values = useMemo(() => {
-    return affinityModalDefaultValues(selectedAffinityRule);
-  }, [selectedAffinityRule]);
+  // const values = useMemo(() => {
+  //   return affinityModalDefaultValues(selectedAffinityRule);
+  // }, [selectedAffinityRule]);
 
   return (
     <FormDialog
       schema={affinityFormSchema}
-      isOpen={!!openAffinityModal}
+      isOpen={isOpen}
       closeModal={handleClose}
       headerMessage={isEditing ? Messages.editRule : Messages.addRule}
       onSubmit={handleSubmit}
       submitMessage={isEditing ? Messages.editRule : Messages.addRule}
-      {...(isEditing && { values })}
-      defaultValues={values}
+      // {...(isEditing && { values })}
+      defaultValues={affinityModalDefaultValues()}
       size="XXL"
       dataTestId={`affinity-form`}
     >
-      <AffinityForm />
+      <AffinityForm dbType={dbType} />
     </FormDialog>
   );
 };

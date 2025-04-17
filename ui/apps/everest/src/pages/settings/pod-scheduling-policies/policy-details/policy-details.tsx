@@ -14,10 +14,14 @@ import { usePodSchedulingPolicy } from 'hooks';
 import { NoMatch } from 'pages/404/NoMatch';
 import { Table } from '@percona/ui-lib';
 import EmptyState from 'components/empty-state';
+import { useState } from 'react';
+import { AffinityFormDialog } from '../affinity/affinity-form-dialog/affinity-form-dialog';
+import { DbType } from '@percona/types';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
   const { name: policyName = '' } = useParams();
+  const [openAffinityDialog, setOpenAffinityDialog] = useState(false);
 
   const {
     isLoading,
@@ -74,6 +78,7 @@ const PolicyDetails = () => {
         columns={[]}
         emptyState={
           <EmptyState
+            onButtonClick={() => setOpenAffinityDialog(true)}
             buttonText="Add rule"
             contentSlot={
               <Stack alignItems="center">
@@ -87,6 +92,11 @@ const PolicyDetails = () => {
             }
           />
         }
+      />
+      <AffinityFormDialog
+        isOpen={openAffinityDialog}
+        dbType={DbType.Postresql}
+        handleClose={() => setOpenAffinityDialog(false)}
       />
     </>
   );

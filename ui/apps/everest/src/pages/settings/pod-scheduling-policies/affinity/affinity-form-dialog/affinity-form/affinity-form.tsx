@@ -14,17 +14,18 @@
 // limitations under the License.
 
 import { Box, Typography } from '@mui/material';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { AffinityPriority, AffinityType } from 'shared-types/affinity.types';
-import { AffinityFormDialogContext } from '../affinity-form-dialog-context/affinity-form-context';
 import { AffinityFormFields } from './affinity-form.types';
 import { useFormContext } from 'react-hook-form';
 import { RuleDetailsSection, RuleTypeSection } from './sections';
+import { DbType } from '@percona/types';
 
-export const AffinityForm = () => {
-  const { dbType, isShardingEnabled, selectedAffinityUid } = useContext(
-    AffinityFormDialogContext
-  );
+type Props = {
+  dbType: DbType;
+};
+
+export const AffinityForm = ({ dbType }: Props) => {
   const { watch, resetField, trigger } = useFormContext();
   const [operator, key, priority, type] = watch([
     AffinityFormFields.operator,
@@ -55,8 +56,7 @@ export const AffinityForm = () => {
       </Box>
       <RuleTypeSection
         dbType={dbType}
-        isShardingEnabled={isShardingEnabled}
-        disableComponent={selectedAffinityUid !== null}
+        // disableComponent={selectedAffinityUid !== null}
         showWeight={priority === AffinityPriority.Preferred}
       />
       <RuleDetailsSection

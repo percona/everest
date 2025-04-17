@@ -5,31 +5,26 @@ import {
   TypeInput,
   WeightInput,
 } from '../fields';
-import { availableComponentsType } from 'components/cluster-form/affinity/affinity-utils';
+
 import { DbType } from '@percona/types';
+import { availableComponentsType } from '../../../affinity-utils';
 
 type Props = {
   dbType: DbType;
-  isShardingEnabled: boolean;
-  disableComponent: boolean;
+  disableComponent?: boolean;
   showWeight?: boolean;
 };
 
-const RuleTypeSection = ({
-  dbType,
-  isShardingEnabled,
-  disableComponent,
-  showWeight,
-}: Props) => (
+const RuleTypeSection = ({ dbType, disableComponent, showWeight }: Props) => (
   <>
     <Typography variant="sectionHeading" sx={{ marginTop: '20px' }}>
       Rule type
     </Typography>
     <Box sx={{ display: 'flex', gap: '20px' }}>
       <ComponentInput
-        disabled={disableComponent}
+        disabled={!!disableComponent}
         dbType={dbType}
-        components={availableComponentsType(dbType, isShardingEnabled)}
+        components={availableComponentsType(dbType)}
       />
       <TypeInput />
       <PriorityToggle />
