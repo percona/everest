@@ -3,14 +3,17 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Visibility from '@mui/icons-material/Visibility';
 import { Button, MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PoliciesDialog from './policies-dialog';
 import { MRT_ColumnDef } from 'material-react-table';
 import TableActionsMenu from 'components/table-actions-menu';
+import DeletePolicyDialog from './delete-policy-dialog';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const selectedPolicy = useRef<string>('');
   const navigate = useNavigate();
 
   const columns = useMemo<MRT_ColumnDef[]>(
@@ -26,6 +29,12 @@ const PoliciesList = () => {
     ],
     []
   );
+
+  const handleOnDeleteIconClick = (row: any) => {
+    selectedPolicy.current = row.original.name;
+    setDeleteDialogOpen(true);
+  };
+
   return (
     <>
       <Table
@@ -75,7 +84,10 @@ const PoliciesList = () => {
                   <Visibility sx={{ mr: 1 }} />
                   View details
                 </MenuItem>,
-                <MenuItem key="delete">
+                <MenuItem
+                  key="delete"
+                  onClick={() => handleOnDeleteIconClick(row)}
+                >
                   <DeleteIcon sx={{ mr: 1 }} />
                   Delete
                 </MenuItem>,
@@ -88,6 +100,11 @@ const PoliciesList = () => {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSubmit={({ name }) => navigate(name)}
+      />
+      <DeletePolicyDialog
+        isOpen={deleteDialogOpen}
+        policyName={selectedPolicy.current}
+        handleCloseDeleteDialog={() => setDeleteDialogOpen(false)}
       />
     </>
   );
