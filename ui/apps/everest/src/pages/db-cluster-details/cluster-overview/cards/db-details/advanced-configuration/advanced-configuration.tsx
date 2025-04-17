@@ -40,6 +40,7 @@ export const AdvancedConfiguration = ({
   } = useContext(DbClusterContext);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
     {

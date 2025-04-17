@@ -8,10 +8,11 @@ const TextInput = ({
   name,
   label,
   controllerProps,
-  textFieldProps,
+  textFieldProps = {},
   isRequired,
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
+  const { sx: textFieldPropsSx, ...restFieldProps } = textFieldProps;
   return (
     <Controller
       name={name}
@@ -20,9 +21,9 @@ const TextInput = ({
         <TextField
           label={label}
           {...field}
-          size={textFieldProps?.size || 'small'}
-          sx={{ mt: 3 }}
-          {...textFieldProps}
+          size={restFieldProps?.size || 'small'}
+          sx={{ mt: 3, ...textFieldPropsSx }}
+          {...restFieldProps}
           variant="outlined"
           required={isRequired}
           error={!!error}
@@ -34,9 +35,9 @@ const TextInput = ({
             onWheel: (e) => {
               (e.target as HTMLElement).blur();
             },
-            ...textFieldProps?.inputProps,
+            ...restFieldProps?.inputProps,
           }}
-          helperText={error ? error.message : textFieldProps?.helperText}
+          helperText={error ? error.message : restFieldProps?.helperText}
         />
       )}
       {...controllerProps}

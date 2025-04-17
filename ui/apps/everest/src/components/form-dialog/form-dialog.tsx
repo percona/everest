@@ -29,7 +29,7 @@ export const FormDialog = <T extends FieldValues>({
   values,
   onSubmit,
   cancelMessage = 'Cancel',
-  submitMessage,
+  submitMessage = 'Create',
   validationMode = 'onChange',
   subHead2,
   size = 'L',

@@ -31,6 +31,7 @@ import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
 import { WizardMode } from 'shared-types/wizard.types';
+import RoundedBox from 'components/rounded-box';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -46,7 +47,6 @@ export const AdvancedConfigurationForm = ({
   const [externalAccess, engineParametersEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
-    AdvancedConfigurationFields.storageClass,
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
@@ -70,6 +70,7 @@ export const AdvancedConfigurationForm = ({
       );
     }
   }, [clusterInfo]);
+
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
       setValue(fieldName, `${value}/32`);
@@ -102,45 +103,49 @@ export const AdvancedConfigurationForm = ({
           />
         }
       />
-      <SwitchInput
-        label={Messages.enableExternalAccess.title}
-        labelCaption={Messages.enableExternalAccess.caption}
-        name={AdvancedConfigurationFields.externalAccess}
-      />
-      {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
-          <TextArray
-            placeholder={Messages.sourceRangePlaceholder}
-            fieldName={AdvancedConfigurationFields.sourceRanges}
-            fieldKey="sourceRange"
-            label={Messages.sourceRange}
-            handleBlur={handleBlur}
-          />
-        </Stack>
-      )}
-      <SwitchInput
-        label={Messages.engineParameters.title}
-        labelCaption={Messages.engineParameters.caption}
-        name={AdvancedConfigurationFields.engineParametersEnabled}
-        formControlLabelProps={{
-          sx: {
-            mt: 1,
-          },
-        }}
-      />
-      {engineParametersEnabled && (
-        <TextInput
-          name={AdvancedConfigurationFields.engineParameters}
-          textFieldProps={{
-            placeholder: getParamsPlaceholderFromDbType(dbType),
-            multiline: true,
-            minRows: 3,
+      <RoundedBox>
+        <SwitchInput
+          label={Messages.enableExternalAccess.title}
+          labelCaption={Messages.enableExternalAccess.caption}
+          name={AdvancedConfigurationFields.externalAccess}
+        />
+        {externalAccess && (
+          <Stack sx={{ ml: 6 }}>
+            <TextArray
+              placeholder={Messages.sourceRangePlaceholder}
+              fieldName={AdvancedConfigurationFields.sourceRanges}
+              fieldKey="sourceRange"
+              label={Messages.sourceRange}
+              handleBlur={handleBlur}
+            />
+          </Stack>
+        )}
+      </RoundedBox>
+      <RoundedBox>
+        <SwitchInput
+          label={Messages.engineParameters.title}
+          labelCaption={Messages.engineParameters.caption}
+          name={AdvancedConfigurationFields.engineParametersEnabled}
+          formControlLabelProps={{
             sx: {
-              ml: 6,
+              mt: 1,
             },
           }}
         />
-      )}
+        {engineParametersEnabled && (
+          <TextInput
+            name={AdvancedConfigurationFields.engineParameters}
+            textFieldProps={{
+              placeholder: getParamsPlaceholderFromDbType(dbType),
+              multiline: true,
+              minRows: 3,
+              sx: {
+                ml: 6,
+              },
+            }}
+          />
+        )}
+      </RoundedBox>
     </>
   );
 };

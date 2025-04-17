@@ -31,7 +31,14 @@ export const AdvancedConfigurations = ({
   return (
     <>
       <StepHeader pageTitle={Messages.advanced} />
-      <FormGroup sx={{ mt: 3 }}>
+      <FormGroup
+        sx={{
+          mt: 3,
+          '& > .percona-rounded-box:not(:last-child)': {
+            mb: 2,
+          },
+        }}
+      >
         <AdvancedConfigurationForm
           dbType={dbType}
           loadingDefaultsForEdition={loadingDefaultsForEdition}

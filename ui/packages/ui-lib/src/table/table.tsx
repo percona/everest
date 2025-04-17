@@ -164,6 +164,7 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
       muiTopToolbarProps={{
         sx: {
           backgroundColor: 'transparent',
+          display: data.length > 0 ? 'grid' : 'none',
           '& > .MuiBox-root': {
             flexDirection: 'row-reverse',
             flexWrap: 'wrap',
