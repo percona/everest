@@ -40,6 +40,7 @@ import {
   ResourceSize,
   PROXIES_DEFAULT_SIZES,
   resourcesFormSchema,
+  ResourcesInputMap,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
@@ -104,6 +105,17 @@ const ResourceInput = ({
     numberOfUnits = 1;
   }
 
+  const endValue = (value * numberOfUnits).toString();
+
+  const getShortedValue = () => {
+    if (endValue.length <= 3) {
+      return ` = ${endValue} ${endSuffix}`;
+    }
+
+    const { sliceIndex, postfix } = ResourcesInputMap[endValue.length];
+    return ` = ${endValue.slice(0, sliceIndex)}.${endValue[sliceIndex]}${postfix + ' ' + endSuffix}`;
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
       <TextInput
@@ -118,6 +130,7 @@ const ResourceInput = ({
               <InputAdornment position="end">{endSuffix}</InputAdornment>
             ),
           },
+          sx: { minWidth: '140px' },
         }}
       />
       {isDesktop && numberOfUnits && (
@@ -127,13 +140,15 @@ const ResourceInput = ({
             sx={{ whiteSpace: 'nowrap' }}
             color={theme.palette.text.secondary}
           >{`x ${numberOfUnits} ${+numberOfUnits > 1 ? unitPlural : unit}`}</Typography>
-          {!!value && numberOfUnits && (
+          {!!endValue && (
             <Typography
               variant="body1"
               sx={{ whiteSpace: 'nowrap' }}
               color={theme.palette.text.secondary}
               data-testid={`${name}-resource-sum`}
-            >{` = ${(value * numberOfUnits).toFixed(2)} ${endSuffix}`}</Typography>
+            >
+              {getShortedValue()}
+            </Typography>
           )}
         </Box>
       )}
