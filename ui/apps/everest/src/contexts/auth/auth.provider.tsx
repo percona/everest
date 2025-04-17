@@ -102,6 +102,22 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
       await setLogoutStatus();
     }
 
+    const token = localStorage.getItem('everestToken');
+    try {
+      await api.delete('/session', { headers: { token: token } });
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorStatus = error.response?.status;
+        let errorMsg = 'Something went wrong';
+        if (errorStatus === 429) {
+          errorMsg =
+            "Looks like you've made too many attempts. Try again later.";
+        }
+        enqueueSnackbar(errorMsg, {
+          variant: 'error',
+        });
+      }
+    }
     setAuthStatus('loggedOut');
     localStorage.removeItem('everestToken');
     sessionStorage.clear();
@@ -134,8 +150,8 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   const silentlyRenewToken = useCallback(async () => {
     const newLoggedUser = await userManager.signinSilent();
 
-    if (newLoggedUser && newLoggedUser.id_token) {
-      localStorage.setItem('everestToken', newLoggedUser.id_token);
+    if (newLoggedUser && newLoggedUser.access_token) {
+      localStorage.setItem('everestToken', newLoggedUser.access_token);
     } else {
       setLogoutStatus();
     }
@@ -144,8 +160,8 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   useEffect(() => {
     if (isSsoEnabled) {
       userManager.events.addUserLoaded((user) => {
-        localStorage.setItem('everestToken', user.id_token || '');
-        const decoded = jwtDecode(user.id_token || '');
+        localStorage.setItem('everestToken', user.access_token || '');
+        const decoded = jwtDecode(user.access_token || '');
         setLoggedInStatus(decoded.sub || '');
       });
 
