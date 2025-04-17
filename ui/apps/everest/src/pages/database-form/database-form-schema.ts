@@ -8,7 +8,7 @@ import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialo
 import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema.ts';
-import { DbWizardMode } from './database-form.types.ts';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 const basicInfoSchema = () =>
   z
@@ -31,8 +31,8 @@ const basicInfoSchema = () =>
 
 const stepTwoSchema = (
   defaultValues: Record<string, unknown>,
-  mode: DbWizardMode
-) => resourcesFormSchema(defaultValues, mode === 'new');
+  mode: WizardMode
+) => resourcesFormSchema(defaultValues, mode === WizardMode.New, true, true);
 
 const backupsStepSchema = () =>
   z
@@ -88,7 +88,7 @@ const stepFiveSchema = () =>
 export const getDBWizardSchema = (
   activeStep: number,
   defaultValues: DbWizardType,
-  mode: DbWizardMode
+  mode: WizardMode
 ) => {
   const schema = [
     basicInfoSchema(),

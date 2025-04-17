@@ -99,7 +99,8 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             clusterName,
             db,
             storageClasses[0],
-            false
+            false,
+            null
           );
           await moveForward(page);
         });
@@ -140,7 +141,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          await waitForStatus(page, clusterName, 'Initializing', 30000);
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 

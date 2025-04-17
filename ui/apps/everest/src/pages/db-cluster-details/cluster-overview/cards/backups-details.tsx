@@ -34,11 +34,10 @@ import { MRT_ColumnDef } from 'material-react-table';
 import { DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { PitrEditModal } from './pitr-details/edit-pitr';
 import { dbEngineToDbType } from '@percona/utils';
 import { DbType } from '@percona/types';
-import { changeDbClusterPITR } from 'utils/db';
+import { changeDbClusterPITR, shouldDbActionsBeBlocked } from 'utils/db';
 
 export const BackupsDetails = ({
   dbClusterName,
@@ -50,11 +49,8 @@ export const BackupsDetails = ({
   showStorage = true,
 }: BackupsDetailsOverviewCardProps) => {
   const { canUpdateDb, dbCluster } = useContext(DbClusterContext);
-  const restoringOrDeleting = [
-    DbClusterStatus.restoring,
-    DbClusterStatus.deleting,
-  ].includes(dbCluster?.status?.status!);
-  const editable = canUpdateDb && !restoringOrDeleting;
+  const editable =
+    canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
   const dbType = dbEngineToDbType(dbCluster!.spec.engine.type);
   const backupsEnabled = (schedules || []).length > 0;

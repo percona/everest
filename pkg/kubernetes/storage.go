@@ -5,14 +5,25 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// GetPersistentVolumes returns list of persistent volumes.
-func (k *Kubernetes) GetPersistentVolumes(ctx context.Context) (*corev1.PersistentVolumeList, error) {
-	return k.client.GetPersistentVolumes(ctx)
+// ListPersistentVolumes returns list of persistent volumes that match the criteria.
+// This method returns a list of full objects (meta and spec).
+func (k *Kubernetes) ListPersistentVolumes(ctx context.Context, opts ...ctrlclient.ListOption) (*corev1.PersistentVolumeList, error) {
+	result := &corev1.PersistentVolumeList{}
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-// GetStorageClasses returns list of storage classes.
-func (k *Kubernetes) GetStorageClasses(ctx context.Context) (*storagev1.StorageClassList, error) {
-	return k.client.GetStorageClasses(ctx)
+// ListStorageClasses returns list of storage classes that match the criteria.
+// This method returns a list of full objects (meta and spec).
+func (k *Kubernetes) ListStorageClasses(ctx context.Context, opts ...ctrlclient.ListOption) (*storagev1.StorageClassList, error) {
+	result := &storagev1.StorageClassList{}
+	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
