@@ -1,9 +1,8 @@
-import { Box, Button, Divider, Stack, Typography } from '@mui/material';
-import { CodeCopyBlock, EmptyStateIcon } from '@percona/ui-lib';
-import { Messages } from './messages';
+import { Button, Stack, Typography } from '@mui/material';
+import { CodeCopyBlock } from '@percona/ui-lib';
 import { ArrowOutward } from '@mui/icons-material';
-import { centeredContainerStyle } from '../utils';
-import { ContactSupportLink } from '../ContactSupportLink';
+import EmptyState from 'components/empty-state';
+import { Messages } from './messages';
 
 const CommandInstructions = ({
   message,
@@ -18,18 +17,11 @@ const CommandInstructions = ({
   </Stack>
 );
 
-export const EmptyStateNamespaces = () => {
+const EmptyStateNamespaces = () => {
   return (
-    <>
-      <Box
-        sx={{
-          ...centeredContainerStyle,
-          marginTop: '50px',
-          gap: '10px',
-        }}
-      >
-        <EmptyStateIcon w="60px" h="60px" />
-        <Box sx={centeredContainerStyle}>
+    <EmptyState
+      contentSlot={
+        <>
           <Typography>{Messages.noNamespaces}</Typography>
           <Typography> {Messages.createToStart}</Typography>
           <CommandInstructions
@@ -40,7 +32,9 @@ export const EmptyStateNamespaces = () => {
             message="If you are using Helm, run the following command:"
             command="helm install everest percona/everest-db-namespace --create-namespace --namespace <NAMESPACE>"
           />
-        </Box>
+        </>
+      }
+      buttonSlot={
         <Button
           data-testid="learn-more-button"
           size="small"
@@ -57,9 +51,9 @@ export const EmptyStateNamespaces = () => {
         >
           {Messages.learnMore}
         </Button>
-        <Divider sx={{ width: '30%', marginTop: '10px' }} />
-        <ContactSupportLink msg={Messages.contactSupport} />
-      </Box>
-    </>
+      }
+    />
   );
 };
+
+export default EmptyStateNamespaces;

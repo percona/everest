@@ -16,10 +16,9 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, Menu, MenuItem, Skeleton } from '@mui/material';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
-import { Messages } from '../dbClusterView.messages';
-import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { dbEngineToDbType } from '@percona/utils';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { humanizeDbType } from 'utils/db';
 
@@ -86,7 +85,7 @@ export const CreateDbButton = () => {
           onClick={handleClick}
           endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
         >
-          {Messages.createDatabase}
+          Create database
         </Button>
       ) : (
         <Skeleton variant="rounded" sx={skeletonStyle} />

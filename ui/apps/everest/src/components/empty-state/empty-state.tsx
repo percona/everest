@@ -1,24 +1,54 @@
-import { Box, Button, Divider, Typography } from '@mui/material';
+import {
+  Button,
+  Divider,
+  Typography,
+  Link,
+  useTheme,
+  Stack,
+} from '@mui/material';
+import HelpIcon from '@mui/icons-material/Help';
 import { EmptyStateIcon } from '@percona/ui-lib';
-import { ContactSupportLink } from 'pages/common/empty-state/ContactSupportLink';
-import { centeredContainerStyle } from 'pages/common/empty-state/utils';
 
-type Props = {
+const ContactSupportLink = ({ msg }: { msg: string }) => {
+  const theme = useTheme();
+  return (
+    <Link target="_blank" rel="noopener" href="https://hubs.ly/Q02YRLsL0">
+      <Button
+        startIcon={
+          <HelpIcon
+            sx={{
+              color: theme.palette.background.paper,
+              backgroundColor: theme.palette.primary.main,
+              borderRadius: '10px',
+            }}
+          />
+        }
+      >
+        {msg}
+      </Button>
+    </Link>
+  );
+};
+
+type EmptyStateProps = {
   showCreationButton?: boolean;
   contentSlot?: React.ReactNode;
+  buttonSlot?: React.ReactNode;
   buttonText?: string;
 };
 
 const EmptyState = ({
   showCreationButton = true,
   contentSlot,
+  buttonSlot,
   buttonText,
-}: Props) => {
+}: EmptyStateProps) => {
   return (
     <>
-      <Box
+      <Stack
+        alignItems="center"
         sx={{
-          ...centeredContainerStyle,
+          flexDirection: 'column',
           backgroundColor: (theme) =>
             theme.palette.surfaces?.elevation0 || 'transparent',
           p: 3,
@@ -26,21 +56,20 @@ const EmptyState = ({
         }}
       >
         <EmptyStateIcon w="60px" h="60px" />
-        <Box
-          sx={{
-            ...centeredContainerStyle,
-          }}
-        >
+        <Stack alignItems="center">
           {contentSlot ? contentSlot : <Typography>No data to show</Typography>}
-        </Box>
-        {showCreationButton && (
-          <Button variant="contained" onClick={() => {}}>
-            {buttonText || 'Create'}
-          </Button>
-        )}
+        </Stack>
+        {buttonSlot
+          ? buttonSlot
+          : showCreationButton && (
+              <Button variant="contained" onClick={() => {}}>
+                {buttonText || 'Create'}
+              </Button>
+            )}
+
         <Divider sx={{ width: '30%', marginTop: '10px' }} />
         <ContactSupportLink msg="Contact Percona support" />
-      </Box>
+      </Stack>
     </>
   );
 };
