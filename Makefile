@@ -12,6 +12,8 @@ LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/versi
 										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
 default: help
 
+LOCALBIN := $(shell pwd)/bin
+
 help:                   ## Display this help message
 	@echo "Please use \`make <target>\` where <target> is one of:"
 	@grep '^[a-zA-Z]' $(MAKEFILE_LIST) | \
@@ -21,10 +23,10 @@ init:                   ## Install development tools
 	cd tools && go generate -x -tags=tools
 
 build:                ## Build binaries
-	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
+	go build -v $(LD_FLAGS_API) -o $(LOCALBIN)/everest ./cmd
 
 build-cli: init charts                ## Build binaries
-	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
+	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o $(LOCALBIN)/everestctl ./cmd/cli
 
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
 
@@ -42,20 +44,20 @@ release-cli:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl.exe ./cmd/cli
 
 build-debug:                ## Build binaries
-	CGO_ENABLED=0 go build -tags debug -v $(LD_FLAGS_API) -gcflags=all="-N -l" -o bin/everest ./cmd
+	CGO_ENABLED=0 go build -tags debug -v $(LD_FLAGS_API) -gcflags=all="-N -l" -o $(LOCALBIN)/everest ./cmd
 
 gen:                    ## Generate code
 	go generate ./...
 	make format
 
 format:                 ## Format source code
-	bin/gofumpt -l -w $(FILES)
-	bin/goimports -local github.com/percona/everest -l -w $(FILES)
-	bin/gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" $(FILES)
+	$(LOCALBIN)/gofumpt -l -w $(FILES)
+	$(LOCALBIN)/goimports -local github.com/percona/everest -l -w $(FILES)
+	$(LOCALBIN)/gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" $(FILES)
 
 check:                  ## Run checks/linters for the whole project
-	bin/go-consistent -pedantic ./...
-	LOG_LEVEL=error bin/golangci-lint run
+	$(LOCALBIN)/go-consistent -pedantic ./...
+	LOG_LEVEL=error $(LOCALBIN)/golangci-lint run
 
 test:                   ## Run tests
 	go test -race -timeout=10m ./...
@@ -67,15 +69,15 @@ test-crosscover:        ## Run tests and collect cross-package coverage informat
 	go test -race -timeout=10m -count=1 -coverprofile=crosscover.out -covermode=atomic -p=1 -coverpkg=./... ./...
 
 run: build            ## Run binary
-	bin/everest
+	$(LOCALBIN)/everest
 
 run-debug: build-debug    ## Run binary
 	TELEMETRY_URL=https://check-dev.percona.com \
 	TELEMETRY_INTERVAL=30m \
-	bin/everest
+	$(LOCALBIN)/everest
 
 run-cli-install: build-cli
-	bin/everestctl install --disable-telemetry --skip-wizard --namespaces=everest
+	$(LOCALBIN)/everestctl install --disable-telemetry --skip-wizard --namespaces=everest
 
 cert:                   ## Install dev TLS certificates
 	mkcert -install
@@ -89,7 +91,7 @@ k8s-macos: k8s          ## Create a local minikube cluster with MacOS specific c
 	kubectl delete storageclass standard
 	kubectl apply -f ./dev/kubevirt-hostpath-provisioner.yaml
 
-HELM := bin/helm
+HELM := $(LOCALBIN)/helm
 charts: $(HELM)         ## Install Helm charts
 	$(HELM) repo add prometheus-community https://prometheus-community.github.io/helm-charts
 	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
@@ -100,3 +102,13 @@ CHART_BRANCH ?= main
 update-dev-chart:
 	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@$(CHART_BRANCH)
 	go mod tidy
+
+$(LOCALBIN)/setup-envtest:
+	go build -o $(LOCALBIN)/setup-envtest sigs.k8s.io/controller-runtime/tools/setup-envtest
+
+SETUP_ENVTEST := $(LOCALBIN)/setup-envtest
+
+ENVTEST_K8S_VERSION ?= 1.31
+SETUP_ENVTEST_CMD = $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN)/envtest
+integration-tests:
+	ENVTEST_BIN_DIR=$$($(SETUP_ENVTEST_CMD) -p path) go test -tags debug -v ./integration/...

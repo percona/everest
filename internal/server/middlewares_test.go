@@ -29,6 +29,7 @@ import (
 func TestShouldAllowRequestDuringEngineUpgrade(t *testing.T) {
 	lockedAt := time.Now().Format(time.RFC3339)
 	t.Parallel()
+
 	testCases := []struct {
 		description string
 		objs        []ctrlclient.Object

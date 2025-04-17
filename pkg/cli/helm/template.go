@@ -32,6 +32,24 @@ func (t *RenderedTemplate) GetCRDs() ([]string, error) {
 	return t.filter("crds")
 }
 
+// GetRBACConfigMap returns the RBAC configmap in the RenderedTemplate.
+func (t *RenderedTemplate) GetRBACConfigMap() ([]string, error) {
+	objs, err := t.filter("rbac.configmap.yaml")
+	if err != nil {
+		return nil, err
+	}
+	return objs, nil
+}
+
+// GetAccountsSecret returns the accounts secret in the RenderedTemplate.
+func (t *RenderedTemplate) GetAccountsSecret() ([]string, error) {
+	objs, err := t.filter("accounts.secret.yaml")
+	if err != nil {
+		return nil, err
+	}
+	return objs, nil
+}
+
 // GetEverestCatalogNamespace gets the name of the namespace where the Everest catalog is installed.
 func (t *RenderedTemplate) GetEverestCatalogNamespace() (string, error) {
 	objs, err := t.filter("everest-catalogsource.yaml")

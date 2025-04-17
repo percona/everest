@@ -130,12 +130,20 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 	}, nil
 }
 
+func NewWithRESTConfig(restConfig *rest.Config, l *zap.SugaredLogger) (KubernetesConnector, error) {
+	return newConnectorWithRESTConfig(l, restConfig)
+}
+
 // NewInCluster creates a new kubernetes client using incluster authentication.
 func NewInCluster(l *zap.SugaredLogger) (KubernetesConnector, error) {
 	restConfig := ctrl.GetConfigOrDie()
 	restConfig.QPS = defaultQPSLimit
 	restConfig.Burst = defaultBurstLimit
 
+	return newConnectorWithRESTConfig(l, restConfig)
+}
+
+func newConnectorWithRESTConfig(l *zap.SugaredLogger, restConfig *rest.Config) (KubernetesConnector, error) {
 	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptions())
 	if err != nil {
 		return nil, err
@@ -183,6 +191,11 @@ func (k *Kubernetes) getDiscoveryClient() discovery.DiscoveryInterface {
 		}
 	})
 	return k.discoveryClient
+}
+
+// K8sClient returns the kubernetes client.
+func (k *Kubernetes) K8sClient() ctrlclient.Client {
+	return k.k8sClient
 }
 
 // Config returns *rest.Config.

@@ -20,6 +20,8 @@ import (
 	"crypto/aes"
 
 	"github.com/kelseyhightower/envconfig"
+
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 const (
@@ -54,6 +56,12 @@ type EverestConfig struct {
 	CreateSessionRateLimit int `default:"1" envconfig:"CREATE_SESSION_RATE_LIMIT"`
 	// VersionServiceURL contains the URL of the version service.
 	VersionServiceURL string `default:"https://check.percona.com" envconfig:"VERSION_SERVICE_URL"`
+	// KubeConnector is the Kubernetes connector.
+	KubeConnector kubernetes.KubernetesConnector
+	// JWTPrivateKeyPath is the path to the JWT private key file.
+	JWTPrivateKeyPath string `default:"/etc/jwt/id_rsa" envconfig:"JWT_PRIVATE_KEY_PATH"`
+	// Silent disables the logging of the server.
+	Silent bool `default:"false" envconfig:"SILENT"`
 }
 
 // ParseConfig parses env vars and fills EverestConfig.
