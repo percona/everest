@@ -41,6 +41,8 @@ const (
 type Manager struct {
 	accountManager accounts.Interface
 	signingKey     *rsa.PrivateKey
+
+	privateKeyPath string
 }
 
 // Option is a function that modifies a SessionManager.
@@ -52,7 +54,11 @@ func New(options ...Option) (*Manager, error) {
 	for _, opt := range options {
 		opt(m)
 	}
-	privKey, err := getPrivateKey()
+
+	if m.privateKeyPath == "" {
+		m.privateKeyPath = common.EverestJWTPrivateKeyFile
+	}
+	privKey, err := getPrivateKey(m.privateKeyPath)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get private key"))
 	}
@@ -64,6 +70,13 @@ func New(options ...Option) (*Manager, error) {
 func WithAccountManager(i accounts.Interface) Option {
 	return func(m *Manager) {
 		m.accountManager = i
+	}
+}
+
+// WithPrivateKeyPath sets the path to the private key file.
+func WithPrivateKeyPath(path string) Option {
+	return func(m *Manager) {
+		m.privateKeyPath = path
 	}
 }
 
@@ -119,8 +132,8 @@ func (mgr *Manager) Authenticate(ctx context.Context, username string, password 
 	return nil
 }
 
-func getPrivateKey() (*rsa.PrivateKey, error) {
-	pemString, err := os.ReadFile(common.EverestJWTPrivateKeyFile)
+func getPrivateKey(path string) (*rsa.PrivateKey, error) {
+	pemString, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to read JWT private key"))
 	}

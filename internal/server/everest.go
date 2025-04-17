@@ -89,23 +89,31 @@ func getOIDCProviderConfig(ctx context.Context, kubeClient kubernetes.Kubernetes
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeConnector, err := kubernetes.NewInCluster(l)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
+	var err error
+	if c.KubeConnector == nil {
+		c.KubeConnector, err = kubernetes.NewInCluster(l)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
+		}
 	}
 
 	echoServer := echo.New()
+	if c.Silent {
+		echoServer.Logger.SetOutput(io.Discard)
+	}
+
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
 	sessMgr, err := session.New(
-		session.WithAccountManager(kubeConnector.Accounts()),
+		session.WithAccountManager(c.KubeConnector.Accounts()),
+		session.WithPrivateKeyPath(c.JWTPrivateKeyPath),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
 	}
 
-	oidcProvider, err := getOIDCProviderConfig(ctx, kubeConnector)
+	oidcProvider, err := getOIDCProviderConfig(ctx, c.KubeConnector)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to get OIDC provider config"))
 	}
@@ -114,14 +122,14 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		config:        c,
 		l:             l,
 		echo:          echoServer,
-		kubeConnector: kubeConnector,
+		kubeConnector: c.KubeConnector,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
 		oidcProvider:  oidcProvider,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
 
-	if err := e.setupHandlers(ctx, l, kubeConnector, c.VersionServiceURL); err != nil {
+	if err := e.setupHandlers(ctx, l, c.KubeConnector, c.VersionServiceURL); err != nil {
 		return nil, err
 	}
 
