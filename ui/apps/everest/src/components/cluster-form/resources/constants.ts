@@ -4,6 +4,7 @@ import { Resources } from 'shared-types/dbCluster.types';
 import { DbWizardFormFields } from 'consts';
 import { cpuParser, memoryParser } from 'utils/k8ResourceParser';
 import { Messages } from './messages';
+import { MapItem } from './resources.types';
 
 const resourceToNumber = (minimum = 0) =>
   z.union([z.string().min(1), z.number()]).pipe(
@@ -390,6 +391,18 @@ export const resourcesFormSchema = (
       }
     }
   );
+};
+
+export const ResourcesInputMap: Record<number, MapItem> = {
+  4: { postfix: 'K', sliceIndex: 1 },
+  5: { postfix: 'K', sliceIndex: 2 },
+  6: { postfix: 'K', sliceIndex: 3 },
+  7: { postfix: 'M', sliceIndex: 1 },
+  8: { postfix: 'M', sliceIndex: 2 },
+  9: { postfix: 'M', sliceIndex: 3 },
+  10: { postfix: 'B', sliceIndex: 1 },
+  11: { postfix: 'B', sliceIndex: 2 },
+  12: { postfix: 'B', sliceIndex: 3 },
 };
 
 export const CUSTOM_NR_UNITS_INPUT_VALUE = 'custom-units-nr';
