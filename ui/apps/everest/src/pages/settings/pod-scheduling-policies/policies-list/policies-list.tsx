@@ -1,20 +1,52 @@
 import Add from '@mui/icons-material/Add';
-import { Button } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Visibility from '@mui/icons-material/Visibility';
+import { Button, MenuItem } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PoliciesDialog from './policies-dialog';
+import { MRT_ColumnDef } from 'material-react-table';
+import TableActionsMenu from 'components/table-actions-menu';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
+
+  const columns = useMemo<MRT_ColumnDef[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Name',
+      },
+      {
+        accessorKey: 'technology',
+        header: 'Technology',
+      },
+    ],
+    []
+  );
   return (
     <>
       <Table
         tableName="pod-scheduling-policies"
         noDataMessage="No pod scheduling policies added"
-        data={[]}
-        columns={[]}
+        data={[
+          {
+            name: 'default-mysql',
+            technology: 'MySQL',
+          },
+          {
+            name: 'default-postgresql',
+            technology: 'PostgreSQL',
+          },
+          {
+            name: 'default-mongodb',
+            technology: 'MongoDB',
+          },
+        ]}
+        columns={columns}
+        enableRowActions
         renderTopToolbarCustomActions={() => (
           // TODO check if user has permission to create
           <Button
@@ -28,6 +60,29 @@ const PoliciesList = () => {
             Create policy
           </Button>
         )}
+        renderRowActions={({ row }) => {
+          return (
+            <TableActionsMenu
+              menuItems={[
+                <MenuItem
+                  key="view"
+                  onClick={() =>
+                    navigate(
+                      `/settings/pod-scheduling-policies/${row.original.name}`
+                    )
+                  }
+                >
+                  <Visibility sx={{ mr: 1 }} />
+                  View details
+                </MenuItem>,
+                <MenuItem key="delete">
+                  <DeleteIcon sx={{ mr: 1 }} />
+                  Delete
+                </MenuItem>,
+              ]}
+            />
+          );
+        }}
       />
       <PoliciesDialog
         open={dialogOpen}
