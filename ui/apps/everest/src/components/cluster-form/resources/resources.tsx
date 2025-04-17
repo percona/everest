@@ -108,12 +108,24 @@ const ResourceInput = ({
   const endValue = (value * numberOfUnits).toString();
 
   const getShortedValue = () => {
-    if (endValue.length <= 3) {
-      return ` = ${endValue} ${endSuffix}`;
+    let initialValue = endValue;
+    let length = initialValue.length;
+    const isMoreThanThousand = +initialValue > 999;
+
+    if (initialValue.includes('.')) {
+      initialValue = (+initialValue).toFixed(1);
+      length = initialValue.length;
+
+      if (isMoreThanThousand) {
+        length = initialValue.length - 2;
+      }
     }
 
-    const { sliceIndex, postfix } = ResourcesInputMap[endValue.length];
-    return ` = ${endValue.slice(0, sliceIndex)}.${endValue[sliceIndex]}${postfix + ' ' + endSuffix}`;
+    if (isMoreThanThousand) {
+      const { sliceIndex, postfix } = ResourcesInputMap[length];
+      return ` = ${initialValue.slice(0, sliceIndex)}.${initialValue[sliceIndex]}${postfix + ' ' + endSuffix}`;
+    }
+    return ` = ${initialValue} ${endSuffix}`;
   };
 
   return (
