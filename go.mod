@@ -25,6 +25,7 @@ require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/getkin/kin-openapi v0.131.0
 	github.com/go-logr/zapr v1.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
@@ -117,7 +118,6 @@ require (
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/flosch/pongo2/v6 v6.0.0 // indirect
-	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-errors/errors v1.5.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
