@@ -11,7 +11,7 @@ require (
 	github.com/vburenin/ifacemaker v1.3.0
 	github.com/vektra/mockery/v2 v2.53.3
 	golang.org/x/tools v0.31.0
-	helm.sh/helm/v3 v3.17.2
+	helm.sh/helm/v3 v3.17.3
 	mvdan.cc/gofumpt v0.7.0
 )
 

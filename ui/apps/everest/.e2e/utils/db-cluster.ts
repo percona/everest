@@ -20,9 +20,8 @@ import { getClusterDetailedInfo } from './storage-class';
 import { getTokenFromLocalStorage } from './localStorage';
 import { getNamespacesFn } from './namespaces';
 import { DbType } from '@percona/types';
-import { checkError, getDbOperatorVersionK8s } from '@e2e/utils/generic';
+import { checkError } from '@e2e/utils/generic';
 import { getVersionServiceDBVersions } from '@e2e/utils/version-service';
-import { Operator } from '@e2e/upgrade/types';
 
 export const createDbClusterFn = async (
   request: APIRequestContext,
@@ -89,6 +88,9 @@ export const createDbClusterFn = async (
       }),
       // TODO return monitoring to tests
       monitoring: {
+        ...(customOptions?.monitoringConfigName && {
+          monitoringConfigName: customOptions?.monitoringConfigName,
+        }),
         // ...(!!dbPayload.monitoring && {
         //     monitoringConfigName:
         //         typeof dbPayload.monitoringInstance === 'string'
@@ -220,7 +222,7 @@ export const getDbAvailableUpgradeVersionK8S = async (
       : dbSplitVersion[0] + '.' + dbSplitVersion[1];
 
   try {
-    const versions = getVersionServiceDBVersions(
+    const versions = await getVersionServiceDBVersions(
       dbType,
       crVersion,
       request,

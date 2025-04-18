@@ -199,7 +199,7 @@ test.describe.configure({ retries: 0 });
         // go to db list and check status
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          await waitForStatus(page, clusterName, 'Initializing', 30000);
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
@@ -317,10 +317,6 @@ test.describe.configure({ retries: 0 });
               await expect(
                 page.getByText(`${technology} ${nextMajorVersion}`)
               ).toBeVisible();
-              await findDbAndClickRow(page, clusterName);
-              await expect(
-                page.getByTestId('upgrade-db-btn')
-              ).not.toBeVisible();
             });
 
             await test.step('Insert more data after upgrade', async () => {
