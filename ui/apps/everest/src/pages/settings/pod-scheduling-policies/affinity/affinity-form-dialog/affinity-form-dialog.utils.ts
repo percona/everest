@@ -1,5 +1,6 @@
 import {
   AffinityComponent,
+  AffinityOperator,
   AffinityPriority,
   AffinityRule,
   AffinityType,
@@ -30,7 +31,7 @@ export const affinityModalDefaultValues = (
       [AffinityFormFields.weight]: parseInt(weight?.toString() || '1', 10),
       [AffinityFormFields.topologyKey]: topologyKey || '',
       [AffinityFormFields.key]: key || '',
-      [AffinityFormFields.operator]: operator || '',
+      [AffinityFormFields.operator]: operator || ('' as AffinityOperator),
       [AffinityFormFields.values]: values,
     };
   }
@@ -41,7 +42,7 @@ export const affinityModalDefaultValues = (
     [AffinityFormFields.weight]: 1,
     [AffinityFormFields.topologyKey]: 'kubernetes.io/hostname',
     [AffinityFormFields.key]: '',
-    [AffinityFormFields.operator]: '',
+    [AffinityFormFields.operator]: '' as AffinityOperator,
     [AffinityFormFields.values]: '',
   };
 };

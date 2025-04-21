@@ -10,20 +10,23 @@ import ArrowBack from '@mui/icons-material/ArrowBack';
 import Edit from '@mui/icons-material/Edit';
 import { SettingsTabs } from 'pages/settings/settings.types';
 import { useNavigate, useParams } from 'react-router-dom';
-import { usePodSchedulingPolicy } from 'hooks';
+import { usePodSchedulingPolicy, useUpdatePodSchedulingPolicy } from 'hooks';
 import { NoMatch } from 'pages/404/NoMatch';
 import { Table } from '@percona/ui-lib';
 import EmptyState from 'components/empty-state';
 import { useState } from 'react';
 import { AffinityFormDialog } from '../affinity/affinity-form-dialog/affinity-form-dialog';
-import { DbType } from '@percona/types';
-import { humanizeDbType } from 'utils/db';
+import { humanizeDbType, insertAffinityRuleToExistingPolicy } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
+import { AffinityRule } from 'shared-types/affinity.types';
+import { useQueryClient } from '@tanstack/react-query';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
   const { name: policyName = '' } = useParams();
   const [openAffinityDialog, setOpenAffinityDialog] = useState(false);
+  const { mutate: updatePolicy } = useUpdatePodSchedulingPolicy();
+  const queryClient = useQueryClient();
 
   const {
     isLoading,
@@ -44,9 +47,21 @@ const PolicyDetails = () => {
     );
   }
 
-  if (isError) {
+  if (isError || !policy) {
     return <NoMatch />;
   }
+
+  const handleFormSubmit = (rule: AffinityRule) => {
+    insertAffinityRuleToExistingPolicy(policy, rule);
+    updatePolicy(policy, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['pod-scheduling-policy', policyName],
+        });
+        setOpenAffinityDialog(false);
+      },
+    });
+  };
 
   return (
     <>
@@ -102,8 +117,9 @@ const PolicyDetails = () => {
       />
       <AffinityFormDialog
         isOpen={openAffinityDialog}
-        dbType={DbType.Postresql}
+        dbType={dbEngineToDbType(policy.spec.engineType)}
         handleClose={() => setOpenAffinityDialog(false)}
+        handleSubmit={handleFormSubmit}
       />
     </>
   );

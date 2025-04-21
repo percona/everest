@@ -22,6 +22,7 @@ import {
   PodAffinity,
   PodAffinityTerm,
   PodAntiAffinity,
+  PodSchedulingPolicy,
   PreferredNodeSchedulingTerm,
   PreferredPodSchedulingTerm,
   RequiredNodeSchedulingTerm,
@@ -286,6 +287,90 @@ export const affinityRulesToDbPayload = (
   };
 
   return finalObject;
+};
+
+export const insertAffinityRuleToExistingPolicy = (
+  policy: PodSchedulingPolicy,
+  rule: AffinityRule
+): PodSchedulingPolicy => {
+  const dbType = policy.spec.engineType;
+  const formattedRule = affinityRulesToDbPayload([rule]);
+
+  if (!policy.spec.affinityConfig) {
+    policy.spec.affinityConfig = {};
+  }
+
+  if (!policy.spec.affinityConfig[dbType]) {
+    policy.spec.affinityConfig[dbType] = {};
+  }
+
+  if (!policy.spec.affinityConfig[dbType][rule.component]) {
+    policy.spec.affinityConfig[dbType][rule.component] = {};
+  }
+
+  if (rule.type === AffinityType.NodeAffinity) {
+    if (!policy.spec.affinityConfig[dbType][rule.component]?.nodeAffinity) {
+      policy.spec.affinityConfig[dbType][rule.component]!.nodeAffinity = {
+        requiredDuringSchedulingIgnoredDuringExecution: {
+          nodeSelectorTerms: [],
+        },
+        preferredDuringSchedulingIgnoredDuringExecution: [],
+      };
+    }
+
+    if (rule.priority === AffinityPriority.Required) {
+      policy.spec.affinityConfig[dbType][
+        rule.component
+      ]!.nodeAffinity!.requiredDuringSchedulingIgnoredDuringExecution!.nodeSelectorTerms =
+        [
+          ...policy.spec.affinityConfig[dbType][rule.component]!.nodeAffinity!
+            .requiredDuringSchedulingIgnoredDuringExecution!.nodeSelectorTerms,
+          ...(formattedRule.nodeAffinity
+            ?.requiredDuringSchedulingIgnoredDuringExecution
+            ?.nodeSelectorTerms || []),
+        ];
+    } else {
+      policy.spec.affinityConfig[dbType][
+        rule.component
+      ]!.nodeAffinity!.preferredDuringSchedulingIgnoredDuringExecution = [
+        ...(policy.spec.affinityConfig[dbType][rule.component]!.nodeAffinity!
+          .preferredDuringSchedulingIgnoredDuringExecution || []),
+        ...(formattedRule.nodeAffinity
+          ?.preferredDuringSchedulingIgnoredDuringExecution || []),
+      ];
+    }
+  } else {
+    const affinityType = rule.type;
+
+    if (!policy.spec.affinityConfig[dbType][rule.component]![affinityType]) {
+      policy.spec.affinityConfig[dbType][rule.component]![affinityType] = {
+        preferredDuringSchedulingIgnoredDuringExecution: [],
+        requiredDuringSchedulingIgnoredDuringExecution: [],
+      };
+    }
+
+    if (rule.priority === AffinityPriority.Required) {
+      policy.spec.affinityConfig[dbType][rule.component]![
+        affinityType
+      ]!.requiredDuringSchedulingIgnoredDuringExecution = [
+        ...(policy.spec.affinityConfig[dbType][rule.component]![affinityType]!
+          .requiredDuringSchedulingIgnoredDuringExecution || []),
+        ...(formattedRule[affinityType]
+          ?.requiredDuringSchedulingIgnoredDuringExecution || []),
+      ];
+    } else {
+      policy.spec.affinityConfig[dbType][rule.component]![
+        affinityType
+      ]!.preferredDuringSchedulingIgnoredDuringExecution = [
+        ...(policy.spec.affinityConfig[dbType][rule.component]![affinityType]!
+          .preferredDuringSchedulingIgnoredDuringExecution || []),
+        ...(formattedRule[affinityType]
+          ?.preferredDuringSchedulingIgnoredDuringExecution || []),
+      ];
+    }
+  }
+
+  return policy;
 };
 
 export const generateDefaultAffinityRule = (

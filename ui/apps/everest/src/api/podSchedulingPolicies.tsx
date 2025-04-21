@@ -23,3 +23,11 @@ export const createPodSchedulingPolicy = async (
   });
   return response;
 };
+
+export const updatePodSchedulingPolicy = async (
+  name: string,
+  policy: PodSchedulingPolicy
+) => {
+  const response = await api.put(`pod-scheduling-policies/${name}`, policy);
+  return response;
+};

@@ -20,7 +20,7 @@ export type AffinityRules = [
 ];
 
 export enum AffinityComponent {
-  DbNode = 'dbNode',
+  DbNode = 'engine',
   Proxy = 'proxy',
   ConfigServer = 'configServer',
 }
@@ -123,7 +123,7 @@ export type PodSchedulingPolicy = {
     engineType: DbEngineType;
     affinityConfig: {
       [key in DbEngineType]?: {
-        [key in AffinityComponentType]: Affinity;
+        [key in AffinityComponent]?: Affinity;
       };
     };
   };

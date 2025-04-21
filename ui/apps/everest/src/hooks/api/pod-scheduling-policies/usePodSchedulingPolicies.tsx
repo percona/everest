@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   createPodSchedulingPolicy,
   getPodSchedulingPolicy,
+  updatePodSchedulingPolicy,
 } from 'api/podSchedulingPolicies';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
@@ -29,3 +30,19 @@ export const useCreatePodSchedulingPolicy = () => {
       createPodSchedulingPolicy(args.policyName, args.dbType),
   });
 };
+
+export const useUpdatePodSchedulingPolicy = () => {
+  return useMutation({
+    mutationKey: ['update-pod-scheduling-policy'],
+    mutationFn: (policy: PodSchedulingPolicy) =>
+      updatePodSchedulingPolicy(policy.metadata.name, policy),
+  });
+};
+
+// export const useDeletePodSchedulingPolicy = () => {
+//   return useMutation({
+//     mutationKey: ['delete-pod-scheduling-policy'],
+//     mutationFn: (args: { policyName: string }) =>
+//       createPodSchedulingPolicy(args.policyName, 'mysql'),
+//   });
+// };

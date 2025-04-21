@@ -4,12 +4,13 @@ import { affinityFormSchema } from './affinity-form/affinity-form.types';
 import { AffinityForm } from './affinity-form/affinity-form';
 import { DbType } from '@percona/types';
 import { affinityModalDefaultValues } from './affinity-form-dialog.utils';
+import { AffinityRule } from 'shared-types/affinity.types';
 
 type Props = {
   isOpen: boolean;
   dbType: DbType;
   handleClose?: () => void;
-  handleSubmit?: () => void;
+  handleSubmit?: (values: AffinityRule) => void;
 };
 
 export const AffinityFormDialog = ({
