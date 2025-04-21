@@ -91,7 +91,7 @@ func getOIDCProviderConfig(ctx context.Context, kubeClient kubernetes.Kubernetes
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeConnector, err := kubernetes.NewInCluster(l)
+	kubeConnector, err := kubernetes.NewInClusterWithCache(l, ctx)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
@@ -112,7 +112,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed to get OIDC provider config"))
 	}
 
-	blockList, err := session.NewBlocklist(ctx, kubeClient, l)
+	blockList, err := session.NewBlocklist(ctx, kubeConnector, l)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
 	}

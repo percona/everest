@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -37,7 +38,7 @@ type blocklist struct {
 // NewBlocklist creates a new block list
 func NewBlocklist(ctx context.Context, kubeClient kubernetes.KubernetesConnector, logger *zap.SugaredLogger) (Blocklist, error) {
 	// read the existing blocklist token or create it
-	secret, err := kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestBlocklistSecretName)
+	secret, err := kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
 	if err != nil {
 		if !k8serrors.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to get secret: %w", err)
@@ -67,7 +68,7 @@ func (b *blocklist) Block(ctx context.Context) error {
 	}
 
 	for attempts := 0; attempts < maxRetries; attempts++ {
-		secret, err := b.kubeClient.GetSecret(ctx, common.SystemNamespace, common.EverestBlocklistSecretName)
+		secret, err := b.kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
 		if err != nil {
 			b.l.Errorf("failed to get %s secret: %v", common.EverestBlocklistSecretName, err)
 			return err
