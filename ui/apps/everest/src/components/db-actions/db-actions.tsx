@@ -30,7 +30,8 @@ import { useDbActions } from 'hooks';
 import { shouldDbActionsBeBlocked } from 'utils/db';
 
 export const DbActions = ({
-  isDetailView = false,
+  isDbDetailsView = false,
+  isStatusDetailView = false,
   dbCluster,
 }: DbActionsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -49,6 +50,7 @@ export const DbActions = ({
     handleCloseDetailsDialog,
     handleDbSuspendOrResumed,
     handleRestoreDbCluster,
+    handleOpenDbDetails,
     deleteMutation,
   } = useDbActions(dbCluster);
   const open = Boolean(anchorEl);
@@ -127,7 +129,7 @@ export const DbActions = ({
   return (
     <>
       <Box>
-        {isDetailView ? (
+        {isStatusDetailView ? (
           <Button
             id="actions-button"
             data-testid="actions-button"
@@ -163,6 +165,18 @@ export const DbActions = ({
             'aria-labelledby': 'row-actions-button',
           }}
         >
+          {isDbDetailsView && (
+            <MenuItem
+              data-testid={`${dbClusterName}-details`}
+              key={0}
+              onClick={() => {
+                handleOpenDbDetails();
+              }}
+              sx={sx}
+            >
+              <VisibilityOutlinedIcon /> {Messages.menuItems.dbDetails}
+            </MenuItem>
+          )}
           {canUpdate && (
             <MenuItem
               disabled={actionsBlocked}
@@ -203,7 +217,7 @@ export const DbActions = ({
               <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
             </MenuItem>
           )}
-          {isDetailView && dbCluster?.status?.details && (
+          {isStatusDetailView && dbCluster?.status?.details && (
             <MenuItem
               key={6}
               sx={sx}

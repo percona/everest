@@ -192,6 +192,10 @@ export const useDbActions = (dbCluster: DbCluster) => {
     setOpenDetailsDialog(false);
   };
 
+  const handleOpenDbDetails = () => {
+    setOpenDetailsDialog(true);
+  };
+
   return {
     openDeleteDialog,
     openRestoreDialog,
@@ -201,6 +205,7 @@ export const useDbActions = (dbCluster: DbCluster) => {
     handleDeleteDbCluster,
     handleConfirmDelete,
     handleOpenDbDetailsDialog,
+    handleOpenDbDetails,
     handleCloseDeleteDialog,
     handleCloseDetailsDialog,
     isPaused,
