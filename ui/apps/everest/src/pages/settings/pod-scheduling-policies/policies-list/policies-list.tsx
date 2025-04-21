@@ -9,12 +9,15 @@ import PoliciesDialog from './policies-dialog';
 import { MRT_ColumnDef } from 'material-react-table';
 import TableActionsMenu from 'components/table-actions-menu';
 import DeletePolicyDialog from './delete-policy-dialog';
+import { DbEngineType } from '@percona/types';
+import { useCreatePodSchedulingPolicy } from 'hooks';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const selectedPolicy = useRef<string>('');
   const navigate = useNavigate();
+  const { mutate: createPolicy } = useCreatePodSchedulingPolicy();
 
   const columns = useMemo<MRT_ColumnDef[]>(
     () => [
@@ -30,10 +33,23 @@ const PoliciesList = () => {
     []
   );
 
-  const handleOnDeleteIconClick = (row: any) => {
-    selectedPolicy.current = row.original.name;
-    setDeleteDialogOpen(true);
+  const handleOnCreatePolicy = (data: { name: string; type: DbEngineType }) => {
+    createPolicy(
+      { policyName: data.name, dbType: data.type },
+      {
+        onSuccess: () => {
+          setDialogOpen(false);
+          navigate(data.name);
+        },
+      }
+    );
   };
+
+  // @ts-ignore
+  // const handleOnDeleteIconClick = (row: any) => {
+  //   selectedPolicy.current = row.original.name;
+  //   setDeleteDialogOpen(true);
+  // };
 
   return (
     <>
@@ -77,6 +93,7 @@ const PoliciesList = () => {
                   key="view"
                   onClick={() =>
                     navigate(
+                      // @ts-ignore
                       `/settings/pod-scheduling-policies/${row.original.name}`
                     )
                   }
@@ -86,7 +103,7 @@ const PoliciesList = () => {
                 </MenuItem>,
                 <MenuItem
                   key="delete"
-                  onClick={() => handleOnDeleteIconClick(row)}
+                  // onClick={() => handleOnDeleteIconClick(row)}
                 >
                   <DeleteIcon sx={{ mr: 1 }} />
                   Delete
@@ -99,7 +116,7 @@ const PoliciesList = () => {
       <PoliciesDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        onSubmit={({ name }) => navigate(name)}
+        onSubmit={handleOnCreatePolicy}
       />
       <DeletePolicyDialog
         isOpen={deleteDialogOpen}

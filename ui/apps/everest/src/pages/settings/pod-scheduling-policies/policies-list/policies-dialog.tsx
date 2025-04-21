@@ -5,10 +5,11 @@ import { humanizeDbType } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
 import { FormDialog } from 'components/form-dialog';
 import { z } from 'zod';
+import { DbEngineType } from '@percona/types';
 
 const schema = z.object({
   name: z.string().min(1),
-  type: z.string().min(1),
+  type: z.nativeEnum(DbEngineType).refine((val) => val !== undefined),
 });
 
 type Props = {
@@ -18,9 +19,7 @@ type Props = {
 };
 
 const PoliciesDialog = ({ open, onClose, onSubmit }: Props) => {
-  const [availableDbTypes] = useDBEnginesForDbEngineTypes(undefined, {
-    refetchInterval: 30 * 1000,
-  });
+  const [availableDbTypes] = useDBEnginesForDbEngineTypes();
 
   return (
     <FormDialog
@@ -31,7 +30,7 @@ const PoliciesDialog = ({ open, onClose, onSubmit }: Props) => {
       schema={schema}
       defaultValues={{
         name: '',
-        type: availableDbTypes.length ? availableDbTypes[0].type : '',
+        type: availableDbTypes.length ? availableDbTypes[0].type : undefined,
       }}
     >
       <TextInput name="name" label="Policy name" />

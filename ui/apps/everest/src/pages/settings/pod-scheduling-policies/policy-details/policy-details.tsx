@@ -17,6 +17,8 @@ import EmptyState from 'components/empty-state';
 import { useState } from 'react';
 import { AffinityFormDialog } from '../affinity/affinity-form-dialog/affinity-form-dialog';
 import { DbType } from '@percona/types';
+import { humanizeDbType } from 'utils/db';
+import { dbEngineToDbType } from '@percona/utils';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
@@ -58,7 +60,12 @@ const PolicyDetails = () => {
         Back
       </Button>
       <Box display="flex" alignItems="center" gap={1} mt={3} mb={2}>
-        <Typography variant="h6">{policyName} / MySQL</Typography>
+        <Typography variant="h6">
+          {policyName}
+          {policy
+            ? ` / ${humanizeDbType(dbEngineToDbType(policy?.spec.engineType))}`
+            : ''}
+        </Typography>
         <IconButton
           size="medium"
           aria-label="edit"

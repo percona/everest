@@ -1,3 +1,5 @@
+import { DbEngineType } from '@percona/types';
+
 export type AffinityRule = {
   component: AffinityComponent;
   type: AffinityType;
@@ -111,4 +113,18 @@ export type Affinity = {
   podAffinity?: PodAffinity;
 } & {
   podAntiAffinity?: PodAntiAffinity;
+};
+
+export type PodSchedulingPolicy = {
+  metadata: {
+    name: string;
+  };
+  spec: {
+    engineType: DbEngineType;
+    affinityConfig: {
+      [key in DbEngineType]?: {
+        [key in AffinityComponentType]: Affinity;
+      };
+    };
+  };
 };
