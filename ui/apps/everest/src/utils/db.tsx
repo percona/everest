@@ -135,6 +135,132 @@ export const transformSchedulesIntoManageableSchedules = async (
   return transformedSchedules;
 };
 
+export const dbPayloadToAffinityRules = (
+  payload: PodSchedulingPolicy
+): AffinityRule[] => {
+  const rules: AffinityRule[] = [];
+  const {
+    spec: { engineType, affinityConfig = {} },
+  } = payload;
+  const engineAffinity = affinityConfig[engineType]?.engine || {};
+  const proxyAffinity = affinityConfig[engineType]?.proxy || {};
+  const configServerAffinity = affinityConfig[engineType]?.configServer || {};
+  const allAffinities = [
+    {
+      affinityObject: engineAffinity,
+      component: AffinityComponent.DbNode,
+    },
+    {
+      affinityObject: proxyAffinity,
+      component: AffinityComponent.Proxy,
+    },
+    {
+      affinityObject: configServerAffinity,
+      component: AffinityComponent.ConfigServer,
+    },
+  ];
+
+  allAffinities.forEach(({ affinityObject, component }) => {
+    if (affinityObject && Object.keys(affinityObject).length) {
+      const { nodeAffinity, podAffinity, podAntiAffinity } = affinityObject;
+
+      if (nodeAffinity) {
+        const {
+          preferredDuringSchedulingIgnoredDuringExecution = [],
+          requiredDuringSchedulingIgnoredDuringExecution = {
+            nodeSelectorTerms: [],
+          },
+        } = nodeAffinity;
+
+        preferredDuringSchedulingIgnoredDuringExecution.forEach(
+          ({ preference = { matchExpressions: [] }, weight }) => {
+            rules.push({
+              component,
+              type: AffinityType.NodeAffinity,
+              priority: AffinityPriority.Preferred,
+              uid: generateShortUID(),
+              weight,
+              ...(preference.matchExpressions.length > 0 && {
+                key: preference.matchExpressions[0].key,
+                operator: preference.matchExpressions[0].operator,
+                values: preference.matchExpressions[0].values?.join(','),
+              }),
+            });
+          }
+        );
+
+        requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms.forEach(
+          ({ matchExpressions = [] }) => {
+            rules.push({
+              component,
+              type: AffinityType.NodeAffinity,
+              priority: AffinityPriority.Required,
+              uid: generateShortUID(),
+              ...(matchExpressions.length > 0 && {
+                key: matchExpressions[0].key,
+                operator: matchExpressions[0].operator,
+                values: matchExpressions[0].values?.join(','),
+              }),
+            });
+          }
+        );
+      }
+
+      [podAffinity, podAntiAffinity].forEach((affinity) => {
+        if (affinity) {
+          const affinityType =
+            affinity === podAffinity
+              ? AffinityType.PodAffinity
+              : AffinityType.PodAntiAffinity;
+          const {
+            preferredDuringSchedulingIgnoredDuringExecution = [],
+            requiredDuringSchedulingIgnoredDuringExecution = [],
+          } = affinity;
+          preferredDuringSchedulingIgnoredDuringExecution.forEach(
+            ({ weight, podAffinityTerm }) => {
+              const { topologyKey, labelSelector = { matchExpressions: [] } } =
+                podAffinityTerm;
+
+              rules.push({
+                component,
+                type: affinityType,
+                priority: AffinityPriority.Preferred,
+                uid: generateShortUID(),
+                weight,
+                topologyKey,
+                ...(labelSelector.matchExpressions.length > 0 && {
+                  key: labelSelector.matchExpressions[0].key,
+                  operator: labelSelector.matchExpressions[0].operator,
+                  values: labelSelector.matchExpressions[0].values?.join(','),
+                }),
+              });
+            }
+          );
+
+          requiredDuringSchedulingIgnoredDuringExecution.forEach(
+            ({ topologyKey, labelSelector = { matchExpressions: [] } }) => {
+              rules.push({
+                component,
+                type: affinityType,
+                priority: AffinityPriority.Required,
+                uid: generateShortUID(),
+                topologyKey,
+                ...(labelSelector.matchExpressions.length > 0 && {
+                  key: labelSelector.matchExpressions[0].key,
+                  operator: labelSelector.matchExpressions[0].operator,
+                  values: labelSelector.matchExpressions[0].values?.join(','),
+                }),
+              });
+            }
+          );
+        }
+      });
+    }
+  });
+
+  return rules;
+};
+
 export const affinityRulesToDbPayload = (
   affinityRules: AffinityRule[]
 ): Affinity => {
@@ -371,6 +497,19 @@ export const insertAffinityRuleToExistingPolicy = (
   }
 
   return policy;
+};
+
+export const getAffinityRuleTypeLabel = (type: AffinityType): string => {
+  switch (type) {
+    case AffinityType.NodeAffinity:
+      return 'Node Affinity';
+    case AffinityType.PodAffinity:
+      return 'Pod Affinity';
+    case AffinityType.PodAntiAffinity:
+      return 'Pod Anti-Affinity';
+    default:
+      return '';
+  }
 };
 
 export const generateDefaultAffinityRule = (
