@@ -499,6 +499,102 @@ export const insertAffinityRuleToExistingPolicy = (
   return policy;
 };
 
+export const removeRuleInExistingPolicy = (
+  policy: PodSchedulingPolicy,
+  rule: AffinityRule
+): PodSchedulingPolicy => {
+  const { spec } = policy;
+  const { engineType, affinityConfig } = spec;
+
+  if (
+    affinityConfig &&
+    affinityConfig[engineType] &&
+    affinityConfig[engineType][rule.component] &&
+    affinityConfig[engineType][rule.component] &&
+    affinityConfig[engineType][rule.component]![rule.type]
+  ) {
+    const obj = affinityConfig[engineType][rule.component]![rule.type];
+    const { priority } = rule;
+
+    if (priority === AffinityPriority.Required) {
+      if (rule.type === AffinityType.NodeAffinity) {
+        const matchingRuleIdx = (
+          obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredNodeSchedulingTerm
+        ).nodeSelectorTerms.findIndex(
+          ({ matchExpressions }) =>
+            matchExpressions.length &&
+            matchExpressions[0].key === rule.key &&
+            matchExpressions[0].operator === rule.operator &&
+            matchExpressions[0].values?.join(',') === rule.values
+        );
+
+        if (matchingRuleIdx !== -1) {
+          (
+            obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredNodeSchedulingTerm
+          ).nodeSelectorTerms.splice(matchingRuleIdx, 1);
+        }
+      } else {
+        const matchingRuleIdx = (
+          obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredPodSchedulingTerm
+        ).findIndex(
+          ({ topologyKey, labelSelector }) =>
+            topologyKey === rule.topologyKey &&
+            labelSelector?.matchExpressions[0].key === rule.key &&
+            labelSelector?.matchExpressions[0].operator === rule.operator &&
+            labelSelector?.matchExpressions[0].values?.join(',') === rule.values
+        );
+
+        if (matchingRuleIdx !== -1) {
+          (
+            obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredPodSchedulingTerm
+          ).splice(matchingRuleIdx, 1);
+        }
+      }
+    } else {
+      if (rule.type === AffinityType.NodeAffinity) {
+        const matchingRuleIdx = (
+          obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredNodeSchedulingTerm[]
+        ).findIndex(
+          ({ weight, preference }) =>
+            weight === rule.weight &&
+            preference.matchExpressions[0].key === rule.key &&
+            preference.matchExpressions[0].operator === rule.operator &&
+            preference.matchExpressions[0].values?.join(',') === rule.values
+        );
+
+        if (matchingRuleIdx !== -1) {
+          (
+            obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredNodeSchedulingTerm[]
+          ).splice(matchingRuleIdx, 1);
+        }
+      } else {
+        const matchingRuleIdx = (
+          obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredPodSchedulingTerm[]
+        ).findIndex(
+          ({ weight, podAffinityTerm }) =>
+            weight === rule.weight &&
+            podAffinityTerm.topologyKey === rule.topologyKey &&
+            podAffinityTerm.labelSelector?.matchExpressions[0].key ===
+              rule.key &&
+            podAffinityTerm.labelSelector?.matchExpressions[0].operator ===
+              rule.operator &&
+            podAffinityTerm.labelSelector?.matchExpressions[0].values?.join(
+              ','
+            ) === rule.values
+        );
+
+        if (matchingRuleIdx !== -1) {
+          (
+            obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredPodSchedulingTerm[]
+          ).splice(matchingRuleIdx, 1);
+        }
+      }
+    }
+  }
+
+  return policy;
+};
+
 export const getAffinityRuleTypeLabel = (type: AffinityType): string => {
   switch (type) {
     case AffinityType.NodeAffinity:

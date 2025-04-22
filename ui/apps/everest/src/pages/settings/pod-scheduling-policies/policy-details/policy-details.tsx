@@ -23,6 +23,7 @@ import {
   getAffinityRuleTypeLabel,
   humanizeDbType,
   insertAffinityRuleToExistingPolicy,
+  removeRuleInExistingPolicy,
 } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
 import {
@@ -134,6 +135,10 @@ const PolicyDetails = () => {
   const rules = dbPayloadToAffinityRules(policy);
 
   const handleFormSubmit = (rule: AffinityRule) => {
+    if (selectedRule.current) {
+      // We don't really edit the rule in the object, we just remove the old rule and add the new one
+      removeRuleInExistingPolicy(policy, selectedRule.current);
+    }
     insertAffinityRuleToExistingPolicy(policy, rule);
     updatePolicy(policy, {
       onSuccess: () => {
@@ -141,6 +146,7 @@ const PolicyDetails = () => {
           queryKey: ['pod-scheduling-policy', policyName],
         });
         setOpenAffinityDialog(false);
+        selectedRule.current = undefined;
       },
     });
   };
