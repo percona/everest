@@ -10,7 +10,10 @@ import { MRT_ColumnDef } from 'material-react-table';
 import TableActionsMenu from 'components/table-actions-menu';
 import DeletePolicyDialog from './delete-policy-dialog';
 import { DbEngineType } from '@percona/types';
-import { useCreatePodSchedulingPolicy } from 'hooks';
+import { useCreatePodSchedulingPolicy, usePodSchedulingPolicies } from 'hooks';
+import { PodSchedulingPolicy } from 'shared-types/affinity.types';
+import { humanizeDbType } from 'utils/db';
+import { dbEngineToDbType } from '@percona/utils';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -18,16 +21,21 @@ const PoliciesList = () => {
   const selectedPolicy = useRef<string>('');
   const navigate = useNavigate();
   const { mutate: createPolicy } = useCreatePodSchedulingPolicy();
+  const { data: podSchedulingPolicies = [] } = usePodSchedulingPolicies();
 
-  const columns = useMemo<MRT_ColumnDef[]>(
+  const columns = useMemo<MRT_ColumnDef<PodSchedulingPolicy>[]>(
     () => [
       {
-        accessorKey: 'name',
+        accessorKey: 'metadata.name',
         header: 'Name',
       },
       {
-        accessorKey: 'technology',
+        accessorKey: 'spec.engineType',
         header: 'Technology',
+        Cell: ({ cell }) => {
+          const engineType = cell.getValue<DbEngineType>();
+          return humanizeDbType(dbEngineToDbType(engineType));
+        },
       },
     ],
     []
@@ -56,20 +64,7 @@ const PoliciesList = () => {
       <Table
         tableName="pod-scheduling-policies"
         noDataMessage="No pod scheduling policies added"
-        data={[
-          {
-            name: 'default-mysql',
-            technology: 'MySQL',
-          },
-          {
-            name: 'default-postgresql',
-            technology: 'PostgreSQL',
-          },
-          {
-            name: 'default-mongodb',
-            technology: 'MongoDB',
-          },
-        ]}
+        data={podSchedulingPolicies}
         columns={columns}
         enableRowActions
         renderTopToolbarCustomActions={() => (
@@ -93,8 +88,7 @@ const PoliciesList = () => {
                   key="view"
                   onClick={() =>
                     navigate(
-                      // @ts-ignore
-                      `/settings/pod-scheduling-policies/${row.original.name}`
+                      `/settings/pod-scheduling-policies/${row.original.metadata.name}` // TODO check if user has permission to view
                     )
                   }
                 >

@@ -1,6 +1,16 @@
 import { DbEngineType } from '@percona/types';
 import { api } from './api';
-import { PodSchedulingPolicy } from 'shared-types/affinity.types';
+import {
+  PodSchedulingPolicy,
+  PodSchedulingPolicyGetPayload,
+} from 'shared-types/affinity.types';
+
+export const getPodSchedulingPolicies = async () => {
+  const response = await api.get<PodSchedulingPolicyGetPayload>(
+    'pod-scheduling-policies'
+  );
+  return response.data;
+};
 
 export const getPodSchedulingPolicy = async (name: string) => {
   const response = await api.get<PodSchedulingPolicy>(

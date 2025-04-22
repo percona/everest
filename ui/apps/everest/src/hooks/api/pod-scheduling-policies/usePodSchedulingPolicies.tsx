@@ -2,11 +2,31 @@ import { DbEngineType } from '@percona/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   createPodSchedulingPolicy,
+  getPodSchedulingPolicies,
   getPodSchedulingPolicy,
   updatePodSchedulingPolicy,
 } from 'api/podSchedulingPolicies';
-import { PodSchedulingPolicy } from 'shared-types/affinity.types';
+import {
+  PodSchedulingPolicy,
+  PodSchedulingPolicyGetPayload,
+} from 'shared-types/affinity.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
+
+export const usePodSchedulingPolicies = (
+  options?: PerconaQueryOptions<
+    PodSchedulingPolicyGetPayload,
+    unknown,
+    PodSchedulingPolicy[]
+  >
+) => {
+  // const { canRead } = useRBACPermissions('database-clusters', namespace);
+  return useQuery({
+    queryKey: ['pod-scheduling-policies'],
+    queryFn: () => getPodSchedulingPolicies(),
+    select: (data) => data.items || [],
+    ...options,
+  });
+};
 
 export const usePodSchedulingPolicy = (
   policyName: string,

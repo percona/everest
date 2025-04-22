@@ -115,6 +115,10 @@ export type Affinity = {
   podAntiAffinity?: PodAntiAffinity;
 };
 
+export type PodSchedulingPolicyGetPayload = {
+  items: PodSchedulingPolicy[];
+};
+
 export type PodSchedulingPolicy = {
   metadata: {
     name: string;
