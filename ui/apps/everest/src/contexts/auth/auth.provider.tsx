@@ -103,21 +103,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
     }
 
     const token = localStorage.getItem('everestToken');
-    try {
-      await api.delete('/session', { headers: { token: token } });
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        const errorStatus = error.response?.status;
-        let errorMsg = 'Something went wrong';
-        if (errorStatus === 429) {
-          errorMsg =
-            "Looks like you've made too many attempts. Try again later.";
-        }
-        enqueueSnackbar(errorMsg, {
-          variant: 'error',
-        });
-      }
-    }
+    await api.delete('/session', { headers: { token: token } });
     setAuthStatus('loggedOut');
     localStorage.removeItem('everestToken');
     sessionStorage.clear();
