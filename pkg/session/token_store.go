@@ -45,7 +45,7 @@ func newTokenStore(ctx context.Context, kubeClient kubernetes.KubernetesConnecto
 type tokenStore struct {
 	kubeClient kubernetes.KubernetesConnector
 	l          *zap.SugaredLogger
-	mutex      sync.Mutex
+	mutex      sync.RWMutex
 }
 
 func (ts *tokenStore) Add(ctx context.Context, shortenedToken string) error {
@@ -68,6 +68,8 @@ func (ts *tokenStore) Add(ctx context.Context, shortenedToken string) error {
 }
 
 func (ts *tokenStore) Exists(ctx context.Context, shortenedToken string) (bool, error) {
+	ts.mutex.RLock()
+	defer ts.mutex.RUnlock()
 	// no worries about k8s requests overhead - the controller-runtime cache is enabled for Everest API server
 	secret, err := ts.kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
 	if err != nil {
