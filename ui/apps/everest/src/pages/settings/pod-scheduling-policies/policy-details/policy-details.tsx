@@ -8,14 +8,14 @@ import {
 } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import Add from '@mui/icons-material/Add';
-import Edit from '@mui/icons-material/Edit';
+import Edit from '@mui/icons-material/EditOutlined';
 import { SettingsTabs } from 'pages/settings/settings.types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePodSchedulingPolicy, useUpdatePodSchedulingPolicy } from 'hooks';
 import { NoMatch } from 'pages/404/NoMatch';
 import { Table } from '@percona/ui-lib';
 import EmptyState from 'components/empty-state';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { AffinityFormDialog } from '../affinity/affinity-form-dialog/affinity-form-dialog';
 import {
   dbPayloadToAffinityRules,
@@ -39,6 +39,7 @@ const PolicyDetails = () => {
   const navigate = useNavigate();
   const { name: policyName = '' } = useParams();
   const [openAffinityDialog, setOpenAffinityDialog] = useState(false);
+  const selectedRule = useRef<AffinityRule>();
   const { mutate: updatePolicy } = useUpdatePodSchedulingPolicy();
   const queryClient = useQueryClient();
 
@@ -144,6 +145,11 @@ const PolicyDetails = () => {
     });
   };
 
+  const handleOnAddClick = () => {
+    selectedRule.current = undefined;
+    setOpenAffinityDialog(true);
+  };
+
   return (
     <>
       <Button
@@ -179,9 +185,10 @@ const PolicyDetails = () => {
         tableName="policy-rules"
         data={rules}
         columns={columns}
+        enableRowActions
         emptyState={
           <EmptyState
-            onButtonClick={() => setOpenAffinityDialog(true)}
+            onButtonClick={handleOnAddClick}
             buttonText="Add rule"
             contentSlot={
               <Stack alignItems="center">
@@ -199,7 +206,7 @@ const PolicyDetails = () => {
           <Button
             size="small"
             variant="contained"
-            onClick={() => setOpenAffinityDialog(true)}
+            onClick={handleOnAddClick}
             data-testid="add-affinity-rule-button"
             sx={{ display: 'flex' }}
             startIcon={<Add />}
@@ -207,13 +214,29 @@ const PolicyDetails = () => {
             Add rule
           </Button>
         )}
+        renderRowActions={({ row }) => (
+          <IconButton
+            size="small"
+            aria-label="edit"
+            onClick={() => {
+              selectedRule.current = row.original;
+              setOpenAffinityDialog(true);
+            }}
+            data-testid="edit-affinity-rule-button"
+          >
+            <Edit />
+          </IconButton>
+        )}
       />
-      <AffinityFormDialog
-        isOpen={openAffinityDialog}
-        dbType={dbEngineToDbType(policy.spec.engineType)}
-        handleClose={() => setOpenAffinityDialog(false)}
-        handleSubmit={handleFormSubmit}
-      />
+      {openAffinityDialog && (
+        <AffinityFormDialog
+          isOpen
+          dbType={dbEngineToDbType(policy.spec.engineType)}
+          handleClose={() => setOpenAffinityDialog(false)}
+          handleSubmit={handleFormSubmit}
+          defaultValues={selectedRule.current}
+        />
+      )}
     </>
   );
 };

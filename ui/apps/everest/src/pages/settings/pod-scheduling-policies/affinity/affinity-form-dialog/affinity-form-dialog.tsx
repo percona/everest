@@ -21,11 +21,7 @@ export const AffinityFormDialog = ({
   handleClose = () => {},
   handleSubmit = () => {},
 }: Props) => {
-  const isEditing = false;
-
-  // const values = useMemo(() => {
-  //   return affinityModalDefaultValues(selectedAffinityRule);
-  // }, [selectedAffinityRule]);
+  const isEditing = !!defaultValues;
 
   return (
     <FormDialog
@@ -35,7 +31,6 @@ export const AffinityFormDialog = ({
       headerMessage={isEditing ? Messages.editRule : Messages.addRule}
       onSubmit={handleSubmit}
       submitMessage={isEditing ? Messages.editRule : Messages.addRule}
-      // {...(isEditing && { values })}
       //@ts-ignore
       defaultValues={defaultValues ?? affinityModalDefaultValues()}
       size="XXL"
