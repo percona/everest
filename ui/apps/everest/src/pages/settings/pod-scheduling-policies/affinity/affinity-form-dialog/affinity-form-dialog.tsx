@@ -9,6 +9,7 @@ import { AffinityRule } from 'shared-types/affinity.types';
 type Props = {
   isOpen: boolean;
   dbType: DbType;
+  defaultValues?: AffinityRule;
   handleClose?: () => void;
   handleSubmit?: (values: AffinityRule) => void;
 };
@@ -16,6 +17,7 @@ type Props = {
 export const AffinityFormDialog = ({
   isOpen,
   dbType,
+  defaultValues,
   handleClose = () => {},
   handleSubmit = () => {},
 }: Props) => {
@@ -34,7 +36,8 @@ export const AffinityFormDialog = ({
       onSubmit={handleSubmit}
       submitMessage={isEditing ? Messages.editRule : Messages.addRule}
       // {...(isEditing && { values })}
-      defaultValues={affinityModalDefaultValues()}
+      //@ts-ignore
+      defaultValues={defaultValues ?? affinityModalDefaultValues()}
       size="XXL"
       dataTestId={`affinity-form`}
     >
