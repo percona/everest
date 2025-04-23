@@ -29,7 +29,7 @@ const UpdateCrDialog = ({
 
   return (
     <ConfirmDialog
-      isOpen
+      open
       selectedId={dbCluster.metadata.name}
       closeModal={onClose}
       handleConfirm={onCrdUpdate}

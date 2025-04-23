@@ -150,7 +150,7 @@ const ScheduledBackupsList = () => {
       ))}
       {openDeleteDialog && (
         <ConfirmDialog
-          isOpen={openDeleteDialog}
+          open={openDeleteDialog}
           selectedId={selectedSchedule}
           closeModal={handleCloseDeleteDialog}
           headerMessage={Messages.deleteModal.header}

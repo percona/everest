@@ -137,7 +137,7 @@ const Restores = () => {
       />
       {openDeleteDialog && (
         <ConfirmDialog
-          isOpen={openDeleteDialog}
+          open={openDeleteDialog}
           selectedId={selectedRestore}
           closeModal={() => setOpenDeleteDialog(false)}
           headerMessage={Messages.deleteDialog.header}

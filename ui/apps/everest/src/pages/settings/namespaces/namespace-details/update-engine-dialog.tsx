@@ -26,7 +26,7 @@ const UpdateEngineDialog = ({
 
   return (
     <ConfirmDialog
-      isOpen
+      open
       selectedId={dbCluster.metadata.name}
       closeModal={onClose}
       handleConfirm={onEngineUpdate}

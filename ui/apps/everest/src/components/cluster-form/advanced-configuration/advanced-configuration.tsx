@@ -28,13 +28,15 @@ import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import { Box, IconButton, MenuItem, Stack } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
 import { WizardMode } from 'shared-types/wizard.types';
 import RoundedBox from 'components/rounded-box';
 import { usePodSchedulingPolicies } from 'hooks';
+import PoliciesDialog from './policies.dialog';
+import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -45,7 +47,9 @@ export const AdvancedConfigurationForm = ({
   dbType,
   loadingDefaultsForEdition,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, setValue, getFieldState } = useFormContext();
+  const { watch, setValue, getFieldState, getValues } = useFormContext();
+  const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
+  const selectedPolicy = useRef<PodSchedulingPolicy>();
   const mode = useDatabasePageMode();
   const [externalAccess, engineParametersEnabled, policiesEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
@@ -56,6 +60,19 @@ export const AdvancedConfigurationForm = ({
     useKubernetesClusterInfo(['wizard-k8-info']);
   const { data: policies = [], isLoading: fetchingPolicies } =
     usePodSchedulingPolicies();
+
+  const handleOnPolicyInfoClick = () => {
+    const policyName = getValues<string>(
+      AdvancedConfigurationFields.podSchedulingPolicy
+    );
+    selectedPolicy.current = policies.find(
+      (p) => policyName === p.metadata.name
+    );
+
+    if (selectedPolicy.current) {
+      setPolicyDialogOpen(true);
+    }
+  };
 
   // setting the storage class default value
   useEffect(() => {
@@ -112,7 +129,7 @@ export const AdvancedConfigurationForm = ({
             autoCompleteProps={{
               sx: {
                 mt: 0,
-                width: '135px',
+                minWidth: '200px',
               },
             }}
           />
@@ -148,6 +165,7 @@ export const AdvancedConfigurationForm = ({
               loading={fetchingPolicies}
               formControlProps={{
                 sx: {
+                  minWidth: '200px',
                   mt: 0,
                 },
               }}
@@ -161,9 +179,11 @@ export const AdvancedConfigurationForm = ({
                 </MenuItem>
               ))}
             </SelectInput>
-            <IconButton>
-              <InfoIcon />
-            </IconButton>
+            {!!policies.length && (
+              <IconButton onClick={handleOnPolicyInfoClick}>
+                <InfoIcon />
+              </IconButton>
+            )}
           </Box>
         )}
       </RoundedBox>
@@ -192,6 +212,13 @@ export const AdvancedConfigurationForm = ({
           />
         )}
       </RoundedBox>
+      {policyDialogOpen && (
+        <PoliciesDialog
+          engineType={getValues(DbWizardFormFields.dbType)}
+          policy={selectedPolicy.current!}
+          handleClose={() => setPolicyDialogOpen(false)}
+        />
+      )}
     </>
   );
 };

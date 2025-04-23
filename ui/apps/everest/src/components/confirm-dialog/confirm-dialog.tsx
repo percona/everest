@@ -4,7 +4,6 @@ import { ConfirmDialogProps } from './confirm-dialog.types';
 import { kebabize } from '@percona/utils';
 
 export const ConfirmDialog = ({
-  isOpen,
   closeModal,
   selectedId,
   selectedNamespace,
@@ -15,6 +14,7 @@ export const ConfirmDialog = ({
   cancelMessage = 'Cancel',
   submitMessage = 'Delete',
   disabledButtons = false,
+  ...dialogProps
 }: ConfirmDialogProps) => {
   const onClick = () => {
     if (selectedNamespace) {
@@ -26,12 +26,14 @@ export const ConfirmDialog = ({
 
   return (
     <Dialog
-      open={isOpen}
       onClose={closeModal}
       data-testid={`${selectedId}-confirm-dialog`}
+      maxWidth="sm"
+      {...dialogProps}
+      open={dialogProps.open}
     >
       <DialogTitle onClose={closeModal}>{headerMessage}</DialogTitle>
-      <DialogContent sx={{ width: '480px' }}>{content}</DialogContent>
+      <DialogContent>{content}</DialogContent>
       <DialogActions>
         <Button
           onClick={closeModal}
