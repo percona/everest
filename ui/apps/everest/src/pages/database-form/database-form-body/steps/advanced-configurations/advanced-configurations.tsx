@@ -19,7 +19,6 @@ import { Messages } from './advanced-configurations.messages.ts';
 import { DbWizardFormFields } from 'consts.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import AdvancedConfigurationForm from 'components/cluster-form/advanced-configuration/advanced-configuration.tsx';
-import { FormGroup } from '@mui/material';
 import { StepProps } from 'pages/database-form/database-form.types.ts';
 
 export const AdvancedConfigurations = ({
@@ -31,19 +30,11 @@ export const AdvancedConfigurations = ({
   return (
     <>
       <StepHeader pageTitle={Messages.advanced} />
-      <FormGroup
-        sx={{
-          mt: 3,
-          '& > .percona-rounded-box:not(:last-child)': {
-            mb: 2,
-          },
-        }}
-      >
-        <AdvancedConfigurationForm
-          dbType={dbType}
-          loadingDefaultsForEdition={loadingDefaultsForEdition}
-        />
-      </FormGroup>
+
+      <AdvancedConfigurationForm
+        dbType={dbType}
+        loadingDefaultsForEdition={loadingDefaultsForEdition}
+      />
     </>
   );
 };

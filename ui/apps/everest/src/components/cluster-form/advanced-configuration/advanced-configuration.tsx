@@ -25,7 +25,7 @@ import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
-import { Box, IconButton, MenuItem, Stack } from '@mui/material';
+import { Box, FormGroup, IconButton, MenuItem, Stack } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useEffect, useRef, useState } from 'react';
@@ -115,7 +115,14 @@ export const AdvancedConfigurationForm = ({
   };
 
   return (
-    <>
+    <FormGroup
+      sx={{
+        mt: 3,
+        '& > .percona-rounded-box:not(:last-child)': {
+          mb: 2,
+        },
+      }}
+    >
       <AdvancedCard
         title={Messages.cards.storage.title}
         description={Messages.cards.storage.description}
@@ -224,7 +231,7 @@ export const AdvancedConfigurationForm = ({
           handleClose={() => setPolicyDialogOpen(false)}
         />
       )}
-    </>
+    </FormGroup>
   );
 };
 
