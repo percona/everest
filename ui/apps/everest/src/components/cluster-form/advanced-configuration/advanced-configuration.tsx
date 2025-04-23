@@ -188,7 +188,7 @@ export const AdvancedConfigurationForm = ({
             </SelectInput>
             {!!policies.length && (
               <IconButton onClick={handleOnPolicyInfoClick}>
-                <InfoIcon />
+                <InfoIcon sx={{ width: '20px' }} />
               </IconButton>
             )}
           </Box>
