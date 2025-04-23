@@ -28,7 +28,7 @@ import (
 func (e *EverestServer) ListPodSchedulingPolicy(ctx echo.Context) error {
 	list, err := e.handler.ListPodSchedulingPolicies(ctx.Request().Context())
 	if err != nil {
-		e.l.Errorf("ListPodSchedulingPolicies failed: %w", err)
+		e.l.Errorf("ListPodSchedulingPolicies failed: %v", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, list)
@@ -43,7 +43,7 @@ func (e *EverestServer) CreatePodSchedulingPolicy(c echo.Context) error {
 
 	result, err := e.handler.CreatePodSchedulingPolicy(c.Request().Context(), psp)
 	if err != nil {
-		e.l.Errorf("CreatePodSchedulingPolicy failed: %w", err)
+		e.l.Errorf("CreatePodSchedulingPolicy failed: %v", err)
 		return err
 	}
 
@@ -53,7 +53,7 @@ func (e *EverestServer) CreatePodSchedulingPolicy(c echo.Context) error {
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.
 func (e *EverestServer) DeletePodSchedulingPolicy(c echo.Context, policyName string) error {
 	if err := e.handler.DeletePodSchedulingPolicy(c.Request().Context(), policyName); err != nil {
-		e.l.Errorf("DeletePodSchedulingPolicy failed: %w", err)
+		e.l.Errorf("DeletePodSchedulingPolicy failed: %v", err)
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -63,7 +63,7 @@ func (e *EverestServer) DeletePodSchedulingPolicy(c echo.Context, policyName str
 func (e *EverestServer) GetPodSchedulingPolicy(c echo.Context, policyName string) error {
 	result, err := e.handler.GetPodSchedulingPolicy(c.Request().Context(), policyName)
 	if err != nil {
-		e.l.Errorf("GetPodSchedulingPolicy failed: %w", err)
+		e.l.Errorf("GetPodSchedulingPolicy failed: %v", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -77,9 +77,9 @@ func (e *EverestServer) UpdatePodSchedulingPolicy(c echo.Context, policyName str
 	}
 	psp.SetName(policyName)
 
-	result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), psp)
+	result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), policyName, psp)
 	if err != nil {
-		e.l.Errorf("UpdatePodSchedulingPolicy failed: %w", err)
+		e.l.Errorf("UpdatePodSchedulingPolicy failed: %v", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)

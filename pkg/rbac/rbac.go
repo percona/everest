@@ -54,6 +54,7 @@ const (
 	ResourceDatabaseEngines            = "database-engines"
 	ResourceMonitoringInstances        = "monitoring-instances"
 	ResourceNamespaces                 = "namespaces"
+	ResourcePodSchedulingPolicies      = "pod-scheduling-policies"
 )
 
 // RBAC actions.
@@ -253,7 +254,7 @@ func loadAdminPolicy(enf casbin.IEnforcer) error {
 	action := "*"
 	for resource := range resources {
 		object := "*/*"
-		if resource == ResourceNamespaces {
+		if resource == ResourceNamespaces || resource == ResourcePodSchedulingPolicies {
 			object = "*"
 		}
 		if _, err := enf.AddPolicy(common.EverestAdminRole, resource, action, object); err != nil {

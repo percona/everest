@@ -27,8 +27,8 @@ func (h *validateHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *ev
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
-func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	return h.next.UpdatePodSchedulingPolicy(ctx, psp)
+func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	return h.next.UpdatePodSchedulingPolicy(ctx, name, psp)
 }
 
 // ListPodSchedulingPolicies lists all pod scheduling policies.
