@@ -17,6 +17,7 @@ const DeletePolicyDialog = ({
   <CustomConfirmDialog
     inputLabel="Policy name"
     inputPlaceholder="Policy name"
+    selectedId={policyName}
     isOpen={isOpen}
     closeModal={handleCloseDeleteDialog}
     headerMessage="Delete policy"

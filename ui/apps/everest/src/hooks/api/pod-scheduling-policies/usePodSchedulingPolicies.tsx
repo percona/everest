@@ -2,6 +2,7 @@ import { DbEngineType } from '@percona/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   createPodSchedulingPolicy,
+  deletePodSchedulingPolicy,
   getPodSchedulingPolicies,
   getPodSchedulingPolicy,
   updatePodSchedulingPolicy,
@@ -59,10 +60,9 @@ export const useUpdatePodSchedulingPolicy = () => {
   });
 };
 
-// export const useDeletePodSchedulingPolicy = () => {
-//   return useMutation({
-//     mutationKey: ['delete-pod-scheduling-policy'],
-//     mutationFn: (args: { policyName: string }) =>
-//       createPodSchedulingPolicy(args.policyName, 'mysql'),
-//   });
-// };
+export const useDeletePodSchedulingPolicy = () => {
+  return useMutation({
+    mutationKey: ['delete-pod-scheduling-policy'],
+    mutationFn: (policyName: string) => deletePodSchedulingPolicy(policyName),
+  });
+};

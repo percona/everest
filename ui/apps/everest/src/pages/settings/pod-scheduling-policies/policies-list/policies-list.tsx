@@ -1,7 +1,7 @@
 import Add from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Visibility from '@mui/icons-material/Visibility';
-import { Button, MenuItem } from '@mui/material';
+import { Button, MenuItem, Typography } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,17 +10,25 @@ import { MRT_ColumnDef } from 'material-react-table';
 import TableActionsMenu from 'components/table-actions-menu';
 import DeletePolicyDialog from './delete-policy-dialog';
 import { DbEngineType } from '@percona/types';
-import { useCreatePodSchedulingPolicy, usePodSchedulingPolicies } from 'hooks';
+import {
+  useCreatePodSchedulingPolicy,
+  useDeletePodSchedulingPolicy,
+  usePodSchedulingPolicies,
+} from 'hooks';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { humanizeDbType } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
+import { useQueryClient } from '@tanstack/react-query';
+import EmptyState from 'components/empty-state';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const selectedPolicy = useRef<string>('');
+  const selectedPolicy = useRef<PodSchedulingPolicy>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { mutate: createPolicy } = useCreatePodSchedulingPolicy();
+  const { mutate: deletePolicy } = useDeletePodSchedulingPolicy();
   const { data: podSchedulingPolicies = [] } = usePodSchedulingPolicies();
 
   const columns = useMemo<MRT_ColumnDef<PodSchedulingPolicy>[]>(
@@ -53,17 +61,39 @@ const PoliciesList = () => {
     );
   };
 
-  // @ts-ignore
-  // const handleOnDeleteIconClick = (row: any) => {
-  //   selectedPolicy.current = row.original.name;
-  //   setDeleteDialogOpen(true);
-  // };
+  const handleOnDeleteIconClick = (policy: PodSchedulingPolicy) => {
+    selectedPolicy.current = policy;
+    setDeleteDialogOpen(true);
+  };
+
+  const handleOnDeletePolicy = () => {
+    if (selectedPolicy.current) {
+      deletePolicy(selectedPolicy.current.metadata.name, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: ['pod-scheduling-policies'],
+          });
+          setDeleteDialogOpen(false);
+        },
+      });
+    }
+  };
 
   return (
     <>
       <Table
         tableName="pod-scheduling-policies"
-        noDataMessage="No pod scheduling policies added"
+        emptyState={
+          <EmptyState
+            onButtonClick={() => setDialogOpen(true)}
+            buttonText="Add rule"
+            contentSlot={
+              <Typography variant="body1">
+                You currently do not have any policy
+              </Typography>
+            }
+          />
+        }
         data={podSchedulingPolicies}
         columns={columns}
         enableRowActions
@@ -97,7 +127,7 @@ const PoliciesList = () => {
                 </MenuItem>,
                 <MenuItem
                   key="delete"
-                  // onClick={() => handleOnDeleteIconClick(row)}
+                  onClick={() => handleOnDeleteIconClick(row.original)}
                 >
                   <DeleteIcon sx={{ mr: 1 }} />
                   Delete
@@ -114,8 +144,9 @@ const PoliciesList = () => {
       />
       <DeletePolicyDialog
         isOpen={deleteDialogOpen}
-        policyName={selectedPolicy.current}
+        policyName={selectedPolicy.current?.metadata.name || ''}
         handleCloseDeleteDialog={() => setDeleteDialogOpen(false)}
+        handleConfirmDelete={handleOnDeletePolicy}
       />
     </>
   );

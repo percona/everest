@@ -41,3 +41,8 @@ export const updatePodSchedulingPolicy = async (
   const response = await api.put(`pod-scheduling-policies/${name}`, policy);
   return response;
 };
+
+export const deletePodSchedulingPolicy = async (name: string) => {
+  const response = await api.delete(`pod-scheduling-policies/${name}`);
+  return response;
+};
