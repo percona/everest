@@ -446,6 +446,95 @@ test.describe.configure({ retries: 0 });
         }
       });
 
+      test(`PITR restore to new cluster [${db} size ${size}]`, async ({ page }) => {
+        // First create a backup to restore from
+        await gotoDbClusterBackups(page, clusterName);
+        await clickOnDemandBackup(page);
+        await page.getByTestId('text-input-name').fill(baseBackupName + '-new-cluster');
+        await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
+        await expect(page.getByTestId('text-input-storage-location')).not.toBeEmpty();
+        await page.getByTestId('form-dialog-create').click();
+        await waitForStatus(page, baseBackupName + '-new-cluster', 'Succeeded', 240000);
+
+        // Add some data after the backup
+        await insertTestDB(
+          clusterName,
+          namespace,
+          ['10', '11', '12'],
+          ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+        );
+
+        // Wait for binlogs to be uploaded
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        await delay(65000);
+
+        // Get the PITR time after adding new data
+        const restoreTime = getCurrentPITRTime();
+
+        // Create a new cluster name for the restore
+        const newClusterName = `${clusterName}-restored`;
+
+        // Go to restore wizard
+        await page.goto('databases');
+        await findDbAndClickActions(page, clusterName, 'Restore from a backup');
+        await page.getByTestId('radio-option-fromPITR').click({ timeout: 5000 });
+        await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({
+          timeout: 5000,
+        });
+
+        // Set the restore time
+        await page.getByTestId('CalendarIcon').click({ timeout: 5000 });
+        await page
+          .getByLabel(restoreTime.hour + ' hours', { exact: true })
+          .click({ timeout: 5000 });
+        await page
+          .getByLabel(restoreTime.minute + ' minutes', { exact: true })
+          .click({ timeout: 5000 });
+        await page
+          .getByLabel(restoreTime.second + ' seconds', { exact: true })
+          .click({ timeout: 5000 });
+        await expect(page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')).toHaveValue(
+          getFormattedPITRTime(restoreTime)
+        );
+
+        // Enable new cluster option and set new cluster name
+        await page.getByTestId('switch-input-new-cluster').click();
+        await page.getByTestId('text-input-new-cluster-name').fill(newClusterName);
+
+        // Submit the restore
+        await page.getByTestId('form-dialog-restore').click({ timeout: 5000 });
+
+        // Wait for the new cluster to be created and ready
+        await page.goto('/databases');
+        await waitForStatus(page, newClusterName, 'Initializing', 30000);
+        await waitForStatus(page, newClusterName, 'Up', 600000);
+
+        // Verify the restore was successful
+        await gotoDbClusterRestores(page, newClusterName);
+        await waitForStatus(page, 'restore-', 'Succeeded', 120000);
+
+        // Verify the data in the new cluster
+        const result = await queryTestDB(newClusterName, namespace);
+        switch (db) {
+          case 'pxc':
+            expect(result.trim()).toBe('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12');
+            break;
+          case 'psmdb':
+            expect(result.trim()).toBe(
+              '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6},{"a":7},{"a":8},{"a":9},{"a":10},{"a":11},{"a":12}]'
+            );
+            break;
+          case 'postgresql':
+            expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9\n 10\n 11\n 12');
+            break;
+        }
+
+        // Cleanup - delete the restored cluster
+        await deleteDbCluster(page, newClusterName);
+        await waitForStatus(page, newClusterName, 'Deleting', 15000);
+        await waitForDelete(page, newClusterName, 240000);
+      });
+
       test(`Delete second restore [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterRestores(page, clusterName);
         await findRowAndClickActions(page, baseBackupName + `-2`, 'Delete');
