@@ -35,13 +35,16 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { MRT_ColumnDef } from 'material-react-table';
 import { DbEngineType } from '@percona/types';
+import PoliciesDialog from '../policies-dialog';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
   const { name: policyName = '' } = useParams();
   const [openAffinityDialog, setOpenAffinityDialog] = useState(false);
+  const [openPolicyDialog, setOpenPolicyDialog] = useState(false);
   const selectedRule = useRef<AffinityRule>();
-  const { mutate: updatePolicy } = useUpdatePodSchedulingPolicy();
+  const { mutate: updatePolicy, isPending: updatingPolicy } =
+    useUpdatePodSchedulingPolicy();
   const queryClient = useQueryClient();
 
   const {
@@ -150,10 +153,26 @@ const PolicyDetails = () => {
       },
     });
   };
-
   const handleOnAddClick = () => {
     selectedRule.current = undefined;
     setOpenAffinityDialog(true);
+  };
+
+  const handleOnPolicyEdit = (data: { name: string; type: DbEngineType }) => {
+    updatePolicy(
+      {
+        ...policy,
+        metadata: {
+          ...policy.metadata,
+          name: data.name,
+        },
+      },
+      {
+        onSuccess: () => {
+          setOpenPolicyDialog(false);
+        },
+      }
+    );
   };
 
   return (
@@ -177,7 +196,7 @@ const PolicyDetails = () => {
         <IconButton
           size="medium"
           aria-label="edit"
-          onClick={() => {}}
+          onClick={() => setOpenPolicyDialog(true)}
           data-testid="edit-policy-button"
           sx={{
             position: 'relative',
@@ -237,10 +256,20 @@ const PolicyDetails = () => {
       {openAffinityDialog && (
         <AffinityFormDialog
           isOpen
+          submitting={updatingPolicy}
           dbType={dbEngineToDbType(policy.spec.engineType)}
           handleClose={() => setOpenAffinityDialog(false)}
           handleSubmit={handleFormSubmit}
           defaultValues={selectedRule.current}
+        />
+      )}
+      {openPolicyDialog && (
+        <PoliciesDialog
+          submitting={updatingPolicy}
+          policy={policy}
+          open={openPolicyDialog}
+          onClose={() => setOpenPolicyDialog(false)}
+          onSubmit={handleOnPolicyEdit}
         />
       )}
     </>

@@ -5,7 +5,7 @@ import { Button, MenuItem, Typography } from '@mui/material';
 import { Table } from '@percona/ui-lib';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PoliciesDialog from './policies-dialog';
+import PoliciesDialog from '../policies-dialog';
 import { MRT_ColumnDef } from 'material-react-table';
 import TableActionsMenu from 'components/table-actions-menu';
 import DeletePolicyDialog from './delete-policy-dialog';

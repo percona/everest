@@ -6,6 +6,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import { FormDialog } from 'components/form-dialog';
 import { z } from 'zod';
 import { DbEngineType } from '@percona/types';
+import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 
 const schema = z.object({
   name: z.string().min(1),
@@ -14,27 +15,44 @@ const schema = z.object({
 
 type Props = {
   open: boolean;
+  policy?: PodSchedulingPolicy;
+  submitting?: boolean;
   onClose: () => void;
   onSubmit: (data: z.infer<typeof schema>) => void;
 };
 
-const PoliciesDialog = ({ open, onClose, onSubmit }: Props) => {
+const PoliciesDialog = ({
+  open,
+  policy,
+  submitting,
+  onClose,
+  onSubmit,
+}: Props) => {
   const [availableDbTypes] = useDBEnginesForDbEngineTypes();
+  const isEditing = !!policy;
 
   return (
     <FormDialog
       isOpen={open}
       closeModal={onClose}
-      headerMessage="Create policy"
+      submitting={submitting}
+      headerMessage={isEditing ? 'Edit policy details' : 'Create policy'}
       onSubmit={onSubmit}
+      submitMessage={isEditing ? 'Save' : 'Create'}
       schema={schema}
       defaultValues={{
-        name: '',
-        type: availableDbTypes.length ? availableDbTypes[0].type : undefined,
+        name: policy?.metadata.name || '',
+        type:
+          policy?.spec.engineType ||
+          (availableDbTypes.length ? availableDbTypes[0].type : undefined),
       }}
     >
       <TextInput name="name" label="Policy name" />
-      <SelectInput name="type" label="Technology">
+      <SelectInput
+        name="type"
+        label="Technology"
+        selectFieldProps={{ disabled: isEditing }}
+      >
         {availableDbTypes.map((item) => (
           <MenuItem
             data-testid={`add-db-cluster-button-${item.type}`}

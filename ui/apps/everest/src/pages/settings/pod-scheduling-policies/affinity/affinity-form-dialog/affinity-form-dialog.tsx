@@ -10,6 +10,7 @@ type Props = {
   isOpen: boolean;
   dbType: DbType;
   defaultValues?: AffinityRule;
+  submitting?: boolean;
   handleClose?: () => void;
   handleSubmit?: (values: AffinityRule) => void;
 };
@@ -18,6 +19,7 @@ export const AffinityFormDialog = ({
   isOpen,
   dbType,
   defaultValues,
+  submitting,
   handleClose = () => {},
   handleSubmit = () => {},
 }: Props) => {
@@ -27,6 +29,7 @@ export const AffinityFormDialog = ({
     <FormDialog
       schema={affinityFormSchema}
       isOpen={isOpen}
+      submitting={submitting}
       closeModal={handleClose}
       headerMessage={isEditing ? Messages.editRule : Messages.addRule}
       onSubmit={handleSubmit}
