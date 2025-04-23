@@ -158,7 +158,7 @@ func NewInClusterWithCache(l *zap.SugaredLogger, ctx context.Context) (Kubernete
 		panic(err)
 	}
 	go func() {
-		l.Info("starting cache")
+		l.Info("starting session blocklist cache")
 		if err := k8sCache.Start(ctx); err != nil {
 			l.Errorf("error starting pod cache: %s", err)
 			os.Exit(1)
