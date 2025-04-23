@@ -37,6 +37,7 @@ import RoundedBox from 'components/rounded-box';
 import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
+import { dbEngineToDbType } from '@percona/utils';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -58,8 +59,14 @@ export const AdvancedConfigurationForm = ({
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
-  const { data: policies = [], isLoading: fetchingPolicies } =
+  const { data: fetchedPolicies = [], isLoading: fetchingPolicies } =
     usePodSchedulingPolicies();
+
+  const policies = fetchedPolicies.filter(
+    (p) =>
+      dbEngineToDbType(p.spec.engineType) ===
+      getValues(DbWizardFormFields.dbType)
+  );
 
   const handleOnPolicyInfoClick = () => {
     const policyName = getValues<string>(

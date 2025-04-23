@@ -97,7 +97,7 @@ const PodSchedulingPoliciesTable = ({
       tableName="policy-rules"
       data={rules}
       columns={columns}
-      enableRowActions={!viewOnly}
+      enableTopToolbar={!viewOnly}
       emptyState={
         <EmptyState
           onButtonClick={onAddRuleClick}

@@ -153,6 +153,7 @@ const ScheduledBackupsList = () => {
           open={openDeleteDialog}
           selectedId={selectedSchedule}
           closeModal={handleCloseDeleteDialog}
+          cancelMessage="Cancel"
           headerMessage={Messages.deleteModal.header}
           handleConfirm={handleConfirmDelete}
           disabledButtons={updatingCluster}

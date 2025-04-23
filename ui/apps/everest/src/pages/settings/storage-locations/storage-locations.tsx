@@ -248,6 +248,7 @@ export const StorageLocations = () => {
       {openDeleteDialog && (
         <ConfirmDialog
           open={openDeleteDialog}
+          cancelMessage="Cancel"
           selectedId={selectedStorageName}
           selectedNamespace={selectedStorageNamespace}
           closeModal={handleCloseDeleteDialog}

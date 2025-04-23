@@ -13,6 +13,7 @@ const UpgradeModal = ({
   return (
     <ConfirmDialog
       open={open}
+      cancelMessage="Cancel"
       selectedId={namespace}
       closeModal={onClose}
       headerMessage="Upgrade Operators"

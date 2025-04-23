@@ -134,6 +134,10 @@ const formValuesToPayloadMapping = (
           }),
         },
       }),
+      ...(dbPayload.podSchedulingPolicyEnabled &&
+        dbPayload.podSchedulingPolicy && {
+          podSchedulingPolicyName: dbPayload.podSchedulingPolicy,
+        }),
     },
   };
 

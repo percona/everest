@@ -11,7 +11,7 @@ export const ConfirmDialog = ({
   handleConfirm = () => {},
   handleConfirmNamespace = () => {},
   headerMessage,
-  cancelMessage = 'Cancel',
+  cancelMessage,
   submitMessage = 'Delete',
   disabledButtons = false,
   ...dialogProps
@@ -35,21 +35,25 @@ export const ConfirmDialog = ({
       <DialogTitle onClose={closeModal}>{headerMessage}</DialogTitle>
       <DialogContent>{content}</DialogContent>
       <DialogActions>
-        <Button
-          onClick={closeModal}
-          disabled={disabledButtons}
-          data-testid={`confirm-dialog-${kebabize(cancelMessage)}`}
-        >
-          {cancelMessage}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={onClick}
-          disabled={disabledButtons}
-          data-testid={`confirm-dialog-${kebabize(submitMessage)}`}
-        >
-          {submitMessage}
-        </Button>
+        {!!cancelMessage && (
+          <Button
+            onClick={closeModal}
+            disabled={disabledButtons}
+            data-testid={`confirm-dialog-${kebabize(cancelMessage)}`}
+          >
+            {cancelMessage}
+          </Button>
+        )}
+        {!!submitMessage && (
+          <Button
+            variant="contained"
+            onClick={onClick}
+            disabled={disabledButtons}
+            data-testid={`confirm-dialog-${kebabize(submitMessage)}`}
+          >
+            {submitMessage}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

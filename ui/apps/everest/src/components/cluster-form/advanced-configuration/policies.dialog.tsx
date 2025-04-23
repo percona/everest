@@ -13,9 +13,11 @@ const PoliciesDialog = ({ engineType, policy, handleClose }: Props) => {
   return (
     <ConfirmDialog
       open
+      cancelMessage={undefined}
       selectedId="pod-scheduling-policies"
       headerMessage={policy.metadata.name}
       closeModal={handleClose}
+      handleConfirm={handleClose}
       submitMessage="OK"
       maxWidth="xl"
     >

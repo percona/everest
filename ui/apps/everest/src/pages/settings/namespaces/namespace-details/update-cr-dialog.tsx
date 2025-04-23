@@ -30,6 +30,7 @@ const UpdateCrDialog = ({
   return (
     <ConfirmDialog
       open
+      cancelMessage="Cancel"
       selectedId={dbCluster.metadata.name}
       closeModal={onClose}
       handleConfirm={onCrdUpdate}

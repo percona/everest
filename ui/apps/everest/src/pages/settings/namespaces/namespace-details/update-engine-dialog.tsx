@@ -27,6 +27,7 @@ const UpdateEngineDialog = ({
   return (
     <ConfirmDialog
       open
+      cancelMessage="Cancel"
       selectedId={dbCluster.metadata.name}
       closeModal={onClose}
       handleConfirm={onEngineUpdate}
