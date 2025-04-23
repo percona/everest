@@ -32,8 +32,8 @@ func DBNamespaceSubChartPath(dir string) string {
 // CheckHelmInstallation ensures that the current installation was done using Helm chart.
 // Returns the version of Everest installed in the cluster.
 // Returns an error if the installation was not done using Helm chart.
-func CheckHelmInstallation(ctx context.Context, client kubernetes.KubernetesConnector) (string, error) {
-	everestVersion, err := version.EverestVersionFromDeployment(ctx, client)
+func CheckHelmInstallation(ctx context.Context, kubeConnector kubernetes.KubernetesConnector) (string, error) {
+	everestVersion, err := version.EverestVersionFromDeployment(ctx, kubeConnector)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return "", errors.New("everest is not installed in the cluster")
@@ -50,8 +50,8 @@ func CheckHelmInstallation(ctx context.Context, client kubernetes.KubernetesConn
 	return ver, nil
 }
 
-// NewKubeclient creates a new Kubernetes client.
-func NewKubeclient(l *zap.SugaredLogger, kubeconfigPath string) (*kubernetes.Kubernetes, error) {
+// NewKubeConnector creates a new Kubernetes client.
+func NewKubeConnector(l *zap.SugaredLogger, kubeconfigPath string) (kubernetes.KubernetesConnector, error) {
 	k, err := kubernetes.New(kubeconfigPath, l)
 	if err != nil {
 		var u *url.Error
