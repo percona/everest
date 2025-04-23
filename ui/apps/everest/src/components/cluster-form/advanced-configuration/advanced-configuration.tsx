@@ -15,6 +15,7 @@
 
 import {
   AutoCompleteInput,
+  SelectInput,
   SwitchInput,
   TextArray,
   TextInput,
@@ -24,7 +25,8 @@ import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
-import { Stack } from '@mui/material';
+import { Box, IconButton, MenuItem, Stack } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useEffect } from 'react';
 import { DbWizardFormFields } from 'consts';
@@ -32,6 +34,7 @@ import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
 import { WizardMode } from 'shared-types/wizard.types';
 import RoundedBox from 'components/rounded-box';
+import { usePodSchedulingPolicies } from 'hooks';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -44,12 +47,15 @@ export const AdvancedConfigurationForm = ({
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState } = useFormContext();
   const mode = useDatabasePageMode();
-  const [externalAccess, engineParametersEnabled] = watch([
+  const [externalAccess, engineParametersEnabled, policiesEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
+    AdvancedConfigurationFields.podSchedulingPolicyEnabled,
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
+  const { data: policies = [], isLoading: fetchingPolicies } =
+    usePodSchedulingPolicies();
 
   // setting the storage class default value
   useEffect(() => {
@@ -70,6 +76,15 @@ export const AdvancedConfigurationForm = ({
       );
     }
   }, [clusterInfo]);
+
+  useEffect(() => {
+    if (policies.length) {
+      setValue(
+        AdvancedConfigurationFields.podSchedulingPolicy,
+        policies[0].metadata.name
+      );
+    }
+  }, [policies, setValue]);
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
@@ -119,6 +134,37 @@ export const AdvancedConfigurationForm = ({
               handleBlur={handleBlur}
             />
           </Stack>
+        )}
+      </RoundedBox>
+      <RoundedBox sx={{ display: 'flex', minHeight: '80px' }}>
+        <SwitchInput
+          label={Messages.podSchedulingPolicy}
+          name={AdvancedConfigurationFields.podSchedulingPolicyEnabled}
+        />
+        {!!policiesEnabled && (
+          <Box display="flex" ml="auto" alignItems="center">
+            <SelectInput
+              name={AdvancedConfigurationFields.podSchedulingPolicy}
+              loading={fetchingPolicies}
+              formControlProps={{
+                sx: {
+                  mt: 0,
+                },
+              }}
+            >
+              {policies.map((policy) => (
+                <MenuItem
+                  value={policy.metadata.name}
+                  key={policy.metadata.name}
+                >
+                  {policy.metadata.name}
+                </MenuItem>
+              ))}
+            </SelectInput>
+            <IconButton>
+              <InfoIcon />
+            </IconButton>
+          </Box>
         )}
       </RoundedBox>
       <RoundedBox>

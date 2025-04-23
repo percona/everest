@@ -23,6 +23,7 @@ export const Messages = {
       Exposing your database to remote access poses severe risks, including unauthorized access, data breaches and compliance violations.
     `,
   },
+  podSchedulingPolicy: 'Pod scheduling policy',
   sourceRange: 'Source Range',
   sourceRangePlaceholder: SOURCE_RANGE_PLACEHOLDER,
   engineParameters: {
