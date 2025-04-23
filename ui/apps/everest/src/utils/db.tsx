@@ -704,11 +704,16 @@ export const changeDbClusterAdvancedConfig = (
   engineParametersEnabled = false,
   externalAccess = false,
   engineParameters = '',
-  sourceRanges?: Array<{ sourceRange?: string }>
+  sourceRanges?: Array<{ sourceRange?: string }>,
+  podSchedulingPolicyEnabled = false,
+  podSchedulingPolicy = ''
 ) => ({
   ...dbCluster,
   spec: {
     ...dbCluster.spec,
+    podSchedulingPolicyName: podSchedulingPolicyEnabled
+      ? podSchedulingPolicy
+      : undefined,
     engine: {
       ...dbCluster.spec.engine,
       config: engineParametersEnabled ? engineParameters : '',

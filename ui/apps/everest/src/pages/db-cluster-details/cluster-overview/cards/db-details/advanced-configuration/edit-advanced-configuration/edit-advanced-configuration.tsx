@@ -38,6 +38,8 @@ export const AdvancedConfigurationEditModal = ({
     engineParameters,
     sourceRanges,
     storageClass,
+    podSchedulingPolicyEnabled,
+    podSchedulingPolicy,
   }) => {
     handleSubmitModal({
       externalAccess,
@@ -45,6 +47,8 @@ export const AdvancedConfigurationEditModal = ({
       engineParameters,
       sourceRanges,
       storageClass,
+      podSchedulingPolicyEnabled,
+      podSchedulingPolicy,
     });
   };
 

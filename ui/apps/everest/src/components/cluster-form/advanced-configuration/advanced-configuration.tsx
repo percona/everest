@@ -63,9 +63,7 @@ export const AdvancedConfigurationForm = ({
     usePodSchedulingPolicies();
 
   const policies = fetchedPolicies.filter(
-    (p) =>
-      dbEngineToDbType(p.spec.engineType) ===
-      getValues(DbWizardFormFields.dbType)
+    (p) => dbEngineToDbType(p.spec.engineType) === dbType
   );
 
   const handleOnPolicyInfoClick = () => {
@@ -102,7 +100,7 @@ export const AdvancedConfigurationForm = ({
   }, [clusterInfo]);
 
   useEffect(() => {
-    if (policies.length) {
+    if (policies.length && mode === WizardMode.New) {
       setValue(
         AdvancedConfigurationFields.podSchedulingPolicy,
         policies[0].metadata.name

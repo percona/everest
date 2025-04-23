@@ -44,5 +44,6 @@ export const Messages = {
     memory: 'Memory',
     backupStorages: 'Backup\u00A0storage',
     storageClass: 'Storage class',
+    podSchedulingPolicy: 'Pod scheduling policy',
   },
 };
