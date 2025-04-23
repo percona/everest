@@ -1,14 +1,11 @@
 import { Page, expect } from '@playwright/test';
 
-
 // Returns a row that matches an exact name in a <td> element
 export const getClusterRow = (page: Page, name: string) => {
-  return page
-    .locator('.MuiTableRow-root')
-    .filter({
-      has: page.locator('td').getByText(name, { exact: true }),
-      //has: page.getByText(name, { exact: true }),
-    });
+  return page.locator('.MuiTableRow-root').filter({
+    has: page.locator('td').getByText(name, { exact: true }),
+    //has: page.getByText(name, { exact: true }),
+  });
 };
 
 export const findRowAndClickActions = async (
@@ -18,8 +15,8 @@ export const findRowAndClickActions = async (
 ) => {
   // cluster actions menu click
   const dbRow = getClusterRow(page, name);
-    // .filter({ hasText: name })
-    // .first();
+  // .filter({ hasText: name })
+  // .first();
   await expect(dbRow).toHaveCount(1);
   await expect(dbRow).toBeVisible({ timeout: 10000 });
   await dbRow.locator('[data-testid="MoreHorizIcon"]').click();

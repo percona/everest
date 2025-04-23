@@ -69,7 +69,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test.describe.configure({ timeout: 720000 });
 
       // Define primary and restored cluster names to use across related tests
-      const clusterName = `${db}-${size}-primary`; 
+      const clusterName = `${db}-${size}-primary`;
       const restoredClusterName = `rest-${clusterName}`;
 
       let storageClasses = [];
@@ -86,7 +86,10 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         storageClasses = storageClassNames;
       });
 
-      test(`Create primary database cluster [${clusterName}]`, async ({ page, request }) => {
+      test(`Create primary database cluster [${clusterName}]`, async ({
+        page,
+        request,
+      }) => {
         expect(storageClasses.length).toBeGreaterThan(0);
 
         await page.goto('/databases');
@@ -171,11 +174,13 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Add data to primary database [${clusterName}]`, async () => { 
-        await prepareTestDB(clusterName, namespace); 
+      test(`Add data to primary database [${clusterName}]`, async () => {
+        await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create and verify backup schedules for primary database [${clusterName}]`, async ({ page }) => {
+      test(`Create and verify backup schedules for primary database [${clusterName}]`, async ({
+        page,
+      }) => {
         test.setTimeout(60 * 1000); // Increased timeout
 
         const scheduleMinute1 = getNextScheduleMinute(2);
@@ -263,7 +268,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Delete schedules on primary database [${clusterName}]`, async ({ page }) => {
+      test(`Delete schedules on primary database [${clusterName}]`, async ({
+        page,
+      }) => {
         test.setTimeout(30 * 1000);
 
         await gotoDbClusterBackups(page, clusterName);
@@ -293,9 +300,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-
-      test(`Restore to a new database cluster [${restoredClusterName}]`, async ({ page }) => {
-
+      test(`Restore to a new database cluster [${restoredClusterName}]`, async ({
+        page,
+      }) => {
         await gotoDbClusterBackups(page, clusterName);
         const firstBackup = await page
           .getByText(`${db}-${size}-primary-`)
@@ -314,34 +321,38 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         // Set the new DB name
         await test.step('Set DB name', async () => {
-        await expect(page.getByTestId('text-input-db-name')).toBeVisible();
-        await page.getByTestId('text-input-db-name').fill(restoredClusterName);
+          await expect(page.getByTestId('text-input-db-name')).toBeVisible();
+          await page
+            .getByTestId('text-input-db-name')
+            .fill(restoredClusterName);
         });
         await test.step('Populate basic information', async () => {
           await moveForward(page);
         });
-      
+
         await test.step('Populate resources', async () => {
           await moveForward(page);
         });
-      
+
         await test.step('Populate backups', async () => {
           await moveForward(page);
         });
         await test.step('Populate advanced db config', async () => {
           await moveForward(page);
         });
-      
+
         await test.step('Submit restore request (monitoring step)', async () => {
-          await expect(page.getByTestId('db-wizard-submit-button')).toBeVisible();
+          await expect(
+            page.getByTestId('db-wizard-submit-button')
+          ).toBeVisible();
           await page.getByTestId('db-wizard-submit-button').click();
         });
-      
+
         await test.step('Check restored DB list and status', async () => {
           await waitForStatus(page, restoredClusterName, 'Initializing', 15000);
           await waitForStatus(page, restoredClusterName, 'Up', 600000);
         });
-      });      
+      });
 
       test(`Delete primary database cluster [${clusterName}]`, async ({
         page,
@@ -352,7 +363,6 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       });
 
       test(`Verify data after restore on the new database [${restoredClusterName}]`, async () => {
-
         const result = await queryTestDB(restoredClusterName, namespace);
 
         switch (db) {
@@ -386,7 +396,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Create backup schedule for the restored database [${restoredClusterName}]`, async ({ page }) => {
+      test(`Create backup schedule for the restored database [${restoredClusterName}]`, async ({
+        page,
+      }) => {
         test.setTimeout(60 * 1000);
         const scheduleMinute = getNextScheduleMinute(2);
         const timeOption: ScheduleTimeOptions = {
@@ -396,7 +408,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           hour: null,
           minute: scheduleMinute,
         };
-      
+
         await test.step('Create schedule', async () => {
           console.log(`Querying cluster: ${restoredClusterName}`);
           await gotoDbClusterBackups(page, restoredClusterName);
@@ -409,10 +421,10 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             '0'
           );
           await page.getByTestId('form-dialog-create').click();
-      
+
           // Wait for UI to reflect schedule
           await page.waitForTimeout(3000);
-      
+
           // Check if schedule is visible, otherwise expand the dropdown
           if (
             !(await page
@@ -427,41 +439,52 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Wait for backup to succeed for the restored database [${restoredClusterName}]`, async ({ page }) => {
+      test(`Wait for backup to succeed for the restored database [${restoredClusterName}]`, async ({
+        page,
+      }) => {
         await gotoDbClusterBackups(page, clusterName);
         await expect(page.getByText(`rest-${db}-${size}-`)).toHaveCount(1, {
           timeout: 360000,
         });
-        await expect(page.locator('tr', {has: page.getByText(`rest-${db}-${size}-`),}).getByText('Succeeded')
+        await expect(
+          page
+            .locator('tr', { has: page.getByText(`rest-${db}-${size}-`) })
+            .getByText('Succeeded')
         ).toBeVisible({ timeout: 360000 });
       });
 
-      test(`Create and verify on-demand backup for the restored database [${restoredClusterName}]`, async ({ page }) => {
+      test(`Create and verify on-demand backup for the restored database [${restoredClusterName}]`, async ({
+        page,
+      }) => {
         const backupName = `ondemand-${restoredClusterName}`;
-      
+
         await test.step('Navigate to Backups tab', async () => {
           await gotoDbClusterBackups(page, restoredClusterName);
         });
-      
+
         await test.step('Click Create Backup and select NOW', async () => {
           await page.getByTestId('menu-button').click();
           await page.getByTestId('now-menu-item').click();
-      
+
           await page.getByTestId('text-input-name').fill(backupName);
-      
+
           await page.getByTestId('form-dialog-create').click();
         });
-      
+
         await test.step('Verify on-demand backup appears and succeeds', async () => {
-          await expect(page.getByText(backupName)).toBeVisible({ timeout: 60000 });
-      
+          await expect(page.getByText(backupName)).toBeVisible({
+            timeout: 60000,
+          });
+
           await expect(
             page.locator('tr', { hasText: backupName }).getByText('Succeeded')
           ).toBeVisible({ timeout: 360000 });
         });
       });
 
-      test(`Delete the restored database cluster [${restoredClusterName}]`, async ({ page }) => {
+      test(`Delete the restored database cluster [${restoredClusterName}]`, async ({
+        page,
+      }) => {
         await deleteDbCluster(page, restoredClusterName);
         await waitForStatus(page, restoredClusterName, 'Deleting', 15000);
         await waitForDelete(page, restoredClusterName, 240000);
