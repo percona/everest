@@ -228,7 +228,7 @@ export const AdvancedConfigurationForm = ({
       </RoundedBox>
       {policyDialogOpen && (
         <PoliciesDialog
-          engineType={getValues(DbWizardFormFields.dbType)}
+          engineType={selectedPolicy.current!.spec.engineType}
           policy={selectedPolicy.current!}
           handleClose={() => setPolicyDialogOpen(false)}
         />
