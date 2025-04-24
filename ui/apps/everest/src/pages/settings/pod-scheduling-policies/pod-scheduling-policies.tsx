@@ -1,6 +1,6 @@
 import { Outlet, useMatch } from 'react-router-dom';
 import { SettingsTabs } from '../settings.types';
-import PoliciesList from './policies-list/policies-list';
+import PoliciesList from './policies-list';
 
 const PodSchedulingPolicies = () => {
   const routeMatch = useMatch(

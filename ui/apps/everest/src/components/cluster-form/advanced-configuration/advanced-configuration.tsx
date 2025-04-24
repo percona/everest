@@ -60,7 +60,9 @@ export const AdvancedConfigurationForm = ({
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
   const { data: fetchedPolicies = [], isLoading: fetchingPolicies } =
-    usePodSchedulingPolicies();
+    usePodSchedulingPolicies({
+      refetchInterval: 2000,
+    });
 
   const policies = fetchedPolicies.filter(
     (p) => dbEngineToDbType(p.spec.engineType) === dbType

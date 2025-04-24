@@ -16,6 +16,7 @@ import { dbEngineToDbType } from '@percona/utils';
 import { AffinityRule } from 'shared-types/affinity.types';
 import { useQueryClient } from '@tanstack/react-query';
 import PodSchedulingPoliciesTable from 'components/pod-scheduling-policies-table';
+import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
@@ -25,6 +26,18 @@ const PolicyDetails = () => {
   const { mutate: updatePolicy, isPending: updatingPolicy } =
     useUpdatePodSchedulingPolicy();
   const queryClient = useQueryClient();
+  const { canUpdate } = useRBACPermissions(
+    'pod-scheduling-policies',
+    policyName
+  );
+
+  useRBACPermissionRoute([
+    {
+      action: 'read',
+      resource: 'pod-scheduling-policies',
+      specificResources: [policyName],
+    },
+  ]);
 
   const {
     isLoading,
@@ -93,6 +106,7 @@ const PolicyDetails = () => {
       </Box>
       <PodSchedulingPoliciesTable
         rules={rules}
+        showAddRuleButton={canUpdate}
         engineType={policy.spec.engineType}
         onRowClick={(rule) => {
           selectedRule.current = rule;

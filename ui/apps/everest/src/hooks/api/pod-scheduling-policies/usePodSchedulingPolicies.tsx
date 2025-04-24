@@ -20,7 +20,6 @@ export const usePodSchedulingPolicies = (
     PodSchedulingPolicy[]
   >
 ) => {
-  // const { canRead } = useRBACPermissions('database-clusters', namespace);
   return useQuery({
     queryKey: ['pod-scheduling-policies'],
     queryFn: () => getPodSchedulingPolicies(),
@@ -33,10 +32,6 @@ export const usePodSchedulingPolicy = (
   policyName: string,
   options?: PerconaQueryOptions<PodSchedulingPolicy>
 ) => {
-  // const { canRead } = useRBACPermissions(
-  //   'database-clusters',
-  //   `${namespace}/${dbClusterName}`
-  // );
   return useQuery({
     queryKey: ['pod-scheduling-policy', policyName],
     queryFn: () => getPodSchedulingPolicy(policyName),
