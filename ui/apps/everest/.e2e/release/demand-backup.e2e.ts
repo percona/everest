@@ -138,6 +138,14 @@ test.describe.configure({ retries: 0 });
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
+        await test.step('Wait for PG initial backup to finish', async () => {
+          if (db !== 'postgresql') {
+            return;
+          }
+
+          await page.waitForTimeout(30000);
+        });
+
         await test.step('Check db cluster k8s object options', async () => {
           const addedCluster = await getDbClusterAPI(
             clusterName,
