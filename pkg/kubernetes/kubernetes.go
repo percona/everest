@@ -19,25 +19,30 @@ package kubernetes
 import (
 	"context"
 	"errors"
-	"net/http"
-	"slices"
+	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/zap"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/version"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/discovery"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/kubernetes/client"
 )
 
 type (
@@ -59,18 +64,10 @@ const (
 	// ClusterTypeGeneric is a generic type.
 	ClusterTypeGeneric ClusterType = "generic"
 
-	// EverestDBNamespacesEnvVar is the name of the environment variable that
-	// contains the list of monitored namespaces.
-	EverestDBNamespacesEnvVar = "DB_NAMESPACES"
-
 	// OLMNamespace is the namespace where OLM is installed.
-	OLMNamespace    = "everest-olm"
-	olmOperatorName = "olm-operator"
+	OLMNamespace = "everest-olm"
 
 	openShiftCatalogNamespace = "openshift-marketplace"
-
-	// APIVersionCoreosV1 constant for some API requests.
-	APIVersionCoreosV1 = "operators.coreos.com/v1"
 
 	pollInterval = 5 * time.Second
 	pollTimeout  = 15 * time.Minute
@@ -80,130 +77,202 @@ const (
 	backoffInterval   = 5 * time.Second
 	backoffMaxRetries = 5
 
-	requestTimeout  = 5 * time.Second
-	maxIdleConns    = 1
-	idleConnTimeout = 10 * time.Second
+	defaultQPSLimit   = 100
+	defaultBurstLimit = 150
 )
 
-// ErrEmptyVersionTag Got an empty version tag from GitHub API.
-var ErrEmptyVersionTag = errors.New("got an empty version tag from Github")
+var once sync.Once
 
 // Kubernetes is a client for Kubernetes.
 type Kubernetes struct {
-	client     client.KubeClientConnector
+	k8sClient  ctrlclient.Client
 	l          *zap.SugaredLogger
-	namespace  string
-	httpClient *http.Client
+	restConfig *rest.Config
 	kubeconfig string
+	// it is required for handling plain runtime.Objects (ApplyManifestFile)
+	// WARNING: do not access this field directly, use getDiscoveryClient() instead.
+	// This field is lazy initialized because it is not always needed.
+	discoveryClient discovery.DiscoveryInterface
 }
 
 // Kubeconfig returns the path to the kubeconfig.
+// This value is available only if the client was created with New() function.
 func (k *Kubernetes) Kubeconfig() string {
 	return k.kubeconfig
 }
 
-// NodeSummaryNode holds information about Node inside Node's summary.
-type NodeSummaryNode struct {
-	FileSystem NodeFileSystemSummary `json:"fs,omitempty"`
-}
+// New returns new Kubernetes object based on provided kubeconfig.
+func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, error) {
+	home := os.Getenv("HOME")
+	path := strings.ReplaceAll(kubeconfigPath, "~", home)
+	path = filepath.Clean(path)
+	fileData, err := os.ReadFile(path)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not read kubeconfig file"))
+	}
 
-// NodeSummary holds summary of the Node.
-// One gets this by requesting Kubernetes API endpoint:
-// /v1/nodes/<node-name>/proxy/stats/summary.
-type NodeSummary struct {
-	Node NodeSummaryNode `json:"node,omitempty"`
-}
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(fileData)
+	if err != nil {
+		return nil, err
+	}
 
-// NodeFileSystemSummary holds a summary of Node's filesystem.
-type NodeFileSystemSummary struct {
-	UsedBytes uint64 `json:"usedBytes,omitempty"`
-}
-
-// New returns new Kubernetes object.
-func New(kubeconfigPath string, l *zap.SugaredLogger) (*Kubernetes, error) {
-	client, err := client.NewFromKubeConfig(kubeconfigPath, l)
+	restConfig.QPS = defaultQPSLimit
+	restConfig.Burst = defaultBurstLimit
+	k8client, err := ctrlclient.New(restConfig, getKubernetesClientOptions())
 	if err != nil {
 		return nil, err
 	}
 
 	return &Kubernetes{
-		client: client,
-		l:      l.With("component", "kubernetes"),
-		httpClient: &http.Client{
-			Timeout: requestTimeout,
-			Transport: &http.Transport{
-				MaxIdleConns:    maxIdleConns,
-				IdleConnTimeout: idleConnTimeout,
-			},
-		},
-		kubeconfig: kubeconfigPath,
+		k8sClient:  k8client,
+		l:          l.With("component", "kubernetes"),
+		restConfig: restConfig,
+		kubeconfig: path,
 	}, nil
 }
 
 // NewInCluster creates a new kubernetes client using incluster authentication.
-func NewInCluster(l *zap.SugaredLogger) (*Kubernetes, error) {
-	client, err := client.NewInCluster()
+func NewInCluster(l *zap.SugaredLogger) (KubernetesConnector, error) {
+	restConfig := inClusterRestConfig()
+
+	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptions())
 	if err != nil {
 		return nil, err
 	}
+
 	return &Kubernetes{
-		client:    client,
-		l:         l,
-		namespace: client.Namespace(),
+		k8sClient:  k8sclient,
+		l:          l.With("component", "kubernetes"),
+		restConfig: restConfig,
 	}, nil
 }
 
-// Config returns *rest.Config.
-func (k *Kubernetes) Config() *rest.Config {
-	return k.client.Config()
+// NewInClusterWithCache creates a new kubernetes client using incluster authentication with cache enabled
+func NewInClusterWithCache(l *zap.SugaredLogger, ctx context.Context) (KubernetesConnector, error) {
+	restConfig := inClusterRestConfig()
+	cacheOptions := cache.Options{
+		Scheme: CreateScheme(),
+	}
+	k8sCache, err := cache.New(restConfig, cacheOptions)
+	if err != nil {
+		panic(err)
+	}
+	go func() {
+		l.Info("starting session blocklist cache")
+		if err := k8sCache.Start(ctx); err != nil {
+			l.Errorf("error starting session blocklist cache: %s", err)
+			os.Exit(1)
+		}
+	}()
+	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptionsWithCache(k8sCache))
+	if err != nil {
+		return nil, err
+	}
+
+	return &Kubernetes{
+		k8sClient:  k8sclient,
+		l:          l.With("component", "kubernetes"),
+		restConfig: restConfig,
+	}, nil
 }
 
-// NewEmpty returns new Kubernetes object.
-func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
-	return &Kubernetes{
-		client: &client.Client{},
-		l:      l.With("component", "kubernetes"),
-		httpClient: &http.Client{
-			Timeout: requestTimeout,
-			Transport: &http.Transport{
-				MaxIdleConns:    maxIdleConns,
-				IdleConnTimeout: idleConnTimeout,
-			},
+func inClusterRestConfig() *rest.Config {
+	restConfig := ctrl.GetConfigOrDie()
+	restConfig.QPS = defaultQPSLimit
+	restConfig.Burst = defaultBurstLimit
+	return restConfig
+}
+
+// CreateScheme creates a new runtime.Scheme.
+// It registers all necessary types:
+// - standard client-go types
+// - Everest CRDs
+// - OLM CRDs
+// - API extensions
+func CreateScheme() *runtime.Scheme {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(everestv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(olmv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(apiextv1.AddToScheme(scheme))
+	return scheme
+}
+
+func getKubernetesClientOptions() ctrlclient.Options {
+	return ctrlclient.Options{
+		Scheme: CreateScheme(),
+		Cache:  nil, // disable cache
+	}
+}
+
+func getKubernetesClientOptionsWithCache(k8sCache cache.Cache) ctrlclient.Options {
+	return ctrlclient.Options{
+		Scheme: CreateScheme(),
+		Cache: &ctrlclient.CacheOptions{
+			Reader:       k8sCache,
+			Unstructured: false,
 		},
 	}
 }
 
-// WithClient sets the client connector.
-func (k *Kubernetes) WithClient(c client.KubeClientConnector) *Kubernetes {
-	k.client = c
+func (k *Kubernetes) getDiscoveryClient() discovery.DiscoveryInterface {
+	once.Do(func() {
+		httpClient, err := rest.HTTPClientFor(k.restConfig)
+		if err != nil {
+			panic(err)
+		}
+
+		k.discoveryClient, err = discovery.NewDiscoveryClientForConfigAndClient(k.restConfig, httpClient)
+		if err != nil {
+			panic(err)
+		}
+	})
+	return k.discoveryClient
+}
+
+// Config returns *rest.Config.
+func (k *Kubernetes) Config() *rest.Config {
+	return k.restConfig
+}
+
+// NewEmpty returns new empty Kubernetes object.
+// useful for testing.
+func NewEmpty(l *zap.SugaredLogger) *Kubernetes {
+	return &Kubernetes{
+		l: l.With("component", "kubernetes"),
+	}
+}
+
+// WithKubernetesClient sets the k8s client.
+func (k *Kubernetes) WithKubernetesClient(c ctrlclient.Client) *Kubernetes {
+	k.k8sClient = c
 	return k
 }
 
-// Namespace returns the current namespace.
+// Namespace returns the Everest system namespace.
 func (k *Kubernetes) Namespace() string {
-	return k.namespace
-}
-
-// ClusterName returns the name of the k8s cluster.
-func (k *Kubernetes) ClusterName() string {
-	return k.client.ClusterName()
+	return common.SystemNamespace
 }
 
 // GetEverestID returns the ID of the namespace where everest is deployed.
 func (k *Kubernetes) GetEverestID(ctx context.Context) (string, error) {
-	namespace, err := k.client.GetNamespace(ctx, k.namespace)
+	namespace, err := k.GetNamespace(ctx, types.NamespacedName{Name: k.Namespace()})
 	if err != nil {
-		return "", err
+		return "", errors.Join(err, fmt.Errorf("can't get namespace='%s'", k.Namespace()))
+	}
+
+	if namespace == nil {
+		return "", fmt.Errorf("can't get namespace='%s'", k.Namespace())
 	}
 	return string(namespace.UID), nil
 }
 
 func (k *Kubernetes) isOpenshift(ctx context.Context) (bool, error) {
-	_, err := k.client.GetNamespace(ctx, openShiftCatalogNamespace)
-	if err == nil {
-		return true, nil
+	ns, err := k.GetNamespace(ctx, types.NamespacedName{Name: openShiftCatalogNamespace})
+	if err != nil {
+		return false, ctrlclient.IgnoreNotFound(err)
 	}
-	return false, ctrlclient.IgnoreNotFound(err)
+	return ns != nil, nil
 }
 
 // GetClusterType tries to guess the underlying kubernetes cluster based on storage class.
@@ -215,7 +284,7 @@ func (k *Kubernetes) GetClusterType(ctx context.Context) (ClusterType, error) {
 	}
 
 	// For other types, we will check the storage classes.
-	storageClasses, err := k.client.GetStorageClasses(ctx)
+	storageClasses, err := k.ListStorageClasses(ctx)
 	if err != nil {
 		return ClusterTypeUnknown, err
 	}
@@ -233,40 +302,6 @@ func (k *Kubernetes) GetClusterType(ctx context.Context) (ClusterType, error) {
 		}
 	}
 	return ClusterTypeGeneric, nil
-}
-
-// GetCatalogSource returns catalog source.
-func (k *Kubernetes) GetCatalogSource(ctx context.Context, name, namespace string) (*olmv1alpha1.CatalogSource, error) {
-	return k.client.OLM().OperatorsV1alpha1().CatalogSources(namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
-// DeleteCatalogSource deletes catalog source.
-func (k *Kubernetes) DeleteCatalogSource(ctx context.Context, name, namespace string) error {
-	return k.client.OLM().OperatorsV1alpha1().CatalogSources(namespace).Delete(ctx, name, metav1.DeleteOptions{})
-}
-
-// GetSubscription returns subscription.
-func (k *Kubernetes) GetSubscription(ctx context.Context, name, namespace string) (*olmv1alpha1.Subscription, error) {
-	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
-// ListSubscriptions lists subscriptions.
-func (k *Kubernetes) ListSubscriptions(ctx context.Context, namespace string) (*olmv1alpha1.SubscriptionList, error) {
-	return k.client.OLM().OperatorsV1alpha1().Subscriptions(namespace).List(ctx, metav1.ListOptions{})
-}
-
-// InstallOperatorRequest holds the fields to make an operator install request.
-type InstallOperatorRequest struct {
-	Namespace              string
-	Name                   string
-	OperatorGroup          string
-	CatalogSource          string
-	CatalogSourceNamespace string
-	Channel                string
-	InstallPlanApproval    olmv1alpha1.Approval
-	StartingCSV            string
-	TargetNamespaces       []string
-	SubscriptionConfig     *olmv1alpha1.SubscriptionConfig
 }
 
 func mergeNamespacesEnvVar(str1, str2 string) string {
@@ -296,142 +331,4 @@ func mergeNamespacesEnvVar(str1, str2 string) string {
 	sort.Strings(namespaces)
 
 	return strings.Join(namespaces, ",")
-}
-
-// GetServerVersion returns server version.
-func (k *Kubernetes) GetServerVersion() (*version.Info, error) {
-	return k.client.GetServerVersion()
-}
-
-// GetClusterServiceVersion retrieves a ClusterServiceVersion by namespaced name.
-func (k *Kubernetes) GetClusterServiceVersion(
-	ctx context.Context,
-	key types.NamespacedName,
-) (*olmv1alpha1.ClusterServiceVersion, error) {
-	return k.client.GetClusterServiceVersion(ctx, key)
-}
-
-// ListClusterServiceVersion list all CSVs for the given namespace.
-func (k *Kubernetes) ListClusterServiceVersion(
-	ctx context.Context,
-	namespace string,
-) (*olmv1alpha1.ClusterServiceVersionList, error) {
-	return k.client.ListClusterServiceVersion(ctx, namespace)
-}
-
-// ListCRDs lists all CRDs.
-func (k *Kubernetes) ListCRDs(
-	ctx context.Context,
-) (*apiextv1.CustomResourceDefinitionList, error) {
-	return k.client.ListCRDs(ctx, &metav1.LabelSelector{})
-}
-
-// DeleteCRD deletes a CRD by name.
-func (k *Kubernetes) DeleteCRD(
-	ctx context.Context,
-	name string,
-) error {
-	return k.client.DeleteCRD(ctx, name)
-}
-
-// DeleteClusterServiceVersion deletes a ClusterServiceVersion.
-func (k *Kubernetes) DeleteClusterServiceVersion(
-	ctx context.Context,
-	key types.NamespacedName,
-) error {
-	return k.client.DeleteClusterServiceVersion(ctx, key)
-}
-
-// DeleteSubscription deletes a subscription by namespaced name.
-func (k *Kubernetes) DeleteSubscription(
-	ctx context.Context,
-	key types.NamespacedName,
-) error {
-	return k.client.DeleteSubscription(ctx, key)
-}
-
-// RestartDeployment restarts the given deployment.
-func (k *Kubernetes) RestartDeployment(ctx context.Context, name, namespace string) error {
-	// Get the Deployment and add restart annotation to pod template.
-	// We retry this operatation since there may be update conflicts.
-	var b backoff.BackOff
-	b = backoff.NewConstantBackOff(backoffInterval)
-	b = backoff.WithMaxRetries(b, backoffMaxRetries)
-	b = backoff.WithContext(b, ctx)
-	if err := backoff.Retry(func() error {
-		// Get the deployment.
-		deployment, err := k.GetDeployment(ctx, name, namespace)
-		if err != nil {
-			return err
-		}
-		// Set restart annotation.
-		annotations := deployment.Spec.Template.Annotations
-		if annotations == nil {
-			annotations = make(map[string]string)
-		}
-		annotations[deploymentRestartAnnotation] = time.Now().Format(time.RFC3339)
-		deployment.Spec.Template.SetAnnotations(annotations)
-		// Update deployment.
-		if _, err := k.client.UpdateDeployment(ctx, deployment); err != nil {
-			return err
-		}
-		return nil
-	}, b,
-	); err != nil {
-		return errors.Join(err, errors.New("cannot add restart annotation to deployment"))
-	}
-	// Wait for pods to be ready.
-	return wait.PollUntilContextTimeout(ctx, pollInterval, pollTimeout, true, func(ctx context.Context) (bool, error) {
-		deployment, err := k.GetDeployment(ctx, name, namespace)
-		if err != nil {
-			return false, err
-		}
-		ready := deployment.Status.ReadyReplicas == deployment.Status.Replicas &&
-			deployment.Status.Replicas == deployment.Status.UpdatedReplicas &&
-			deployment.Status.UnavailableReplicas == 0 &&
-			deployment.GetGeneration() == deployment.Status.ObservedGeneration
-
-		return ready, nil
-	})
-}
-
-// ApplyManifestFile accepts manifest file contents, parses into []runtime.Object
-// and applies them against the cluster.
-func (k *Kubernetes) ApplyManifestFile(files []byte, namespace string) error {
-	return k.client.ApplyManifestFile(files, namespace)
-}
-
-// GetDBNamespaces returns a list of namespaces that are monitored by the Everest operator.
-func (k *Kubernetes) GetDBNamespaces(ctx context.Context) ([]string, error) {
-	// List all namespaces managed by everest.
-	namespaceList, err := k.ListNamespaces(ctx, metav1.ListOptions{
-		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				common.KubernetesManagedByLabel: common.Everest,
-			},
-		}),
-	})
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to get watched namespaces"))
-	}
-	internalNs := []string{common.SystemNamespace, common.MonitoringNamespace}
-	result := make([]string, 0, len(namespaceList.Items))
-	for _, ns := range namespaceList.Items {
-		if slices.Contains(internalNs, ns.GetName()) {
-			continue
-		}
-		result = append(result, ns.GetName())
-	}
-	return result, nil
-}
-
-// WaitForRollout waits for rollout of a provided deployment in the provided namespace.
-func (k *Kubernetes) WaitForRollout(ctx context.Context, name, namespace string) error {
-	return k.client.DoRolloutWait(ctx, types.NamespacedName{Name: name, Namespace: namespace})
-}
-
-// DeleteManifestFile accepts manifest file contents, parses into []runtime.Object
-// and deletes them from the cluster.
-func (k *Kubernetes) DeleteManifestFile(fileBytes []byte, namespace string) error {
-	return k.client.DeleteManifestFile(fileBytes, namespace)
 }

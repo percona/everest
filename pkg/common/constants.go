@@ -62,6 +62,9 @@ const (
 	// EverestOperatorName holds the name for Everest operator.
 	EverestOperatorName = "everest-operator"
 
+	// VictoriaMetricsOperatorName holds the name for VictoriaMetrics operator.
+	VictoriaMetricsOperatorName = "victoriametrics-operator"
+
 	// EverestAccountsSecretName is the name of the secret that holds accounts.
 	EverestAccountsSecretName = "everest-accounts"
 	// EverestJWTSecretName is the name of the secret that holds JWT secret.
@@ -86,6 +89,8 @@ const (
 	EverestRBACConfigMapName = "everest-rbac"
 	// KubernetesManagedByLabel is the label used to identify resources managed by Everest.
 	KubernetesManagedByLabel = "app.kubernetes.io/managed-by"
+	// DatabaseClusterNameLabel is the label used to identify resources by DB cluster name.
+	DatabaseClusterNameLabel = "clusterName"
 	// ForegroundDeletionFinalizer is the finalizer used to delete resources in foreground.
 	ForegroundDeletionFinalizer = "foregroundDeletion"
 	// UserCtxKey is the key used to store the user in the context.
