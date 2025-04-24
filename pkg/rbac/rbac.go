@@ -80,14 +80,14 @@ type User struct {
 // This informer reloads the policy whenever the ConfigMap is updated.
 func refreshEnforcerInBackground(
 	ctx context.Context,
-	kubeClient kubernetes.KubernetesConnector,
+	kubeConnector kubernetes.KubernetesConnector,
 	enforcer *casbin.Enforcer,
 	l *zap.SugaredLogger,
 ) error {
 	inf, err := informer.New(
-		informer.WithConfig(kubeClient.Config()),
+		informer.WithConfig(kubeConnector.Config()),
 		informer.WithLogger(l),
-		informer.Watches(&corev1.ConfigMap{}, kubeClient.Namespace()),
+		informer.Watches(&corev1.ConfigMap{}, common.SystemNamespace),
 	)
 	inf.OnUpdate(func(_, newObj interface{}) {
 		cm, ok := newObj.(*corev1.ConfigMap)
@@ -158,21 +158,21 @@ func NewIOReaderEnforcer(r io.Reader) (*casbin.Enforcer, error) {
 }
 
 // NewEnforcerWithRefresh creates a new enforcer that refreshes the policy whenever the ConfigMap is updated.
-func NewEnforcerWithRefresh(ctx context.Context, kubeClient kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
-	enf, err := NewEnforcer(ctx, kubeClient, l)
+func NewEnforcerWithRefresh(ctx context.Context, kubeConnector kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+	enf, err := NewEnforcer(ctx, kubeConnector, l)
 	if err != nil {
 		return nil, err
 	}
-	return enf, refreshEnforcerInBackground(ctx, kubeClient, enf, l)
+	return enf, refreshEnforcerInBackground(ctx, kubeConnector, enf, l)
 }
 
 // NewEnforcer creates a new Casbin enforcer with the RBAC model and ConfigMap adapter.
-func NewEnforcer(ctx context.Context, kubeClient kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
+func NewEnforcer(ctx context.Context, kubeConnector kubernetes.KubernetesConnector, l *zap.SugaredLogger) (*casbin.Enforcer, error) {
 	cmReq := types.NamespacedName{
 		Namespace: common.SystemNamespace,
 		Name:      common.EverestRBACConfigMapName,
 	}
-	adapter := configmapadapter.New(l, kubeClient, cmReq)
+	adapter := configmapadapter.New(l, kubeConnector, cmReq)
 	enforcer, err := newEnforcer(adapter, false)
 	if err != nil {
 		return nil, err
@@ -308,7 +308,7 @@ func NewSkipper(basePath string) (func(echo.Context) bool, error) {
 
 // Can checks if a user is allowed to perform an action on a resource.
 // Input request should be of the form [user action resource object].
-func Can(ctx context.Context, filePath string, k *kubernetes.Kubernetes, req ...string) (bool, error) {
+func Can(ctx context.Context, filePath string, k kubernetes.KubernetesConnector, req ...string) (bool, error) {
 	if len(req) != 4 { //nolint:mnd
 		return false, errors.New("expected input of the form [user action resource object]")
 	}
