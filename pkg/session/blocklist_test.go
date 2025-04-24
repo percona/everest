@@ -22,6 +22,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -30,27 +31,36 @@ import (
 )
 
 func TestBlocklist_Block(t *testing.T) {
-	objs := []ctrlclient.Object{
-		getBlockListSecretTemplate(""),
-	}
-
 	mockClient := fakeclient.NewClientBuilder().WithScheme(kubernetes.CreateScheme())
-	mockClient.WithObjects(objs...)
 	l := zap.NewNop().Sugar()
 	k := kubernetes.NewEmpty(l).WithKubernetesClient(mockClient.Build())
-	ctx := context.WithValue(
-		context.Background(),
-		common.UserCtxKey,
-		jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "9d1c1f98-a479-41e3-8939-c7cb3e049a", "exp": float64(331743679478)}),
-	)
+	ctx := backgroundContextWithToken(jwt.MapClaims{"jti": "9d1c1f98-a479-41e3-8939-c7cb3e049a", "exp": float64(331743679478)})
+
+	// check there is no blocklist secret before the blocklist creation
+	secret, err := k.GetSecret(ctx, ctrlclient.ObjectKey{
+		Name:      common.EverestBlocklistSecretName,
+		Namespace: common.SystemNamespace,
+	})
+	assert.True(t, k8serrors.IsNotFound(err))
+	assert.Nil(t, secret)
 
 	b, err := NewBlocklist(ctx, k, l)
 	assert.NoError(t, err)
 
+	// blocklist secret appears after the blocklist creation
+	secret, err = k.GetSecret(ctx, ctrlclient.ObjectKey{
+		Name:      common.EverestBlocklistSecretName,
+		Namespace: common.SystemNamespace,
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, secret)
+	assert.Equal(t, "", secret.StringData[dataKey])
+
+	// block the token from the context and check the secret has been changed accordingly
 	err = b.Block(ctx)
 	assert.NoError(t, err)
 
-	secret, err := k.GetSecret(ctx, ctrlclient.ObjectKey{
+	secret, err = k.GetSecret(ctx, ctrlclient.ObjectKey{
 		Name:      common.EverestBlocklistSecretName,
 		Namespace: common.SystemNamespace,
 	})
@@ -58,14 +68,21 @@ func TestBlocklist_Block(t *testing.T) {
 	// the mocked client does not do this StringData -> Data transformation in Secrets which the actual k8a API do, so
 	// we only check the StringData field
 	assert.Equal(t, "9d1c1f98-a479-41e3-8939-c7cb3e049a331743679478", secret.StringData[dataKey])
+
+	// deleting secret to test the backoff
+	err = k.DeleteSecret(ctx, secret)
+	assert.NoError(t, err)
+
+	// after deleting secret - try to block again, get the NotFound error
+	err = b.Block(ctx)
+	assert.Equal(t, true, k8serrors.IsNotFound(err))
 }
 
 func TestBlocklist_IsBlocked(t *testing.T) {
 	secret := getBlockListSecretTemplate("the-blocked-jti331743679478")
 	// when writing Secrets, the mocked client does not do this StringData -> Data transformation which the actual k8a API do,
-	// so we need to set the Data field manually
+	// so we set the Data field manually
 	secret.Data = map[string][]byte{dataKey: []byte("the-blocked-jti331743679478")}
-
 	objs := []ctrlclient.Object{secret}
 
 	mockClient := fakeclient.NewClientBuilder().WithScheme(kubernetes.CreateScheme())
@@ -74,11 +91,7 @@ func TestBlocklist_IsBlocked(t *testing.T) {
 	k := kubernetes.NewEmpty(l).WithKubernetesClient(mockClient.Build())
 
 	t.Run("blocked token in context", func(t *testing.T) {
-		ctx := context.WithValue(
-			context.Background(),
-			common.UserCtxKey,
-			jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "the-blocked-jti", "exp": float64(331743679478)}),
-		)
+		ctx := backgroundContextWithToken(jwt.MapClaims{"jti": "the-blocked-jti", "exp": float64(331743679478)})
 
 		b, err := NewBlocklist(ctx, k, l)
 		assert.NoError(t, err)
@@ -86,15 +99,10 @@ func TestBlocklist_IsBlocked(t *testing.T) {
 		blocked, err := b.IsBlocked(ctx)
 		assert.NoError(t, err)
 		assert.True(t, blocked)
-
 	})
 
 	t.Run("not blocked token in context", func(t *testing.T) {
-		ctx := context.WithValue(
-			context.Background(),
-			common.UserCtxKey,
-			jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "some-other-jti", "exp": float64(331743679478)}),
-		)
+		ctx := backgroundContextWithToken(jwt.MapClaims{"jti": "some-other-jti", "exp": float64(331743679478)})
 
 		b, err := NewBlocklist(ctx, k, l)
 		assert.NoError(t, err)
@@ -103,5 +111,12 @@ func TestBlocklist_IsBlocked(t *testing.T) {
 		assert.NoError(t, err)
 		assert.False(t, blocked)
 	})
+}
 
+func backgroundContextWithToken(claims jwt.MapClaims) context.Context {
+	return context.WithValue(
+		context.Background(),
+		common.UserCtxKey,
+		jwt.NewWithClaims(jwt.SigningMethodHS256, claims),
+	)
 }

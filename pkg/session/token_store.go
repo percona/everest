@@ -67,7 +67,7 @@ type tokenStore struct {
 func (ts *tokenStore) Add(ctx context.Context, shortenedToken string) error {
 	secret, err := ts.kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
 	if err != nil {
-		ts.l.Errorf("failed to get %s secret in the %s namespace: %v", secret.Name, secret.Namespace, err)
+		ts.l.Errorf("failed to get %s secret in the %s namespace: %v", common.EverestBlocklistSecretName, common.SystemNamespace, err)
 		return err
 	}
 

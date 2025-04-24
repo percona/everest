@@ -18,7 +18,9 @@ package session
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 
@@ -27,8 +29,9 @@ import (
 )
 
 const (
-	dataKey    = "list"
-	maxRetries = 10
+	dataKey         = "list"
+	maxRetries      = 10
+	backoffInterval = 500 * time.Millisecond
 )
 
 // Blocklist represents interface to block JWT tokens and check if a token is blocked.
@@ -74,14 +77,16 @@ func (b *blocklist) Block(ctx context.Context) error {
 		return err
 	}
 
-	for attempts := 0; attempts < maxRetries; attempts++ {
-		if err := b.tokenStore.Add(ctx, shortenedToken); err != nil {
-			b.l.Errorf("failed to add shortened token %s to the blocklist: %v", shortenedToken, err)
-			continue
-		}
-		return nil
-	}
-	return fmt.Errorf("failed to block token after %d attempts", maxRetries)
+	var bOff backoff.BackOff
+	bOff = backoff.NewConstantBackOff(backoffInterval)
+	bOff = backoff.WithMaxRetries(bOff, maxRetries)
+	bOff = backoff.WithContext(bOff, ctx)
+	return backoff.Retry(
+		func() error {
+			return b.tokenStore.Add(ctx, shortenedToken)
+		},
+		bOff,
+	)
 }
 
 // IsBlocked checks if the token from the context is blocked.
