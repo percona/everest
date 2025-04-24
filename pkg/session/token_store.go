@@ -47,7 +47,7 @@ func newTokenStore(ctx context.Context, kubeClient kubernetes.KubernetesConnecto
 		return store, nil
 	}
 	if !k8serrors.IsNotFound(err) {
-		return nil, fmt.Errorf("failed to get secret: %w", err)
+		return nil, fmt.Errorf("failed to get %s secret in the %s namespace: %w", common.EverestBlocklistSecretName, common.SystemNamespace, err)
 	}
 	var createErr error
 	secret := getBlockListSecretTemplate("")
