@@ -38,6 +38,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -117,7 +118,7 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 
 	restConfig.QPS = defaultQPSLimit
 	restConfig.Burst = defaultBurstLimit
-	k8client, err := ctrlclient.New(restConfig, getKubernetesClientOptions())
+	k8client, err := ctrlclient.New(restConfig, getKubernetesClientOptions(nil))
 	if err != nil {
 		return nil, err
 	}
@@ -131,12 +132,28 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 }
 
 // NewInCluster creates a new kubernetes client using incluster authentication.
-func NewInCluster(l *zap.SugaredLogger) (KubernetesConnector, error) {
+func NewInCluster(l *zap.SugaredLogger, ctx context.Context, cacheOptions *cache.Options) (KubernetesConnector, error) {
 	restConfig := ctrl.GetConfigOrDie()
 	restConfig.QPS = defaultQPSLimit
 	restConfig.Burst = defaultBurstLimit
 
-	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptions())
+	var k8sCache cache.Cache
+	var err error
+	if cacheOptions != nil {
+		k8sCache, err = cache.New(restConfig, *cacheOptions)
+		if err != nil {
+			panic(err)
+		}
+		go func() {
+			l.Info("starting incluster client cache")
+			if err := k8sCache.Start(ctx); err != nil {
+				l.Errorf("error starting incluster client cache: %s", err)
+				os.Exit(1)
+			}
+		}()
+	}
+
+	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptions(k8sCache))
 	if err != nil {
 		return nil, err
 	}
@@ -163,10 +180,15 @@ func CreateScheme() *runtime.Scheme {
 	return scheme
 }
 
-func getKubernetesClientOptions() ctrlclient.Options {
+func getKubernetesClientOptions(cache cache.Cache) ctrlclient.Options {
+	var cacheOptions *ctrlclient.CacheOptions
+	if cache != nil {
+		cacheOptions = &ctrlclient.CacheOptions{Reader: cache}
+	}
+
 	return ctrlclient.Options{
 		Scheme: CreateScheme(),
-		Cache:  nil, // disable cache
+		Cache:  cacheOptions,
 	}
 }
 

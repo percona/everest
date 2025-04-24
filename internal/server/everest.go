@@ -37,8 +37,12 @@ import (
 	"github.com/unrolled/secure"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
@@ -91,7 +95,14 @@ func getOIDCProviderConfig(ctx context.Context, kubeClient kubernetes.Kubernetes
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeConnector, err := kubernetes.NewInCluster(l)
+	options := &cache.Options{
+		ByObject: map[ctrlclient.Object]cache.ByObject{
+			&corev1.Secret{}: {
+				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.EverestBlocklistSecretName}),
+			},
+		},
+	}
+	kubeConnector, err := kubernetes.NewInCluster(l, ctx, options)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
