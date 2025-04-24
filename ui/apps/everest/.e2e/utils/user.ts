@@ -15,7 +15,7 @@ export const switchUser = async (
   ).toBeVisible();
   await page.getByTestId('text-input-username').fill(user);
   await page.getByTestId('text-input-password').fill(password);
-  await page.waitForTimeout(TIMEOUTS.TenSeconds);
+  await page.waitForTimeout(1000);
   await page.getByTestId('login-button').click();
   await expect(page.getByTestId('user-appbar-button')).toBeVisible({
     timeout: TIMEOUTS.ThirtySeconds,
