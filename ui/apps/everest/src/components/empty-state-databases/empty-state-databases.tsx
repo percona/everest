@@ -36,7 +36,8 @@ const EmptyStateDatabases = ({
             )}
           </>
         }
-        buttonSlot={showCreationButton && <CreateDbButton />}
+        showCreationButton={showCreationButton}
+        buttonSlot={<CreateDbButton />}
       />
     </>
   );
