@@ -38,7 +38,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -133,7 +132,9 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 
 // NewInCluster creates a new kubernetes client using incluster authentication.
 func NewInCluster(l *zap.SugaredLogger) (KubernetesConnector, error) {
-	restConfig := inClusterRestConfig()
+	restConfig := ctrl.GetConfigOrDie()
+	restConfig.QPS = defaultQPSLimit
+	restConfig.Burst = defaultBurstLimit
 
 	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptions())
 	if err != nil {
@@ -145,42 +146,6 @@ func NewInCluster(l *zap.SugaredLogger) (KubernetesConnector, error) {
 		l:          l.With("component", "kubernetes"),
 		restConfig: restConfig,
 	}, nil
-}
-
-// NewInClusterWithCache creates a new kubernetes client using incluster authentication with cache enabled
-func NewInClusterWithCache(l *zap.SugaredLogger, ctx context.Context) (KubernetesConnector, error) {
-	restConfig := inClusterRestConfig()
-	cacheOptions := cache.Options{
-		Scheme: CreateScheme(),
-	}
-	k8sCache, err := cache.New(restConfig, cacheOptions)
-	if err != nil {
-		panic(err)
-	}
-	go func() {
-		l.Info("starting cache")
-		if err := k8sCache.Start(ctx); err != nil {
-			l.Errorf("error starting pod cache: %s", err)
-			os.Exit(1)
-		}
-	}()
-	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptionsWithCache(k8sCache))
-	if err != nil {
-		return nil, err
-	}
-
-	return &Kubernetes{
-		k8sClient:  k8sclient,
-		l:          l.With("component", "kubernetes"),
-		restConfig: restConfig,
-	}, nil
-}
-
-func inClusterRestConfig() *rest.Config {
-	restConfig := ctrl.GetConfigOrDie()
-	restConfig.QPS = defaultQPSLimit
-	restConfig.Burst = defaultBurstLimit
-	return restConfig
 }
 
 // CreateScheme creates a new runtime.Scheme.
@@ -202,16 +167,6 @@ func getKubernetesClientOptions() ctrlclient.Options {
 	return ctrlclient.Options{
 		Scheme: CreateScheme(),
 		Cache:  nil, // disable cache
-	}
-}
-
-func getKubernetesClientOptionsWithCache(k8sCache cache.Cache) ctrlclient.Options {
-	return ctrlclient.Options{
-		Scheme: CreateScheme(),
-		Cache: &ctrlclient.CacheOptions{
-			Reader:       k8sCache,
-			Unstructured: false,
-		},
 	}
 }
 

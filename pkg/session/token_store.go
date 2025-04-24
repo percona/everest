@@ -61,6 +61,7 @@ func newTokenStore(ctx context.Context, kubeClient kubernetes.KubernetesConnecto
 type tokenStore struct {
 	kubeClient kubernetes.KubernetesConnector
 	l          *zap.SugaredLogger
+	secret     *corev1.Secret
 }
 
 // Add adds the shortened token to the blocklist
@@ -72,23 +73,26 @@ func (ts *tokenStore) Add(ctx context.Context, shortenedToken string) error {
 	}
 
 	secret = addDataToSecret(ts.l, secret, shortenedToken, time.Now().UTC())
-	_, updateErr := ts.kubeClient.UpdateSecret(ctx, secret)
+	updatedSecret, updateErr := ts.kubeClient.UpdateSecret(ctx, secret)
 	if updateErr != nil {
 		ts.l.Errorf("failed to update %s secret in the %s namespace, retrying: %v", secret.Name, secret.Namespace, updateErr)
 		return err
 	}
+	ts.secret = updatedSecret
 	return nil
 }
 
 // Exists checks if the shortened token is in the blocklist
 func (ts *tokenStore) Exists(ctx context.Context, shortenedToken string) (bool, error) {
-	// no worries about k8s requests overhead - the controller-runtime cache is enabled for Everest API server
-	secret, err := ts.kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
-	if err != nil {
-		ts.l.Errorf("failed to get %s secret: %v", common.EverestBlocklistSecretName, err)
-		return false, err
+	if ts.secret == nil {
+		secret, err := ts.kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
+		if err != nil {
+			ts.l.Errorf("failed to get %s secret in the %s namespace: %v", common.EverestBlocklistSecretName, common.SystemNamespace, err)
+			return false, err
+		}
+		ts.secret = secret
 	}
-	list, ok := secret.Data[dataKey]
+	list, ok := ts.secret.Data[dataKey]
 	return ok && strings.Contains(string(list), shortenedToken), nil
 }
 
