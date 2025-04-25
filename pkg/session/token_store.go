@@ -123,7 +123,7 @@ func cleanupOld(l *zap.SugaredLogger, list string, now time.Time) []string {
 		ts := shortenedToken[length-10 : length]
 		tsInt, err := strconv.ParseInt(ts, 10, 64)
 		if err != nil {
-			l.Infof("failed to parse timestamp %v", tsInt)
+			l.Warnf("failed to parse timestamp %v", tsInt)
 			continue
 		}
 		timeObj := time.Unix(tsInt, 0)
