@@ -183,7 +183,9 @@ func CreateScheme() *runtime.Scheme {
 func getKubernetesClientOptions(cache cache.Cache) ctrlclient.Options {
 	var cacheOptions *ctrlclient.CacheOptions
 	if cache != nil {
-		cacheOptions = &ctrlclient.CacheOptions{Reader: cache}
+		cacheOptions = &ctrlclient.CacheOptions{
+			Reader: cache,
+		}
 	}
 
 	return ctrlclient.Options{

@@ -17,15 +17,16 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
-
-	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/kubernetes"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -34,12 +35,21 @@ const (
 	backoffInterval = 500 * time.Millisecond
 )
 
+var (
+	errExtractJti       = errors.New("could not extract jti")
+	errExtractExp       = errors.New("could not extract exp")
+	errEmptyToken       = errors.New("token is empty")
+	errUnsupportedClaim = func(claims any) error {
+		return errors.New(fmt.Sprintf("unsupported claims type: %T", claims))
+	}
+)
+
 // Blocklist represents interface to block JWT tokens and check if a token is blocked.
 type Blocklist interface {
 	// Block invalidates the token from the context by adding it to blocklist.
-	Block(ctx context.Context) error
+	Block(ctx context.Context, token *jwt.Token) error
 	// IsBlocked checks if the token from the context is blocked.
-	IsBlocked(ctx context.Context) (bool, error)
+	IsBlocked(ctx context.Context, token *jwt.Token) (bool, error)
 }
 
 type blocklist struct {
@@ -47,6 +57,7 @@ type blocklist struct {
 	l          *zap.SugaredLogger
 }
 
+// TokenStore represents an abstraction for storage, hiding details about how the data is actually stored.
 type TokenStore interface {
 	// Add adds the shortened token to the blocklist
 	Add(ctx context.Context, shortenedToken string) error
@@ -54,9 +65,21 @@ type TokenStore interface {
 	Exists(ctx context.Context, shortenedToken string) (bool, error)
 }
 
+// BlocklistClient supports only the k8s API methods that are needed for blocklist management.
+// A separate client is needed to apply the controller-runtime cache only to the related objects.
+// Using the controller-runtime client is also beneficial because it supports HA mode.
+type BlocklistClient interface {
+	// GetSecret returns a secret that matches the criteria.
+	GetSecret(ctx context.Context, key client.ObjectKey) (*corev1.Secret, error)
+	// CreateSecret creates a secret.
+	CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	// UpdateSecret updates a secret.
+	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+}
+
 // NewBlocklist creates a new block list
-func NewBlocklist(ctx context.Context, kubeClient kubernetes.KubernetesConnector, logger *zap.SugaredLogger) (Blocklist, error) {
-	store, err := newTokenStore(ctx, kubeClient, logger)
+func NewBlocklist(ctx context.Context, bc BlocklistClient, logger *zap.SugaredLogger) (Blocklist, error) {
+	store, err := newTokenStore(ctx, bc, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -67,11 +90,7 @@ func NewBlocklist(ctx context.Context, kubeClient kubernetes.KubernetesConnector
 }
 
 // Block invalidates the token from the context by adding it to blocklist.
-func (b *blocklist) Block(ctx context.Context) error {
-	token, err := extractToken(ctx)
-	if err != nil {
-		return err
-	}
+func (b *blocklist) Block(ctx context.Context, token *jwt.Token) error {
 	shortenedToken, err := shortenToken(token)
 	if err != nil {
 		return err
@@ -90,11 +109,7 @@ func (b *blocklist) Block(ctx context.Context) error {
 }
 
 // IsBlocked checks if the token from the context is blocked.
-func (b *blocklist) IsBlocked(ctx context.Context) (bool, error) {
-	token, err := extractToken(ctx)
-	if err != nil {
-		return false, err
-	}
+func (b *blocklist) IsBlocked(ctx context.Context, token *jwt.Token) (bool, error) {
 	shortenedToken, err := shortenToken(token)
 	if err != nil {
 		return false, fmt.Errorf("failed to shorten token: %w", err)
@@ -103,10 +118,46 @@ func (b *blocklist) IsBlocked(ctx context.Context) (bool, error) {
 	return b.tokenStore.Exists(ctx, shortenedToken)
 }
 
-func extractToken(ctx context.Context) (*jwt.Token, error) {
-	token, ok := ctx.Value(common.UserCtxKey).(*jwt.Token)
-	if !ok {
-		return nil, fmt.Errorf("failed to get token from context")
+// shortenToken contains only the "jti" and the "exp" claims from the token, so the format of shortened token is
+// <jti><expiration_timestamp>, for example "9d1c1f98-a479-41e3-8939-c7cb3edefa331743679478",
+// where last 10 digits represent the expiration timestamp.
+func shortenToken(token *jwt.Token) (string, error) {
+	content, err := extractContent(token)
+	if err != nil {
+		return "", err
 	}
-	return token, nil
+	jti, ok := content.Payload["jti"].(string)
+	if !ok {
+		return "", errExtractJti
+	}
+	exp, ok := content.Payload["exp"].(float64)
+	if !ok {
+		return "", errExtractExp
+	}
+	return jti + strconv.FormatFloat(exp, 'f', 0, 64), nil
+}
+
+// JWTContent represents the JWT token structure that is used by blocklist.
+type JWTContent struct {
+	Payload map[string]interface{} `json:"payload"`
+}
+
+func extractContent(token *jwt.Token) (*JWTContent, error) {
+	if token == nil {
+		return nil, errEmptyToken
+	}
+	claimsMap := make(map[string]interface{})
+
+	switch claims := token.Claims.(type) {
+	case jwt.MapClaims:
+		for key, val := range claims {
+			claimsMap[key] = val
+		}
+	default:
+		return nil, errUnsupportedClaim(claims)
+	}
+
+	return &JWTContent{
+		Payload: claimsMap,
+	}, nil
 }

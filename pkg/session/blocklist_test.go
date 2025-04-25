@@ -30,11 +30,105 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
+func TestShortenToken(t *testing.T) {
+	type tcase struct {
+		name           string
+		claims         jwt.MapClaims
+		shortenedToken string
+		error          error
+	}
+	tcases := []tcase{
+		{
+			name: "valid",
+			claims: jwt.MapClaims{
+				"jti": "9d1c1f98-a479-41e3-8939-c7cb3edefa",
+				"exp": float64(331743679478),
+			},
+			shortenedToken: "9d1c1f98-a479-41e3-8939-c7cb3edefa331743679478",
+			error:          nil,
+		},
+		{
+			name: "no jti",
+			claims: jwt.MapClaims{
+				"exp": float64(331743679478),
+			},
+			shortenedToken: "",
+			error:          errExtractJti,
+		},
+		{
+			name: "no exp",
+			claims: jwt.MapClaims{
+				"jti": "9d1c1f98-a479-41e3-8939-c7cb3e049a",
+			},
+			shortenedToken: "",
+			error:          errExtractExp,
+		},
+	}
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result, err := shortenToken(jwt.NewWithClaims(jwt.SigningMethodHS256, tc.claims))
+			assert.Equal(t, tc.error, err)
+			assert.Equal(t, tc.shortenedToken, result)
+		})
+	}
+}
+
+func TestExtractContent(t *testing.T) {
+	type tcase struct {
+		name   string
+		token  *jwt.Token
+		error  error
+		result *JWTContent
+	}
+	tokenUnsupportedClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{})
+	tcases := []tcase{
+		{
+			name:   "empty token",
+			token:  nil,
+			result: nil,
+			error:  errEmptyToken,
+		},
+		{
+			name:   "unsupported claims",
+			token:  tokenUnsupportedClaims,
+			result: nil,
+			error:  errUnsupportedClaim(tokenUnsupportedClaims.Claims),
+		},
+		{
+			name:  "valid empty payload",
+			token: jwt.New(jwt.SigningMethodHS256),
+			result: &JWTContent{
+				Payload: make(map[string]interface{}),
+			},
+			error: nil,
+		},
+		{
+			name:  "valid with payload",
+			token: jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "9d1c1f98-a479-41e3-8939-c7cb3e049a", "exp": float64(331743679478)}),
+			result: &JWTContent{
+				Payload: map[string]interface{}{"exp": float64(331743679478), "jti": "9d1c1f98-a479-41e3-8939-c7cb3e049a"},
+			},
+			error: nil,
+		},
+	}
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result, err := extractContent(tc.token)
+			assert.Equal(t, tc.error, err)
+			assert.Equal(t, tc.result, result)
+		})
+	}
+}
+
 func TestBlocklist_Block(t *testing.T) {
 	mockClient := fakeclient.NewClientBuilder().WithScheme(kubernetes.CreateScheme())
 	l := zap.NewNop().Sugar()
 	k := kubernetes.NewEmpty(l).WithKubernetesClient(mockClient.Build())
-	ctx := backgroundContextWithToken(jwt.MapClaims{"jti": "9d1c1f98-a479-41e3-8939-c7cb3e049a", "exp": float64(331743679478)})
+
+	ctx := context.Background()
+	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "9d1c1f98-a479-41e3-8939-c7cb3e049a", "exp": float64(331743679478)})
 
 	// check there is no blocklist secret before the blocklist creation
 	secret, err := k.GetSecret(ctx, ctrlclient.ObjectKey{
@@ -57,7 +151,7 @@ func TestBlocklist_Block(t *testing.T) {
 	assert.Equal(t, "", secret.StringData[dataKey])
 
 	// block the token from the context and check the secret has been changed accordingly
-	err = b.Block(ctx)
+	err = b.Block(ctx, jwt)
 	assert.NoError(t, err)
 
 	secret, err = k.GetSecret(ctx, ctrlclient.ObjectKey{
@@ -74,7 +168,7 @@ func TestBlocklist_Block(t *testing.T) {
 	assert.NoError(t, err)
 
 	// after deleting secret - try to block again, get the NotFound error
-	err = b.Block(ctx)
+	err = b.Block(ctx, jwt)
 	assert.Equal(t, true, k8serrors.IsNotFound(err))
 }
 
@@ -91,32 +185,26 @@ func TestBlocklist_IsBlocked(t *testing.T) {
 	k := kubernetes.NewEmpty(l).WithKubernetesClient(mockClient.Build())
 
 	t.Run("blocked token in context", func(t *testing.T) {
-		ctx := backgroundContextWithToken(jwt.MapClaims{"jti": "the-blocked-jti", "exp": float64(331743679478)})
+		ctx := context.Background()
+		jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "the-blocked-jti", "exp": float64(331743679478)})
 
 		b, err := NewBlocklist(ctx, k, l)
 		assert.NoError(t, err)
 
-		blocked, err := b.IsBlocked(ctx)
+		blocked, err := b.IsBlocked(ctx, jwt)
 		assert.NoError(t, err)
 		assert.True(t, blocked)
 	})
 
 	t.Run("not blocked token in context", func(t *testing.T) {
-		ctx := backgroundContextWithToken(jwt.MapClaims{"jti": "some-other-jti", "exp": float64(331743679478)})
+		ctx := context.Background()
 
 		b, err := NewBlocklist(ctx, k, l)
 		assert.NoError(t, err)
 
-		blocked, err := b.IsBlocked(ctx)
+		jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "some-other-jti", "exp": float64(331743679478)})
+		blocked, err := b.IsBlocked(ctx, jwt)
 		assert.NoError(t, err)
 		assert.False(t, blocked)
 	})
-}
-
-func backgroundContextWithToken(claims jwt.MapClaims) context.Context {
-	return context.WithValue(
-		context.Background(),
-		common.UserCtxKey,
-		jwt.NewWithClaims(jwt.SigningMethodHS256, claims),
-	)
 }
