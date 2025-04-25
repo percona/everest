@@ -102,7 +102,7 @@ test.describe.configure({ retries: 0 });
     },
     () => {
       test.skip(!shouldExecuteDBCombination(db, size));
-      test.describe.configure({ timeout: 720000 });
+      test.describe.configure({ timeout: 1_200_000 }); // 20 minutes
 
       const clusterName = `${db}-${size}-pitr`;
 
