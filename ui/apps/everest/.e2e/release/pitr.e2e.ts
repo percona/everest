@@ -446,17 +446,27 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`PITR restore to new cluster [${db} size ${size}]`, async ({ page }) => {
-
+      test(`PITR restore to new cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await test.step('Create a backup to restore from', async () => {
           await gotoDbClusterBackups(page, clusterName);
           await clickOnDemandBackup(page);
-          await page.getByTestId('text-input-name').fill(baseBackupName + '-new-cluster');
+          await page
+            .getByTestId('text-input-name')
+            .fill(baseBackupName + '-new-cluster');
           await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
-          await expect(page.getByTestId('text-input-storage-location')).not.toBeEmpty();
+          await expect(
+            page.getByTestId('text-input-storage-location')
+          ).not.toBeEmpty();
           await page.getByTestId('form-dialog-create').click();
-          await waitForStatus(page, baseBackupName + '-new-cluster', 'Succeeded', 240000);
-        })
+          await waitForStatus(
+            page,
+            baseBackupName + '-new-cluster',
+            'Succeeded',
+            240000
+          );
+        });
 
         await test.step('Add some data after the backup', async () => {
           await insertTestDB(
@@ -464,32 +474,37 @@ test.describe.configure({ retries: 0 });
             namespace,
             ['9', '10', '11'],
             ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
-        );
-
-        })
+          );
+        });
 
         await test.step('Wait for binlogs to be uploaded', async () => {
-          const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+          const delay = (ms) =>
+            new Promise((resolve) => setTimeout(resolve, ms));
           await delay(65000);
-        })
-
+        });
 
         const newClusterName = `${clusterName}-restored`;
         await test.step('Create DB from latest PITR', async () => {
           // Go to restore wizard
           await page.goto('databases');
-          await findDbAndClickActions(page, clusterName, 'Create DB from a backup');
-          await page.getByTestId('radio-option-fromPITR').click({ timeout: 5000 });
+          await findDbAndClickActions(
+            page,
+            clusterName,
+            'Create DB from a backup'
+          );
+          await page
+            .getByTestId('radio-option-fromPITR')
+            .click({ timeout: 5000 });
           await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({
             timeout: 5000,
           });
 
-        await expect(
-          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
-        ).toBeVisible({ timeout: 5000 });
-        await expect(
-          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
-        ).not.toBeEmpty({ timeout: 5000 });
+          await expect(
+            page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
+          ).toBeVisible({ timeout: 5000 });
+          await expect(
+            page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
+          ).not.toBeEmpty({ timeout: 5000 });
 
           // Submit and open DB creation wizard
           await page.getByTestId('form-dialog-create').click({ timeout: 5000 });
@@ -500,20 +515,19 @@ test.describe.configure({ retries: 0 });
           await moveForward(page);
           await moveForward(page);
           await submitWizard(page);
-        })
-
+        });
 
         await test.step('Wait for the new cluster to be created and ready', async () => {
           await page.goto('/databases');
           await waitForStatus(page, newClusterName, 'Initializing', 30000);
           await waitForStatus(page, newClusterName, 'Restoring', 600000);
           await waitForStatus(page, newClusterName, 'Up', 600000);
-        })
+        });
 
         await test.step('Verify the restore was successful', async () => {
           await gotoDbClusterRestores(page, newClusterName);
           await waitForStatus(page, newClusterName, 'Succeeded', 120000);
-        })
+        });
 
         await test.step('Verify the data in the new cluster', async () => {
           const result = await queryTestDB(newClusterName, namespace);
@@ -527,16 +541,18 @@ test.describe.configure({ retries: 0 });
               );
               break;
             case 'postgresql':
-              expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9\n 10\n 11');
+              expect(result.trim()).toBe(
+                '1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9\n 10\n 11'
+              );
               break;
           }
-        })
+        });
 
         await test.step('Delete the restored cluster', async () => {
           await deleteDbCluster(page, newClusterName);
           await waitForStatus(page, newClusterName, 'Deleting', 15000);
           await waitForDelete(page, newClusterName, 240000);
-        })
+        });
       });
 
       test(`Delete second restore [${db} size ${size}]`, async ({ page }) => {
