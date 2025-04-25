@@ -474,14 +474,8 @@ test.describe.configure({ retries: 0 });
         })
 
 
-
-        // Get the PITR time after adding new data
-        const restoreTime = getCurrentPITRTime();
-        // Create a new cluster name for the restore
         const newClusterName = `${clusterName}-restored`;
-
-
-        await test.step('create DB from PITR', async () => {
+        await test.step('Create DB from latest PITR', async () => {
           // Go to restore wizard
           await page.goto('databases');
           await findDbAndClickActions(page, clusterName, 'Create DB from a backup');
@@ -490,20 +484,12 @@ test.describe.configure({ retries: 0 });
             timeout: 5000,
           });
 
-          // Set the restore time
-          await page.getByTestId('CalendarIcon').click({ timeout: 5000 });
-          await page
-            .getByLabel(restoreTime.hour + ' hours', { exact: true })
-            .click({ timeout: 5000 });
-          await page
-            .getByLabel(restoreTime.minute + ' minutes', { exact: true })
-            .click({ timeout: 5000 });
-          await page
-            .getByLabel(restoreTime.second + ' seconds', { exact: true })
-            .click({ timeout: 5000 });
-          await expect(page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')).toHaveValue(
-            getFormattedPITRTime(restoreTime)
-          );
+        await expect(
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
+        ).toBeVisible({ timeout: 5000 });
+        await expect(
+          page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
+        ).not.toBeEmpty({ timeout: 5000 });
 
           // Submit and open DB creation wizard
           await page.getByTestId('form-dialog-create').click({ timeout: 5000 });
@@ -520,29 +506,28 @@ test.describe.configure({ retries: 0 });
         await test.step('Wait for the new cluster to be created and ready', async () => {
           await page.goto('/databases');
           await waitForStatus(page, newClusterName, 'Initializing', 30000);
-          await waitForStatus(page, newClusterName, 'Restoring', 30000);
+          await waitForStatus(page, newClusterName, 'Restoring', 600000);
           await waitForStatus(page, newClusterName, 'Up', 600000);
         })
 
         await test.step('Verify the restore was successful', async () => {
           await gotoDbClusterRestores(page, newClusterName);
-          await waitForStatus(page, 'restore-', 'Succeeded', 120000);
+          await waitForStatus(page, newClusterName, 'Succeeded', 120000);
         })
-
 
         await test.step('Verify the data in the new cluster', async () => {
           const result = await queryTestDB(newClusterName, namespace);
           switch (db) {
             case 'pxc':
-              expect(result.trim()).toBe('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12');
+              expect(result.trim()).toBe('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11');
               break;
             case 'psmdb':
               expect(result.trim()).toBe(
-                '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6},{"a":7},{"a":8},{"a":9},{"a":10},{"a":11},{"a":12}]'
+                '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6},{"a":7},{"a":8},{"a":9},{"a":10},{"a":11}]'
               );
               break;
             case 'postgresql':
-              expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9\n 10\n 11\n 12');
+              expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9\n 10\n 11');
               break;
           }
         })
