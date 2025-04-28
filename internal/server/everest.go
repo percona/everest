@@ -27,7 +27,6 @@ import (
 	"slices"
 	"text/template"
 
-	"github.com/AlekSi/pointer"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -207,7 +206,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}
 	apiGroup.Use(jwtMW)
 
-	blocklistMW, err := e.blocklistMiddleWare()
+	blocklistMW, err := e.sessionMgr.BlocklistMiddleWare(newSkipperFunc)
 	if err != nil {
 		return err
 	}
@@ -424,32 +423,4 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
-}
-
-func (e *EverestServer) blocklistMiddleWare() (echo.MiddlewareFunc, error) {
-	skipper, err := newSkipperFunc()
-	if err != nil {
-		return nil, err
-	}
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			if skipper(c) {
-				return next(c)
-			}
-			ctx := c.Request().Context()
-			token, tErr := common.ExtractToken(ctx)
-			if tErr != nil {
-				return tErr
-			}
-			if isBlocked, err := e.sessionMgr.IsBlocked(ctx, token); err != nil {
-				e.l.Error(err)
-				return err
-			} else if isBlocked {
-				return c.JSON(http.StatusUnauthorized, api.Error{
-					Message: pointer.ToString("Invalid token"),
-				})
-			}
-			return next(c)
-		}
-	}, nil
 }
