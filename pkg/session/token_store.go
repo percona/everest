@@ -27,6 +27,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 )
@@ -36,7 +37,17 @@ const (
 	timestampLen = 10
 )
 
-func newTokenStore(ctx context.Context, client BlocklistClient, logger *zap.SugaredLogger) (TokenStore, error) {
+// TokenStoreClient contains the methods that are needed for the token store management.
+type TokenStoreClient interface {
+	// GetSecret returns a secret that matches the criteria.
+	GetSecret(ctx context.Context, key client.ObjectKey) (*corev1.Secret, error)
+	// CreateSecret creates a secret.
+	CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+	// UpdateSecret updates a secret.
+	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
+}
+
+func newTokenStore(ctx context.Context, client TokenStoreClient, logger *zap.SugaredLogger) (TokenStore, error) {
 	s := &tokenStore{
 		l:      logger,
 		client: client,
@@ -70,7 +81,7 @@ func (ts *tokenStore) init(ctx context.Context) error {
 }
 
 type tokenStore struct {
-	client BlocklistClient
+	client TokenStoreClient
 	l      *zap.SugaredLogger
 }
 

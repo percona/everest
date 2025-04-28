@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 
 	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
@@ -48,7 +49,7 @@ type Manager struct {
 type Option func(*Manager)
 
 // New creates a new session manager with the given options.
-func New(blocklist Blocklist, options ...Option) (*Manager, error) {
+func New(ctx context.Context, l *zap.SugaredLogger, options ...Option) (*Manager, error) {
 	m := &Manager{}
 	for _, opt := range options {
 		opt(m)
@@ -58,7 +59,13 @@ func New(blocklist Blocklist, options ...Option) (*Manager, error) {
 		return nil, errors.Join(err, errors.New("failed to get private key"))
 	}
 	m.signingKey = privKey
-	m.Blocklist = blocklist
+
+	blockList, err := NewBlocklist(ctx, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
+	}
+
+	m.Blocklist = blockList
 	return m, nil
 }
 

@@ -37,10 +37,7 @@ import (
 	"github.com/unrolled/secure"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
-	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/fields"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/api"
@@ -103,24 +100,8 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
 
-	options := &cache.Options{
-		ByObject: map[client.Object]cache.ByObject{
-			&corev1.Secret{}: {
-				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.EverestBlocklistSecretName}),
-			},
-		},
-	}
-	blocklistClient, err := kubernetes.NewInCluster(l, ctx, options)
-	if err != nil {
-		return nil, err
-	}
-
-	blockList, err := session.NewBlocklist(ctx, blocklistClient, l)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
-	}
 	sessMgr, err := session.New(
-		blockList,
+		ctx, l,
 		session.WithAccountManager(kubeConnector.Accounts()),
 	)
 	if err != nil {
