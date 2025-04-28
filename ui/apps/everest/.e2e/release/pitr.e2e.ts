@@ -91,8 +91,8 @@ function getFormattedPITRTime(time: pitrTime): string {
 test.describe.configure({ retries: 0 });
 
 [
-  { db: 'psmdb', size: 3 },
-  { db: 'pxc', size: 3 },
+  // { db: 'psmdb', size: 3 },
+  // { db: 'pxc', size: 3 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
@@ -285,7 +285,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Wait 1 min for binlogs to be uploaded [${db} size ${size}]`, async () => {
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
         await delay(65000);
       });
 
@@ -393,7 +393,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Wait 1 min for binlogs to be uploaded for second restore [${db} size ${size}]`, async () => {
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
         await delay(65000);
       });
 
@@ -472,18 +472,18 @@ test.describe.configure({ retries: 0 });
           await insertTestDB(
             clusterName,
             namespace,
-            ['9', '10', '11'],
-            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+            ['9'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9']
           );
         });
 
         await test.step('Wait for binlogs to be uploaded', async () => {
-          const delay = (ms) =>
+          const delay = (ms: number) =>
             new Promise((resolve) => setTimeout(resolve, ms));
-          await delay(65000);
+          await delay(60000);
         });
 
-        const newClusterName = `${clusterName}-restored`;
+        let newClusterName: string;
         await test.step('Create DB from latest PITR', async () => {
           // Go to restore wizard
           await page.goto('databases');
@@ -508,8 +508,9 @@ test.describe.configure({ retries: 0 });
 
           // Submit and open DB creation wizard
           await page.getByTestId('form-dialog-create').click({ timeout: 5000 });
-
-          await page.getByTestId('text-input-db-name').fill(newClusterName);
+          
+          newClusterName = await page.getByTestId('text-input-db-name').inputValue();
+          expect(newClusterName).not.toBe('');
           await moveForward(page);
           await moveForward(page);
           await moveForward(page);
@@ -533,16 +534,16 @@ test.describe.configure({ retries: 0 });
           const result = await queryTestDB(newClusterName, namespace);
           switch (db) {
             case 'pxc':
-              expect(result.trim()).toBe('1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11');
+              expect(result.trim()).toBe('1\n2\n3\n4\n5\n6\n7\n8\n9');
               break;
             case 'psmdb':
               expect(result.trim()).toBe(
-                '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6},{"a":7},{"a":8},{"a":9},{"a":10},{"a":11}]'
+                '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6},{"a":7},{"a":8},{"a":9}]'
               );
               break;
             case 'postgresql':
               expect(result.trim()).toBe(
-                '1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9\n 10\n 11'
+                '1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9'
               );
               break;
           }

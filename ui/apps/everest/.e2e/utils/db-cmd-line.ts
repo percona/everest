@@ -275,8 +275,10 @@ export const insertTestDB = async (
         `INSERT INTO t1 VALUES ${values};`
       );
       const result = await queryTestDB(cluster, namespace);
-      const expected_result = expected.join('\n ');
-      expect(result.trim()).toBe(expected_result);
+      const expected_result = expected.join('\n');
+      // Output lines contain leading spaces depending on the number of digits.
+      const normalizedResult = result.split('\n').map(line => line.trim()).join('\n');
+      expect(normalizedResult.trim()).toBe(expected_result);
       break;
     }
     default:
