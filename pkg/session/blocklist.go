@@ -83,7 +83,7 @@ func NewBlocklist(ctx context.Context, logger *zap.SugaredLogger) (Blocklist, er
 	// Using the controller-runtime client is also beneficial because it supports HA mode.
 	tokenStoreClient, err := kubernetes.NewInCluster(logger, ctx, options)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, errors.New("failed creating Kubernetes client for blockList"))
 	}
 
 	store, err := newTokenStore(ctx, tokenStoreClient, logger)
