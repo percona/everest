@@ -286,7 +286,8 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Wait 1 min for binlogs to be uploaded [${db} size ${size}]`, async () => {
-        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+        const delay = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, ms));
         await delay(65000);
       });
 
@@ -394,7 +395,8 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Wait 1 min for binlogs to be uploaded for second restore [${db} size ${size}]`, async () => {
-        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+        const delay = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, ms));
         await delay(65000);
       });
 
@@ -521,7 +523,9 @@ test.describe.configure({ retries: 0 });
           let currentUrl = page.url();
           expect(currentUrl).toContain('/databases/new');
 
-          newClusterName = await page.getByTestId('text-input-db-name').inputValue();
+          newClusterName = await page
+            .getByTestId('text-input-db-name')
+            .inputValue();
           expect(newClusterName).not.toBe('');
           await goToLastStepByStepAndSubmit(page, 5000);
         });
@@ -555,9 +559,7 @@ test.describe.configure({ retries: 0 });
               );
               break;
             case 'postgresql':
-              expect(result.trim()).toBe(
-                '1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9'
-              );
+              expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9');
               break;
           }
         });

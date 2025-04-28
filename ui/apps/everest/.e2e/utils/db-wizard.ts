@@ -65,7 +65,10 @@ export const cancelWizard = async (page: Page) => {
   await page.waitForURL('**/databases');
 };
 
-export const goToLastStepByStepAndSubmit = async (page: Page, waitMs?: number) => {
+export const goToLastStepByStepAndSubmit = async (
+  page: Page,
+  waitMs?: number
+) => {
   let createDbVisible = false;
   while (!createDbVisible) {
     if (waitMs) {
