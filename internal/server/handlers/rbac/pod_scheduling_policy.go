@@ -17,10 +17,11 @@ package rbac
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"slices"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -46,16 +47,10 @@ func (h *rbacHandler) ListPodSchedulingPolicies(ctx context.Context) (*everestv1
 	if err != nil {
 		return nil, fmt.Errorf("ListPodSchedulingPolicies failed: %w", err)
 	}
-	var filtered []everestv1alpha1.PodSchedulingPolicy
-	for _, psp := range pspList.Items {
-		if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(psp.GetName())); errors.Is(err, ErrInsufficientPermissions) {
-			continue
-		} else if err != nil {
-			return nil, fmt.Errorf("enforce failed: %w", err)
-		}
-		filtered = append(filtered, psp)
-	}
-	pspList.Items = filtered
+	// filter out PodSchedulingPolicies that the user does not have access to.
+	pspList.Items = slices.DeleteFunc(pspList.Items, func(psp everestv1alpha1.PodSchedulingPolicy) bool {
+		return h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(psp.GetName())) != nil
+	})
 	return pspList, nil
 }
 
