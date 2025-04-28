@@ -23,6 +23,10 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
+const (
+	PodSchedulingPolicyNameLabel = "podSchedulingPolicyName"
+)
+
 // ListPodSchedulingPolicies returns a list of pod scheduling policy that matches the criteria.
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListPodSchedulingPolicies(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.PodSchedulingPolicyList, error) {
@@ -48,17 +52,35 @@ func (k *Kubernetes) DeletePodSchedulingPolicy(ctx context.Context, obj *everest
 }
 
 // CreatePodSchedulingPolicy creates pod scheduling policy.
-func (k *Kubernetes) CreatePodSchedulingPolicy(ctx context.Context, cluster *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	if err := k.k8sClient.Create(ctx, cluster); err != nil {
+func (k *Kubernetes) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	if err := k.k8sClient.Create(ctx, psp); err != nil {
 		return nil, err
 	}
-	return cluster, nil
+	return psp, nil
 }
 
 // UpdatePodSchedulingPolicy updates pod scheduling policy.
-func (k *Kubernetes) UpdatePodSchedulingPolicy(ctx context.Context, cluster *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	if err := k.k8sClient.Update(ctx, cluster); err != nil {
+func (k *Kubernetes) UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	if err := k.k8sClient.Update(ctx, psp); err != nil {
 		return nil, err
 	}
-	return cluster, nil
+	return psp, nil
+}
+
+// IsPodSchedulingPolicyUsed checks if any database cluster uses a pod scheduling policy that matches the criteria.
+func (k *Kubernetes) IsPodSchedulingPolicyUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error) {
+	_, err := k.GetPodSchedulingPolicy(ctx, key)
+	if err != nil {
+		return false, err
+	}
+
+	list, err := k.listDatabaseClustersMeta(ctx, ctrlclient.MatchingLabels{PodSchedulingPolicyNameLabel: key.Name})
+	if err != nil {
+		return false, err
+	}
+	if list != nil && len(list.Items) > 0 {
+		return true, nil
+	}
+
+	return false, nil
 }

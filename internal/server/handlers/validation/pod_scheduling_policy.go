@@ -210,9 +210,10 @@ func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName strin
 
 func (h *validateHandler) isDefaultPSP(psp *everestv1alpha1.PodSchedulingPolicy) bool {
 	// TODO: need to check another mark that indicates default policy
-	if psp.GetName() == "everest-default-pxc" ||
-		psp.GetName() == "everest-default-psmdb" ||
-		psp.GetName() == "everest-default-postgresql" {
+	pspName := psp.GetName()
+	if pspName == "everest-default-pxc" ||
+		pspName == "everest-default-psmdb" ||
+		pspName == "everest-default-postgresql" {
 		return true
 	}
 
