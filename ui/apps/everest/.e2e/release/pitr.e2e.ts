@@ -28,6 +28,7 @@ import {
   populateBasicInformation,
   populateResources,
   populateAdvancedConfig,
+  goToLastStepByStepAndSubmit,
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
@@ -475,6 +476,15 @@ test.describe.configure({ retries: 0 });
             ['9'],
             ['1', '2', '3', '4', '5', '6', '7', '8', '9']
           );
+          // for PG we need one more transaction to be able to restore to the previous one
+          if (db == 'postgresql') {
+            await insertTestDB(
+              clusterName,
+              namespace,
+              ['10'],
+              ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+            );
+          }
         });
 
         await test.step('Wait for binlogs to be uploaded', async () => {
@@ -508,26 +518,29 @@ test.describe.configure({ retries: 0 });
 
           // Submit and open DB creation wizard
           await page.getByTestId('form-dialog-create').click({ timeout: 5000 });
-          
+          let currentUrl = page.url();
+          expect(currentUrl).toContain('/databases/new');
+
           newClusterName = await page.getByTestId('text-input-db-name').inputValue();
           expect(newClusterName).not.toBe('');
-          await moveForward(page);
-          await moveForward(page);
-          await moveForward(page);
-          await moveForward(page);
-          await submitWizard(page);
+          await goToLastStepByStepAndSubmit(page, 5000);
         });
 
         await test.step('Wait for the new cluster to be created and ready', async () => {
           await page.goto('/databases');
           await waitForStatus(page, newClusterName, 'Initializing', 30000);
-          await waitForStatus(page, newClusterName, 'Restoring', 600000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, newClusterName, 'Restoring', 600000);
+          }
           await waitForStatus(page, newClusterName, 'Up', 600000);
         });
 
         await test.step('Verify the restore was successful', async () => {
-          await gotoDbClusterRestores(page, newClusterName);
-          await waitForStatus(page, newClusterName, 'Succeeded', 120000);
+          // PG does not create a DBR object when restoring to new cluster.
+          if (db !== 'postgresql') {
+            await gotoDbClusterRestores(page, newClusterName);
+            await waitForStatus(page, newClusterName, 'Succeeded', 120000);
+          }
         });
 
         await test.step('Verify the data in the new cluster', async () => {
