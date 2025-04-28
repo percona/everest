@@ -1832,3 +1832,180 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 		})
 	}
 }
+
+func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name            string
+		objs            []ctrlclient.Object
+		pspNameToDelete string
+		wantErr         error
+	}
+	testCases := []testCase{
+		// no policies
+		{
+			name:            "no policies",
+			pspNameToDelete: "test-policy",
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "podschedulingpolicies",
+			},
+				"test-policy",
+			),
+		},
+		// delete non-existing policy
+		{
+			name: "delete non-existing policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			pspNameToDelete: "non-existing-policy",
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "podschedulingpolicies",
+			},
+				"non-existing-policy",
+			),
+		},
+		// delete default PXC policy
+		{
+			name: "delete default PXC policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			pspNameToDelete: "everest-default-pxc",
+			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-pxc' is default and cannot be deleted")),
+		},
+		// delete default PSMDB policy
+		{
+			name: "delete default PSMDB policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			pspNameToDelete: "everest-default-psmdb",
+			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-psmdb' is default and cannot be deleted")),
+		},
+		// delete default PostgreSQL policy
+		{
+			name: "delete default PostgreSQL policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			pspNameToDelete: "everest-default-postgresql",
+			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-postgresql' is default and cannot be deleted")),
+		},
+		// delete existing policy
+		{
+			name: "delete existing policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+			},
+			pspNameToDelete: "test-policy",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(tc.objs...).
+				Build()
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sHandler := k8s.New(zap.NewNop().Sugar(), k, "")
+
+			valHandler := New(zap.NewNop().Sugar(), k)
+			valHandler.SetNext(k8sHandler)
+
+			err := valHandler.DeletePodSchedulingPolicy(context.Background(), tc.pspNameToDelete)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr.Error(), err.Error())
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

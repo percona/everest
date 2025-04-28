@@ -2,6 +2,7 @@ package validation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -9,12 +10,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	k8sError "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/internal/server/handlers/k8s"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/utils"
@@ -1914,6 +1918,363 @@ func TestIsDatabaseClusterUpdateAllowed(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.expected, isDatabaseClusterUpdateAllowed(tt.currentDB))
+		})
+	}
+}
+
+func TestValidatePodSchedulingPolicy(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name      string
+		objs      []ctrlclient.Object
+		dbCluster *everestv1alpha1.DatabaseCluster
+		wantErr   error
+	}
+
+	testCases := []testCase{
+		// no policy used
+		{
+			name: "no policy used",
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-no-policy",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+		},
+		// absent policy used
+		{
+			name: "absent policy used",
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-absent-policy",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePXC,
+					},
+					PodSchedulingPolicyName: "absent-policy",
+				},
+			},
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "podschedulingpolicies",
+			},
+				"absent-policy",
+			),
+		},
+		// engineType mismatches
+		{
+			name: "engineType mismatch PXC",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-policy-mismatch",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePXC,
+					},
+					PodSchedulingPolicyName: "everest-default-postgresql",
+				},
+			},
+			wantErr: fmt.Errorf("requested pod scheduling policy='everest-default-postgresql' is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC),
+		},
+		{
+			name: "engineType mismatch PSMDB",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-policy-mismatch",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+					PodSchedulingPolicyName: "everest-default-postgresql",
+				},
+			},
+			wantErr: fmt.Errorf("requested pod scheduling policy='everest-default-postgresql' is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB),
+		},
+		{
+			name: "engineType mismatch PostgreSQL",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-policy-mismatch",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+					PodSchedulingPolicyName: "everest-default-pxc",
+				},
+			},
+			wantErr: fmt.Errorf("requested pod scheduling policy='everest-default-pxc' is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql),
+		},
+		// affinityConfig is absent
+		{
+			name: "affinityConfig is absent",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-pxc-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-affinityConfig-empty",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePXC,
+					},
+					PodSchedulingPolicyName: "test-pxc-policy",
+				},
+			},
+			wantErr: errors.New("pod scheduling policy='test-pxc-policy' is not applicable: affinityConfig is absent or empty"),
+		},
+		// affinityConfig.PXC is absent
+		{
+			name: "affinityConfig.PXC is absent",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-pxc-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType:     everestv1alpha1.DatabaseEnginePXC,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{},
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-affinityConfig-pxc-empty",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePXC,
+					},
+					PodSchedulingPolicyName: "test-pxc-policy",
+				},
+			},
+			wantErr: errors.New("pod scheduling policy='test-pxc-policy' is not applicable: .spec.affinityConfig.pxc is required"),
+		},
+		// affinityConfig.PXC DB components are absent
+		{
+			name: "affinityConfig.PXC DB components are absent",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-pxc-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PXC: &everestv1alpha1.PXCAffinityConfig{},
+						},
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-affinityConfig-pxc-components",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePXC,
+					},
+					PodSchedulingPolicyName: "test-pxc-policy",
+				},
+			},
+			wantErr: errors.New("pod scheduling policy='test-pxc-policy' is not applicable: .spec.affinityConfig.pxc.engine or .spec.affinityConfig.pxc.proxy is required"),
+		},
+		// affinityConfig.PSMDB is absent
+		{
+			name: "affinityConfig.PSMDB is absent",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-psmdb-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType:     everestv1alpha1.DatabaseEnginePSMDB,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{},
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-affinityConfig-psmdb-empty",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+					PodSchedulingPolicyName: "test-psmdb-policy",
+				},
+			},
+			wantErr: errors.New("pod scheduling policy='test-psmdb-policy' is not applicable: .spec.affinityConfig.psmdb is required"),
+		},
+		// affinityConfig.PSMDB DB components are absent
+		{
+			name: "affinityConfig.PSMDB DB components are absent",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-psmdb-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PSMDB: &everestv1alpha1.PSMDBAffinityConfig{},
+						},
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-affinityConfig-psmdb-components",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+					PodSchedulingPolicyName: "test-psmdb-policy",
+				},
+			},
+			wantErr: errors.New("pod scheduling policy='test-psmdb-policy' is not applicable: .spec.affinityConfig.psmdb.engine or .spec.affinityConfig.psmdb.proxy or .spec.affinityConfig.psmdb.configServer is required"),
+		},
+		// affinityConfig.PostgreSQL is absent
+		{
+			name: "affinityConfig.PostgreSQL is absent",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-pg-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType:     everestv1alpha1.DatabaseEnginePostgresql,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{},
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-affinityConfig-pg-empty",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+					PodSchedulingPolicyName: "test-pg-policy",
+				},
+			},
+			wantErr: errors.New("pod scheduling policy='test-pg-policy' is not applicable: .spec.affinityConfig.postgresql is required"),
+		},
+		// affinityConfig.PostgreSQL DB components are absent
+		{
+			name: "affinityConfig.PostgreSQL DB components are absent",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-pg-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{},
+						},
+					},
+				},
+			},
+			dbCluster: &everestv1alpha1.DatabaseCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "db-affinityConfig-pg-components",
+					Namespace: "test-ns",
+				},
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+					PodSchedulingPolicyName: "test-pg-policy",
+				},
+			},
+			wantErr: errors.New("pod scheduling policy='test-pg-policy' is not applicable: .spec.affinityConfig.postgresql.engine or .spec.affinityConfig.postgresql.proxy is required"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(tc.objs...).
+				Build()
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sHandler := k8s.New(zap.NewNop().Sugar(), k, "")
+
+			valHandler := &validateHandler{
+				log:           zap.NewNop().Sugar(),
+				kubeConnector: k,
+			}
+			valHandler.SetNext(k8sHandler)
+
+			err := valHandler.validatePodSchedulingPolicy(context.Background(), tc.dbCluster)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr.Error(), err.Error())
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

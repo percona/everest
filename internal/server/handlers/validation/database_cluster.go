@@ -139,6 +139,11 @@ func (h *validateHandler) validateDatabaseClusterCR(
 	if err := validateSharding(databaseCluster); err != nil {
 		return err
 	}
+
+	if err = h.validatePodSchedulingPolicy(ctx, databaseCluster); err != nil {
+		h.log.Errorf("failed to validate .spec.podSchedulingPolicyName='%s': %v", databaseCluster.Spec.PodSchedulingPolicyName, err)
+		return err
+	}
 	return validateResourceLimits(databaseCluster)
 }
 
@@ -640,4 +645,56 @@ func isDatabaseClusterUpdateAllowed(currentDB *everestv1alpha1.DatabaseCluster) 
 	}
 
 	return true
+}
+
+func (h *validateHandler) validatePodSchedulingPolicy(ctx context.Context, db *everestv1alpha1.DatabaseCluster) error {
+	var psp *everestv1alpha1.PodSchedulingPolicy
+	var err error
+	pspName := db.Spec.PodSchedulingPolicyName
+
+	if pspName == "" {
+		return nil
+	}
+
+	if psp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: pspName}); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return err
+		}
+		return fmt.Errorf("failed to check if requested pod scheduling policy with name='%s' exists: %v", pspName, err)
+	}
+
+	if psp.Spec.EngineType != db.Spec.Engine.Type {
+		return fmt.Errorf("requested pod scheduling policy='%s' is not applicable with engineType='%s'", pspName, db.Spec.Engine.Type)
+	}
+
+	affinityConfig := psp.Spec.AffinityConfig
+	if affinityConfig == nil {
+		return fmt.Errorf("pod scheduling policy='%s' is not applicable: affinityConfig is absent or empty", pspName)
+	}
+
+	// Policy has affinityConfig - need to validate it.
+	switch psp.Spec.EngineType {
+	case everestv1alpha1.DatabaseEnginePXC:
+		if affinityConfig.PXC == nil {
+			return fmt.Errorf("pod scheduling policy='%s' is not applicable: .spec.affinityConfig.pxc is required", pspName)
+		}
+		if affinityConfig.PXC.Engine == nil && affinityConfig.PXC.Proxy == nil {
+			return fmt.Errorf("pod scheduling policy='%s' is not applicable: .spec.affinityConfig.pxc.engine or .spec.affinityConfig.pxc.proxy is required", pspName)
+		}
+	case everestv1alpha1.DatabaseEnginePSMDB:
+		if affinityConfig.PSMDB == nil {
+			return fmt.Errorf("pod scheduling policy='%s' is not applicable: .spec.affinityConfig.psmdb is required", pspName)
+		}
+		if affinityConfig.PSMDB.Engine == nil && affinityConfig.PSMDB.Proxy == nil && affinityConfig.PSMDB.ConfigServer == nil {
+			return fmt.Errorf("pod scheduling policy='%s' is not applicable: .spec.affinityConfig.psmdb.engine or .spec.affinityConfig.psmdb.proxy or .spec.affinityConfig.psmdb.configServer is required", pspName)
+		}
+	case everestv1alpha1.DatabaseEnginePostgresql:
+		if affinityConfig.PostgreSQL == nil {
+			return fmt.Errorf("pod scheduling policy='%s' is not applicable: .spec.affinityConfig.postgresql is required", pspName)
+		}
+		if affinityConfig.PostgreSQL.Engine == nil && affinityConfig.PostgreSQL.Proxy == nil {
+			return fmt.Errorf("pod scheduling policy='%s' is not applicable: .spec.affinityConfig.postgresql.engine or .spec.affinityConfig.postgresql.proxy is required", pspName)
+		}
+	}
+	return nil
 }

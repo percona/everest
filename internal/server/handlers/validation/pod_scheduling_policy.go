@@ -50,6 +50,9 @@ func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, name st
 
 	// validate updated policy params
 	if err := h.validatePSPOnUpdate(ctx, psp); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil, err
+		}
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
@@ -63,6 +66,12 @@ func (h *validateHandler) ListPodSchedulingPolicies(ctx context.Context) (*evere
 
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.
 func (h *validateHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {
+	if err := h.validatePSPOnDelete(ctx, name); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return err
+		}
+		return errors.Join(ErrInvalidRequest, err)
+	}
 	return h.next.DeletePodSchedulingPolicy(ctx, name)
 }
 
@@ -168,11 +177,8 @@ func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *evere
 		return fmt.Errorf("failed to check if pod scheduling policy with name='%s' exists: %w", newPsp.GetName(), err)
 	}
 
-	// default policy update is not allowed
-	// TODO: need to check another mark that indicates default policy
-	if oldPsp.GetName() == "everest-default-pxc" ||
-		oldPsp.GetName() == "everest-default-psmdb" ||
-		oldPsp.GetName() == "everest-default-postgresql" {
+	if h.isDefaultPSP(oldPsp) {
+		// default policy update is not allowed
 		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be updated", newPsp.GetName())
 	}
 
@@ -181,4 +187,34 @@ func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *evere
 		return errors.New("changing .spec.engineType is forbidden")
 	}
 	return nil
+}
+
+func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName string) error {
+	var psp *everestv1alpha1.PodSchedulingPolicy
+	var err error
+	if psp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: pspName}); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return err
+		}
+		h.log.Errorf("failed to check if pod scheduling policy with name='%s' exists: %v", pspName, err)
+		return fmt.Errorf("failed to check if pod scheduling policy with name='%s' exists: %w", pspName, err)
+	}
+
+	if h.isDefaultPSP(psp) {
+		// default policy deletion is not allowed
+		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be deleted", psp.GetName())
+	}
+
+	return nil
+}
+
+func (h *validateHandler) isDefaultPSP(psp *everestv1alpha1.PodSchedulingPolicy) bool {
+	// TODO: need to check another mark that indicates default policy
+	if psp.GetName() == "everest-default-pxc" ||
+		psp.GetName() == "everest-default-psmdb" ||
+		psp.GetName() == "everest-default-postgresql" {
+		return true
+	}
+
+	return false
 }
