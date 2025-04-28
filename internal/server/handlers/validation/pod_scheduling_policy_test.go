@@ -1,0 +1,1834 @@
+// everest
+// Copyright (C) 2025 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package validation
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"slices"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	k8sError "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/internal/server/handlers/k8s"
+	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/utils"
+)
+
+func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name    string
+		objs    []ctrlclient.Object
+		value   everestv1alpha1.PodSchedulingPolicy
+		wantErr error
+	}
+
+	testCases := []testCase{
+		// invalid PodSchedulingPolicy names
+		{
+			name: "empty podSchedulingPolicy name",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "",
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+		},
+		{
+			name: "name starts with -",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "-rstrst",
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+		},
+		{
+			name: "name ends with -",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "rstrst-",
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+		},
+		{
+			name: "name contains uppercase",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "AAsdf",
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+		},
+		{
+			name: "name too long",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "asldkafaslkdjfalskdfjaslkdjflsakfjdalskfdjaslkfdjaslkfdjsaklfdassksjdfhskdjfskjdfsdfsdflasdkfasdfk",
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+		},
+		{
+			name: "duplicate name",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "everest-existing-name",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-existing-name",
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-existing-name' already exists")),
+		},
+		// unsupported engineType
+		{
+			name: "unsupported engineType",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "unknown-engine-type",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: "unsupported",
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("unsupported .spec.engineType='unsupported'")),
+		},
+		// empty affinity configs
+		{
+			name: "empty pxc affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "empty-affinity",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType:     everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.pxc is required")),
+		},
+		{
+			name: "empty psmdb affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "empty-affinity",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType:     everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.psmdb is required")),
+		},
+		{
+			name: "empty postgresql affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "empty-affinity",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType:     everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.postgresql is required")),
+		},
+		// empty DB components affinity configs
+		{
+			name: "empty PXC components config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "empty-pxc-components",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.pxc.engine or .spec.affinityConfig.pxc.proxy is required")),
+		},
+		{
+			name: "empty PSMDB components config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "empty-psmdb-components",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.psmdb.engine or .spec.affinityConfig.psmdb.proxy or .spec.affinityConfig.psmdb.configServer is required")),
+		},
+		{
+			name: "empty PostgreSQL components config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "empty-pg-components",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.postgresql.engine or .spec.affinityConfig.postgresql.proxy is required")),
+		},
+		// affinity config mismatches with engineType
+		{
+			name: "PXC affinity config mismatch PSMDB",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pxc-mismatch-psmdb",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)),
+		},
+		{
+			name: "PXC affinity config mismatch PostgreSQL",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pxc-mismatch-pg",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)),
+		},
+		{
+			name: "PSMDB affinity config mismatch PXC",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "psmdb-mismatch-pxc",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{},
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)),
+		},
+		{
+			name: "PSMDB affinity config mismatch PosgreSQL",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "psmdb-mismatch-pg",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)),
+		},
+		{
+			name: "PostgreSQL affinity config mismatch PXC",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pg-mismatch-pxc",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{},
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)),
+		},
+		{
+			name: "PostgreSQL affinity config mismatch PSMDB",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pg-mismatch-psmdb",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{},
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)),
+		},
+		// valid simple cases
+		{
+			name: "PXC valid simple affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pxc-valid-simple-cfg",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "PSMDB valid simple affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "psmdb-valid-simple-cfg",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "PostgreSQL valid simple affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pg-valid-simple-cfg",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// valid cases with full affinity config
+		{
+			name: "PXC valid full affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pxc-valid-full-cfg",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "PSMDB valid full affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "psmdb-valid-full-cfg",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							ConfigServer: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "PostgreSQL valid full affinity config",
+			value: everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pg-valid-full-cfg",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(tc.objs...).
+				Build()
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sHandler := k8s.New(zap.NewNop().Sugar(), k, "")
+
+			valHandler := New(zap.NewNop().Sugar(), k)
+			valHandler.SetNext(k8sHandler)
+			_, err := valHandler.CreatePodSchedulingPolicy(context.Background(), &tc.value)
+			if tc.wantErr == nil {
+				require.NoError(t, err)
+				return
+			}
+			assert.Equal(t, tc.wantErr.Error(), err.Error())
+		})
+	}
+}
+
+func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name    string
+		objs    []ctrlclient.Object
+		assert  func(*everestv1alpha1.PodSchedulingPolicyList) bool
+		wantErr error
+	}
+
+	testCases := []testCase{
+		// policies are absent
+		{
+			name: "absent policies",
+			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
+				return len(list.Items) == 0
+			},
+		},
+		// default policies
+		{
+			name: "default policies",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
+				return len(list.Items) == 3 &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-pxc"
+					}) &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-postgresql"
+					}) &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-psmdb"
+					})
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(tc.objs...).
+				Build()
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sHandler := k8s.New(zap.NewNop().Sugar(), k, "")
+
+			valHandler := New(zap.NewNop().Sugar(), k)
+			valHandler.SetNext(k8sHandler)
+			pspList, err := valHandler.ListPodSchedulingPolicies(context.Background())
+			require.NoError(t, err)
+			assert.Condition(t, func() bool {
+				return tc.assert(pspList)
+			})
+		})
+	}
+}
+
+func TestValidate_GetPodSchedulingPolicy(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name       string
+		objs       []ctrlclient.Object
+		policyName string
+		wantPolicy *everestv1alpha1.PodSchedulingPolicy
+		wantErr    error
+	}
+
+	testCases := []testCase{
+		// policies are absent
+		{
+			name:       "no policies",
+			policyName: "everest-default-pxc",
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "podschedulingpolicies",
+			},
+				"everest-default-pxc",
+			),
+		},
+		// get default policy
+		{
+			name: "get default policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			policyName: "everest-default-pxc",
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "everest-default-pxc",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+			},
+		},
+		// get absent policy
+		{
+			name: "get absent policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			policyName: "non-existing-policy",
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "podschedulingpolicies",
+			},
+				"non-existing-policy",
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(tc.objs...).
+				Build()
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sHandler := k8s.New(zap.NewNop().Sugar(), k, "")
+
+			valHandler := New(zap.NewNop().Sugar(), k)
+			valHandler.SetNext(k8sHandler)
+			psp, err := valHandler.GetPodSchedulingPolicy(context.Background(), tc.policyName)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr.Error(), err.Error())
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantPolicy.GetName(), psp.GetName())
+		})
+	}
+}
+
+func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name          string
+		objs          []ctrlclient.Object
+		updatedPolicy *everestv1alpha1.PodSchedulingPolicy
+		wantPolicy    *everestv1alpha1.PodSchedulingPolicy
+		wantErr       error
+	}
+
+	testCases := []testCase{
+		// policies are absent
+		{
+			name: "no policies",
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-policy",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+				},
+			},
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "podschedulingpolicies",
+			},
+				"test-policy",
+			),
+		},
+		// update non-existing policy
+		{
+			name: "update non-existing policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "non-existing-policy",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "podschedulingpolicies",
+			},
+				"non-existing-policy",
+			),
+		},
+		// update default policy PXC
+		{
+			name: "update default PXC policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "everest-default-pxc",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-pxc' is default and cannot be updated")),
+		},
+		// update default policy PSMDB
+		{
+			name: "update default PSMDB policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "everest-default-psmdb",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-psmdb' is default and cannot be updated")),
+		},
+		// update default policy PostgreSQL
+		{
+			name: "update default PosgreSQL policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "everest-default-postgresql",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-postgresql' is default and cannot be updated")),
+		},
+		// affinity config mismatches with engineType
+		{
+			name: "PXC affinity config mismatch PSMDB",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-policy",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)),
+		},
+		{
+			name: "PXC affinity config mismatch PostgreSQL",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-policy",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)),
+		},
+		{
+			name: "PSMDB affinity config mismatch PXC",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-policy",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)),
+		},
+		{
+			name: "PSMDB affinity config mismatch PosgreSQL",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-policy",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)),
+		},
+		{
+			name: "PostgreSQL affinity config mismatch PXC",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-policy",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)),
+		},
+		{
+			name: "PostgreSQL affinity config mismatch PSMDB",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-policy",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-policy",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{},
+						},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)),
+		},
+		// valid update - add full affinity config
+		{
+			name: "valid update PXC - add full affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-pxc",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pxc",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pxc",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid update PSMDB - add full affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-psmdb",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-psmdb",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							ConfigServer: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-psmdb",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							ConfigServer: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid update PosgreSQL - add full affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-pg",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pg",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pg",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// valid update - add a DB component into affinity config
+		{
+			name: "valid update PXC - add db component into affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-pxc",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PXC: &everestv1alpha1.PXCAffinityConfig{
+								Engine: &corev1.Affinity{
+									PodAntiAffinity: &corev1.PodAntiAffinity{
+										RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+											{
+												TopologyKey: "kubernetes.io/hostname",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pxc",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pxc",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid update PSMDB - add db component into affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-psmdb",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+								Engine: &corev1.Affinity{
+									PodAntiAffinity: &corev1.PodAntiAffinity{
+										RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+											{
+												TopologyKey: "kubernetes.io/hostname",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-psmdb",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							ConfigServer: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-psmdb",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							ConfigServer: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid update PosgreSQL - add db component into affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-pg",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+								Engine: &corev1.Affinity{
+									PodAntiAffinity: &corev1.PodAntiAffinity{
+										RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+											{
+												TopologyKey: "kubernetes.io/hostname",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pg",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pg",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Engine: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// valid update - replace a DB component in affinity config
+		{
+			name: "valid update PXC - replace db component in affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-pxc",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PXC: &everestv1alpha1.PXCAffinityConfig{
+								Engine: &corev1.Affinity{
+									PodAntiAffinity: &corev1.PodAntiAffinity{
+										RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+											{
+												TopologyKey: "kubernetes.io/hostname",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pxc",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pxc",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid update PSMDB - replace db component in affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-psmdb",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+								Engine: &corev1.Affinity{
+									PodAntiAffinity: &corev1.PodAntiAffinity{
+										RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+											{
+												TopologyKey: "kubernetes.io/hostname",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-psmdb",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							ConfigServer: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-psmdb",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{
+							ConfigServer: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid update PosgreSQL - replace db component in affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "valid-update-pg",
+						ResourceVersion: "1",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+						AffinityConfig: &everestv1alpha1.AffinityConfig{
+							PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+								Engine: &corev1.Affinity{
+									PodAntiAffinity: &corev1.PodAntiAffinity{
+										RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+											{
+												TopologyKey: "kubernetes.io/hostname",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pg",
+					ResourceVersion: "1",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "valid-update-pg",
+					ResourceVersion: "2",
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{
+							Proxy: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(tc.objs...).
+				Build()
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sHandler := k8s.New(zap.NewNop().Sugar(), k, "")
+
+			valHandler := New(zap.NewNop().Sugar(), k)
+			valHandler.SetNext(k8sHandler)
+
+			psp, err := valHandler.UpdatePodSchedulingPolicy(context.Background(), tc.updatedPolicy.GetName(), tc.updatedPolicy)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr.Error(), err.Error())
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.wantPolicy, psp)
+		})
+	}
+}

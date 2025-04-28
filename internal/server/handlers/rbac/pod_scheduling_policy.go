@@ -16,62 +16,61 @@
 package rbac
 
 import (
-    "context"
-    "errors"
-    "fmt"
+	"context"
+	"errors"
+	"fmt"
 
-    everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-
-    "github.com/percona/everest/pkg/rbac"
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 // CreatePodSchedulingPolicy creates a new pod scheduling policy.
 func (h *rbacHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-    if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionCreate, rbac.ObjectName(psp.GetName())); err != nil {
-        return nil, err
-    }
-    return h.next.CreatePodSchedulingPolicy(ctx, psp)
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionCreate, rbac.ObjectName(psp.GetName())); err != nil {
+		return nil, err
+	}
+	return h.next.CreatePodSchedulingPolicy(ctx, psp)
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
 func (h *rbacHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-    if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionUpdate, rbac.ObjectName(name)); err != nil {
-        return nil, err
-    }
-    return h.next.UpdatePodSchedulingPolicy(ctx, name, psp)
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionUpdate, rbac.ObjectName(name)); err != nil {
+		return nil, err
+	}
+	return h.next.UpdatePodSchedulingPolicy(ctx, name, psp)
 }
 
 // ListPodSchedulingPolicies lists all pod scheduling policies.
 func (h *rbacHandler) ListPodSchedulingPolicies(ctx context.Context) (*everestv1alpha1.PodSchedulingPolicyList, error) {
-    pspList, err := h.next.ListPodSchedulingPolicies(ctx)
-    if err != nil {
-        return nil, fmt.Errorf("ListPodSchedulingPolicies failed: %w", err)
-    }
-    var filtered []everestv1alpha1.PodSchedulingPolicy
-    for _, psp := range pspList.Items {
-        if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(psp.GetName())); errors.Is(err, ErrInsufficientPermissions) {
-            continue
-        } else if err != nil {
-            return nil, fmt.Errorf("enforce failed: %w", err)
-        }
-        filtered = append(filtered, psp)
-    }
-    pspList.Items = filtered
-    return pspList, nil
+	pspList, err := h.next.ListPodSchedulingPolicies(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("ListPodSchedulingPolicies failed: %w", err)
+	}
+	var filtered []everestv1alpha1.PodSchedulingPolicy
+	for _, psp := range pspList.Items {
+		if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(psp.GetName())); errors.Is(err, ErrInsufficientPermissions) {
+			continue
+		} else if err != nil {
+			return nil, fmt.Errorf("enforce failed: %w", err)
+		}
+		filtered = append(filtered, psp)
+	}
+	pspList.Items = filtered
+	return pspList, nil
 }
 
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.
 func (h *rbacHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {
-    if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionDelete, rbac.ObjectName(name)); err != nil {
-        return err
-    }
-    return h.next.DeletePodSchedulingPolicy(ctx, name)
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionDelete, rbac.ObjectName(name)); err != nil {
+		return err
+	}
+	return h.next.DeletePodSchedulingPolicy(ctx, name)
 }
 
 // GetPodSchedulingPolicy retrieves a pod scheduling policy by name.
 func (h *rbacHandler) GetPodSchedulingPolicy(ctx context.Context, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
-    if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(name)); err != nil {
-        return nil, err
-    }
-    return h.next.GetPodSchedulingPolicy(ctx, name)
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(name)); err != nil {
+		return nil, err
+	}
+	return h.next.GetPodSchedulingPolicy(ctx, name)
 }

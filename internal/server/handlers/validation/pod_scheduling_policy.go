@@ -17,17 +17,42 @@ package validation
 
 import (
 	"context"
+	"errors"
+	"fmt"
+
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/utils"
 )
 
 // CreatePodSchedulingPolicy creates a new pod scheduling policy.
 func (h *validateHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	if err := h.validatePSPCR(psp); err != nil {
+		return nil, errors.Join(ErrInvalidRequest, err)
+	}
+
+	// validate new policy params
+	if err := h.validatePSPOnCreate(ctx, psp); err != nil {
+		return nil, errors.Join(ErrInvalidRequest, err)
+	}
+
 	return h.next.CreatePodSchedulingPolicy(ctx, psp)
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
 func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	if err := h.validatePSPCR(psp); err != nil {
+		return nil, errors.Join(ErrInvalidRequest, err)
+	}
+
+	// validate updated policy params
+	if err := h.validatePSPOnUpdate(ctx, psp); err != nil {
+		return nil, errors.Join(ErrInvalidRequest, err)
+	}
+
 	return h.next.UpdatePodSchedulingPolicy(ctx, name, psp)
 }
 
@@ -44,4 +69,116 @@ func (h *validateHandler) DeletePodSchedulingPolicy(ctx context.Context, name st
 // GetPodSchedulingPolicy retrieves a pod scheduling policy by name.
 func (h *validateHandler) GetPodSchedulingPolicy(ctx context.Context, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	return h.next.GetPodSchedulingPolicy(ctx, name)
+}
+
+func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy) error {
+	if err := utils.ValidateRFC1035(psp.GetName(), "metadata.name"); err != nil {
+		return err
+	}
+
+	_, ok := common.OperatorTypeToName[psp.Spec.EngineType]
+	if !ok {
+		return fmt.Errorf("unsupported .spec.engineType='%s'", psp.Spec.EngineType)
+	}
+
+	// The following cases are possible:
+	// - policy is created without affinityConfig. In such a case only .metadata.name and .spec.engineType are set.
+	// This is exactly how UI behaves - creates an empty policy and later adds affinity rules into it one by one.
+	// - policy is created with all required fields filled at once.
+	affinityConfig := psp.Spec.AffinityConfig
+	if affinityConfig == nil {
+		return nil
+	}
+
+	// affinityConfig is passed - need to validate it.
+	switch psp.Spec.EngineType {
+	case everestv1alpha1.DatabaseEnginePXC:
+		if affinityConfig.PSMDB != nil {
+			// .spec.affinityConfig.psmdb shall not be set with engineType=pxc
+			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)
+		}
+		if affinityConfig.PostgreSQL != nil {
+			// .spec.affinityConfig.postgresql shall not be set with engineType=pxc
+			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)
+		}
+		if affinityConfig.PXC == nil {
+			return errors.New("invalid affinity config: .spec.affinityConfig.pxc is required")
+		}
+		if affinityConfig.PXC.Engine == nil && affinityConfig.PXC.Proxy == nil {
+			return errors.New("invalid affinity config: .spec.affinityConfig.pxc.engine or .spec.affinityConfig.pxc.proxy is required")
+		}
+	case everestv1alpha1.DatabaseEnginePSMDB:
+		if affinityConfig.PXC != nil {
+			// .spec.affinityConfig.pxc shall not be set with engineType=psmdb
+			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)
+		}
+		if affinityConfig.PostgreSQL != nil {
+			// .spec.affinityConfig.postgresql shall not be set with engineType=psmdb
+			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)
+		}
+		if affinityConfig.PSMDB == nil {
+			return errors.New("invalid affinity config: .spec.affinityConfig.psmdb is required")
+		}
+		if affinityConfig.PSMDB.Engine == nil && affinityConfig.PSMDB.Proxy == nil && affinityConfig.PSMDB.ConfigServer == nil {
+			return errors.New("invalid affinity config: .spec.affinityConfig.psmdb.engine or .spec.affinityConfig.psmdb.proxy or .spec.affinityConfig.psmdb.configServer is required")
+		}
+	case everestv1alpha1.DatabaseEnginePostgresql:
+		if affinityConfig.PXC != nil {
+			// .spec.affinityConfig.pxc shall not be set with engineType=postgresql
+			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)
+		}
+		if affinityConfig.PSMDB != nil {
+			// .spec.affinityConfig.psmdb shall not be set with engineType=postgresql
+			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)
+		}
+		if affinityConfig.PostgreSQL == nil {
+			return errors.New("invalid affinity config: .spec.affinityConfig.postgresql is required")
+		}
+		if affinityConfig.PostgreSQL.Engine == nil && affinityConfig.PostgreSQL.Proxy == nil {
+			return errors.New("invalid affinity config: .spec.affinityConfig.postgresql.engine or .spec.affinityConfig.postgresql.proxy is required")
+		}
+	}
+	return nil
+}
+
+func (h *validateHandler) validatePSPOnCreate(ctx context.Context, newPsp *everestv1alpha1.PodSchedulingPolicy) error {
+	if existingPolicy, err := h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: newPsp.GetName()}); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil
+		}
+
+		if !k8serrors.IsNotFound(err) {
+			h.log.Errorf("failed to check if pod scheduling policy with name='%s' already exists: %v", newPsp.GetName(), err)
+			return fmt.Errorf("failed to check if pod scheduling policy with name='%s' already exists: %w", newPsp.GetName(), err)
+		}
+	} else if existingPolicy.GetName() != "" {
+		return fmt.Errorf("pod scheduling policy with name='%s' already exists", newPsp.GetName())
+	}
+	return nil
+}
+
+func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *everestv1alpha1.PodSchedulingPolicy) error {
+	var oldPsp *everestv1alpha1.PodSchedulingPolicy
+	var err error
+	if oldPsp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: newPsp.GetName()}); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return err
+		}
+		h.log.Errorf("failed to check if pod scheduling policy with name='%s' exists: %v", newPsp.GetName(), err)
+		return fmt.Errorf("failed to check if pod scheduling policy with name='%s' exists: %w", newPsp.GetName(), err)
+	}
+
+	// default policy update is not allowed
+	// TODO: need to check another mark that indicates default policy
+	if oldPsp.GetName() == "everest-default-pxc" ||
+		oldPsp.GetName() == "everest-default-psmdb" ||
+		oldPsp.GetName() == "everest-default-postgresql" {
+		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be updated", newPsp.GetName())
+	}
+
+	if oldPsp.Spec.EngineType != newPsp.Spec.EngineType {
+		// changing .spec.engineType is not allowed
+		return errors.New("changing .spec.engineType is forbidden")
+	}
+	return nil
 }

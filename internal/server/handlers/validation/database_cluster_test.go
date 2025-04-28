@@ -17,6 +17,7 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/utils"
 )
 
 func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
@@ -36,7 +37,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: ErrNameNotRFC1035Compatible("metadata.name"),
+			err: utils.ErrNameNotRFC1035Compatible("metadata.name"),
 		},
 		{
 			name: "starts with -",
@@ -46,7 +47,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: ErrNameNotRFC1035Compatible("metadata.name"),
+			err: utils.ErrNameNotRFC1035Compatible("metadata.name"),
 		},
 		{
 			name: "ends with -",
@@ -56,7 +57,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: ErrNameNotRFC1035Compatible("metadata.name"),
+			err: utils.ErrNameNotRFC1035Compatible("metadata.name"),
 		},
 		{
 			name: "contains uppercase",
@@ -66,7 +67,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: ErrNameNotRFC1035Compatible("metadata.name"),
+			err: utils.ErrNameNotRFC1035Compatible("metadata.name"),
 		},
 		{
 			name: "valid",
@@ -86,7 +87,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: ErrNameTooLong("metadata.name"),
+			err: utils.ErrNameTooLong("metadata.name"),
 		},
 	}
 

@@ -17,6 +17,7 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/utils"
 )
 
 const (
@@ -178,7 +179,7 @@ func validateSharding(dbc *everestv1alpha1.DatabaseCluster) error {
 }
 
 func validateCreateDatabaseClusterRequest(dbc *everestv1alpha1.DatabaseCluster) error {
-	return validateRFC1035(dbc.GetName(), "metadata.name")
+	return utils.ValidateEverestResourceName(dbc.GetName(), "metadata.name")
 }
 
 func validateEngine(databaseCluster *everestv1alpha1.DatabaseCluster, engine *everestv1alpha1.DatabaseEngine) error {
