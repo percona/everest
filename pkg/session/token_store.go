@@ -85,7 +85,7 @@ func (ts *tokenStore) Add(ctx context.Context, shortenedToken string) error {
 	secret = addDataToSecret(ts.l, secret, shortenedToken, time.Now().UTC())
 	_, updateErr := ts.client.UpdateSecret(ctx, secret)
 	if updateErr != nil {
-		ts.l.Errorf("failed to update %s secret in the %s namespace withe the %s shortened token, retrying: %v", secret.Name, secret.Namespace, shortenedToken, updateErr)
+		ts.l.Errorf("failed to update %s secret in the %s namespace with the %s shortened token, retrying: %v", secret.Name, secret.Namespace, shortenedToken, updateErr)
 		return err
 	}
 	return nil
