@@ -112,7 +112,7 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	}
 	blocklistClient, err := kubernetes.NewInCluster(l, ctx, options)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, errors.New("failed creating Kubernetes client for blockList"))
 	}
 
 	blockList, err := session.NewBlocklist(ctx, blocklistClient, l)
