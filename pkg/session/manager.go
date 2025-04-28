@@ -23,11 +23,17 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
+	echomiddleware "github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
 
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 )
@@ -41,13 +47,15 @@ const (
 type Manager struct {
 	accountManager accounts.Interface
 	signingKey     *rsa.PrivateKey
+	Blocklist
+	l *zap.SugaredLogger
 }
 
 // Option is a function that modifies a SessionManager.
 type Option func(*Manager)
 
 // New creates a new session manager with the given options.
-func New(options ...Option) (*Manager, error) {
+func New(ctx context.Context, l *zap.SugaredLogger, options ...Option) (*Manager, error) {
 	m := &Manager{}
 	for _, opt := range options {
 		opt(m)
@@ -57,6 +65,14 @@ func New(options ...Option) (*Manager, error) {
 		return nil, errors.Join(err, errors.New("failed to get private key"))
 	}
 	m.signingKey = privKey
+	m.l = l
+
+	blockList, err := NewBlocklist(ctx, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
+	}
+
+	m.Blocklist = blockList
 	return m, nil
 }
 
@@ -134,4 +150,32 @@ func (mgr *Manager) KeyFunc() jwt.Keyfunc {
 	return func(_ *jwt.Token) (interface{}, error) {
 		return mgr.signingKey.Public(), nil
 	}
+}
+
+func (mgr *Manager) BlocklistMiddleWare(skipperFunc func() (echomiddleware.Skipper, error)) (echo.MiddlewareFunc, error) {
+	skipper, err := skipperFunc()
+	if err != nil {
+		return nil, err
+	}
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if skipper(c) {
+				return next(c)
+			}
+			ctx := c.Request().Context()
+			token, tErr := common.ExtractToken(ctx)
+			if tErr != nil {
+				return tErr
+			}
+			if isBlocked, err := mgr.IsBlocked(ctx, token); err != nil {
+				mgr.l.Error(err)
+				return err
+			} else if isBlocked {
+				return c.JSON(http.StatusUnauthorized, api.Error{
+					Message: pointer.ToString("Invalid token"),
+				})
+			}
+			return next(c)
+		}
+	}, nil
 }

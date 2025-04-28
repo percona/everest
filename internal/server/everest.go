@@ -89,7 +89,7 @@ func getOIDCProviderConfig(ctx context.Context, kubeClient kubernetes.Kubernetes
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeConnector, err := kubernetes.NewInCluster(l)
+	kubeConnector, err := kubernetes.NewInCluster(l, ctx, nil)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
@@ -98,7 +98,9 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
+
 	sessMgr, err := session.New(
+		ctx, l,
 		session.WithAccountManager(kubeConnector.Accounts()),
 	)
 	if err != nil {
@@ -203,6 +205,12 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return err
 	}
 	apiGroup.Use(jwtMW)
+
+	blocklistMW, err := e.sessionMgr.BlocklistMiddleWare(newSkipperFunc)
+	if err != nil {
+		return err
+	}
+	apiGroup.Use(blocklistMW)
 
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	api.RegisterHandlers(apiGroup, e)
@@ -365,7 +373,7 @@ func (e *EverestServer) getBodyFromContext(ctx echo.Context, into any) error {
 
 func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore) {
 	allButSession := func(c echo.Context) bool {
-		return c.Request().Method != echo.POST || c.Request().URL.Path != "/v1/session"
+		return c.Request().URL.Path != "/v1/session"
 	}
 	config := echomiddleware.DefaultRateLimiterConfig
 	config.Skipper = allButSession
