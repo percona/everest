@@ -124,7 +124,7 @@ func cleanupOld(l *zap.SugaredLogger, list string, now time.Time) []string {
 	for _, shortenedToken := range tokens {
 		length := len(shortenedToken)
 		if length < timestampLen {
-			l.Warn("blocklist contains irregular data format")
+			l.Warnf("blocklist token='%s' contains irregular data format", shortenedToken)
 			continue
 		}
 		ts := shortenedToken[length-10 : length]
