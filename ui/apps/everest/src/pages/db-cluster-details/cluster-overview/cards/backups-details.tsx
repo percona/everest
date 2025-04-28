@@ -35,8 +35,6 @@ import { DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 import { PitrEditModal } from './pitr-details/edit-pitr';
-import { dbEngineToDbType } from '@percona/utils';
-import { DbType } from '@percona/types';
 import { changeDbClusterPITR, shouldDbActionsBeBlocked } from 'utils/db';
 
 export const BackupsDetails = ({
@@ -52,9 +50,7 @@ export const BackupsDetails = ({
   const editable =
     canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
-  const dbType = dbEngineToDbType(dbCluster!.spec.engine.type);
   const backupsEnabled = (schedules || []).length > 0;
-  const pitrDisabled = !backupsEnabled || dbType === DbType.Postresql;
 
   const [openEditModal, setOpenEditModal] = useState(false);
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
@@ -204,10 +200,8 @@ export const BackupsDetails = ({
             },
             'data-testid': 'edit-pitr-button',
           }}
-          editable={editable && !pitrDisabled}
-          showTooltip={
-            editable && !backupsEnabled && dbType !== DbType.Postresql
-          }
+          editable={editable && backupsEnabled}
+          showTooltip={editable && !backupsEnabled}
           disabledEditTooltipText={Messages.titles.createScheduleToEnable}
         >
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
