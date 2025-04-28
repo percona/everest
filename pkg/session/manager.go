@@ -41,13 +41,14 @@ const (
 type Manager struct {
 	accountManager accounts.Interface
 	signingKey     *rsa.PrivateKey
+	Blocklist
 }
 
 // Option is a function that modifies a SessionManager.
 type Option func(*Manager)
 
 // New creates a new session manager with the given options.
-func New(options ...Option) (*Manager, error) {
+func New(blocklist Blocklist, options ...Option) (*Manager, error) {
 	m := &Manager{}
 	for _, opt := range options {
 		opt(m)
@@ -57,6 +58,7 @@ func New(options ...Option) (*Manager, error) {
 		return nil, errors.Join(err, errors.New("failed to get private key"))
 	}
 	m.signingKey = privKey
+	m.Blocklist = blocklist
 	return m, nil
 }
 

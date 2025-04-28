@@ -1,3 +1,18 @@
+// everest
+// Copyright (C) 2025 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package session
 
 import (
@@ -5,16 +20,15 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/kubernetes"
 )
 
 const (
@@ -22,58 +36,67 @@ const (
 	timestampLen = 10
 )
 
-func newTokenStore(ctx context.Context, kubeClient kubernetes.KubernetesConnector, logger *zap.SugaredLogger) (TokenStore, error) {
-	store := &tokenStore{
-		l:          logger,
-		kubeClient: kubeClient,
+func newTokenStore(ctx context.Context, client BlocklistClient, logger *zap.SugaredLogger) (TokenStore, error) {
+	s := &tokenStore{
+		l:      logger,
+		client: client,
 	}
-	_, err := kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
-	if err == nil {
-		return store, nil
-	}
-	if !k8serrors.IsNotFound(err) {
-		return nil, fmt.Errorf("failed to get secret: %w", err)
-	}
-	var createErr error
-	_, createErr = kubeClient.CreateSecret(ctx, blockListSecretTemplate(""))
-	if createErr != nil {
-		return nil, fmt.Errorf("failed to create secret: %w", createErr)
-	}
-	return store, nil
-}
-
-type tokenStore struct {
-	kubeClient kubernetes.KubernetesConnector
-	l          *zap.SugaredLogger
-	mutex      sync.RWMutex
-}
-
-func (ts *tokenStore) Add(ctx context.Context, shortenedToken string) error {
-	ts.mutex.Lock()
-	defer ts.mutex.Unlock()
-
-	secret, err := ts.kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
+	err := s.init(ctx)
 	if err != nil {
-		ts.l.Errorf("failed to get %s secret: %v", common.EverestBlocklistSecretName, err)
+		return nil, err
+	}
+	return s, nil
+}
+
+func (ts *tokenStore) init(ctx context.Context) error {
+	_, err := ts.client.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
+	if err == nil {
 		return err
 	}
-
-	addDataToSecret(ts.l, secret, shortenedToken, time.Now().UTC())
-	_, updateErr := ts.kubeClient.UpdateSecret(ctx, secret)
-	if updateErr != nil {
-		ts.l.Errorf("failed to update %s secret, retrying: %v", common.EverestBlocklistSecretName, updateErr)
+	if !k8serrors.IsNotFound(err) {
+		err = fmt.Errorf("failed to get %s secret in the %s namespace: %w", common.EverestBlocklistSecretName, common.SystemNamespace, err)
+		ts.l.Error(err)
+		return err
+	}
+	var createErr error
+	secret := getBlockListSecretTemplate("")
+	_, createErr = ts.client.CreateSecret(ctx, secret)
+	if createErr != nil {
+		err = fmt.Errorf("failed to create secret %s in namespace %s: %w", secret.Name, secret.Namespace, createErr)
+		ts.l.Error(err)
 		return err
 	}
 	return nil
 }
 
-func (ts *tokenStore) Exists(ctx context.Context, shortenedToken string) (bool, error) {
-	ts.mutex.RLock()
-	defer ts.mutex.RUnlock()
-	// no worries about k8s requests overhead - the controller-runtime cache is enabled for Everest API server
-	secret, err := ts.kubeClient.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
+type tokenStore struct {
+	client BlocklistClient
+	l      *zap.SugaredLogger
+}
+
+// Add adds the shortened token to the blocklist
+func (ts *tokenStore) Add(ctx context.Context, shortenedToken string) error {
+	secret, err := ts.client.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
 	if err != nil {
-		ts.l.Errorf("failed to get %s secret: %v", common.EverestBlocklistSecretName, err)
+		ts.l.Errorf("failed to get %s secret in the %s namespace: %v", common.EverestBlocklistSecretName, common.SystemNamespace, err)
+		return err
+	}
+
+	secret = addDataToSecret(ts.l, secret, shortenedToken, time.Now().UTC())
+	_, updateErr := ts.client.UpdateSecret(ctx, secret)
+	if updateErr != nil {
+		ts.l.Errorf("failed to update %s secret in the %s namespace with the %s shortened token, retrying: %v", secret.Name, secret.Namespace, shortenedToken, updateErr)
+		return err
+	}
+	return nil
+}
+
+// Exists checks if the shortened token is in the blocklist
+func (ts *tokenStore) Exists(ctx context.Context, shortenedToken string) (bool, error) {
+	// no worries about overwhelming k8s API - the secret is cached
+	secret, err := ts.client.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestBlocklistSecretName})
+	if err != nil {
+		ts.l.Errorf("failed to get %s secret in the %s namespace: %v", common.EverestBlocklistSecretName, common.SystemNamespace, err)
 		return false, err
 	}
 	list, ok := secret.Data[dataKey]
@@ -101,13 +124,13 @@ func cleanupOld(l *zap.SugaredLogger, list string, now time.Time) []string {
 	for _, shortenedToken := range tokens {
 		length := len(shortenedToken)
 		if length < timestampLen {
-			l.Info("blocklist contains irregular data format")
+			l.Warnf("blocklist token='%s' contains irregular data format", shortenedToken)
 			continue
 		}
 		ts := shortenedToken[length-10 : length]
 		tsInt, err := strconv.ParseInt(ts, 10, 64)
 		if err != nil {
-			l.Infof("failed to parse timestamp %v", tsInt)
+			l.Warnf("failed to parse timestamp %v", tsInt)
 			continue
 		}
 		timeObj := time.Unix(tsInt, 0)
@@ -117,4 +140,20 @@ func cleanupOld(l *zap.SugaredLogger, list string, now time.Time) []string {
 		}
 	}
 	return newList
+}
+
+func getBlockListSecretTemplate(stringData string) *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      common.EverestBlocklistSecretName,
+			Namespace: common.SystemNamespace,
+		},
+		StringData: map[string]string{
+			dataKey: stringData,
+		},
+	}
 }

@@ -118,7 +118,7 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 
 	restConfig.QPS = defaultQPSLimit
 	restConfig.Burst = defaultBurstLimit
-	k8client, err := ctrlclient.New(restConfig, getKubernetesClientOptions())
+	k8client, err := ctrlclient.New(restConfig, getKubernetesClientOptions(nil))
 	if err != nil {
 		return nil, err
 	}
@@ -132,55 +132,37 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 }
 
 // NewInCluster creates a new kubernetes client using incluster authentication.
-func NewInCluster(l *zap.SugaredLogger) (KubernetesConnector, error) {
-	restConfig := inClusterRestConfig()
-
-	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptions())
-	if err != nil {
-		return nil, err
-	}
-
-	return &Kubernetes{
-		k8sClient:  k8sclient,
-		l:          l.With("component", "kubernetes"),
-		restConfig: restConfig,
-	}, nil
-}
-
-// NewInClusterWithCache creates a new kubernetes client using incluster authentication with cache enabled
-func NewInClusterWithCache(l *zap.SugaredLogger, ctx context.Context) (KubernetesConnector, error) {
-	restConfig := inClusterRestConfig()
-	cacheOptions := cache.Options{
-		Scheme: CreateScheme(),
-	}
-	k8sCache, err := cache.New(restConfig, cacheOptions)
-	if err != nil {
-		panic(err)
-	}
-	go func() {
-		l.Info("starting session blocklist cache")
-		if err := k8sCache.Start(ctx); err != nil {
-			l.Errorf("error starting session blocklist cache: %s", err)
-			os.Exit(1)
-		}
-	}()
-	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptionsWithCache(k8sCache))
-	if err != nil {
-		return nil, err
-	}
-
-	return &Kubernetes{
-		k8sClient:  k8sclient,
-		l:          l.With("component", "kubernetes"),
-		restConfig: restConfig,
-	}, nil
-}
-
-func inClusterRestConfig() *rest.Config {
+func NewInCluster(l *zap.SugaredLogger, ctx context.Context, cacheOptions *cache.Options) (KubernetesConnector, error) {
 	restConfig := ctrl.GetConfigOrDie()
 	restConfig.QPS = defaultQPSLimit
 	restConfig.Burst = defaultBurstLimit
-	return restConfig
+
+	var k8sCache cache.Cache
+	var err error
+	if cacheOptions != nil {
+		k8sCache, err = cache.New(restConfig, *cacheOptions)
+		if err != nil {
+			panic(err)
+		}
+		go func() {
+			l.Info("starting incluster client cache")
+			if err := k8sCache.Start(ctx); err != nil {
+				l.Errorf("error starting incluster client cache: %s", err)
+				os.Exit(1)
+			}
+		}()
+	}
+
+	k8sclient, err := ctrlclient.New(restConfig, getKubernetesClientOptions(k8sCache))
+	if err != nil {
+		return nil, err
+	}
+
+	return &Kubernetes{
+		k8sClient:  k8sclient,
+		l:          l.With("component", "kubernetes"),
+		restConfig: restConfig,
+	}, nil
 }
 
 // CreateScheme creates a new runtime.Scheme.
@@ -198,20 +180,17 @@ func CreateScheme() *runtime.Scheme {
 	return scheme
 }
 
-func getKubernetesClientOptions() ctrlclient.Options {
-	return ctrlclient.Options{
-		Scheme: CreateScheme(),
-		Cache:  nil, // disable cache
+func getKubernetesClientOptions(cache cache.Cache) ctrlclient.Options {
+	var cacheOptions *ctrlclient.CacheOptions
+	if cache != nil {
+		cacheOptions = &ctrlclient.CacheOptions{
+			Reader: cache,
+		}
 	}
-}
 
-func getKubernetesClientOptionsWithCache(k8sCache cache.Cache) ctrlclient.Options {
 	return ctrlclient.Options{
 		Scheme: CreateScheme(),
-		Cache: &ctrlclient.CacheOptions{
-			Reader:       k8sCache,
-			Unstructured: false,
-		},
+		Cache:  cacheOptions,
 	}
 }
 

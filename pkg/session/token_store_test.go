@@ -1,3 +1,18 @@
+// everest
+// Copyright (C) 2025 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package session
 
 import (
@@ -180,4 +195,53 @@ func generateTestList(numTokens int) string {
 		}
 	}
 	return builder.String()
+}
+
+const (
+	stringSizeMB = 1 // Size of the string in MB
+)
+
+// generateLargeString creates a string of the specified size in MB.
+func generateLargeString(sizeMB int) string {
+	size := sizeMB * 1024 * 1024 // Convert MB to bytes
+	builder := strings.Builder{}
+	builder.Grow(size)
+
+	// Repeat a simple pattern to fill the string. This is important.
+	// Random data will compress differently and may not represent realistic
+	// data patterns.
+	pattern := "abcdefghijklmnopqrstuvwxyz"
+	patternLen := len(pattern)
+
+	for i := 0; i < size; i++ {
+		builder.WriteByte(pattern[i%patternLen])
+	}
+
+	return builder.String()
+}
+
+// BenchmarkStringsContains measures the time it takes to run strings.Contains on a 1MB string.
+func BenchmarkStringsContains(b *testing.B) {
+	largeString := generateLargeString(stringSizeMB)
+	// Substring to search for.  Choose a substring that's *likely* to be found for a realistic test.
+	substring := "xyz"
+
+	// Reset the timer to exclude the setup time.
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		strings.Contains(largeString, substring)
+	}
+}
+
+// BenchmarkStringsContainsNotFound measures the time it takes to run strings.Contains on a 1MB string when the substring is NOT present.
+func BenchmarkStringsContainsNotFound(b *testing.B) {
+	largeString := generateLargeString(stringSizeMB)
+	substring := "thisstringisdefinitelynotpresent" // Substring that is NOT present.
+
+	b.ResetTimer() // Reset the timer to exclude the setup time.
+
+	for i := 0; i < b.N; i++ {
+		strings.Contains(largeString, substring)
+	}
 }

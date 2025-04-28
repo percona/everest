@@ -37,7 +37,10 @@ import (
 	"github.com/unrolled/secure"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/api"
@@ -62,7 +65,6 @@ type EverestServer struct {
 	sessionMgr    *session.Manager
 	attemptsStore *RateLimiterMemoryStore
 	handler       handlers.Handler
-	blocklist     session.Blocklist
 	oidcProvider  *oidc.ProviderConfig
 }
 
@@ -91,7 +93,7 @@ func getOIDCProviderConfig(ctx context.Context, kubeClient kubernetes.Kubernetes
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeConnector, err := kubernetes.NewInClusterWithCache(l, ctx)
+	kubeConnector, err := kubernetes.NewInCluster(l, ctx, nil)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
@@ -100,7 +102,25 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
+
+	options := &cache.Options{
+		ByObject: map[client.Object]cache.ByObject{
+			&corev1.Secret{}: {
+				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.EverestBlocklistSecretName}),
+			},
+		},
+	}
+	blocklistClient, err := kubernetes.NewInCluster(l, ctx, options)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed creating Kubernetes client for blockList"))
+	}
+
+	blockList, err := session.NewBlocklist(ctx, blocklistClient, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
+	}
 	sessMgr, err := session.New(
+		blockList,
 		session.WithAccountManager(kubeConnector.Accounts()),
 	)
 	if err != nil {
@@ -112,11 +132,6 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		return nil, errors.Join(err, errors.New("failed to get OIDC provider config"))
 	}
 
-	blockList, err := session.NewBlocklist(ctx, kubeConnector, l)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
-	}
-
 	e := &EverestServer{
 		config:        c,
 		l:             l,
@@ -124,7 +139,6 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 		kubeConnector: kubeConnector,
 		sessionMgr:    sessMgr,
 		attemptsStore: store,
-		blocklist:     blockList,
 		oidcProvider:  oidcProvider,
 	}
 	e.echo.HTTPErrorHandler = e.errorHandlerChain()
@@ -441,7 +455,12 @@ func (e *EverestServer) blocklistMiddleWare() (echo.MiddlewareFunc, error) {
 			if skipper(c) {
 				return next(c)
 			}
-			if isBlocked, err := e.blocklist.IsBlocked(c.Request().Context()); err != nil {
+			ctx := c.Request().Context()
+			token, tErr := common.ExtractToken(ctx)
+			if tErr != nil {
+				return tErr
+			}
+			if isBlocked, err := e.sessionMgr.IsBlocked(ctx, token); err != nil {
 				e.l.Error(err)
 				return err
 			} else if isBlocked {
