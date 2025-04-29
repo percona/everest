@@ -123,7 +123,7 @@ const PodSchedulingPoliciesTable = ({
           : () => (
               <Button
                 size="small"
-                variant="contained"
+                variant="outlined"
                 onClick={onAddRuleClick}
                 data-testid="add-affinity-rule-button"
                 sx={{ display: 'flex' }}
