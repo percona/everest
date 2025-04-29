@@ -1,4 +1,3 @@
-// everest
 // Copyright (C) 2023 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,14 +85,10 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         storageClasses = storageClassNames;
       });
 
-<<<<<<< HEAD
-      test(`Create primary database cluster [${clusterName}]`, async ({
+      test(`Create primary database cluster [${db} size ${size}]`, async ({
         page,
         request,
       }) => {
-=======
-      test(`Create primary database cluster [${db} size ${size}]`, async ({ page, request }) => {
->>>>>>> 766f128b (Update test name to include cluster type and size)
         expect(storageClasses.length).toBeGreaterThan(0);
 
         await page.goto('/databases');
@@ -178,21 +173,13 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-<<<<<<< HEAD
-      test(`Add data to primary database [${clusterName}]`, async () => {
+      test(`Add data to primary database [${db} size ${size}]`, async () => {
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create and verify backup schedules for primary database [${clusterName}]`, async ({
+      test(`Create and verify backup schedules for primary database [${db} size ${size}]`, async ({
         page,
       }) => {
-=======
-      test(`Add data to primary database [${db} size ${size}]`, async () => { 
-        await prepareTestDB(clusterName, namespace); 
-      });
-
-      test(`Create and verify backup schedules for primary database [${db} size ${size}]`, async ({ page }) => {
->>>>>>> 766f128b (Update test name to include cluster type and size)
         test.setTimeout(60 * 1000); // Increased timeout
 
         const scheduleMinute1 = getNextScheduleMinute(2);
@@ -280,13 +267,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-<<<<<<< HEAD
-      test(`Delete schedules on primary database [${clusterName}]`, async ({
+      test(`Delete schedules on primary database [${db} size ${size}]`, async ({
         page,
       }) => {
-=======
-      test(`Delete schedules on primary database [${db} size ${size}]`, async ({ page }) => {
->>>>>>> 766f128b (Update test name to include cluster type and size)
         test.setTimeout(30 * 1000);
 
         await gotoDbClusterBackups(page, clusterName);
@@ -316,15 +299,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-<<<<<<< HEAD
-      test(`Restore to a new database cluster [${restoredClusterName}]`, async ({
+      test(`Restore to a new database cluster [${db} size ${size}]`, async ({
         page,
       }) => {
-=======
-
-      test(`Restore to a new database cluster [${db} size ${size}]`, async ({ page }) => {
-
->>>>>>> 766f128b (Update test name to include cluster type and size)
         await gotoDbClusterBackups(page, clusterName);
         const firstBackup = await page
           .getByText(`${db}-${size}-primary-`)
@@ -384,12 +361,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await waitForDelete(page, clusterName, 240000);
       });
 
-<<<<<<< HEAD
-      test(`Verify data after restore on the new database [${restoredClusterName}]`, async () => {
-=======
       test(`Verify data after restore on the new database [${db} size ${size}]`, async () => {
-
->>>>>>> 766f128b (Update test name to include cluster type and size)
         const result = await queryTestDB(restoredClusterName, namespace);
 
         switch (db) {
@@ -423,13 +395,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-<<<<<<< HEAD
-      test(`Create backup schedule for the restored database [${restoredClusterName}]`, async ({
+      test(`Create backup schedule for the restored database [${db} size ${size}]`, async ({
         page,
       }) => {
-=======
-      test(`Create backup schedule for the restored database [${db} size ${size}]`, async ({ page }) => {
->>>>>>> 766f128b (Update test name to include cluster type and size)
         test.setTimeout(60 * 1000);
         const scheduleMinute = getNextScheduleMinute(2);
         const timeOption: ScheduleTimeOptions = {
@@ -511,13 +479,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-<<<<<<< HEAD
-      test(`Delete the restored database cluster [${restoredClusterName}]`, async ({
+      test(`Delete the restored database cluster [${db} size ${size}]`, async ({
         page,
       }) => {
-=======
-      test(`Delete the restored database cluster [${db} size ${size}]`, async ({ page }) => {
->>>>>>> 766f128b (Update test name to include cluster type and size)
         await deleteDbCluster(page, restoredClusterName);
         await waitForStatus(page, restoredClusterName, 'Deleting', 15000);
         await waitForDelete(page, restoredClusterName, 240000);
