@@ -16,22 +16,10 @@
 import { INVALID_SOURCE_RANGE_ERROR, SOURCE_RANGE_PLACEHOLDER } from 'consts';
 
 export const Messages = {
-  enableExternalAccess: {
-    title: 'Enable External Access',
-    caption: `
-      Enable this to make this database available outside of the Kubernetes cluster network.
-      Exposing your database to remote access poses severe risks, including unauthorized access, data breaches and compliance violations.
-    `,
-  },
-  podSchedulingPolicy: 'Pod scheduling policy',
+  enable: 'Enable',
   sourceRange: 'Source Range',
   sourceRangePlaceholder: SOURCE_RANGE_PLACEHOLDER,
-  engineParameters: {
-    title: 'Set database engine parameters',
-    caption:
-      'Set your database engine configuration to adjust your database system to your workload and performance needs. For configuration format and specific parameters, check your database type documentation.',
-  },
-  labels: {
+  placeholders: {
     storageClass: 'Storage class',
   },
   cards: {
@@ -39,6 +27,22 @@ export const Messages = {
       title: 'Storage',
       description:
         'Defines the type and performance of storage for your database. Select based on workload needs, such as high IOPS for fast access or cost-effective options for less frequent use.',
+    },
+    policies: {
+      title: 'Pod scheduling policy',
+      description: 'Select one of the available templates',
+    },
+    enableExternalAccess: {
+      title: 'Enable External Access',
+      description: `
+        Enable this to make this database available outside of the Kubernetes cluster network.
+        Exposing your database to remote access poses severe risks, including unauthorized access, data breaches and compliance violations.
+      `,
+    },
+    engineParameters: {
+      title: 'Set database engine parameters',
+      description:
+        'Set your database engine configuration to adjust your database system to your workload and performance needs. For configuration format and specific parameters, check your database type documentation.',
     },
   },
   errors: {

@@ -1,20 +1,38 @@
-import { Box, BoxProps } from '@mui/material';
+import { Box, BoxProps, Stack, Typography } from '@mui/material';
 
-const RoundedBox = ({ sx, children, ...rest }: BoxProps) => (
-  <Box
-    className="percona-rounded-box"
-    sx={{
-      p: 2,
-      borderStyle: 'solid',
-      borderWidth: '1px',
-      borderColor: (theme) => theme.palette.divider,
-      borderRadius: '8px',
-      ...sx,
-    }}
-    {...rest}
-  >
-    {children}
-  </Box>
-);
+type Props = {
+  title?: React.ReactNode;
+  children: React.ReactNode;
+  boxProps?: BoxProps;
+};
+
+const RoundedBox = ({ title, children, boxProps }: Props) => {
+  const { sx, ...restProps } = boxProps || {};
+
+  return (
+    <Box
+      className="percona-rounded-box"
+      sx={{
+        p: 2,
+        borderStyle: 'solid',
+        borderWidth: '1px',
+        borderColor: (theme) => theme.palette.divider,
+        borderRadius: 2,
+        ...sx,
+      }}
+      {...restProps}
+    >
+      <Stack>
+        {title &&
+          (typeof title === 'string' ? (
+            <Typography variant="sectionHeading">{title}</Typography>
+          ) : (
+            title
+          ))}
+        <Box>{children}</Box>
+      </Stack>
+    </Box>
+  );
+};
 
 export default RoundedBox;
