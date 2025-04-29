@@ -106,6 +106,12 @@ const PoliciesList = () => {
         data={podSchedulingPolicies}
         columns={columns}
         enableRowActions
+        enableRowHoverAction
+        rowHoverAction={(row) =>
+          navigate(
+            `/settings/pod-scheduling-policies/${row.original.metadata.name}`
+          )
+        }
         renderTopToolbarCustomActions={() =>
           canCreatePolicies ? (
             <Button

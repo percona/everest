@@ -180,23 +180,12 @@ export const DbClusterView = () => {
             return <DbActions dbCluster={row.original.raw} />;
           }}
           renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
-          muiTableBodyRowProps={({ row, isDetailPanel }) => ({
-            onClick: (e) => {
-              if (
-                !isDetailPanel &&
-                e.currentTarget.contains(e.target as Node)
-              ) {
-                navigate(
-                  `/databases/${row.original.namespace}/${row.original.databaseName}/overview`
-                );
-              }
-            },
-            sx: {
-              ...(!isDetailPanel && {
-                cursor: 'pointer', // you might want to change the cursor too when adding an onClick
-              }),
-            },
-          })}
+          enableRowHoverAction
+          rowHoverAction={(row) =>
+            navigate(
+              `/databases/${row.original.namespace}/${row.original.databaseName}/overview`
+            )
+          }
           renderTopToolbarCustomActions={() =>
             canAddCluster && tableData.length > 0 && <CreateDbButton />
           }
