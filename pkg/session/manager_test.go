@@ -18,14 +18,14 @@ func TestExtractUsername(t *testing.T) {
 	tcases := []tcase{
 		{
 			name:          "oidc user",
-			token:         jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"sub": "some_user@email.com"}),
+			token:         jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"sub": "some_user@email.com", "iss": "external_issuer"}),
 			error:         nil,
 			username:      "some_user@email.com",
 			isBuiltInUser: false,
 		},
 		{
 			name:          "built-in user",
-			token:         jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"sub": "admin:login"}),
+			token:         jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"sub": "admin:login", "iss": "everest"}),
 			error:         nil,
 			username:      "admin",
 			isBuiltInUser: true,
@@ -34,6 +34,13 @@ func TestExtractUsername(t *testing.T) {
 			name:          "no sub in token",
 			token:         jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{}),
 			error:         errExtractSub,
+			username:      "",
+			isBuiltInUser: false,
+		},
+		{
+			name:          "no iss in token",
+			token:         jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"sub": "smth"}),
+			error:         errExtractIss,
 			username:      "",
 			isBuiltInUser: false,
 		},

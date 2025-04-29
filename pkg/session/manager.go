@@ -48,7 +48,10 @@ const (
 	SessionManagerClaimsIssuer = "everest"
 )
 
-var errExtractSub = errors.New("could not extract sub")
+var (
+	errExtractSub = errors.New("could not extract sub")
+	errExtractIss = errors.New("could not extract iss")
+)
 
 // Manager provides functionality for creating and managing JWT tokens.
 type Manager struct {
@@ -218,8 +221,12 @@ func extractUsername(token *jwt.Token) (string, bool, error) {
 	if !ok {
 		return "", false, errExtractSub
 	}
+	iss, ok := content.Payload["iss"].(string)
+	if !ok {
+		return "", false, errExtractIss
+	}
 	username := strings.TrimSuffix(sub, ":login")
-	return username, len(sub) > len(username), nil
+	return username, iss == SessionManagerClaimsIssuer, nil
 }
 
 // ClientCacheOptions returns the cache options for the session manager k8s client.
