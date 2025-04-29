@@ -45,7 +45,6 @@ export const MAX_DB_CLUSTER_NAME_LENGTH = 22;
 export const MAX_SCHEDULE_NAME_LENGTH = 57;
 export const EVEREST_JWT_ISSUER = 'everest';
 export const PG_SLOTS_LIMIT = 3;
-export const DEFAULT_TOPOLOGY_KEY = 'kubernetes.io/hostname';
 
 export enum DbWizardForm {
   dbName = 'dbName',
