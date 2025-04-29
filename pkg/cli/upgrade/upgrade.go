@@ -102,7 +102,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 
 	var kubeClient kubernetes.KubernetesConnector
 	if cfg.InCluster {
-		k, err := kubernetes.NewInCluster(cli.l, context.Background(), nil)
+		k, err := kubernetes.NewInCluster(cli.l, nil, nil)
 		if err != nil {
 			return nil, fmt.Errorf("could not create in-cluster kubernetes client: %w", err)
 		}

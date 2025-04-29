@@ -26,7 +26,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/percona/everest/pkg/common"
+	"github.com/percona/everest/pkg/kubernetes"
 )
 
 const (
@@ -65,21 +70,23 @@ type TokenStore interface {
 	Exists(ctx context.Context, shortenedToken string) (bool, error)
 }
 
-// BlocklistClient supports only the k8s API methods that are needed for blocklist management.
-// A separate client is needed to apply the controller-runtime cache only to the related objects.
-// Using the controller-runtime client is also beneficial because it supports HA mode.
-type BlocklistClient interface {
-	// GetSecret returns a secret that matches the criteria.
-	GetSecret(ctx context.Context, key client.ObjectKey) (*corev1.Secret, error)
-	// CreateSecret creates a secret.
-	CreateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
-	// UpdateSecret updates a secret.
-	UpdateSecret(ctx context.Context, secret *corev1.Secret) (*corev1.Secret, error)
-}
-
 // NewBlocklist creates a new block list
-func NewBlocklist(ctx context.Context, bc BlocklistClient, logger *zap.SugaredLogger) (Blocklist, error) {
-	store, err := newTokenStore(ctx, bc, logger)
+func NewBlocklist(ctx context.Context, logger *zap.SugaredLogger) (Blocklist, error) {
+	options := &cache.Options{
+		ByObject: map[client.Object]cache.ByObject{
+			&corev1.Secret{}: {
+				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.EverestBlocklistSecretName}),
+			},
+		},
+	}
+	// A separate client is needed to apply the controller-runtime cache only to the related objects.
+	// Using the controller-runtime client is also beneficial because it supports HA mode.
+	tokenStoreClient, err := kubernetes.NewInCluster(logger, ctx, options)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed creating Kubernetes client for blockList"))
+	}
+
+	store, err := newTokenStore(ctx, tokenStoreClient, logger)
 	if err != nil {
 		return nil, err
 	}

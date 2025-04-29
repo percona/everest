@@ -138,7 +138,7 @@ func TestBlocklist_Block(t *testing.T) {
 	assert.True(t, k8serrors.IsNotFound(err))
 	assert.Nil(t, secret)
 
-	b, err := NewBlocklist(ctx, k, l)
+	b, err := mockNewBlocklist(ctx, l, k)
 	assert.NoError(t, err)
 
 	// blocklist secret appears after the blocklist creation
@@ -188,7 +188,7 @@ func TestBlocklist_IsBlocked(t *testing.T) {
 		ctx := context.Background()
 		jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "the-blocked-jti", "exp": float64(331743679478)})
 
-		b, err := NewBlocklist(ctx, k, l)
+		b, err := mockNewBlocklist(ctx, l, k)
 		assert.NoError(t, err)
 
 		blocked, err := b.IsBlocked(ctx, jwt)
@@ -199,7 +199,7 @@ func TestBlocklist_IsBlocked(t *testing.T) {
 	t.Run("not blocked token in context", func(t *testing.T) {
 		ctx := context.Background()
 
-		b, err := NewBlocklist(ctx, k, l)
+		b, err := mockNewBlocklist(ctx, l, k)
 		assert.NoError(t, err)
 
 		jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"jti": "some-other-jti", "exp": float64(331743679478)})
@@ -207,4 +207,15 @@ func TestBlocklist_IsBlocked(t *testing.T) {
 		assert.NoError(t, err)
 		assert.False(t, blocked)
 	})
+}
+
+func mockNewBlocklist(ctx context.Context, logger *zap.SugaredLogger, mockClient TokenStoreClient) (Blocklist, error) {
+	store, err := newTokenStore(ctx, mockClient, logger)
+	if err != nil {
+		return nil, err
+	}
+	return &blocklist{
+		tokenStore: store,
+		l:          logger,
+	}, nil
 }

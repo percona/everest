@@ -27,7 +27,6 @@ import (
 	"slices"
 	"text/template"
 
-	"github.com/AlekSi/pointer"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -37,10 +36,7 @@ import (
 	"github.com/unrolled/secure"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
-	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/fields"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/api"
@@ -103,24 +99,8 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
 
-	options := &cache.Options{
-		ByObject: map[client.Object]cache.ByObject{
-			&corev1.Secret{}: {
-				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.EverestBlocklistSecretName}),
-			},
-		},
-	}
-	blocklistClient, err := kubernetes.NewInCluster(l, ctx, options)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed creating Kubernetes client for blockList"))
-	}
-
-	blockList, err := session.NewBlocklist(ctx, blocklistClient, l)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
-	}
 	sessMgr, err := session.New(
-		blockList,
+		ctx, l,
 		session.WithAccountManager(kubeConnector.Accounts()),
 	)
 	if err != nil {
@@ -226,7 +206,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 	}
 	apiGroup.Use(jwtMW)
 
-	blocklistMW, err := e.blocklistMiddleWare()
+	blocklistMW, err := e.sessionMgr.BlocklistMiddleWare(newSkipperFunc)
 	if err != nil {
 		return err
 	}
@@ -443,32 +423,4 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
-}
-
-func (e *EverestServer) blocklistMiddleWare() (echo.MiddlewareFunc, error) {
-	skipper, err := newSkipperFunc()
-	if err != nil {
-		return nil, err
-	}
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			if skipper(c) {
-				return next(c)
-			}
-			ctx := c.Request().Context()
-			token, tErr := common.ExtractToken(ctx)
-			if tErr != nil {
-				return tErr
-			}
-			if isBlocked, err := e.sessionMgr.IsBlocked(ctx, token); err != nil {
-				e.l.Error(err)
-				return err
-			} else if isBlocked {
-				return c.JSON(http.StatusUnauthorized, api.Error{
-					Message: pointer.ToString("Invalid token"),
-				})
-			}
-			return next(c)
-		}
-	}, nil
 }
