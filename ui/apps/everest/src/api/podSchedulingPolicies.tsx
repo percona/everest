@@ -5,9 +5,14 @@ import {
   PodSchedulingPolicyGetPayload,
 } from 'shared-types/affinity.types';
 
-export const getPodSchedulingPolicies = async () => {
+export const getPodSchedulingPolicies = async (dbType?: DbEngineType) => {
   const response = await api.get<PodSchedulingPolicyGetPayload>(
-    'pod-scheduling-policies'
+    'pod-scheduling-policies',
+    {
+      params: {
+        ...(dbType && { engineType: dbType }),
+      },
+    }
   );
   return response.data;
 };

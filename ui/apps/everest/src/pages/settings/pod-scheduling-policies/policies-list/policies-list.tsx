@@ -32,9 +32,12 @@ const PoliciesList = () => {
   const queryClient = useQueryClient();
   const { mutate: createPolicy } = useCreatePodSchedulingPolicy();
   const { mutate: deletePolicy } = useDeletePodSchedulingPolicy();
-  const { data: podSchedulingPolicies = [] } = usePodSchedulingPolicies({
-    refetchInterval: 10000,
-  });
+  const { data: podSchedulingPolicies = [] } = usePodSchedulingPolicies(
+    undefined,
+    {
+      refetchInterval: 10000,
+    }
+  );
 
   const columns = useMemo<MRT_ColumnDef<PodSchedulingPolicy>[]>(
     () => [
