@@ -518,8 +518,11 @@ export const removeRuleInExistingPolicy = (
     if (priority === AffinityPriority.Required) {
       if (rule.type === AffinityType.NodeAffinity) {
         const matchingRuleIdx = (
-          obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredNodeSchedulingTerm
-        ).nodeSelectorTerms.findIndex(
+          (
+            (obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredNodeSchedulingTerm) ||
+            {}
+          ).nodeSelectorTerms || []
+        ).findIndex(
           ({ matchExpressions }) =>
             matchExpressions.length &&
             matchExpressions[0].key === rule.key &&
@@ -534,7 +537,8 @@ export const removeRuleInExistingPolicy = (
         }
       } else {
         const matchingRuleIdx = (
-          obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredPodSchedulingTerm
+          (obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredPodSchedulingTerm) ||
+          []
         ).findIndex(
           ({ topologyKey, labelSelector }) =>
             topologyKey === rule.topologyKey &&
@@ -552,7 +556,8 @@ export const removeRuleInExistingPolicy = (
     } else {
       if (rule.type === AffinityType.NodeAffinity) {
         const matchingRuleIdx = (
-          obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredNodeSchedulingTerm[]
+          (obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredNodeSchedulingTerm[]) ||
+          []
         ).findIndex(
           ({ weight, preference }) =>
             weight === rule.weight &&
@@ -568,7 +573,8 @@ export const removeRuleInExistingPolicy = (
         }
       } else {
         const matchingRuleIdx = (
-          obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredPodSchedulingTerm[]
+          (obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredPodSchedulingTerm[]) ||
+          []
         ).findIndex(
           ({ weight, podAffinityTerm }) =>
             weight === rule.weight &&
