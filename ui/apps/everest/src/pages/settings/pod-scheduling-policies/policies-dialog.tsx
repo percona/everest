@@ -7,9 +7,13 @@ import { FormDialog } from 'components/form-dialog';
 import { z } from 'zod';
 import { DbEngineType } from '@percona/types';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
+import { rfc_123_schema } from 'utils/common-validation';
 
 const schema = z.object({
-  name: z.string().min(1),
+  name: rfc_123_schema({
+    fieldName: 'name',
+    maxLength: 22,
+  }),
   type: z.nativeEnum(DbEngineType).refine((val) => val !== undefined),
 });
 
