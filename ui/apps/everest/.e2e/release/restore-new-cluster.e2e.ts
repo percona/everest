@@ -452,7 +452,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         ).toBeVisible({ timeout: 360000 });
       });
 
-      test(`Create and verify on-demand backup for the restored database [${db} size ${size}]`, async ({ page }) => {
+      test(`Create and verify on-demand backup for the restored database [${db} size ${size}]`, async ({
+        page,
+      }) => {
         const backupName = `ondemand-${restoredClusterName}`;
 
         await test.step('Navigate to Backups tab', async () => {
