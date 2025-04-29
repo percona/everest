@@ -1686,6 +1686,17 @@ paths:
       description: |
         This API lists all pod scheduling policies in the kubernetes cluster.
       operationId: listPodSchedulingPolicy
+      parameters:
+        - in: query
+          name: engineType
+          description: Database engine type that Pod Scheduling Policy is applicable to.
+          required: false
+          schema:
+            type: string
+            enum:
+              - pxc
+              - psmdb
+              - postgresql
       responses:
         '200':
           description: Successful operation

@@ -22,11 +22,12 @@ import (
 	"github.com/labstack/echo/v4"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
 )
 
 // ListPodSchedulingPolicy lists all pod scheduling policies.
-func (e *EverestServer) ListPodSchedulingPolicy(ctx echo.Context) error {
-	list, err := e.handler.ListPodSchedulingPolicies(ctx.Request().Context())
+func (e *EverestServer) ListPodSchedulingPolicy(ctx echo.Context, params api.ListPodSchedulingPolicyParams) error {
+	list, err := e.handler.ListPodSchedulingPolicies(ctx.Request().Context(), &params)
 	if err != nil {
 		e.l.Errorf("ListPodSchedulingPolicies failed: %v", err)
 		return err

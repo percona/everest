@@ -111,6 +111,13 @@ const (
 	UpgradeEngine UpgradeTaskPendingTask = "upgradeEngine"
 )
 
+// Defines values for ListPodSchedulingPolicyParamsEngineType.
+const (
+	Postgresql ListPodSchedulingPolicyParamsEngineType = "postgresql"
+	Psmdb      ListPodSchedulingPolicyParamsEngineType = "psmdb"
+	Pxc        ListPodSchedulingPolicyParamsEngineType = "pxc"
+)
+
 // BackupStorage Backup storage information
 type BackupStorage struct {
 	// AllowedNamespaces List of namespaces allowed to use this backup storage
@@ -4767,6 +4774,15 @@ type DeleteDatabaseClusterParams struct {
 	CleanupBackupStorage *bool `form:"cleanupBackupStorage,omitempty" json:"cleanupBackupStorage,omitempty"`
 }
 
+// ListPodSchedulingPolicyParams defines parameters for ListPodSchedulingPolicy.
+type ListPodSchedulingPolicyParams struct {
+	// EngineType Database engine type that Pod Scheduling Policy is applicable to.
+	EngineType *ListPodSchedulingPolicyParamsEngineType `form:"engineType,omitempty" json:"engineType,omitempty"`
+}
+
+// ListPodSchedulingPolicyParamsEngineType defines parameters for ListPodSchedulingPolicy.
+type ListPodSchedulingPolicyParamsEngineType string
+
 // CreateBackupStorageJSONRequestBody defines body for CreateBackupStorage for application/json ContentType.
 type CreateBackupStorageJSONRequestBody = CreateBackupStorageParams
 
@@ -5352,7 +5368,7 @@ type ServerInterface interface {
 	GetUserPermissions(ctx echo.Context) error
 	// List pod scheduling policies
 	// (GET /pod-scheduling-policies)
-	ListPodSchedulingPolicy(ctx echo.Context) error
+	ListPodSchedulingPolicy(ctx echo.Context, params ListPodSchedulingPolicyParams) error
 	// Create pod scheduling policy
 	// (POST /pod-scheduling-policies)
 	CreatePodSchedulingPolicy(ctx echo.Context) error
@@ -6185,8 +6201,17 @@ func (w *ServerInterfaceWrapper) ListPodSchedulingPolicy(ctx echo.Context) error
 
 	ctx.Set(BearerAuthScopes, []string{})
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPodSchedulingPolicyParams
+	// ------------- Optional query parameter "engineType" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "engineType", ctx.QueryParams(), &params.EngineType)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter engineType: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ListPodSchedulingPolicy(ctx)
+	err = w.Handler.ListPodSchedulingPolicy(ctx, params)
 	return err
 }
 
@@ -6668,18 +6693,19 @@ var swaggerSpec = []string{
 	"qBAjUIg9sFJtdb8tWNdv39vfZ4KQ2aj21mx0TN6bX4n/j/m/2Qi+m43G9d8q8bQeGFm1fvp+NrJ/Xo0H",
 	"lt4WbbfA5t+HO1ThZb5FHeY/VzPx2UnyRMSbRF+fZsMFP5fz+2t1MMRMsfy8tpzvM8qrVRU6le4W6WU0",
 	"ZdYYMq/ZTwp9zYR2DSOz4ujo2V+I+VXm/DfbnavPoMFlPDEtiovEqHdQmXw7RieTMamKIL4IH651U8xZ",
-	"LsCJ5NMLemKnz2V8UZZzDsr7PqdhoDokVHYgVHrmQW1ansuYVCInboi3pldCFa36WYi+abV/NBCqqQcC",
-	"BPvw9V3+A3uA62GQzz84yIPWQ78t3qew1yjzw99tzZO7uf3DU7XPMdF7dlh4GQ72TYQX/XaJaoEmrE9W",
-	"q8kNLz/6o52qdffVO9Cbv/PC+olpXFW48T0wXHL3dTP0EKydF45z0v7R1s5Dt3i/RjAqLvx9Opy/tMXr",
-	"393qMBma0Yjrlc0SvaU8ofMEYulsUX5t/jzIcfET09WL1SHMrlX3OHHX1Irzd3vEVh31XA6dn7SVpJ3T",
-	"TDHwuA3IbORKFaXf4n//ekm0vGECHMOJXC4tMWNP9jVT7oVdAuZTl4VYRl6Cty8tlCbX1J0P/CGRSy4+",
-	"wISe84TrNU6QC9fke8r3U80Tk3q2AOhD81SZ/Sr6LDd9186BCbIOstH+F7v74HoZvF5YVORcr0bH76/q",
-	"q8fP219ekldmTt7JFa2Y1lwst2ASIRvYfeW1tm8KEJVJYiOUQ1r7wld3jzq6rGPwDFsj5FqDvXB/YoLl",
-	"NLEnrFgp3rLc66bhQnQftWVoXrNzIKRY/mE/emlPd7k3GbpqthNhKTT/db/MmhL/ffSc0ZzlZoKaATCG",
-	"sxWBhQNFnoyOR4e3T0fmiSuzLWMjv5W+Nto9ZwnkimvZtilq1/E5Q6e2z3QDZvrLbJ+nUyuxc9TOncqt",
-	"zrJpF+szuHZoLandM+KKL++73KXY6hokV6q7/GWbQp+3kw8aRRF/wP7QIqswiqqoWgzG0GJoU6OCFdtQ",
-	"p2XhQ3Rvt9b6AslTV8lcFrpXv1Y1NhbXDpONvK1lnruyq5+GFlxSkXBhTpJIIwixJGfPy2TITNokFyHj",
-	"+hQM45TPV5//TwAAAP//E5IlT68YBQA=",
+	"LsCJ5NMLemKnz2V8UZZzDsp7k/V61iKrjdlnd49zGZOqNGKLM3uKG7F5woiW056DVGxxl8aIrFuVTBSp",
+	"kW/2KTItU2k8H1luYJkz9a9kdDX+otAyIDHkhHbghHqmcm1lBafV9gxRqKJVP5ESXhn3AWhCNfWgmGAf",
+	"vj5rMbAHuB4G0RbBQR60HvrhRN+es2Y/Ovzd1jy5G3MRnqp9vpXe48/usEHV3SvhRb9drl2gCevz7Wpy",
+	"w/ub/mgHg9199Q4kJHZeWD8xjasKN74HBq3uvm6GnuO188JxfuY/2tp56Bbv14inxYW/T5/5l7Z4/btb",
+	"nYdDMxpxvbKJrreUJ+DPKIvya/PnQb6Xn5iuXqzOkXatuseJu6ZWnL/bI7bqtOpy6PykrSTt/H6KgdNw",
+	"QHImV6oo/Rb/+9dLouUNE+DbTuRyabklezixmXIv7BIwn7pEyjJ4FByWaaE0uabuiOMPiVxy8QEm9Jwn",
+	"XK9xgly4Jt9TyqJqHvrUswVAH5oH4+xX0We56bt2PliQdZBQ97/Y3QfXy+D1wqIi53o1On5/VV89ft7+",
+	"8pK8MnPyTt50xbTmYrkFGQoJze4rr7V9U4BrTRIbZB3S2he+unvU0WUdg2fYGiHXGuyF+xMTLKeJPSTG",
+	"SvGW5V43DRei+6gtQ/OanQMhxfIP+9FLe0DNvcnQVbOdCEuh+a/7ZdaU+O+j54zmLDcT1AyAMZytCCwc",
+	"KPJkdDw6vH06Mk9cmW0ZG/mt9LXR7jlLIN1dy7ZNUbtR0Bk6tX2mG/PTX2b7SKBaiZ3Tgu5UbnUcT7tY",
+	"n4S2Q2tJ7aoUV3x5ZecuxVY3OblS3f012xT6vJ0/0SiK+DsChhZZRYJURdXCSIYWQ5saFazYhjotCx+i",
+	"e7u11hdInrpK5rLQvfq1qrGxuHaYbORtLXnelV39NLTgkk2FO3+SRBpBiCU5e17mc2bS5ukIGdenYBin",
+	"fL76/H8CAAD//ySfMLtyGQUA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

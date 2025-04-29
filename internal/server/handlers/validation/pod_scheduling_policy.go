@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/utils"
 )
@@ -60,8 +61,8 @@ func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, name st
 }
 
 // ListPodSchedulingPolicies lists all pod scheduling policies.
-func (h *validateHandler) ListPodSchedulingPolicies(ctx context.Context) (*everestv1alpha1.PodSchedulingPolicyList, error) {
-	return h.next.ListPodSchedulingPolicies(ctx)
+func (h *validateHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
+	return h.next.ListPodSchedulingPolicies(ctx, params)
 }
 
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.

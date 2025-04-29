@@ -21,7 +21,7 @@ import (
 	"slices"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -42,8 +42,8 @@ func (h *rbacHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string
 }
 
 // ListPodSchedulingPolicies lists all pod scheduling policies.
-func (h *rbacHandler) ListPodSchedulingPolicies(ctx context.Context) (*everestv1alpha1.PodSchedulingPolicyList, error) {
-	pspList, err := h.next.ListPodSchedulingPolicies(ctx)
+func (h *rbacHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
+	pspList, err := h.next.ListPodSchedulingPolicies(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListPodSchedulingPolicies failed: %w", err)
 	}

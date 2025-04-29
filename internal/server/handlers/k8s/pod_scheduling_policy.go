@@ -18,11 +18,14 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"slices"
 
+	"github.com/AlekSi/pointer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
 )
 
 func (h *k8sHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
@@ -33,8 +36,21 @@ func (h *k8sHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string,
 	return h.kubeConnector.UpdatePodSchedulingPolicy(ctx, psp)
 }
 
-func (h *k8sHandler) ListPodSchedulingPolicies(ctx context.Context) (*everestv1alpha1.PodSchedulingPolicyList, error) {
-	return h.kubeConnector.ListPodSchedulingPolicies(ctx)
+func (h *k8sHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
+	pspList, err := h.kubeConnector.ListPodSchedulingPolicies(ctx)
+	if err != nil {
+		return pspList, err
+	}
+
+	if params != nil {
+		if engineType := everestv1alpha1.EngineType(pointer.Get(params.EngineType)); engineType != "" {
+			// filter out PodSchedulingPolicies that do not match a requested engine type
+			pspList.Items = slices.DeleteFunc(pspList.Items, func(psp everestv1alpha1.PodSchedulingPolicy) bool {
+				return psp.Spec.EngineType != engineType
+			})
+		}
+	}
+	return pspList, err
 }
 
 func (h *k8sHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {

@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/internal/server/handlers"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
@@ -38,6 +39,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 	data := func() *handlers.MockHandler {
 		next := handlers.MockHandler{}
 		next.On("ListPodSchedulingPolicies",
+			mock.Anything,
 			mock.Anything,
 		).Return(
 			&everestv1alpha1.PodSchedulingPolicyList{
@@ -64,12 +66,13 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		return &next
 	}
 
-	testCases := []struct {
+	type testCase struct {
 		desc   string
 		policy string
 		outLen int
 		assert func(*everestv1alpha1.PodSchedulingPolicyList) bool
-	}{
+	}
+	testCases := []testCase{
 		{
 			desc: "admin",
 			policy: newPolicy(
@@ -247,7 +250,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 				userGetter: testUserGetter,
 			}
 
-			list, err := h.ListPodSchedulingPolicies(ctx)
+			list, err := h.ListPodSchedulingPolicies(ctx, nil)
 			require.NoError(t, err)
 			assert.Condition(t, func() bool {
 				return tc.assert(list)
@@ -271,11 +274,12 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		return &next
 	}
 
-	testCases := []struct {
+	type testCase struct {
 		desc    string
 		policy  string
 		wantErr error
-	}{
+	}
+	testCases := []testCase{
 		{
 			desc: "admin",
 			policy: newPolicy(
@@ -412,11 +416,12 @@ func TestRBAC_CretePodSchedulingPolicy(t *testing.T) {
 		return &next
 	}
 
-	testCases := []struct {
+	type testCase struct {
 		desc    string
 		policy  string
 		wantErr error
-	}{
+	}
+	testCases := []testCase{
 		{
 			desc: "admin",
 			policy: newPolicy(
@@ -550,11 +555,12 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		return &next
 	}
 
-	testCases := []struct {
+	type testCase struct {
 		desc    string
 		policy  string
 		wantErr error
-	}{
+	}
+	testCases := []testCase{
 		{
 			desc: "admin",
 			policy: newPolicy(

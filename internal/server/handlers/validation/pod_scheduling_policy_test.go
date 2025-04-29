@@ -601,7 +601,7 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 
 			valHandler := New(zap.NewNop().Sugar(), k)
 			valHandler.SetNext(k8sHandler)
-			pspList, err := valHandler.ListPodSchedulingPolicies(context.Background())
+			pspList, err := valHandler.ListPodSchedulingPolicies(context.Background(), nil)
 			require.NoError(t, err)
 			assert.Condition(t, func() bool {
 				return tc.assert(pspList)

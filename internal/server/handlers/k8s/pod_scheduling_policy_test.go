@@ -18,8 +18,10 @@ package k8s
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
+	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -30,10 +32,11 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
-func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
+func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -170,6 +173,198 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name       string
+		objs       []ctrlclient.Object
+		listParams *api.ListPodSchedulingPolicyParams
+		assert     func(*everestv1alpha1.PodSchedulingPolicyList) bool
+		wantErr    error
+	}
+	testCases := []testCase{
+		// policies are absent
+		{
+			name: "absent policies",
+			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
+				return len(list.Items) == 0
+			},
+		},
+		// default policies no filter
+		{
+			name: "default policies without filter",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+				},
+			},
+			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
+				return len(list.Items) == 3 &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-pxc"
+					}) &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-postgresql"
+					}) &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-psmdb"
+					})
+			},
+		},
+		// default policies PXC filter
+		{
+			name: "default policies PXC filter",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+				},
+			},
+			listParams: &api.ListPodSchedulingPolicyParams{
+				EngineType: pointer.To(api.Pxc),
+			},
+			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
+				return len(list.Items) == 1 &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-pxc"
+					})
+			},
+		},
+		// default policies PSMDB filter
+		{
+			name: "default policies PSMDB filter",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+				},
+			},
+			listParams: &api.ListPodSchedulingPolicyParams{
+				EngineType: pointer.To(api.Psmdb),
+			},
+			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
+				return len(list.Items) == 1 &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-psmdb"
+					})
+			},
+		},
+		// default policies PostgreSQL filter
+		{
+			name: "default policies PostgreSQL filter",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-pxc",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-postgresql",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "everest-default-psmdb",
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+				},
+			},
+			listParams: &api.ListPodSchedulingPolicyParams{
+				EngineType: pointer.To(api.Postgresql),
+			},
+			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
+				return len(list.Items) == 1 &&
+					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
+						return bs.GetName() == "everest-default-postgresql"
+					})
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(tc.objs...).
+				Build()
+
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sH := New(zap.NewNop().Sugar(), k, "")
+
+			pspList, err := k8sH.ListPodSchedulingPolicies(context.Background(), tc.listParams)
+			require.NoError(t, err)
+			assert.Condition(t, func() bool {
+				return tc.assert(pspList)
+			})
 		})
 	}
 }
