@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -32,6 +33,10 @@ import (
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/accounts"
@@ -41,6 +46,11 @@ import (
 const (
 	// SessionManagerClaimsIssuer fills the "iss" field of the token.
 	SessionManagerClaimsIssuer = "everest"
+)
+
+var (
+	errExtractSub = errors.New("could not extract sub")
+	errExtractIss = errors.New("could not extract iss")
 )
 
 // Manager provides functionality for creating and managing JWT tokens.
@@ -53,6 +63,24 @@ type Manager struct {
 
 // Option is a function that modifies a SessionManager.
 type Option func(*Manager)
+
+func (mgr *Manager) IsBlocked(ctx context.Context, token *jwt.Token) (bool, error) {
+	username, isBuiltInUser, err := extractUsername(token)
+	if err != nil {
+		return false, fmt.Errorf("failed to extract username: %w", err)
+	}
+	// for the built-in users check if the account exists
+	if isBuiltInUser {
+		_, err := mgr.accountManager.Get(ctx, username)
+		if err != nil {
+			if errors.Is(err, accounts.ErrAccountNotFound) {
+				return true, nil
+			}
+			return false, err
+		}
+	}
+	return mgr.Blocklist.IsBlocked(ctx, token)
+}
 
 // New creates a new session manager with the given options.
 func New(ctx context.Context, l *zap.SugaredLogger, options ...Option) (*Manager, error) {
@@ -178,4 +206,42 @@ func (mgr *Manager) BlocklistMiddleWare(skipperFunc func() (echomiddleware.Skipp
 			return next(c)
 		}
 	}, nil
+}
+
+// extractUsername returns
+// - the current username from the token
+// - a bool flag that indicates whereas it's a built-in auth user
+// - an error
+func extractUsername(token *jwt.Token) (string, bool, error) {
+	content, err := extractContent(token)
+	if err != nil {
+		return "", false, err
+	}
+	sub, ok := content.Payload["sub"].(string)
+	if !ok {
+		return "", false, errExtractSub
+	}
+	iss, ok := content.Payload["iss"].(string)
+	if !ok {
+		return "", false, errExtractIss
+	}
+	username := strings.TrimSuffix(sub, ":login")
+	return username, iss == SessionManagerClaimsIssuer, nil
+}
+
+// ClientCacheOptions returns the cache options for the session manager k8s client.
+// To avoid overwhelming k8s API with requests, the client should cache the accounts secret,
+// because every authenticated API request checks the secret.
+// It also defines a rule for the system namespace which gets requested otherwise the ByObject won't allow to read the ns.
+func ClientCacheOptions() *cache.Options {
+	return &cache.Options{
+		ByObject: map[client.Object]cache.ByObject{
+			&corev1.Secret{}: {
+				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.EverestAccountsSecretName}),
+			},
+			&corev1.Namespace{}: {
+				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.SystemNamespace}),
+			},
+		},
+	}
 }

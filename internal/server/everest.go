@@ -45,6 +45,7 @@ import (
 	k8shandler "github.com/percona/everest/internal/server/handlers/k8s"
 	rbachandler "github.com/percona/everest/internal/server/handlers/rbac"
 	valhandler "github.com/percona/everest/internal/server/handlers/validation"
+	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
@@ -99,9 +100,13 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
 
+	sessionManagerClient, err := createSessionManagerClient(ctx, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed creating session manager client"))
+	}
 	sessMgr, err := session.New(
 		ctx, l,
-		session.WithAccountManager(kubeConnector.Accounts()),
+		session.WithAccountManager(sessionManagerClient),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
@@ -423,4 +428,14 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
+}
+
+// createSessionManagerClient creates a k8s client for a session manager.
+func createSessionManagerClient(ctx context.Context, l *zap.SugaredLogger) (accounts.Interface, error) {
+	sessionMgrClientCacheOptions := session.ClientCacheOptions()
+	sessionMgrClient, err := kubernetes.NewInCluster(l, ctx, sessionMgrClientCacheOptions)
+	if err != nil {
+		return nil, err
+	}
+	return sessionMgrClient.Accounts(), nil
 }
