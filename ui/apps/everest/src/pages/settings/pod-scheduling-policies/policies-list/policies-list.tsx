@@ -95,7 +95,7 @@ const PoliciesList = () => {
         emptyState={
           <EmptyState
             onButtonClick={() => setDialogOpen(true)}
-            buttonText="Add rule"
+            buttonText="Create policy"
             showCreationButton={canCreatePolicies}
             contentSlot={
               <Typography variant="body1">
