@@ -82,6 +82,7 @@ const PoliciesList = () => {
             queryKey: ['pod-scheduling-policies'],
           });
           setDeleteDialogOpen(false);
+          selectedPolicy.current = undefined;
         },
       });
     }
@@ -135,17 +136,21 @@ const PoliciesList = () => {
           />
         )}
       />
-      <PoliciesDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onSubmit={handleOnCreatePolicy}
-      />
-      <DeletePolicyDialog
-        isOpen={deleteDialogOpen}
-        policyName={selectedPolicy.current?.metadata.name || ''}
-        handleCloseDeleteDialog={() => setDeleteDialogOpen(false)}
-        handleConfirmDelete={handleOnDeletePolicy}
-      />
+      {dialogOpen && (
+        <PoliciesDialog
+          open
+          onClose={() => setDialogOpen(false)}
+          onSubmit={handleOnCreatePolicy}
+        />
+      )}
+      {deleteDialogOpen && (
+        <DeletePolicyDialog
+          isOpen
+          policyName={selectedPolicy.current?.metadata.name || ''}
+          handleCloseDeleteDialog={() => setDeleteDialogOpen(false)}
+          handleConfirmDelete={handleOnDeletePolicy}
+        />
+      )}
     </>
   );
 };

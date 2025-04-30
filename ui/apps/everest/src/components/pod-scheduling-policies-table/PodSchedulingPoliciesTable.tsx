@@ -125,7 +125,7 @@ const PodSchedulingPoliciesTable = ({
                 size="small"
                 variant="outlined"
                 onClick={onAddRuleClick}
-                data-testid="add-affinity-rule-button"
+                data-testid="add-rule-button"
                 sx={{ display: 'flex' }}
                 startIcon={<Add />}
               >
@@ -142,7 +142,7 @@ const PodSchedulingPoliciesTable = ({
                 size="small"
                 aria-label="edit"
                 onClick={() => onRowClick(row.original)}
-                data-testid="edit-affinity-rule-button"
+                data-testid="edit-rule-button"
               >
                 <Edit />
               </IconButton>

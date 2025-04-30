@@ -1,0 +1,188 @@
+import { expect, Page, test } from '@playwright/test';
+import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
+import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
+import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { STORAGE_STATE_FILE } from '@e2e/constants';
+
+type AffinityRuleFormArgs = {
+  component?: 'DB Node' | 'Proxy' | 'Router' | 'PG Bouncer' | 'Config Server';
+  type?: 'Node affinity' | 'Pod affinity' | 'Pod anti-affinity';
+  preference?: 'preferred' | 'required';
+  weight?: string;
+  topologyKey?: string;
+  key?: string;
+  operator?: 'in' | 'not in' | 'exists' | 'does not exist';
+  values?: string;
+};
+
+const fillAffinityRuleForm = async (
+  page: Page,
+  {
+    weight,
+    topologyKey,
+    key,
+    operator,
+    values,
+    component,
+    type,
+    preference,
+  }: AffinityRuleFormArgs
+) => {
+  if (preference) {
+    await page.getByTestId(`toggle-button-${preference}`).click();
+  }
+
+  if (type) {
+    await page.getByTestId('select-type-button').click();
+    await page.getByRole('option', { name: type, exact: true }).click();
+  }
+
+  if (component) {
+    await page.getByTestId('select-component-button').click();
+    await page.getByRole('option', { name: component, exact: true }).click();
+  }
+
+  if (weight) {
+    await page.getByTestId('text-input-weight').fill(weight);
+  }
+
+  if (topologyKey) {
+    await page.getByTestId('text-input-topology-key').fill(topologyKey);
+  }
+
+  if (key) {
+    await page.getByTestId('text-input-key').fill(key);
+  }
+
+  if (operator) {
+    await page.getByTestId('select-operator-button').click();
+    await page.getByRole('option', { name: operator, exact: true }).click();
+  }
+
+  if (values) {
+    await page.getByTestId('text-input-values').fill(values);
+  }
+};
+
+const addAffinityRule = async (
+  page: Page,
+  affinityRuleFormArgs: AffinityRuleFormArgs
+) => {
+  await page.getByTestId('add-affinity-rule-button').click();
+  await fillAffinityRuleForm(page, affinityRuleFormArgs);
+  await page.getByTestId('form-dialog-add-rule').click();
+};
+
+const editAffinityRule = async (
+  page: Page,
+  ruleIdx: number,
+  affinityRuleFormArgs: AffinityRuleFormArgs
+) => {
+  const rule = page.getByTestId('editable-item').nth(ruleIdx);
+  await rule.getByTestId('edit-editable-item-button-affinity-rule').click();
+  await fillAffinityRuleForm(page, affinityRuleFormArgs);
+  await page.getByTestId('form-dialog-edit-rule').click();
+};
+
+const PG_POLICY_NAME = 'policy-pg-test';
+const PSMDB_POLICY_NAME = 'policy-psmdb-test';
+
+test.beforeAll(async ({ browser }) => {
+  const context = await browser.newContext({
+    storageState: STORAGE_STATE_FILE,
+  });
+  const page = await context.newPage();
+  await page.goto('/settings/pod-scheduling-policies');
+  await page.getByTestId('add-policy').click();
+  await page.getByTestId('text-input-name').fill(PG_POLICY_NAME);
+  await page.getByTestId('select-type-button').click();
+  await page.getByRole('option', { name: 'PostgreSQL', exact: true }).click();
+  await page.getByTestId('form-dialog-create').click();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByTestId('add-policy').click();
+  await page.getByTestId('text-input-name').fill(PSMDB_POLICY_NAME);
+  await page.getByTestId('select-type-button').click();
+  await page.getByRole('option', { name: 'MongoDB', exact: true }).click();
+  await page.getByTestId('form-dialog-create').click();
+});
+
+test.afterAll(async ({ request }) => {
+  await request.delete(`/v1/pod-scheduling-policies/${PG_POLICY_NAME}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
+    },
+  });
+  await request.delete(`/v1/pod-scheduling-policies/${PSMDB_POLICY_NAME}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
+    },
+  });
+});
+
+test.describe('Create rules', () => {
+  test('Create rules for PG', async ({ page }) => {
+    await page.goto('/settings/pod-scheduling-policies');
+    await page.getByRole('table').waitFor();
+    await page
+      .locator('.MuiTableRow-root')
+      .filter({ hasText: PG_POLICY_NAME })
+      .click();
+    await page.getByRole('table').waitFor();
+    await page.getByRole('button', { name: 'Add rule' }).click();
+    await page.getByTestId('select-component-button').click();
+    await page.getByRole('option', { name: 'PG Bouncer', exact: true }).click();
+    await page.getByTestId('toggle-button-required').click();
+    await page.getByTestId('text-input-topology-key').fill('my-topology-key');
+    await page.getByTestId('text-input-key').fill('my-key');
+    await page.getByTestId('select-operator-button').click();
+    await expect(
+      page.getByRole('option', { name: 'Config Server', exact: true })
+    ).not.toBeVisible();
+    await page.getByRole('option', { name: 'exists', exact: true }).click();
+    await page.getByTestId('form-dialog-add-rule').click();
+    const row = page
+      .locator('.MuiTableRow-root')
+      .filter({ hasText: 'PG Bouncer' });
+    await expect(row).toBeVisible();
+    await expect(row.getByText('Pod Anti-Affinity')).toBeVisible();
+    await expect(row.getByText('Required')).toBeVisible();
+    await expect(
+      row.getByText('my-topology-key | my-key | Exists')
+    ).toBeVisible();
+  });
+
+  test('Create rules for Mongo', async ({ page }) => {
+    await page.goto('/settings/pod-scheduling-policies');
+    await page.getByRole('table').waitFor();
+    await page
+      .locator('.MuiTableRow-root')
+      .filter({ hasText: PSMDB_POLICY_NAME })
+      .click();
+    await page.getByRole('table').waitFor();
+    await page.getByRole('button', { name: 'Add rule' }).click();
+    await page.getByTestId('select-component-button').click();
+    await page
+      .getByRole('option', { name: 'Config Server', exact: true })
+      .click();
+    await page.getByTestId('text-input-weight').fill('10');
+    await page.getByTestId('text-input-topology-key').fill('my-topology-key');
+    await page.getByTestId('text-input-key').fill('my-key');
+    await page.getByTestId('select-operator-button').click();
+    await page.getByRole('option', { name: 'in', exact: true }).click();
+    await page.getByTestId('text-input-values').fill('my-value');
+    await page.getByTestId('form-dialog-add-rule').click();
+    const row = page
+      .locator('.MuiTableRow-root')
+      .filter({ hasText: 'Config Server' });
+    await expect(row).toBeVisible();
+    await expect(row.getByText('Pod Anti-Affinity')).toBeVisible();
+    await expect(row.getByText('Preferred: 10')).toBeVisible();
+    await expect(
+      row.getByText('my-topology-key | my-key | In | my-value')
+    ).toBeVisible();
+  });
+});
