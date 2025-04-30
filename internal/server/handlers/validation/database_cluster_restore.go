@@ -54,13 +54,20 @@ func (h *validateHandler) validateDatabaseClusterRestore(
 		return errors.New(".spec.dbClusterName cannot be empty")
 	}
 	namespace := restore.GetNamespace()
-	_, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: restore.Spec.DBClusterName})
+
+	db, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: restore.Spec.DBClusterName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("database cluster %s does not exist", restore.Spec.DBClusterName)
 		}
 		return err
 	}
+
+	// See: https://github.com/percona/everest-operator/pull/739
+	if db.Spec.Engine.Type == everestv1alpha1.DatabaseEnginePXC && db.Spec.Paused {
+		return errors.New("cannot restore when database cluster is paused")
+	}
+
 	b, err := h.kubeConnector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: namespace, Name: restore.Spec.DataSource.DBClusterBackupName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
