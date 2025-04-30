@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -749,10 +750,11 @@ func TestRBAC_BackupStorage(t *testing.T) {
 	})
 }
 
-func newConfigMapMock(policy string) *kubernetes.MockKubernetesConnector {
-	k8sMock := &kubernetes.MockKubernetesConnector{}
-	k8sMock.On("GetConfigMap", mock.Anything, mock.Anything, mock.Anything).Return(newConfigMapPolicy(policy), nil)
-	return k8sMock
+func newConfigMapMock(policy string) kubernetes.KubernetesConnector {
+	mockClient := fakeclient.NewClientBuilder().
+		WithScheme(kubernetes.CreateScheme()).
+		WithObjects(newConfigMapPolicy(policy))
+	return kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient.Build())
 }
 
 func newPolicy(lines ...string) string {
@@ -761,6 +763,10 @@ func newPolicy(lines ...string) string {
 
 func newConfigMapPolicy(policy string) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: common.SystemNamespace,
+			Name:      common.EverestRBACConfigMapName,
+		},
 		Data: map[string]string{
 			"enabled":    "true",
 			"policy.csv": policy,

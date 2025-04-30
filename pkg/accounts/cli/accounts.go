@@ -47,7 +47,7 @@ type (
 		accountManager accounts.Interface
 		l              *zap.SugaredLogger
 		config         Config
-		kubeClient     *kubernetes.Kubernetes
+		kubeClient     kubernetes.KubernetesConnector
 	}
 )
 
@@ -61,7 +61,7 @@ func NewAccounts(c Config, l *zap.SugaredLogger) (*Accounts, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeclient(cli.l, c.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
