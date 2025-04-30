@@ -1,7 +1,7 @@
 import { expect, Page, test } from '@playwright/test';
 import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
 import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
-import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { STORAGE_STATE_FILE } from '@e2e/constants';
@@ -88,8 +88,9 @@ const editAffinityRule = async (
 
 const PG_POLICY_NAME = 'policy-pg-test';
 const PSMDB_POLICY_NAME = 'policy-psmdb-test';
+const DB_CLUSTER_NAME = 'policy-test-cluster';
 
-test.beforeAll(async ({ browser }) => {
+test.beforeAll(async ({ browser, request }) => {
   const context = await browser.newContext({
     storageState: STORAGE_STATE_FILE,
   });
@@ -106,6 +107,16 @@ test.beforeAll(async ({ browser }) => {
   await page.getByTestId('select-type-button').click();
   await page.getByRole('option', { name: 'MongoDB', exact: true }).click();
   await page.getByTestId('form-dialog-create').click();
+
+  await createDbClusterFn(request, {
+    dbName: DB_CLUSTER_NAME,
+    dbType: 'mongodb',
+    numberOfNodes: '1',
+    cpu: 1,
+    memory: 1,
+    proxyCpu: 0.5,
+    proxyMemory: 0.8,
+  });
 });
 
 test.afterAll(async ({ request }) => {
@@ -121,6 +132,7 @@ test.afterAll(async ({ request }) => {
       Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
     },
   });
+  await deleteDbClusterFn(request, DB_CLUSTER_NAME);
 });
 
 test.describe('Create rules', () => {
@@ -184,5 +196,49 @@ test.describe('Create rules', () => {
     await expect(
       row.getByText('my-topology-key | my-key | In | my-value')
     ).toBeVisible();
+  });
+
+  test('Show policies on wizard', async ({ page }) => {
+    await page.goto('/databases');
+    await selectDbEngine(page, 'psmdb');
+    await moveForward(page);
+    await moveForward(page);
+    await moveForward(page);
+    await page
+      .getByTestId('switch-input-pod-scheduling-policy-enabled')
+      .waitFor();
+    await page
+      .getByTestId('switch-input-pod-scheduling-policy-enabled')
+      .getByRole('checkbox')
+      .check();
+    await page.getByTestId('select-pod-scheduling-policy-button').click();
+    await expect(
+      page.getByRole('option', { name: PSMDB_POLICY_NAME, exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('option', { name: PG_POLICY_NAME, exact: true })
+    ).not.toBeVisible();
+    await expect(
+      page.getByText(`Pod scheduling policy: ${PSMDB_POLICY_NAME}`)
+    ).toBeVisible();
+  });
+
+  test('Show policies on overview', async ({ page }) => {
+    await page.goto('/databases');
+    await findDbAndClickRow(page, DB_CLUSTER_NAME);
+    await page.getByText('Advanced configuration').waitFor();
+    await expect(page.getByText('Pod scheduling policy')).not.toBeVisible();
+    await page.getByTestId('edit-advanced-configuration-db-btn').click();
+    await page
+      .getByTestId('switch-input-pod-scheduling-policy-enabled')
+      .getByRole('checkbox')
+      .check();
+    await page.getByTestId('select-pod-scheduling-policy-button').click();
+    await page
+      .getByRole('option', { name: PSMDB_POLICY_NAME, exact: true })
+      .click();
+    await page.getByTestId('form-dialog-save').click();
+    await expect(page.getByText('Pod scheduling policy')).toBeVisible();
+    await expect(page.getByText(PSMDB_POLICY_NAME)).toBeVisible();
   });
 });
