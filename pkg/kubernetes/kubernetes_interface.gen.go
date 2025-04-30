@@ -136,6 +136,8 @@ type KubernetesConnector interface {
 	// Kubeconfig returns the path to the kubeconfig.
 	// This value is available only if the client was created with New() function.
 	Kubeconfig() string
+	// K8sClient returns the kubernetes client.
+	K8sClient() ctrlclient.Client
 	// Config returns *rest.Config.
 	Config() *rest.Config
 	// WithKubernetesClient sets the k8s client.
