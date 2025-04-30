@@ -258,7 +258,7 @@ jobs:
         id: minikube
         with:
           cpus: 2
-          memory: 2000m
+          memory: 4000m
           addons: registry
           insecure-registry: 'localhost:5000'
 
