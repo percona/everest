@@ -198,6 +198,29 @@ test.describe('Create rules', () => {
     ).toBeVisible();
   });
 
+  test('Edit rules', async ({ page }) => {
+    await page.goto('/settings/pod-scheduling-policies');
+    await page.getByRole('table').waitFor();
+    await page
+      .locator('.MuiTableRow-root')
+      .filter({ hasText: PSMDB_POLICY_NAME })
+      .click();
+    await page.getByRole('table').waitFor();
+    await page.getByRole('button', { name: 'Add rule' }).click();
+    await page.getByTestId('form-dialog-add-rule').click();
+    const row = page
+      .locator('.MuiTableRow-root')
+      .filter({ hasText: 'DB Node' });
+    await row.getByTestId('edit-rule-button').click();
+    await page.getByTestId('text-input-key').fill('edit-rule-key');
+    await page.getByTestId('select-operator-button').click();
+    await page.getByRole('option', { name: 'exists', exact: true }).click();
+    await page.getByTestId('form-dialog-edit-rule').click();
+    await expect(
+      row.getByText('kubernetes.io/hostname | edit-rule-key | Exists')
+    ).toBeVisible();
+  });
+
   test('Show policies on wizard', async ({ page }) => {
     await page.goto('/databases');
     await selectDbEngine(page, 'psmdb');
