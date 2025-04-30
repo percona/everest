@@ -98,7 +98,8 @@ func (e *EverestServer) checkOperatorUpgradeState(next echo.HandlerFunc) echo.Ha
 func securityHeaders(oidcProvider *oidc.ProviderConfig) echo.MiddlewareFunc {
 	connectSrc := []string{CSPSelf}
 	if oidcProvider != nil {
-		connectSrc = append(connectSrc, oidcProvider.Issuer+oidc.WellKnownPath)
+		issuer := strings.TrimRight(oidcProvider.Issuer, "/")
+		connectSrc = append(connectSrc, issuer+oidc.WellKnownPath)
 		connectSrc = append(connectSrc, oidcProvider.TokenURL)
 	}
 
