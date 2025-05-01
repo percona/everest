@@ -63,11 +63,11 @@ func MergeVals(
 	}
 
 	// User-defined helm options will overwrite the default helm options.
-	return mergeMaps(helmValues, userVals), nil
+	return MergeMaps(helmValues, userVals), nil
 }
 
-// Merge maps recursively merges the values of b into a copy of a, preferring the values from b.
-func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
+// MergeMaps recursively merges the values of b into a copy of a, preferring the values from b.
+func MergeMaps(a, b map[string]interface{}) map[string]interface{} {
 	out := make(map[string]interface{}, len(a))
 	for k, v := range a {
 		out[k] = v
@@ -76,7 +76,7 @@ func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
 		if v, ok := v.(map[string]interface{}); ok {
 			if bv, ok := out[k]; ok {
 				if bv, ok := bv.(map[string]interface{}); ok {
-					out[k] = mergeMaps(bv, v)
+					out[k] = MergeMaps(bv, v)
 					continue
 				}
 			}
