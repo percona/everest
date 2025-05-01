@@ -25,6 +25,7 @@ require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/getkin/kin-openapi v0.131.0
 	github.com/go-logr/zapr v1.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
@@ -38,7 +39,7 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.27.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250430154415-1a068e8d10ba
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250501122011-62f086dcb025
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250423152246-1e0b872832d1
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
@@ -117,7 +118,6 @@ require (
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/flosch/pongo2/v6 v6.0.0 // indirect
-	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-errors/errors v1.5.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
