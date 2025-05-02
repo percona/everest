@@ -436,10 +436,15 @@ export const insertAffinityRuleToExistingPolicy = (
   if (rule.type === AffinityType.NodeAffinity) {
     if (!policy.spec.affinityConfig[dbType][rule.component]?.nodeAffinity) {
       policy.spec.affinityConfig[dbType][rule.component]!.nodeAffinity = {
-        requiredDuringSchedulingIgnoredDuringExecution: {
-          nodeSelectorTerms: [],
-        },
-        preferredDuringSchedulingIgnoredDuringExecution: [],
+        ...(rule.priority === AffinityPriority.Required
+          ? {
+              requiredDuringSchedulingIgnoredDuringExecution: {
+                nodeSelectorTerms: [],
+              },
+            }
+          : {
+              preferredDuringSchedulingIgnoredDuringExecution: [],
+            }),
       };
     }
 
@@ -469,8 +474,13 @@ export const insertAffinityRuleToExistingPolicy = (
 
     if (!policy.spec.affinityConfig[dbType][rule.component]![affinityType]) {
       policy.spec.affinityConfig[dbType][rule.component]![affinityType] = {
-        preferredDuringSchedulingIgnoredDuringExecution: [],
-        requiredDuringSchedulingIgnoredDuringExecution: [],
+        ...(rule.priority === AffinityPriority.Required
+          ? {
+              requiredDuringSchedulingIgnoredDuringExecution: [],
+            }
+          : {
+              preferredDuringSchedulingIgnoredDuringExecution: [],
+            }),
       };
     }
 
@@ -534,6 +544,14 @@ export const removeRuleInExistingPolicy = (
           (
             obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredNodeSchedulingTerm
           ).nodeSelectorTerms.splice(matchingRuleIdx, 1);
+
+          if (
+            (
+              obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredNodeSchedulingTerm
+            ).nodeSelectorTerms.length === 0
+          ) {
+            delete obj?.requiredDuringSchedulingIgnoredDuringExecution;
+          }
         }
       } else {
         const matchingRuleIdx = (
@@ -551,6 +569,14 @@ export const removeRuleInExistingPolicy = (
           (
             obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredPodSchedulingTerm
           ).splice(matchingRuleIdx, 1);
+
+          if (
+            (
+              obj?.requiredDuringSchedulingIgnoredDuringExecution as RequiredPodSchedulingTerm
+            ).length === 0
+          ) {
+            delete obj?.requiredDuringSchedulingIgnoredDuringExecution;
+          }
         }
       }
     } else {
@@ -570,6 +596,14 @@ export const removeRuleInExistingPolicy = (
           (
             obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredNodeSchedulingTerm[]
           ).splice(matchingRuleIdx, 1);
+
+          if (
+            (
+              obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredNodeSchedulingTerm[]
+            ).length === 0
+          ) {
+            delete obj?.preferredDuringSchedulingIgnoredDuringExecution;
+          }
         }
       } else {
         const matchingRuleIdx = (
@@ -592,6 +626,14 @@ export const removeRuleInExistingPolicy = (
           (
             obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredPodSchedulingTerm[]
           ).splice(matchingRuleIdx, 1);
+
+          if (
+            (
+              obj?.preferredDuringSchedulingIgnoredDuringExecution as PreferredPodSchedulingTerm[]
+            ).length === 0
+          ) {
+            delete obj?.preferredDuringSchedulingIgnoredDuringExecution;
+          }
         }
       }
     }
