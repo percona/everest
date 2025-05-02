@@ -19,7 +19,7 @@ type Props = {
   rules: AffinityRule[];
   engineType: DbEngineType;
   viewOnly?: boolean;
-  showAddRuleButton?: boolean;
+  canDoChanges?: boolean;
   onRowClick?: (rule: AffinityRule) => void;
   onAddRuleClick?: () => void;
 };
@@ -27,8 +27,8 @@ type Props = {
 const PodSchedulingPoliciesTable = ({
   rules,
   engineType,
-  viewOnly,
-  showAddRuleButton = false,
+  viewOnly = false,
+  canDoChanges = false,
   onRowClick = () => {},
   onAddRuleClick = () => {},
 }: Props) => {
@@ -99,11 +99,11 @@ const PodSchedulingPoliciesTable = ({
       tableName="policy-rules"
       data={rules}
       columns={columns}
-      enableTopToolbar={!viewOnly}
+      enableTopToolbar
       emptyState={
         <EmptyState
           onButtonClick={onAddRuleClick}
-          showCreationButton={showAddRuleButton}
+          showCreationButton={canDoChanges}
           buttonText="Add rule"
           contentSlot={
             <Stack alignItems="center">
@@ -118,7 +118,7 @@ const PodSchedulingPoliciesTable = ({
         />
       }
       renderTopToolbarCustomActions={
-        viewOnly || !showAddRuleButton
+        viewOnly || !canDoChanges
           ? undefined
           : () => (
               <Button
@@ -133,9 +133,9 @@ const PodSchedulingPoliciesTable = ({
               </Button>
             )
       }
-      enableRowActions={!viewOnly && showAddRuleButton}
+      enableRowActions
       renderRowActions={
-        viewOnly || !showAddRuleButton
+        viewOnly || !canDoChanges
           ? undefined
           : ({ row }) => (
               <IconButton

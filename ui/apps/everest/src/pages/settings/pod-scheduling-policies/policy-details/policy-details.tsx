@@ -106,7 +106,7 @@ const PolicyDetails = () => {
       </Box>
       <PodSchedulingPoliciesTable
         rules={rules}
-        showAddRuleButton={canUpdate}
+        canDoChanges={canUpdate}
         engineType={policy.spec.engineType}
         onRowClick={(rule) => {
           selectedRule.current = rule;
