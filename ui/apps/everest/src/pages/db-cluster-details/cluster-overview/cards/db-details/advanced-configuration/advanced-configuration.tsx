@@ -115,12 +115,13 @@ export const AdvancedConfiguration = ({
         label={Messages.fields.storageClass}
         contentString={storageClass}
       />
-      {podSchedulingPolicy && (
-        <OverviewSectionRow
-          label={Messages.fields.podSchedulingPolicy}
-          contentString={podSchedulingPolicy}
-        />
-      )}
+
+      <OverviewSectionRow
+        label={Messages.fields.podSchedulingPolicy}
+        contentString={
+          podSchedulingPolicy ? podSchedulingPolicy : Messages.fields.disabled
+        }
+      />
       {openEditModal && dbCluster && (
         <AdvancedConfigurationEditModal
           open={openEditModal}
