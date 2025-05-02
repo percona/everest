@@ -174,6 +174,7 @@ export const AdvancedConfigurationForm = ({
                   formControlProps={{
                     sx: {
                       minWidth: '200px',
+                      maxWidth: '250px',
                       mt: 0,
                     },
                   }}

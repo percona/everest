@@ -11,7 +11,16 @@ const Header = ({
 }) => (
   <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
     <Typography variant="sectionHeading">{title}</Typography>
-    <Box sx={{ flexBasis: '20%', textAlign: 'right' }}>{controlComponent}</Box>
+    <Box
+      sx={{
+        flexBasis: '20%',
+        flexGrow: 1,
+        maxWidth: '40%',
+        textAlign: 'right',
+      }}
+    >
+      {controlComponent}
+    </Box>
   </Box>
 );
 
