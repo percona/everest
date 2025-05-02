@@ -37,9 +37,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useEffect, useRef, useState } from 'react';
 import { DbWizardFormFields } from 'consts';
-import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
-import { WizardMode } from 'shared-types/wizard.types';
 import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
@@ -48,16 +46,19 @@ import { dbTypeToDbEngine } from '@percona/utils';
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
   loadingDefaultsForEdition?: boolean;
+  setDefaultsOnLoad?: boolean;
+  allowStorageClassChange?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
   loadingDefaultsForEdition,
+  setDefaultsOnLoad = false,
+  allowStorageClassChange = false,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues } = useFormContext();
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
   const selectedPolicy = useRef<PodSchedulingPolicy>();
-  const mode = useDatabasePageMode();
   const [externalAccess, engineParametersEnabled, policiesEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
@@ -90,8 +91,9 @@ export const AdvancedConfigurationForm = ({
     );
 
     if (
+      setDefaultsOnLoad &&
+      allowStorageClassChange &&
       !storageClassTouched &&
-      mode === WizardMode.New &&
       clusterInfo?.storageClassNames &&
       clusterInfo.storageClassNames.length > 0
     ) {
@@ -101,16 +103,16 @@ export const AdvancedConfigurationForm = ({
         { shouldValidate: true }
       );
     }
-  }, [clusterInfo]);
+  }, [clusterInfo, setDefaultsOnLoad, allowStorageClassChange]);
 
   useEffect(() => {
-    if (policies.length && mode === WizardMode.New) {
+    if (setDefaultsOnLoad && policies.length) {
       setValue(
         AdvancedConfigurationFields.podSchedulingPolicy,
         policies[0].metadata.name
       );
     }
-  }, [policies, setValue]);
+  }, [policies, setValue, setDefaultsOnLoad]);
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
@@ -135,14 +137,14 @@ export const AdvancedConfigurationForm = ({
             name={AdvancedConfigurationFields.storageClass}
             loading={clusterInfoLoading}
             options={clusterInfo?.storageClassNames || []}
-            disabled={loadingDefaultsForEdition}
+            disabled={!allowStorageClassChange || loadingDefaultsForEdition}
             textFieldProps={{
               placeholder: Messages.placeholders.storageClass,
             }}
             tooltipText={
-              loadingDefaultsForEdition
-                ? Messages.tooltipTexts.storageClass
-                : undefined
+              allowStorageClassChange
+                ? undefined
+                : Messages.tooltipTexts.storageClass
             }
             autoCompleteProps={{
               sx: {
@@ -168,7 +170,7 @@ export const AdvancedConfigurationForm = ({
               <Box display="flex" ml="auto" alignItems="center">
                 <SelectInput
                   name={AdvancedConfigurationFields.podSchedulingPolicy}
-                  loading={fetchingPolicies}
+                  loading={fetchingPolicies || loadingDefaultsForEdition}
                   formControlProps={{
                     sx: {
                       minWidth: '200px',

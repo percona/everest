@@ -34,6 +34,8 @@ export const AdvancedConfigurations = ({
       <AdvancedConfigurationForm
         dbType={dbType}
         loadingDefaultsForEdition={loadingDefaultsForEdition}
+        setDefaultsOnLoad
+        allowStorageClassChange
       />
     </>
   );
