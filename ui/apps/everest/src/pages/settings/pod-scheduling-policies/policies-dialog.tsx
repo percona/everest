@@ -12,7 +12,7 @@ import { rfc_123_schema } from 'utils/common-validation';
 const schema = z.object({
   name: rfc_123_schema({
     fieldName: 'name',
-    maxLength: 22,
+    maxLength: 63,
   }),
   type: z.nativeEnum(DbEngineType).refine((val) => val !== undefined),
 });
