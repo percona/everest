@@ -16,72 +16,82 @@
 package server
 
 import (
-	"errors"
-	"net/http"
+    "errors"
+    "net/http"
 
-	"github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-	"github.com/percona/everest/api"
+    everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
+    "github.com/percona/everest/api"
+    "github.com/percona/everest/pkg/common"
 )
 
 // ListPodSchedulingPolicy lists all pod scheduling policies.
 func (e *EverestServer) ListPodSchedulingPolicy(ctx echo.Context, params api.ListPodSchedulingPolicyParams) error {
-	list, err := e.handler.ListPodSchedulingPolicies(ctx.Request().Context(), &params)
-	if err != nil {
-		e.l.Errorf("ListPodSchedulingPolicies failed: %v", err)
-		return err
-	}
-	return ctx.JSON(http.StatusOK, list)
+    list, err := e.handler.ListPodSchedulingPolicies(ctx.Request().Context(), &params)
+    if err != nil {
+        e.l.Errorf("ListPodSchedulingPolicies failed: %v", err)
+        return err
+    }
+    return ctx.JSON(http.StatusOK, list)
 }
 
 // CreatePodSchedulingPolicy creates a new pod scheduling policy.
 func (e *EverestServer) CreatePodSchedulingPolicy(c echo.Context) error {
-	psp := &everestv1alpha1.PodSchedulingPolicy{}
-	if err := e.getBodyFromContext(c, psp); err != nil {
-		return errors.Join(errFailedToReadRequestBody, err)
-	}
+    psp := &everestv1alpha1.PodSchedulingPolicy{}
+    if err := e.getBodyFromContext(c, psp); err != nil {
+        return errors.Join(errFailedToReadRequestBody, err)
+    }
 
-	result, err := e.handler.CreatePodSchedulingPolicy(c.Request().Context(), psp)
-	if err != nil {
-		e.l.Errorf("CreatePodSchedulingPolicy failed: %v", err)
-		return err
-	}
+    if psp.GetNamespace() == "" {
+        psp.Namespace = common.SystemNamespace
+    }
 
-	return c.JSON(http.StatusOK, result)
+    result, err := e.handler.CreatePodSchedulingPolicy(c.Request().Context(), psp)
+    if err != nil {
+        e.l.Errorf("CreatePodSchedulingPolicy failed: %v", err)
+        return err
+    }
+
+    return c.JSON(http.StatusOK, result)
 }
 
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.
 func (e *EverestServer) DeletePodSchedulingPolicy(c echo.Context, policyName string) error {
-	if err := e.handler.DeletePodSchedulingPolicy(c.Request().Context(), policyName); err != nil {
-		e.l.Errorf("DeletePodSchedulingPolicy failed: %v", err)
-		return err
-	}
-	return c.NoContent(http.StatusNoContent)
+    if err := e.handler.DeletePodSchedulingPolicy(c.Request().Context(), policyName); err != nil {
+        e.l.Errorf("DeletePodSchedulingPolicy failed: %v", err)
+        return err
+    }
+    return c.NoContent(http.StatusNoContent)
 }
 
 // GetPodSchedulingPolicy retrieves a pod scheduling policy by name.
 func (e *EverestServer) GetPodSchedulingPolicy(c echo.Context, policyName string) error {
-	result, err := e.handler.GetPodSchedulingPolicy(c.Request().Context(), policyName)
-	if err != nil {
-		e.l.Errorf("GetPodSchedulingPolicy failed: %v", err)
-		return err
-	}
-	return c.JSON(http.StatusOK, result)
+    result, err := e.handler.GetPodSchedulingPolicy(c.Request().Context(), policyName)
+    if err != nil {
+        e.l.Errorf("GetPodSchedulingPolicy failed: %v", err)
+        return err
+    }
+    return c.JSON(http.StatusOK, result)
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
 func (e *EverestServer) UpdatePodSchedulingPolicy(c echo.Context, policyName string) error {
-	psp := &everestv1alpha1.PodSchedulingPolicy{}
-	if err := e.getBodyFromContext(c, psp); err != nil {
-		return errors.Join(errFailedToReadRequestBody, err)
-	}
-	psp.SetName(policyName)
+    psp := &everestv1alpha1.PodSchedulingPolicy{}
+    if err := e.getBodyFromContext(c, psp); err != nil {
+        return errors.Join(errFailedToReadRequestBody, err)
+    }
+    psp.SetName(policyName)
 
-	result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), policyName, psp)
-	if err != nil {
-		e.l.Errorf("UpdatePodSchedulingPolicy failed: %v", err)
-		return err
-	}
-	return c.JSON(http.StatusOK, result)
+    if psp.GetNamespace() == "" {
+        psp.Namespace = common.SystemNamespace
+    }
+
+    result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), policyName, psp)
+    if err != nil {
+        e.l.Errorf("UpdatePodSchedulingPolicy failed: %v", err)
+        return err
+    }
+    return c.JSON(http.StatusOK, result)
 }

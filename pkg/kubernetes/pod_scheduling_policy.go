@@ -21,6 +21,7 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 )
 
 const (
@@ -31,6 +32,7 @@ const (
 // This method returns a list of full objects (meta and spec).
 func (k *Kubernetes) ListPodSchedulingPolicies(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.PodSchedulingPolicyList, error) {
 	result := &everestv1alpha1.PodSchedulingPolicyList{}
+	opts = append(opts, ctrlclient.InNamespace(common.SystemNamespace))
 	if err := k.k8sClient.List(ctx, result, opts...); err != nil {
 		return nil, err
 	}
@@ -39,6 +41,7 @@ func (k *Kubernetes) ListPodSchedulingPolicies(ctx context.Context, opts ...ctrl
 
 // GetPodSchedulingPolicy returns pod scheduling policy that matches the criteria.
 func (k *Kubernetes) GetPodSchedulingPolicy(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	key.Namespace = common.SystemNamespace
 	result := &everestv1alpha1.PodSchedulingPolicy{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
 		return nil, err
@@ -48,6 +51,7 @@ func (k *Kubernetes) GetPodSchedulingPolicy(ctx context.Context, key ctrlclient.
 
 // DeletePodSchedulingPolicy deletes pod scheduling policy that matches the criteria.
 func (k *Kubernetes) DeletePodSchedulingPolicy(ctx context.Context, obj *everestv1alpha1.PodSchedulingPolicy) error {
+	obj.Namespace = common.SystemNamespace
 	return k.k8sClient.Delete(ctx, obj)
 }
 
@@ -69,6 +73,7 @@ func (k *Kubernetes) UpdatePodSchedulingPolicy(ctx context.Context, psp *everest
 
 // IsPodSchedulingPolicyUsed checks if any database cluster uses a pod scheduling policy that matches the criteria.
 func (k *Kubernetes) IsPodSchedulingPolicyUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error) {
+	key.Namespace = common.SystemNamespace
 	_, err := k.GetPodSchedulingPolicy(ctx, key)
 	if err != nil {
 		return false, err

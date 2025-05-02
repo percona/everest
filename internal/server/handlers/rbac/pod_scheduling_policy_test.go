@@ -45,17 +45,20 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 				Items: []everestv1alpha1.PodSchedulingPolicy{
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name: "everest-default-pxc",
+							Name:      "everest-default-pxc",
+							Namespace: common.SystemNamespace,
 						},
 					},
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name: "everest-default-postgresql",
+							Name:      "everest-default-postgresql",
+							Namespace: common.SystemNamespace,
 						},
 					},
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name: "everest-default-psmdb",
+							Name:      "everest-default-psmdb",
+							Namespace: common.SystemNamespace,
 						},
 					},
 				},
@@ -93,7 +96,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "all actions for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, *",
+				"p, role:test, pod-scheduling-policies, *, everest-system/*",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -112,7 +115,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "all actions for 'everest-default-pxc'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, everest-default-pxc",
+				"p, role:test, pod-scheduling-policies, *, everest-system/everest-default-pxc",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -125,7 +128,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "create only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, *",
+				"p, role:test, pod-scheduling-policies, create, everest-system/*",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -135,7 +138,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "create only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, test-policy-1",
+				"p, role:test, pod-scheduling-policies, create, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -145,7 +148,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "update only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, *",
+				"p, role:test, pod-scheduling-policies, update, everest-system/*",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -155,7 +158,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "update only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, test-policy-1",
+				"p, role:test, pod-scheduling-policies, update, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -165,7 +168,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "read only for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, *",
+				"p, role:test, pod-scheduling-policies, read, everest-system/*",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -184,7 +187,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "read only for everest-default-pxc",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, everest-default-pxc",
+				"p, role:test, pod-scheduling-policies, read, everest-system/everest-default-pxc",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -197,8 +200,8 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "read only for everest-default-pxc and everest-default-postgresql",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, everest-default-pxc",
-				"p, role:test, pod-scheduling-policies, read, everest-default-postgresql",
+				"p, role:test, pod-scheduling-policies, read, everest-system/everest-default-pxc",
+				"p, role:test, pod-scheduling-policies, read, everest-system/everest-default-postgresql",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -214,7 +217,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "delete only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, *",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/*",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -224,7 +227,7 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 		{
 			desc: "delete only action for 'everest-default-pxc'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, everest-default-pxc",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/everest-default-pxc",
 				"g, bob, role:test",
 			),
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
@@ -288,21 +291,21 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "all actions for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, *",
+				"p, role:test, pod-scheduling-policies, *, everest-system/*",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "all actions for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, test-policy-1",
+				"p, role:test, pod-scheduling-policies, *, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "all actions for some",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, some",
+				"p, role:test, pod-scheduling-policies, *, everest-system/some",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -310,7 +313,7 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "create only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, *",
+				"p, role:test, pod-scheduling-policies, create, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -318,7 +321,7 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "create only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, test-policy-1",
+				"p, role:test, pod-scheduling-policies, create, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -326,7 +329,7 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "update only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, *",
+				"p, role:test, pod-scheduling-policies, update, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -334,7 +337,7 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "update only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, test-policy-1",
+				"p, role:test, pod-scheduling-policies, update, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -342,21 +345,21 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "read only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, *",
+				"p, role:test, pod-scheduling-policies, read, everest-system/*",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "read only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, test-policy-1",
+				"p, role:test, pod-scheduling-policies, read, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "read only action for some",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, some",
+				"p, role:test, pod-scheduling-policies, read, everest-system/some",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -364,7 +367,7 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "delete only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, *",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -372,7 +375,7 @@ func TestRBAC_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "delete only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, test-policy-1",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -430,35 +433,35 @@ func TestRBAC_CretePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "all actions for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, *",
+				"p, role:test, pod-scheduling-policies, *, everest-system/*",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "all actions for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, test-policy-1",
+				"p, role:test, pod-scheduling-policies, *, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "create only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, *",
+				"p, role:test, pod-scheduling-policies, create, everest-system/*",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "create only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, test-policy-1",
+				"p, role:test, pod-scheduling-policies, create, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "create only action for some",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, some",
+				"p, role:test, pod-scheduling-policies, create, everest-system/some",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -466,7 +469,7 @@ func TestRBAC_CretePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "update only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, *",
+				"p, role:test, pod-scheduling-policies, update, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -474,7 +477,7 @@ func TestRBAC_CretePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "update only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, test-policy-1",
+				"p, role:test, pod-scheduling-policies, update, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -482,7 +485,7 @@ func TestRBAC_CretePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "read only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, *",
+				"p, role:test, pod-scheduling-policies, read, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -490,7 +493,7 @@ func TestRBAC_CretePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "read only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, test-policy-1",
+				"p, role:test, pod-scheduling-policies, read, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -498,7 +501,7 @@ func TestRBAC_CretePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "delete only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, *",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -506,7 +509,7 @@ func TestRBAC_CretePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "delete only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, test-policy-1",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -569,21 +572,21 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "all actions for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, *",
+				"p, role:test, pod-scheduling-policies, *, everest-system/*",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "all actions for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, test-policy-1",
+				"p, role:test, pod-scheduling-policies, *, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "create only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, *",
+				"p, role:test, pod-scheduling-policies, create, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -591,7 +594,7 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "create only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, test-policy-1",
+				"p, role:test, pod-scheduling-policies, create, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -599,21 +602,21 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "update only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, *",
+				"p, role:test, pod-scheduling-policies, update, everest-system/*",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "update only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, test-policy-1",
+				"p, role:test, pod-scheduling-policies, update, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "update only action for some",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, some",
+				"p, role:test, pod-scheduling-policies, update, everest-system/some",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -621,7 +624,7 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "read only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, *",
+				"p, role:test, pod-scheduling-policies, read, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -629,7 +632,7 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "read only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, test-policy-1",
+				"p, role:test, pod-scheduling-policies, read, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -637,7 +640,7 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "delete only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, *",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -645,7 +648,7 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "delete only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, test-policy-1",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -702,21 +705,21 @@ func TestRBAC_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "all actions for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, *",
+				"p, role:test, pod-scheduling-policies, *, everest-system/*",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "all actions for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, *, test-policy-1",
+				"p, role:test, pod-scheduling-policies, *, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "create only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, *",
+				"p, role:test, pod-scheduling-policies, create, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -724,7 +727,7 @@ func TestRBAC_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "create only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, create, test-policy-1",
+				"p, role:test, pod-scheduling-policies, create, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -732,7 +735,7 @@ func TestRBAC_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "update only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, *",
+				"p, role:test, pod-scheduling-policies, update, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -740,7 +743,7 @@ func TestRBAC_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "update only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, update, test-policy-1",
+				"p, role:test, pod-scheduling-policies, update, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -748,7 +751,7 @@ func TestRBAC_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "read only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, *",
+				"p, role:test, pod-scheduling-policies, read, everest-system/*",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -756,7 +759,7 @@ func TestRBAC_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "read only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, read, test-policy-1",
+				"p, role:test, pod-scheduling-policies, read, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,
@@ -764,21 +767,21 @@ func TestRBAC_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			desc: "delete only action for all pod-scheduling-policies",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, *",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/*",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "delete only action for 'test-policy-1'",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, test-policy-1",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/test-policy-1",
 				"g, bob, role:test",
 			),
 		},
 		{
 			desc: "delete only action for some",
 			policy: newPolicy(
-				"p, role:test, pod-scheduling-policies, delete, some",
+				"p, role:test, pod-scheduling-policies, delete, everest-system/some",
 				"g, bob, role:test",
 			),
 			wantErr: ErrInsufficientPermissions,

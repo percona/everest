@@ -1976,7 +1976,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
@@ -2002,7 +2003,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
@@ -2028,7 +2030,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name:      "everest-default-pxc",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -2055,7 +2058,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-pxc-policy",
+						Name:      "test-pxc-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -2082,7 +2086,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-pxc-policy",
+						Name:      "test-pxc-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType:     everestv1alpha1.DatabaseEnginePXC,
@@ -2110,7 +2115,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-pxc-policy",
+						Name:      "test-pxc-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -2140,7 +2146,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-psmdb-policy",
+						Name:      "test-psmdb-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType:     everestv1alpha1.DatabaseEnginePSMDB,
@@ -2168,7 +2175,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-psmdb-policy",
+						Name:      "test-psmdb-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
@@ -2198,7 +2206,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-pg-policy",
+						Name:      "test-pg-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType:     everestv1alpha1.DatabaseEnginePostgresql,
@@ -2226,7 +2235,8 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-pg-policy",
+						Name:      "test-pg-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,

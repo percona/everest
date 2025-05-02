@@ -33,6 +33,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -63,18 +64,21 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name:      "everest-default-pxc",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-psmdb",
+						Name:      "everest-default-psmdb",
+						Namespace: common.SystemNamespace,
 					},
 				},
 			},
@@ -92,23 +96,27 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name:      "everest-default-pxc",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-psmdb",
+						Name:      "everest-default-psmdb",
+						Namespace: common.SystemNamespace,
 					},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "used-policy",
+						Name:      "used-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
 				},
@@ -131,23 +139,27 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name:      "everest-default-pxc",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-psmdb",
+						Name:      "everest-default-psmdb",
+						Namespace: common.SystemNamespace,
 					},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "unused-policy",
+						Name:      "unused-policy",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
 				},
@@ -201,18 +213,21 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name:      "everest-default-pxc",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-psmdb",
+						Name:      "everest-default-psmdb",
+						Namespace: common.SystemNamespace,
 					},
 				},
 			},
@@ -235,7 +250,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name:      "everest-default-pxc",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -243,7 +259,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
@@ -251,7 +268,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-psmdb",
+						Name:      "everest-default-psmdb",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
@@ -274,7 +292,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name:      "everest-default-pxc",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -282,7 +301,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
@@ -290,7 +310,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-psmdb",
+						Name:      "everest-default-psmdb",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
@@ -313,7 +334,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name:      "everest-default-pxc",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -321,7 +343,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-postgresql",
+						Name:      "everest-default-postgresql",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
@@ -329,7 +352,8 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 				},
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-psmdb",
+						Name:      "everest-default-psmdb",
+						Namespace: common.SystemNamespace,
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePSMDB,

@@ -22,12 +22,13 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
 )
 
 // CreatePodSchedulingPolicy creates a new pod scheduling policy.
 func (h *rbacHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionCreate, rbac.ObjectName(psp.GetName())); err != nil {
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionCreate, rbac.ObjectName(common.SystemNamespace, psp.GetName())); err != nil {
 		return nil, err
 	}
 	return h.next.CreatePodSchedulingPolicy(ctx, psp)
@@ -35,7 +36,7 @@ func (h *rbacHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everes
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
 func (h *rbacHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionUpdate, rbac.ObjectName(name)); err != nil {
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionUpdate, rbac.ObjectName(common.SystemNamespace, name)); err != nil {
 		return nil, err
 	}
 	return h.next.UpdatePodSchedulingPolicy(ctx, name, psp)
@@ -49,14 +50,14 @@ func (h *rbacHandler) ListPodSchedulingPolicies(ctx context.Context, params *api
 	}
 	// filter out PodSchedulingPolicies that the user does not have access to.
 	pspList.Items = slices.DeleteFunc(pspList.Items, func(psp everestv1alpha1.PodSchedulingPolicy) bool {
-		return h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(psp.GetName())) != nil
+		return h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(common.SystemNamespace, psp.GetName())) != nil
 	})
 	return pspList, nil
 }
 
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.
 func (h *rbacHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {
-	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionDelete, rbac.ObjectName(name)); err != nil {
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionDelete, rbac.ObjectName(common.SystemNamespace, name)); err != nil {
 		return err
 	}
 	return h.next.DeletePodSchedulingPolicy(ctx, name)
@@ -64,7 +65,7 @@ func (h *rbacHandler) DeletePodSchedulingPolicy(ctx context.Context, name string
 
 // GetPodSchedulingPolicy retrieves a pod scheduling policy by name.
 func (h *rbacHandler) GetPodSchedulingPolicy(ctx context.Context, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(name)); err != nil {
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(common.SystemNamespace, name)); err != nil {
 		return nil, err
 	}
 	return h.next.GetPodSchedulingPolicy(ctx, name)

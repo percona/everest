@@ -2203,12 +2203,12 @@ github.com/orisano/pixelmatch v0.0.0-20220722002657-fb0b55479cde/go.mod h1:nZgzb
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
-github.com/percona/everest-operator v0.6.0-dev1.0.20250501192626-ca208413d2c0 h1:yq8gIDJOJa6qw3/9p8Jc3gO00+wYEeG87qqBYUPQc1U=
-github.com/percona/everest-operator v0.6.0-dev1.0.20250501192626-ca208413d2c0/go.mod h1:+b+nIjSHO9JAK/mEHykZrguLfLPlEL2pOIVgFjSebNM=
+github.com/percona/everest-operator v0.6.0-dev1.0.20250502125521-20994dbf1b11 h1:KozXrm7kRwsqjEjHoE3EUp6kjFgES2ayjVJcy6Cbpts=
+github.com/percona/everest-operator v0.6.0-dev1.0.20250502125521-20994dbf1b11/go.mod h1:+b+nIjSHO9JAK/mEHykZrguLfLPlEL2pOIVgFjSebNM=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241212160532-0157f87a7eee h1:LtitxWyhBqCNjIZqdvsSEPBd2HPg11lDBlIExTQAbGQ=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241212160532-0157f87a7eee/go.mod h1:zikIUTNTflfcth3ZJRqhvW8+7Jj38aVlg+wSV1jwnxo=
-github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250501162003-ca445eca3e3b h1:DO3ae1ayrX++YnbWPVhexms7wwhWr7BH4cQZpyTGvww=
-github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250501162003-ca445eca3e3b/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
+github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250502125638-704cd83126b1 h1:HQZgY+V4I03NLTfvHgb5P66/hLFSrjVitU/0l/d7MUs=
+github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250502125638-704cd83126b1/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
 github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26 h1:hng2p9QPk/OxHVZEdsv+k0ByyHzTNSB0SWlVuuTxMjs=
 github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26/go.mod h1:3D56UIi6Z0Z2gduNUuBcgjd1RNht3N8RKKmR9Wbfu4o=
 github.com/percona/percona-server-mongodb-operator v1.19.1 h1:lqIC7V80bZPJwjeYLYl/WA+QVQMHo193uEAx5zyIg84=
