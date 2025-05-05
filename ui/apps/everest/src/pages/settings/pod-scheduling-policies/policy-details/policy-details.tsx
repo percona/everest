@@ -17,6 +17,7 @@ import { AffinityRule } from 'shared-types/affinity.types';
 import { useQueryClient } from '@tanstack/react-query';
 import PodSchedulingPoliciesTable from 'components/pod-scheduling-policies-table';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac';
+import { EVEREST_SYSTEM_NS } from 'consts';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
@@ -28,14 +29,14 @@ const PolicyDetails = () => {
   const queryClient = useQueryClient();
   const { canUpdate } = useRBACPermissions(
     'pod-scheduling-policies',
-    policyName
+    `${EVEREST_SYSTEM_NS}/${policyName}`
   );
 
   useRBACPermissionRoute([
     {
       action: 'read',
       resource: 'pod-scheduling-policies',
-      specificResources: [policyName],
+      specificResources: [`${EVEREST_SYSTEM_NS}/${policyName}`],
     },
   ]);
 

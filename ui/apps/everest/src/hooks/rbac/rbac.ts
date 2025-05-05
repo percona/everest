@@ -116,50 +116,6 @@ export const useNamespacePermissionsForResource = (
   };
 };
 
-export const usePermissionsForResource = (
-  resource: RBACResource,
-  specificResource = '*'
-) => {
-  const [permissions, setPermissions] = useState<Record<RBACAction, boolean>>({
-    read: false,
-    update: false,
-    create: false,
-    delete: false,
-  });
-
-  const checkPermissions = useCallback(async () => {
-    const newPermissions: Record<RBACAction, boolean> = {
-      read: false,
-      update: false,
-      create: false,
-      delete: false,
-    };
-    const permissionsPromisesArr: Promise<void>[] = [];
-
-    ['read', 'update', 'delete', 'create'].forEach((action) => {
-      permissionsPromisesArr.push(
-        can(action as RBACAction, resource, specificResource).then((canDo) => {
-          newPermissions[action as RBACAction] = canDo;
-        })
-      );
-    });
-    await Promise.all(permissionsPromisesArr);
-    setPermissions(newPermissions);
-  }, [resource, specificResource]);
-
-  useEffect(() => {
-    AuthorizerObservable.subscribe(checkPermissions);
-    checkPermissions();
-  }, [checkPermissions]);
-
-  return {
-    canRead: permissions.read,
-    canUpdate: permissions.update,
-    canCreate: permissions.create,
-    canDelete: permissions.delete,
-  };
-};
-
 export const useRBACPermissionRoute = (
   permissions: Array<{
     action: RBACAction;

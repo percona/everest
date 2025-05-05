@@ -2,8 +2,9 @@ import { MenuItem } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Visibility from '@mui/icons-material/Visibility';
 import TableActionsMenu from 'components/table-actions-menu';
-import { usePermissionsForResource } from 'hooks/rbac';
+import { useRBACPermissions } from 'hooks/rbac';
 import { useNavigate } from 'react-router-dom';
+import { EVEREST_SYSTEM_NS } from 'consts';
 
 type Props = {
   policyName: string;
@@ -11,9 +12,9 @@ type Props = {
 };
 
 const PolicyRowActions = ({ policyName, handleOnDeleteIconClick }: Props) => {
-  const { canDelete } = usePermissionsForResource(
+  const { canDelete } = useRBACPermissions(
     'pod-scheduling-policies',
-    policyName
+    `${EVEREST_SYSTEM_NS}/${policyName}`
   );
   const navigate = useNavigate();
 

@@ -18,15 +18,17 @@ import { humanizeDbType } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import EmptyState from 'components/empty-state';
-import { usePermissionsForResource } from 'hooks/rbac';
+import { useRBACPermissions } from 'hooks/rbac';
 import PolicyRowActions from './policy-row-actions';
+import { EVEREST_SYSTEM_NS } from 'consts';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const selectedPolicy = useRef<PodSchedulingPolicy>();
-  const { canCreate: canCreatePolicies } = usePermissionsForResource(
-    'pod-scheduling-policies'
+  const { canCreate } = useRBACPermissions(
+    'pod-scheduling-policies',
+    `${EVEREST_SYSTEM_NS}/*`
   );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -96,7 +98,7 @@ const PoliciesList = () => {
           <EmptyState
             onButtonClick={() => setDialogOpen(true)}
             buttonText="Create policy"
-            showCreationButton={canCreatePolicies}
+            showCreationButton={canCreate}
             contentSlot={
               <Typography variant="body1">
                 You currently do not have any policy
@@ -114,7 +116,7 @@ const PoliciesList = () => {
           )
         }
         renderTopToolbarCustomActions={() =>
-          canCreatePolicies ? (
+          canCreate ? (
             <Button
               size="small"
               startIcon={<Add />}
