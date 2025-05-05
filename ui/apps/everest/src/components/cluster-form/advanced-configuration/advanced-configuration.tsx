@@ -96,6 +96,7 @@ export const AdvancedConfigurationForm = ({
                 : undefined
             }
             autoCompleteProps={{
+              disableClearable: true,
               sx: {
                 mt: 0,
                 width: '135px',
