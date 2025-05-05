@@ -147,6 +147,7 @@ export const AdvancedConfigurationForm = ({
                 : Messages.tooltipTexts.storageClass
             }
             autoCompleteProps={{
+              disableClearable: true,
               sx: {
                 mt: 0,
               },
