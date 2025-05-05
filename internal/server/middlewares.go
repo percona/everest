@@ -100,7 +100,8 @@ func (e *EverestServer) securityHeaders() echo.MiddlewareFunc {
 	useTLS := e.config.TLSCertsPath != ""
 	connectSrc := []string{CSPSelf}
 	if oidcProvider != nil {
-		connectSrc = append(connectSrc, oidcProvider.Issuer+oidc.WellKnownPath)
+		issuer := strings.TrimRight(oidcProvider.Issuer, "/")
+		connectSrc = append(connectSrc, issuer+oidc.WellKnownPath)
 		connectSrc = append(connectSrc, oidcProvider.TokenURL)
 	}
 
