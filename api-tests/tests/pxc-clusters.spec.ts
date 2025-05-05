@@ -51,7 +51,7 @@ test('create/edit/delete pxc single node cluster', async ({ request, page }) => 
         replicas: 1,
         version: recommendedVersion,
         storage: {
-          size: '25G',
+          size: '25Gi',
         },
         resources: {
           cpu: '1',
