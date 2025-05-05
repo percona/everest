@@ -241,6 +241,9 @@ test.describe('Create rules', () => {
     await expect(
       page.getByRole('option', { name: PG_POLICY_NAME, exact: true })
     ).not.toBeVisible();
+    await page
+      .getByRole('option', { name: PSMDB_POLICY_NAME, exact: true })
+      .click();
     await expect(
       page.getByText(`Pod scheduling policy: ${PSMDB_POLICY_NAME}`)
     ).toBeVisible();
@@ -250,7 +253,9 @@ test.describe('Create rules', () => {
     await page.goto('/databases');
     await findDbAndClickRow(page, DB_CLUSTER_NAME);
     await page.getByText('Advanced configuration').waitFor();
-    await expect(page.getByText('Pod scheduling policy')).not.toBeVisible();
+    await expect(
+      page.getByTestId('pod-scheduling policy-overview-section-row')
+    ).toHaveText('Pod scheduling policyDisabled');
     await page.getByTestId('edit-advanced-configuration-db-btn').click();
     await page
       .getByTestId('switch-input-pod-scheduling-policy-enabled')
@@ -261,7 +266,8 @@ test.describe('Create rules', () => {
       .getByRole('option', { name: PSMDB_POLICY_NAME, exact: true })
       .click();
     await page.getByTestId('form-dialog-save').click();
-    await expect(page.getByText('Pod scheduling policy')).toBeVisible();
-    await expect(page.getByText(PSMDB_POLICY_NAME)).toBeVisible();
+    await expect(
+      page.getByTestId('pod-scheduling policy-overview-section-row')
+    ).toHaveText(`Pod scheduling policy${PSMDB_POLICY_NAME}`);
   });
 });
