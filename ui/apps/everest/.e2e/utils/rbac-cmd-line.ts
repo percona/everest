@@ -11,6 +11,12 @@ export const restoreOldRBACPermissions = async () => {
   const oldRbacFileContent = execSync(`cat ${OLD_RBAC_FILE}`).toString();
   const command = `kubectl patch configmap/everest-rbac --namespace everest-system --type merge -p '{"data":${oldRbacFileContent}}'`;
   execSync(command);
+
+  return new Promise<void>((resolve) =>
+    setTimeout(() => {
+      resolve();
+    }, 500)
+  );
 };
 
 export const setRBACPermissionsK8S = async (
