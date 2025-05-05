@@ -2133,9 +2133,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 			pspNameToDelete: "everest-default-postgresql",
 			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-postgresql' is default and cannot be deleted")),
 		},
-		// delete existing policy
+		// delete non-used policy
 		{
-			name: "delete existing policy",
+			name: "delete non-used policy",
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
@@ -2168,6 +2168,44 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 				},
 			},
 			pspNameToDelete: "test-policy",
+		},
+		// delete used policy
+		{
+			name: "delete used policy",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "everest-default-pxc",
+						Namespace:  common.SystemNamespace,
+						Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "everest-default-postgresql",
+						Namespace:  common.SystemNamespace,
+						Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "everest-default-psmdb",
+						Namespace:  common.SystemNamespace,
+						Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
+					},
+				},
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "test-policy",
+						Namespace:  common.SystemNamespace,
+						Finalizers: []string{everestv1alpha1.UsedResourceFinalizer},
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
+				},
+			},
+			pspNameToDelete: "test-policy",
+			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='test-policy' is used by some DB cluster and cannot be deleted")),
 		},
 	}
 

@@ -211,6 +211,10 @@ func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName strin
 		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be deleted", psp.GetName())
 	}
 
+	if slices.Contains(psp.GetFinalizers(), everestv1alpha1.UsedResourceFinalizer) {
+		// policy is used by some DB cluster
+		return fmt.Errorf("pod scheduling policy with name='%s' is used by some DB cluster and cannot be deleted", psp.GetName())
+	}
 	return nil
 }
 
