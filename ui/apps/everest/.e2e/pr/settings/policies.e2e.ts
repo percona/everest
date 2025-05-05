@@ -144,7 +144,7 @@ test.describe('Create rules', () => {
       .filter({ hasText: PG_POLICY_NAME })
       .click();
     await page.getByRole('table').waitFor();
-    await page.getByRole('button', { name: 'Add rule' }).click();
+    await page.getByTestId('add-rule-button').click();
     await page.getByTestId('select-component-button').click();
     await page.getByRole('option', { name: 'PG Bouncer', exact: true }).click();
     await page.getByTestId('toggle-button-required').click();
@@ -175,7 +175,7 @@ test.describe('Create rules', () => {
       .filter({ hasText: PSMDB_POLICY_NAME })
       .click();
     await page.getByRole('table').waitFor();
-    await page.getByRole('button', { name: 'Add rule' }).click();
+    await page.getByTestId('add-rule-button').click();
     await page.getByTestId('select-component-button').click();
     await page
       .getByRole('option', { name: 'Config Server', exact: true })
@@ -206,7 +206,7 @@ test.describe('Create rules', () => {
       .filter({ hasText: PSMDB_POLICY_NAME })
       .click();
     await page.getByRole('table').waitFor();
-    await page.getByRole('button', { name: 'Add rule' }).click();
+    await page.getByTestId('add-rule-button').click();
     await page.getByTestId('form-dialog-add-rule').click();
     const row = page
       .locator('.MuiTableRow-root')
