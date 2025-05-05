@@ -38,7 +38,7 @@ export const advancedConfigurationStepCheck = async (page: Page) => {
   // expect(sourceRangeSecondField).toHaveAttribute('placeholder', SOURCE_RANGE_PLACEHOLDER);
   // await sourceRangeSecondField.fill('192.168.1.0');
 
-  await page.getByLabel('Database engine parameters').check();
+  await page.getByRole('checkbox', { name: 'engineParametersEnabled' }).check();
   expect(
     await page.getByLabel('Database engine parameters').isChecked()
   ).toBeTruthy();

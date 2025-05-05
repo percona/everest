@@ -239,7 +239,9 @@ export const populateAdvancedConfig = async (
       .fill(externalAccess);
   }
   if (engineParameters != '' || addDefaultEngineParameters) {
-    await page.getByLabel('Database engine parameters').check();
+    await page
+      .getByRole('checkbox', { name: 'engineParametersEnabled' })
+      .check();
     if (engineParameters != '') {
       await page
         .getByTestId('text-input-engine-parameters')
