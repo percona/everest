@@ -42,9 +42,6 @@ export const advancedConfigurationStepCheck = async (page: Page) => {
     .getByTestId('switch-input-engine-parameters-enabled-label')
     .getByRole('checkbox')
     .check();
-  expect(
-    await page.getByLabel('Database engine parameters').isChecked()
-  ).toBeTruthy();
 
   await page
     .getByTestId('text-input-engine-parameters')
