@@ -182,6 +182,7 @@ describe('insertAffinityRuleToExistingPolicy', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
         name: 'test-policy',
+        finalizers: [],
       },
       spec: {
         engineType: DbEngineType.PSMDB,
@@ -251,6 +252,7 @@ describe('insertAffinityRuleToExistingPolicy', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
         name: 'test-policy',
+        finalizers: [],
       },
       spec: {
         engineType: DbEngineType.PSMDB,
@@ -347,6 +349,7 @@ describe('insertAffinityRuleToExistingPolicy', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
         name: 'test-policy',
+        finalizers: [],
       },
       spec: {
         engineType: DbEngineType.PSMDB,
@@ -435,6 +438,7 @@ describe('removeRuleInExistingPolicy', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
         name: 'test-policy',
+        finalizers: [],
       },
       spec: {
         engineType: DbEngineType.PSMDB,
@@ -459,6 +463,7 @@ describe('removeRuleInExistingPolicy', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
         name: 'test-policy',
+        finalizers: [],
       },
       spec: {
         engineType: DbEngineType.PSMDB,
@@ -513,6 +518,7 @@ describe('removeRuleInExistingPolicy', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
         name: 'test-policy',
+        finalizers: [],
       },
       spec: {
         engineType: DbEngineType.PSMDB,
