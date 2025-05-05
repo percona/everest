@@ -560,6 +560,6 @@ describe('removeRuleInExistingPolicy', () => {
     expect(
       policy.spec.affinityConfig.psmdb?.engine?.nodeAffinity
         ?.preferredDuringSchedulingIgnoredDuringExecution
-    ).toHaveLength(0);
+    ).toBeUndefined();
   });
 });
