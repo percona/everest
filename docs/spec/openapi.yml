@@ -9839,6 +9839,20 @@ components:
           required:
             - engineType
           type: object
+        status:
+          description: PodSchedulingPolicyStatus defines the observed state of PodSchedulingPolicy.
+          properties:
+            observedGeneration:
+              description: ObservedGeneration is the most recent generation observed
+                for this PodSchedulingPolicy.
+              format: int64
+              type: integer
+            used:
+              default: false
+              description: Used is a flag that indicates if the policy is used by
+                any DB cluster.
+              type: boolean
+          type: object
       type: object
 
     # -------------------------
