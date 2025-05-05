@@ -15,7 +15,7 @@ export const restoreOldRBACPermissions = async () => {
   return new Promise<void>((resolve) =>
     setTimeout(() => {
       resolve();
-    }, 500)
+    }, 1000)
   );
 };
 
