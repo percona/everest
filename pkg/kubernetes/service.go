@@ -1,5 +1,5 @@
 // everest
-// Copyright (C) 2023 Percona LLC
+// Copyright (C) 2025 Percona LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,23 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package kubernetes
 
 import (
-	"testing"
+	"context"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/version"
-	fake "k8s.io/client-go/kubernetes/fake"
+	corev1 "k8s.io/api/core/v1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func TestGetServerVersion(t *testing.T) {
-	t.Parallel()
-	clientset := fake.NewSimpleClientset()
-	client := &Client{clientset: clientset, namespace: "default"}
-	ver, err := client.GetServerVersion()
-	expectedVersion := &version.Info{}
-	require.NoError(t, err)
-	assert.Equal(t, expectedVersion.Minor, ver.Minor)
+// GetService returns service that matches the criteria.
+func (k *Kubernetes) GetService(ctx context.Context, key ctrlclient.ObjectKey) (*corev1.Service, error) {
+	result := &corev1.Service{}
+	if err := k.k8sClient.Get(ctx, key, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

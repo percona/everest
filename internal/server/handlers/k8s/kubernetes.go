@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
@@ -24,7 +25,7 @@ const (
 
 func (h *k8sHandler) GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error) {
 	// Get cluster type
-	clusterType, err := h.kubeClient.GetClusterType(ctx)
+	clusterType, err := h.kubeConnector.GetClusterType(ctx)
 	if err != nil {
 		// Instead of failing we switch to a generic cluster type.
 		clusterType = kubernetes.ClusterTypeGeneric
@@ -32,13 +33,13 @@ func (h *k8sHandler) GetKubernetesClusterResources(ctx context.Context) (*api.Ku
 
 	var volumes *corev1.PersistentVolumeList
 	if clusterType == kubernetes.ClusterTypeEKS {
-		volumes, err = h.kubeClient.GetPersistentVolumes(ctx)
+		volumes, err = h.kubeConnector.ListPersistentVolumes(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to GetPersistentVolumes: %w", err)
+			return nil, fmt.Errorf("failed to ListPersistentVolumes: %w", err)
 		}
 	}
 
-	res, err := h.calculateClusterResources(ctx, h.kubeClient, clusterType, volumes)
+	res, err := h.calculateClusterResources(ctx, h.kubeConnector, clusterType, volumes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculateClusterResources: %w", err)
 	}
@@ -46,13 +47,13 @@ func (h *k8sHandler) GetKubernetesClusterResources(ctx context.Context) (*api.Ku
 }
 
 func (h *k8sHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error) {
-	clusterType, err := h.kubeClient.GetClusterType(ctx)
+	clusterType, err := h.kubeConnector.GetClusterType(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetClusterType: %w", err)
 	}
-	storagesList, err := h.kubeClient.GetStorageClasses(ctx)
+	storagesList, err := h.kubeConnector.ListStorageClasses(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to GetStorageClasses: %w", err)
+		return nil, fmt.Errorf("failed to ListStorageClasses: %w", err)
 	}
 
 	// convert k8s storage class to api storage class
@@ -72,7 +73,7 @@ func (h *k8sHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.Kuberne
 }
 
 func (h *k8sHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissions, error) {
-	cm, err := h.kubeClient.GetConfigMap(ctx, common.SystemNamespace, common.EverestRBACConfigMapName)
+	cm, err := h.kubeConnector.GetConfigMap(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestRBACConfigMapName})
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not get Everest RBAC ConfigMap"))
 	}
@@ -83,7 +84,7 @@ func (h *k8sHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissio
 }
 
 func (h *k8sHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
-	settings, err := h.kubeClient.GetEverestSettings(ctx)
+	settings, err := h.kubeConnector.GetEverestSettings(ctx)
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, err
 	}
@@ -115,7 +116,7 @@ func storageClasses(storagesList *storagev1.StorageClassList) []string {
 }
 
 func (h *k8sHandler) calculateClusterResources(
-	ctx context.Context, kubeClient *kubernetes.Kubernetes, clusterType kubernetes.ClusterType,
+	ctx context.Context, kubeClient kubernetes.KubernetesConnector, clusterType kubernetes.ClusterType,
 	volumes *corev1.PersistentVolumeList,
 ) (*api.KubernetesClusterResources, error) {
 	allCPUMillis, allMemoryBytes, allDiskBytes, err := kubeClient.GetAllClusterResources(

@@ -13,7 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package client
+package utils
 
-//go:generate ../../../bin/ifacemaker -f backup_storage.go -f catalog_source.go -f configmap.go -f client.go -f cluster_service_version.go -f ctl.go -f database_cluster.go -f database_cluster_backup.go -f database_cluster_restore.go -f database_engine.go -f deployment.go -f install_plan.go -f monitoring.go -f monitoring_config.go -f namespace.go -f olm.go -f node.go -f pod.go -f secret.go -f storage.go -f writer -s Client -i KubeClientConnector -p client -o kubeclient_interface.gen.go
-//go:generate ../../../bin/mockery --name=KubeClientConnector --case=snake --inpackage
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestParseValues(t *testing.T) {
+	in := map[string]interface{}{
+		"server": map[string]interface{}{
+			"tls": map[string]interface{}{
+				"enabled": true,
+			},
+			"service": map[string]interface{}{
+				"name": "test",
+				"port": 8080,
+			},
+		},
+	}
+
+	result, err := ParseValues(in)
+	require.NoError(t, err)
+	assert.Equal(t, result.Server.TLS.Enabled, true)
+	assert.Equal(t, result.Server.Service.Name, "test")
+	assert.Equal(t, result.Server.Service.Port, 8080)
+}

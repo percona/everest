@@ -9,9 +9,9 @@ import (
 )
 
 type validateHandler struct {
-	log        *zap.SugaredLogger
-	next       handlers.Handler
-	kubeClient *kubernetes.Kubernetes
+	log           *zap.SugaredLogger
+	next          handlers.Handler
+	kubeConnector kubernetes.KubernetesConnector
 }
 
 // New returns a new RBAC handler.
@@ -19,12 +19,12 @@ type validateHandler struct {
 //nolint:ireturn
 func New(
 	log *zap.SugaredLogger,
-	kubeClient *kubernetes.Kubernetes,
+	kubeConnector kubernetes.KubernetesConnector,
 ) handlers.Handler {
 	l := log.With("handler", "validator")
 	return &validateHandler{
-		log:        l,
-		kubeClient: kubeClient,
+		log:           l,
+		kubeConnector: kubeConnector,
 	}
 }
 
