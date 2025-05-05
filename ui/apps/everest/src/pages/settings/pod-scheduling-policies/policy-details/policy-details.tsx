@@ -17,7 +17,7 @@ import { AffinityRule } from 'shared-types/affinity.types';
 import { useQueryClient } from '@tanstack/react-query';
 import PodSchedulingPoliciesTable from 'components/pod-scheduling-policies-table';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac';
-import { EVEREST_SYSTEM_NS } from 'consts';
+import { EVEREST_READ_ONLY_FINALIZER, EVEREST_SYSTEM_NS } from 'consts';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
@@ -64,6 +64,9 @@ const PolicyDetails = () => {
   }
 
   const rules = dbPayloadToAffinityRules(policy);
+  const readOnlyPolicy = policy.metadata.finalizers?.includes(
+    EVEREST_READ_ONLY_FINALIZER
+  );
 
   const handleFormSubmit = (rule: AffinityRule) => {
     if (selectedRule.current) {
@@ -107,7 +110,7 @@ const PolicyDetails = () => {
       </Box>
       <PodSchedulingPoliciesTable
         rules={rules}
-        canDoChanges={canUpdate}
+        canDoChanges={canUpdate && !readOnlyPolicy}
         engineType={policy.spec.engineType}
         onRowClick={(rule) => {
           selectedRule.current = rule;

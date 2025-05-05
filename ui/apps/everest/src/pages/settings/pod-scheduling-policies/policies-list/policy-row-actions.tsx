@@ -9,9 +9,14 @@ import { EVEREST_SYSTEM_NS } from 'consts';
 type Props = {
   policyName: string;
   handleOnDeleteIconClick: () => void;
+  readOnly: boolean;
 };
 
-const PolicyRowActions = ({ policyName, handleOnDeleteIconClick }: Props) => {
+const PolicyRowActions = ({
+  policyName,
+  handleOnDeleteIconClick,
+  readOnly,
+}: Props) => {
   const { canDelete } = useRBACPermissions(
     'pod-scheduling-policies',
     `${EVEREST_SYSTEM_NS}/${policyName}`
@@ -30,7 +35,7 @@ const PolicyRowActions = ({ policyName, handleOnDeleteIconClick }: Props) => {
           <Visibility sx={{ mr: 1 }} />
           View details
         </MenuItem>,
-        canDelete ? (
+        canDelete && !readOnly ? (
           <MenuItem key="delete" onClick={handleOnDeleteIconClick}>
             <DeleteIcon sx={{ mr: 1 }} />
             Delete

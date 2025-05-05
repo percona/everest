@@ -122,6 +122,7 @@ export type PodSchedulingPolicyGetPayload = {
 export type PodSchedulingPolicy = {
   metadata: {
     name: string;
+    finalizers: string[];
   };
   spec: {
     engineType: DbEngineType;

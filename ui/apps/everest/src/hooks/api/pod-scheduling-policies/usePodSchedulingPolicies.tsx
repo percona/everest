@@ -24,7 +24,14 @@ export const usePodSchedulingPolicies = (
   return useQuery({
     queryKey: ['pod-scheduling-policies', dbType],
     queryFn: () => getPodSchedulingPolicies(dbType),
-    select: (data) => data.items || [],
+    select: (data) =>
+      (data.items || []).map((policy) => ({
+        ...policy,
+        metadata: {
+          ...policy.metadata,
+          finalizers: policy.metadata.finalizers || [],
+        },
+      })),
     ...options,
   });
 };

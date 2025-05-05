@@ -20,7 +20,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import EmptyState from 'components/empty-state';
 import { useRBACPermissions } from 'hooks/rbac';
 import PolicyRowActions from './policy-row-actions';
-import { EVEREST_SYSTEM_NS } from 'consts';
+import { EVEREST_READ_ONLY_FINALIZER, EVEREST_SYSTEM_NS } from 'consts';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -132,6 +132,9 @@ const PoliciesList = () => {
         renderRowActions={({ row }) => (
           <PolicyRowActions
             policyName={row.original.metadata.name}
+            readOnly={row.original.metadata.finalizers.includes(
+              EVEREST_READ_ONLY_FINALIZER
+            )}
             handleOnDeleteIconClick={() =>
               handleOnDeleteIconClick(row.original)
             }
