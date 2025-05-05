@@ -20,12 +20,15 @@ import { DbWizardFormFields } from 'consts.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import AdvancedConfigurationForm from 'components/cluster-form/advanced-configuration/advanced-configuration.tsx';
 import { StepProps } from 'pages/database-form/database-form.types.ts';
+import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode.ts';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const AdvancedConfigurations = ({
   loadingDefaultsForEdition,
 }: StepProps) => {
   const { watch } = useFormContext();
   const dbType = watch(DbWizardFormFields.dbType);
+  const mode = useDatabasePageMode();
 
   return (
     <>
@@ -35,7 +38,7 @@ export const AdvancedConfigurations = ({
         dbType={dbType}
         loadingDefaultsForEdition={loadingDefaultsForEdition}
         setDefaultsOnLoad
-        allowStorageClassChange
+        allowStorageClassChange={mode === WizardMode.New}
       />
     </>
   );
