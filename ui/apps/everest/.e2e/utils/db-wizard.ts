@@ -240,7 +240,8 @@ export const populateAdvancedConfig = async (
   }
   if (engineParameters != '' || addDefaultEngineParameters) {
     await page
-      .getByRole('checkbox', { name: 'engineParametersEnabled' })
+      .getByTestId('switch-input-engine-parameters-enabled-label')
+      .getByRole('checkbox')
       .check();
     if (engineParameters != '') {
       await page
