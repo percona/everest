@@ -14,13 +14,15 @@ import { Button, IconButton, Stack, Typography } from '@mui/material';
 import EmptyState from 'components/empty-state';
 import Add from '@mui/icons-material/Add';
 import Edit from '@mui/icons-material/EditOutlined';
+import Delete from '@mui/icons-material/DeleteOutlineOutlined';
 
 type Props = {
   rules: AffinityRule[];
   engineType: DbEngineType;
   viewOnly?: boolean;
   canDoChanges?: boolean;
-  onRowClick?: (rule: AffinityRule) => void;
+  onEditClick?: (rule: AffinityRule) => void;
+  onDeleteClick?: (rule: AffinityRule) => void;
   onAddRuleClick?: () => void;
 };
 
@@ -29,7 +31,8 @@ const PodSchedulingPoliciesTable = ({
   engineType,
   viewOnly = false,
   canDoChanges = false,
-  onRowClick = () => {},
+  onEditClick = () => {},
+  onDeleteClick = () => {},
   onAddRuleClick = () => {},
 }: Props) => {
   const columns = useMemo<MRT_ColumnDef<AffinityRule>[]>(
@@ -138,14 +141,24 @@ const PodSchedulingPoliciesTable = ({
         viewOnly || !canDoChanges
           ? undefined
           : ({ row }) => (
-              <IconButton
-                size="small"
-                aria-label="edit"
-                onClick={() => onRowClick(row.original)}
-                data-testid="edit-rule-button"
-              >
-                <Edit />
-              </IconButton>
+              <Stack direction="row">
+                <IconButton
+                  size="small"
+                  aria-label="edit"
+                  onClick={() => onEditClick(row.original)}
+                  data-testid="edit-rule-button"
+                >
+                  <Edit />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  aria-label="delete"
+                  onClick={() => onDeleteClick(row.original)}
+                  data-testid="delete-rule-button"
+                >
+                  <Delete />
+                </IconButton>
+              </Stack>
             )
       }
     />

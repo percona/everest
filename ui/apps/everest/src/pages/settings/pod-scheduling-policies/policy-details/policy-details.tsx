@@ -18,11 +18,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import PodSchedulingPoliciesTable from 'components/pod-scheduling-policies-table';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac';
 import { EVEREST_READ_ONLY_FINALIZER, EVEREST_SYSTEM_NS } from 'consts';
+import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
   const { name: policyName = '' } = useParams();
   const [openAffinityDialog, setOpenAffinityDialog] = useState(false);
+  const [openRemoveRuleDialog, setOpenRemoveRuleDialog] = useState(false);
   const selectedRule = useRef<AffinityRule>();
   const { mutate: updatePolicy, isPending: updatingPolicy } =
     useUpdatePodSchedulingPolicy();
@@ -84,6 +86,22 @@ const PolicyDetails = () => {
       },
     });
   };
+
+  const handleConfirmDelete = () => {
+    if (selectedRule.current) {
+      removeRuleInExistingPolicy(policy, selectedRule.current);
+      updatePolicy(policy, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: ['pod-scheduling-policy', policyName],
+          });
+          setOpenRemoveRuleDialog(false);
+          selectedRule.current = undefined;
+        },
+      });
+    }
+  };
+
   const handleOnAddClick = () => {
     selectedRule.current = undefined;
     setOpenAffinityDialog(true);
@@ -112,9 +130,13 @@ const PolicyDetails = () => {
         rules={rules}
         canDoChanges={canUpdate && !readOnlyPolicy}
         engineType={policy.spec.engineType}
-        onRowClick={(rule) => {
+        onEditClick={(rule) => {
           selectedRule.current = rule;
           setOpenAffinityDialog(true);
+        }}
+        onDeleteClick={(rule) => {
+          selectedRule.current = rule;
+          setOpenRemoveRuleDialog(true);
         }}
         onAddRuleClick={handleOnAddClick}
       />
@@ -127,6 +149,19 @@ const PolicyDetails = () => {
           handleSubmit={handleFormSubmit}
           defaultValues={selectedRule.current}
         />
+      )}
+      {openRemoveRuleDialog && (
+        <ConfirmDialog
+          open
+          cancelMessage="Cancel"
+          selectedId={''}
+          closeModal={() => setOpenRemoveRuleDialog(false)}
+          handleConfirm={handleConfirmDelete}
+          headerMessage="Delete Rule"
+          submitMessage="Delete"
+        >
+          Are you sure you want to delete this rule?
+        </ConfirmDialog>
       )}
     </>
   );
