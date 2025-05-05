@@ -44,7 +44,10 @@ func (k *Kubernetes) GetInstalledOperatorVersion(ctx context.Context, key ctrlcl
 		return nil, ErrOperatorNotInstalled
 	}
 
-	csv, err := k.GetClusterServiceVersion(ctx, types.NamespacedName{Name: sub.Status.InstalledCSV})
+	csv, err := k.GetClusterServiceVersion(ctx, types.NamespacedName{
+		Name:      sub.Status.InstalledCSV,
+		Namespace: sub.GetNamespace(),
+	})
 	if err != nil {
 		return nil, errors.Join(err, errors.New("could not retrieve cluster service version"))
 	}
