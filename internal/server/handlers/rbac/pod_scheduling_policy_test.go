@@ -45,20 +45,23 @@ func TestRBAC_ListPodSchedulingPolicies(t *testing.T) {
 				Items: []everestv1alpha1.PodSchedulingPolicy{
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      "everest-default-pxc",
-							Namespace: common.SystemNamespace,
+							Name:       "everest-default-pxc",
+							Namespace:  common.SystemNamespace,
+							Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
 						},
 					},
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      "everest-default-postgresql",
-							Namespace: common.SystemNamespace,
+							Name:       "everest-default-postgresql",
+							Namespace:  common.SystemNamespace,
+							Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
 						},
 					},
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      "everest-default-psmdb",
-							Namespace: common.SystemNamespace,
+							Name:       "everest-default-psmdb",
+							Namespace:  common.SystemNamespace,
+							Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
 						},
 					},
 				},
