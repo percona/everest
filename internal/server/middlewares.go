@@ -95,7 +95,9 @@ func (e *EverestServer) checkOperatorUpgradeState(next echo.HandlerFunc) echo.Ha
 	}
 }
 
-func securityHeaders(oidcProvider *oidc.ProviderConfig) echo.MiddlewareFunc {
+func (e *EverestServer) securityHeaders() echo.MiddlewareFunc {
+	oidcProvider := e.oidcProvider
+	useTLS := e.config.TLSCertsPath != ""
 	connectSrc := []string{CSPSelf}
 	if oidcProvider != nil {
 		issuer := strings.TrimRight(oidcProvider.Issuer, "/")
@@ -123,31 +125,31 @@ func securityHeaders(oidcProvider *oidc.ProviderConfig) echo.MiddlewareFunc {
 			cspbuilder.BaseURI:        {CSPSelf},
 			cspbuilder.ObjectSrc:      {CSPNone},
 			cspbuilder.FrameAncestors: {CSPNone},
-			// TODO (EVEREST-1180): Once we have native support for TLS, we
-			// should probably redirect all HTTP traffic to HTTPS and set the
-			// upgrade-insecure-requests directive.
-			// cspbuilder.UpgradeInsecureRequests: {},
-			cspbuilder.ConnectSrc: connectSrc,
+			cspbuilder.ConnectSrc:     connectSrc,
 		},
 	}
 
-	secureMiddleware := secure.New(secure.Options{
-		ContentSecurityPolicy:     cspBuilder.MustBuild(),
-		ContentTypeNosniff:        true,
-		CrossOriginEmbedderPolicy: "require-corp",
-		CrossOriginOpenerPolicy:   "same-origin",
-		CrossOriginResourcePolicy: "same-origin",
-		FrameDeny:                 true,
-		PermissionsPolicy:         PermissionsPolicy,
-		ReferrerPolicy:            "no-referrer",
-		// TODO (EVEREST-1180): Once we have native support for TLS, we should
-		// probably redirect all HTTP traffic to HTTPS.
-		// SSLRedirect:                   true,
-		// And we should set the HSTS header.
-		// STSIncludeSubdomains:          true,
-		// STSSeconds:                    31536000,
+	opts := secure.Options{
+		ContentTypeNosniff:            true,
+		CrossOriginEmbedderPolicy:     "require-corp",
+		CrossOriginOpenerPolicy:       "same-origin",
+		CrossOriginResourcePolicy:     "same-origin",
+		FrameDeny:                     true,
+		PermissionsPolicy:             PermissionsPolicy,
+		ReferrerPolicy:                "no-referrer",
 		XPermittedCrossDomainPolicies: "none",
-	})
+	}
+
+	if useTLS {
+		opts.SSLRedirect = true
+		opts.STSIncludeSubdomains = true
+		opts.STSSeconds = 31536000
+
+		cspBuilder.Directives[cspbuilder.UpgradeInsecureRequests] = []string{}
+	}
+	opts.ContentSecurityPolicy = cspBuilder.MustBuild()
+
+	secureMiddleware := secure.New(opts)
 
 	return echo.WrapMiddleware(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
