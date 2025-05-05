@@ -10,18 +10,19 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 )
 
 func (h *k8sHandler) ListBackupStorages(ctx context.Context, namespace string) (*everestv1alpha1.BackupStorageList, error) {
-	return h.kubeClient.ListBackupStorages(ctx, namespace)
+	return h.kubeConnector.ListBackupStorages(ctx, ctrlclient.InNamespace(namespace))
 }
 
 func (h *k8sHandler) GetBackupStorage(ctx context.Context, namespace, name string) (*everestv1alpha1.BackupStorage, error) {
-	return h.kubeClient.GetBackupStorage(ctx, namespace, name)
+	return h.kubeConnector.GetBackupStorage(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 }
 
 func (h *k8sHandler) CreateBackupStorage(ctx context.Context, namespace string, req *api.CreateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
@@ -45,9 +46,9 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, namespace string, 
 		Type:       corev1.SecretTypeOpaque,
 		StringData: backupSecretData(req.SecretKey, req.AccessKey),
 	}
-	_, err = h.kubeClient.CreateSecret(ctx, secret)
+	_, err = h.kubeConnector.CreateSecret(ctx, secret)
 	if k8serrors.IsAlreadyExists(err) {
-		if _, err := h.kubeClient.UpdateSecret(ctx, secret); err != nil {
+		if _, err := h.kubeConnector.UpdateSecret(ctx, secret); err != nil {
 			return nil, fmt.Errorf("failed to update secret: %w", err)
 		}
 	} else if err != nil {
@@ -74,10 +75,16 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, namespace string, 
 	if req.Description != nil {
 		bs.Spec.Description = *req.Description
 	}
-	created, err := h.kubeClient.CreateBackupStorage(ctx, bs)
+	created, err := h.kubeConnector.CreateBackupStorage(ctx, bs)
 	if err != nil {
 		// TODO: Move this logic to the operator
-		dErr := h.kubeClient.DeleteSecret(ctx, namespace, req.Name)
+		delObj := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      req.Name,
+				Namespace: namespace,
+			},
+		}
+		dErr := h.kubeConnector.DeleteSecret(ctx, delObj)
 		if dErr != nil {
 			return nil, errors.Join(err, dErr)
 		}
@@ -89,7 +96,7 @@ func (h *k8sHandler) CreateBackupStorage(ctx context.Context, namespace string, 
 
 func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, namespace, name string, req *api.UpdateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
 	if req.AccessKey != nil || req.SecretKey != nil {
-		_, err := h.kubeClient.UpdateSecret(ctx, &corev1.Secret{
+		_, err := h.kubeConnector.UpdateSecret(ctx, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: namespace,
@@ -100,7 +107,7 @@ func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, namespace, name st
 			return nil, fmt.Errorf("failed to update secret: %w", err)
 		}
 	}
-	bs, err := h.kubeClient.GetBackupStorage(ctx, namespace, name)
+	bs, err := h.kubeConnector.GetBackupStorage(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get backup storage: %w", err)
 	}
@@ -125,21 +132,35 @@ func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, namespace, name st
 	if req.ForcePathStyle != nil {
 		bs.Spec.ForcePathStyle = req.ForcePathStyle
 	}
-	return h.kubeClient.UpdateBackupStorage(ctx, bs)
+	return h.kubeConnector.UpdateBackupStorage(ctx, bs)
 }
 
 func (h *k8sHandler) DeleteBackupStorage(ctx context.Context, namespace, name string) error {
-	used, err := h.kubeClient.IsBackupStorageUsed(ctx, namespace, name)
+	used, err := h.kubeConnector.IsBackupStorageUsed(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
-		return fmt.Errorf("failed to check if backup storage is used: %w", err)
+		return fmt.Errorf("failed to check if backup storage='%s' in namespace='%s' is used: %w", name, namespace, err)
 	}
 	if used {
-		return fmt.Errorf("backup storage '%s' in namespace '%s' is in use", name, namespace)
+		return fmt.Errorf("backup storage='%s' in namespace='%s' is in use", name, namespace)
 	}
-	if err := h.kubeClient.DeleteBackupStorage(ctx, namespace, name); client.IgnoreNotFound(err) != nil {
+
+	delBSObj := &everestv1alpha1.BackupStorage{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	if err := h.kubeConnector.DeleteBackupStorage(ctx, delBSObj); ctrlclient.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete backup storage: %w", err)
 	}
-	if err := h.kubeClient.DeleteSecret(ctx, namespace, name); client.IgnoreNotFound(err) != nil {
+
+	delSecObj := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	if err := h.kubeConnector.DeleteSecret(ctx, delSecObj); ctrlclient.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete secret: %w", err)
 	}
 	return nil

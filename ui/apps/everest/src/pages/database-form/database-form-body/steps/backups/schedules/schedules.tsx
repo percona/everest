@@ -37,6 +37,7 @@ import { useDatabasePageDefaultValues } from '../../../../useDatabaseFormDefault
 import { PG_SLOTS_LIMIT } from 'consts';
 import { useRBACPermissions } from 'hooks/rbac';
 import { transformSchedulesIntoManageableSchedules } from 'utils/db';
+import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types';
 
 type Props = {
   disableCreateButton?: boolean;
@@ -49,7 +50,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
     defaultValues: { schedules: defaultDbSchedules },
   } = useDatabasePageDefaultValues(dbWizardMode);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
-  const [mode, setMode] = useState<'new' | 'edit'>('new');
+  const [mode, setMode] = useState<ScheduleWizardMode>(WizardMode.New);
   const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');
 
@@ -92,7 +93,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
       baseSchedules,
       k8sNamespace,
       canCreateBackups,
-      mode === 'new' ? true : canUpdateCluster
+      mode === WizardMode.New ? true : canUpdateCluster
     ).then((newSchedules) => {
       setSchedules(newSchedules);
     });
@@ -113,11 +114,11 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
   };
   const handleEdit = (name: string) => {
     setSelectedScheduleName(name);
-    setMode('edit');
+    setMode(WizardMode.Edit);
     setOpenScheduleModal(true);
   };
   const handleCreate = () => {
-    setMode('new');
+    setMode(WizardMode.New);
     setOpenScheduleModal(true);
   };
 

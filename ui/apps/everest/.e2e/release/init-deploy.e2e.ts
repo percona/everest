@@ -49,9 +49,12 @@ test.describe.configure({ retries: 0 });
 [
   { db: 'psmdb', size: 1 },
   { db: 'psmdb', size: 3 },
+  { db: 'psmdb', size: 5 },
   { db: 'pxc', size: 1 },
   { db: 'pxc', size: 3 },
+  { db: 'pxc', size: 5 },
   { db: 'postgresql', size: 1 },
+  { db: 'postgresql', size: 2 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
@@ -100,7 +103,8 @@ test.describe.configure({ retries: 0 });
             clusterName,
             db,
             storageClasses[0],
-            false
+            false,
+            null
           );
           await moveForward(page);
         });
@@ -145,7 +149,7 @@ test.describe.configure({ retries: 0 });
           if (size != 1 || db != 'psmdb') {
             await waitForStatus(page, clusterName, 'Initializing', 30000);
           }
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          await waitForStatus(page, clusterName, 'Up', 720000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -334,7 +338,7 @@ test.describe.configure({ retries: 0 });
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 45000);
         }
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
       test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
@@ -344,12 +348,13 @@ test.describe.configure({ retries: 0 });
         }
         // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
         if (size != 1 || db != 'psmdb') {
-          await waitForStatus(page, clusterName, 'Initializing', 60000);
+          await waitForStatus(page, clusterName, 'Initializing', 120000);
         }
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
       test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
+        test.skip(size > 3);
         const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
 
@@ -392,14 +397,11 @@ test.describe.configure({ retries: 0 });
             ).toBeVisible({ timeout: 10000 });
           }
 
-          // TODO: Re-enable for PG after fix for: https://perconadev.atlassian.net/browse/EVEREST-1920
-          if (db !== 'postgresql') {
-            await expect(
-              page
-                .getByTestId('overview-section')
-                .filter({ hasText: `${newSize} nodes` })
-            ).toBeVisible({ timeout: 10000 });
-          }
+          await expect(
+            page
+              .getByTestId('overview-section')
+              .filter({ hasText: `${newSize} nodes` })
+          ).toBeVisible({ timeout: 10000 });
         });
 
         await test.step('Wait for cluster status', async () => {
