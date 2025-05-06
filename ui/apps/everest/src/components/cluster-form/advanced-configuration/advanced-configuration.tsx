@@ -36,7 +36,7 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useEffect, useRef, useState } from 'react';
-import { DbWizardFormFields } from 'consts';
+import { DbWizardFormFields, EVEREST_READ_ONLY_FINALIZER } from 'consts';
 import AdvancedCard from 'components/advanced-card';
 import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
@@ -107,9 +107,12 @@ export const AdvancedConfigurationForm = ({
 
   useEffect(() => {
     if (setDefaultsOnLoad && policies.length) {
+      const defaultPolicy = policies.find((policy) =>
+        policy.metadata.finalizers.includes(EVEREST_READ_ONLY_FINALIZER)
+      );
       setValue(
         AdvancedConfigurationFields.podSchedulingPolicy,
-        policies[0].metadata.name
+        defaultPolicy?.metadata.name || policies[0].metadata.name
       );
     }
   }, [policies, setValue, setDefaultsOnLoad]);
