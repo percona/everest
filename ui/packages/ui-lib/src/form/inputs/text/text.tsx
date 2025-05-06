@@ -12,7 +12,7 @@ const TextInput = ({
   isRequired,
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
-  const { sx: textFieldPropsSx, ...restFieldProps } = textFieldProps;
+  const { sx: textFieldPropsSx, onChange, ...restFieldProps } = textFieldProps;
   return (
     <Controller
       name={name}
@@ -34,6 +34,20 @@ const TextInput = ({
             'data-testid': `text-input-${kebabize(name)}`,
             onWheel: (e) => {
               (e.target as HTMLElement).blur();
+            },
+            onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+              if (onChange) {
+                const modifiedEvent = {
+                  ...event,
+                  target: {
+                    ...event.target,
+                    value: onChange(event),
+                  },
+                };
+                field.onChange(modifiedEvent);
+              } else {
+                field.onChange(event);
+              }
             },
             ...restFieldProps?.inputProps,
           }}
