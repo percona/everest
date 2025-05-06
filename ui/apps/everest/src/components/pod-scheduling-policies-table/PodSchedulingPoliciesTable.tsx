@@ -106,6 +106,9 @@ const PodSchedulingPoliciesTable = ({
       emptyState={
         <EmptyState
           onButtonClick={onAddRuleClick}
+          buttonProps={{
+            startIcon: <Add />,
+          }}
           showCreationButton={canDoChanges}
           buttonText="Add rule"
           contentSlot={

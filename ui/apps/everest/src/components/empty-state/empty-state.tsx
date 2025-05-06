@@ -5,6 +5,7 @@ import {
   Link,
   useTheme,
   Stack,
+  ButtonProps,
 } from '@mui/material';
 import HelpIcon from '@mui/icons-material/Help';
 import { EmptyStateIcon } from '@percona/ui-lib';
@@ -34,6 +35,7 @@ type EmptyStateProps = {
   showCreationButton?: boolean;
   contentSlot?: React.ReactNode;
   buttonSlot?: React.ReactNode;
+  buttonProps?: ButtonProps;
   buttonText?: string;
   onButtonClick?: () => void;
 };
@@ -42,6 +44,7 @@ const EmptyState = ({
   showCreationButton = true,
   contentSlot,
   buttonSlot,
+  buttonProps,
   buttonText,
   onButtonClick = () => {},
 }: EmptyStateProps) => {
@@ -64,7 +67,11 @@ const EmptyState = ({
         {buttonSlot
           ? buttonSlot
           : showCreationButton && (
-              <Button variant="contained" onClick={onButtonClick}>
+              <Button
+                variant="contained"
+                onClick={onButtonClick}
+                {...buttonProps}
+              >
                 {buttonText || 'Create'}
               </Button>
             )}

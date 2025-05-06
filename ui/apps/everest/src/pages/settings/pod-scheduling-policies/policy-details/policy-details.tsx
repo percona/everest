@@ -169,7 +169,7 @@ const PolicyDetails = () => {
           submitMessage="Delete"
         >
           <Alert severity="warning">{Messages.policyInUse}</Alert>
-          <Typography px={1} py={2}>
+          <Typography px={1} pt={2}>
             Are you sure you want to delete this rule?
           </Typography>
         </ConfirmDialog>
