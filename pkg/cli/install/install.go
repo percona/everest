@@ -242,10 +242,24 @@ func (o *Installer) printPostInstallMessage(out io.Writer) {
 	message += output.Warn("NOTE: The initial password is stored in plain text. For security, change it immediately using the following command:\n")
 	message += fmt.Sprintf("\t%s", commandStyle.Render("everestctl accounts set-password --username admin"))
 
+	values := o.helmInstaller.GetParsedValues()
+
+	urlScheme := "http"
+	targetPort := values.Server.Service.Port
+	pfSrcPort := 8080
+	svcName := values.Server.Service.Name
+	if values.Server.TLS.Enabled {
+		urlScheme = "https"
+		pfSrcPort = 8443
+		targetPort = 443
+	}
+
+	webURL := fmt.Sprintf("%s://localhost:%d", urlScheme, pfSrcPort)
+	portFwdCmd := fmt.Sprintf("kubectl port-forward -n everest-system svc/%s %d:%d", svcName, pfSrcPort, targetPort)
 	message += fmt.Sprintf("\n\n%s", output.Numeric(count, "%s", titleStyle.Render("ACCESS THE EVEREST UI:")))
 	count++
-	message += "To access the web UI, set up port-forwarding and visit http://localhost:8080 in your browser:\n\n"
-	message += fmt.Sprintf("\t%s\n", commandStyle.Render("kubectl port-forward -n everest-system svc/everest 8080:8080"))
+	message += fmt.Sprintf("To access the web UI, set up port-forwarding and visit %s in your browser:\n\n", webURL)
+	message += fmt.Sprintf("\t%s\n", commandStyle.Render(portFwdCmd))
 
 	_, _ = fmt.Fprint(out, message)
 }
