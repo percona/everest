@@ -100,19 +100,23 @@ test.beforeAll(async ({ browser, request }) => {
 });
 
 test.afterAll(async ({ request }) => {
-  await request.delete(`/v1/pod-scheduling-policies/${PG_POLICY_NAME}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
-    },
-  });
-  await request.delete(`/v1/pod-scheduling-policies/${PSMDB_POLICY_NAME}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
-    },
-  });
   await deleteDbClusterFn(request, DB_CLUSTER_NAME);
+  const promises = [
+    request.delete(`/v1/pod-scheduling-policies/${PG_POLICY_NAME}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
+      },
+    }),
+    request.delete(`/v1/pod-scheduling-policies/${PSMDB_POLICY_NAME}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${await getTokenFromLocalStorage()}`,
+      },
+    }),
+  ];
+
+  const response = await Promise.all(promises);
 });
 
 test.describe('Create rules', () => {
