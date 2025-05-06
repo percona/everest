@@ -1,4 +1,4 @@
-import { Box, Button, Skeleton, Typography } from '@mui/material';
+import { Alert, Box, Button, Skeleton, Typography } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { SettingsTabs } from 'pages/settings/settings.types';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -17,8 +17,13 @@ import { AffinityRule } from 'shared-types/affinity.types';
 import { useQueryClient } from '@tanstack/react-query';
 import PodSchedulingPoliciesTable from 'components/pod-scheduling-policies-table';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac';
-import { EVEREST_READ_ONLY_FINALIZER, EVEREST_SYSTEM_NS } from 'consts';
+import {
+  EVEREST_POLICY_IN_USE_FINALIZER,
+  EVEREST_READ_ONLY_FINALIZER,
+  EVEREST_SYSTEM_NS,
+} from 'consts';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
+import { Messages } from '../pod-scheduling-policies.messages';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
@@ -144,6 +149,9 @@ const PolicyDetails = () => {
         <AffinityFormDialog
           isOpen
           submitting={updatingPolicy}
+          showInUseWarning={policy.metadata.finalizers.includes(
+            EVEREST_POLICY_IN_USE_FINALIZER
+          )}
           dbType={dbEngineToDbType(policy.spec.engineType)}
           handleClose={() => setOpenAffinityDialog(false)}
           handleSubmit={handleFormSubmit}
@@ -160,7 +168,10 @@ const PolicyDetails = () => {
           headerMessage="Delete Rule"
           submitMessage="Delete"
         >
-          Are you sure you want to delete this rule?
+          <Alert severity="warning">{Messages.policyInUse}</Alert>
+          <Typography px={1} py={2}>
+            Are you sure you want to delete this rule?
+          </Typography>
         </ConfirmDialog>
       )}
     </>

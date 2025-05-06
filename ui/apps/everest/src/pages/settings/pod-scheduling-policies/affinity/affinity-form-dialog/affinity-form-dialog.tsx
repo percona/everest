@@ -11,6 +11,7 @@ type Props = {
   dbType: DbType;
   defaultValues?: AffinityRule;
   submitting?: boolean;
+  showInUseWarning?: boolean;
   handleClose?: () => void;
   handleSubmit?: (values: AffinityRule) => void;
 };
@@ -20,6 +21,7 @@ export const AffinityFormDialog = ({
   dbType,
   defaultValues,
   submitting,
+  showInUseWarning = false,
   handleClose = () => {},
   handleSubmit = () => {},
 }: Props) => {
@@ -33,13 +35,13 @@ export const AffinityFormDialog = ({
       closeModal={handleClose}
       headerMessage={isEditing ? Messages.editRule : Messages.addRule}
       onSubmit={handleSubmit}
-      submitMessage={isEditing ? Messages.editRule : Messages.addRule}
+      submitMessage={isEditing ? 'Save' : 'Add'}
       //@ts-ignore
       defaultValues={defaultValues ?? affinityModalDefaultValues()}
       size="XXL"
       dataTestId={`affinity-form`}
     >
-      <AffinityForm dbType={dbType} />
+      <AffinityForm dbType={dbType} showInUseWarning={showInUseWarning} />
     </FormDialog>
   );
 };

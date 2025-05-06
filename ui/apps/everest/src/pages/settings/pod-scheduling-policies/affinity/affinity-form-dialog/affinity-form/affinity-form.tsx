@@ -13,19 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, Typography } from '@mui/material';
+import { Alert, Box, Typography } from '@mui/material';
 import { useEffect } from 'react';
 import { AffinityPriority, AffinityType } from 'shared-types/affinity.types';
 import { AffinityFormFields } from './affinity-form.types';
 import { useFormContext } from 'react-hook-form';
 import { RuleDetailsSection, RuleTypeSection } from './sections';
 import { DbType } from '@percona/types';
+import { Messages } from '../../../pod-scheduling-policies.messages';
 
 type Props = {
   dbType: DbType;
+  showInUseWarning?: boolean;
 };
 
-export const AffinityForm = ({ dbType }: Props) => {
+export const AffinityForm = ({ dbType, showInUseWarning = false }: Props) => {
   const { watch, resetField, trigger } = useFormContext();
   const [operator, key, priority, type] = watch([
     AffinityFormFields.operator,
@@ -66,6 +68,11 @@ export const AffinityForm = ({ dbType }: Props) => {
         disableValue={!key}
         affinityType={type}
       />
+      {showInUseWarning && (
+        <Alert sx={{ mt: 2 }} severity="warning">
+          {Messages.policyInUse}
+        </Alert>
+      )}
     </>
   );
 };
