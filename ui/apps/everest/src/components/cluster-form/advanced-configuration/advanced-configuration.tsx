@@ -33,7 +33,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
+import InfoIcon from '@mui/icons-material/InfoOutlined';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useEffect, useRef, useState } from 'react';
 import { DbWizardFormFields, EVEREST_READ_ONLY_FINALIZER } from 'consts';
