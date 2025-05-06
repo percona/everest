@@ -24,6 +24,7 @@ export interface FormDialogProps<T extends FieldValues> {
   size?: 'L' | 'XL' | 'XXL' | 'XXXL';
   subHead2?: string;
   submitting?: boolean;
+  disableSubmit?: boolean;
   dataTestId?: string;
   scroll?: DialogProps['scroll'];
 }
