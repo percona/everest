@@ -58,7 +58,7 @@ describe('AffinityFormDialog', () => {
       render(<Wrapper dbType={DbType.Postresql} />);
 
       await waitFor(() =>
-        expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled()
+        expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled()
       );
       selectTypeOption('Node affinity');
 
@@ -68,7 +68,7 @@ describe('AffinityFormDialog', () => {
       expect(
         screen.queryByTestId('text-input-topology-key')
       ).not.toBeInTheDocument();
-      expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled();
+      expect(screen.getByTestId('form-dialog-add')).toBeDisabled();
       expect(screen.getByTestId('text-input-key')).toHaveValue('');
 
       fireEvent.change(screen.getByTestId('text-input-key'), {
@@ -81,7 +81,7 @@ describe('AffinityFormDialog', () => {
 
       expect(screen.getByTestId('select-input-operator')).toHaveValue('');
       expect(screen.getByTestId('select-input-operator')).toBeInvalid();
-      expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled();
+      expect(screen.getByTestId('form-dialog-add')).toBeDisabled();
 
       selectOperatorOption('exists');
 
@@ -89,7 +89,7 @@ describe('AffinityFormDialog', () => {
         expect(screen.getByTestId('select-input-operator')).not.toBeInvalid()
       );
       expect(screen.getByTestId('select-input-operator')).toHaveValue('Exists');
-      expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled();
+      expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled();
     });
 
     test('Mandatory value if operator is "In" or "NotIn"', async () => {
@@ -101,7 +101,7 @@ describe('AffinityFormDialog', () => {
       selectOperatorOption('in');
 
       await waitFor(() =>
-        expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled()
+        expect(screen.getByTestId('form-dialog-add')).toBeDisabled()
       );
 
       fireEvent.change(screen.getByTestId('text-input-values'), {
@@ -109,7 +109,7 @@ describe('AffinityFormDialog', () => {
       });
 
       await waitFor(() =>
-        expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled()
+        expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled()
       );
 
       fireEvent.change(screen.getByTestId('text-input-values'), {
@@ -117,13 +117,13 @@ describe('AffinityFormDialog', () => {
       });
 
       await waitFor(() =>
-        expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled()
+        expect(screen.getByTestId('form-dialog-add')).toBeDisabled()
       );
 
       selectOperatorOption('not in');
 
       await waitFor(() =>
-        expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled()
+        expect(screen.getByTestId('form-dialog-add')).toBeDisabled()
       );
 
       fireEvent.change(screen.getByTestId('text-input-values'), {
@@ -131,7 +131,7 @@ describe('AffinityFormDialog', () => {
       });
 
       await waitFor(() =>
-        expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled()
+        expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled()
       );
     });
   });
@@ -143,19 +143,19 @@ describe('AffinityFormDialog', () => {
         selectTypeOption(type);
 
         await waitFor(() =>
-          expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled()
+          expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled()
         );
         fireEvent.change(screen.getByTestId('text-input-topology-key'), {
           target: { value: '' },
         });
         await waitFor(() =>
-          expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled()
+          expect(screen.getByTestId('form-dialog-add')).toBeDisabled()
         );
         fireEvent.change(screen.getByTestId('text-input-topology-key'), {
           target: { value: 'toplogy-key' },
         });
         await waitFor(() =>
-          expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled()
+          expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled()
         );
       });
 
@@ -163,30 +163,30 @@ describe('AffinityFormDialog', () => {
         render(<Wrapper dbType={DbType.Postresql} />);
         selectTypeOption(type);
         await waitFor(() =>
-          expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled()
+          expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled()
         );
         expect(screen.getByTestId('select-input-operator')).toBeDisabled();
         fireEvent.change(screen.getByTestId('text-input-key'), {
           target: { value: 'my-key' },
         });
         await waitFor(() =>
-          expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled()
+          expect(screen.getByTestId('form-dialog-add')).toBeDisabled()
         );
         expect(screen.getByTestId('select-input-operator')).not.toBeDisabled();
         expect(screen.getByTestId('select-input-operator')).toBeInvalid();
         selectOperatorOption('exists');
         await waitFor(() =>
-          expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled()
+          expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled()
         );
         selectOperatorOption('in');
         await waitFor(() =>
-          expect(screen.getByTestId('form-dialog-add-rule')).toBeDisabled()
+          expect(screen.getByTestId('form-dialog-add')).toBeDisabled()
         );
         fireEvent.change(screen.getByTestId('text-input-values'), {
           target: { value: 'val1' },
         });
         await waitFor(() =>
-          expect(screen.getByTestId('form-dialog-add-rule')).not.toBeDisabled()
+          expect(screen.getByTestId('form-dialog-add')).not.toBeDisabled()
         );
       });
     });

@@ -66,26 +66,6 @@ const fillAffinityRuleForm = async (
   }
 };
 
-const addAffinityRule = async (
-  page: Page,
-  affinityRuleFormArgs: AffinityRuleFormArgs
-) => {
-  await page.getByTestId('add-affinity-rule-button').click();
-  await fillAffinityRuleForm(page, affinityRuleFormArgs);
-  await page.getByTestId('form-dialog-add-rule').click();
-};
-
-const editAffinityRule = async (
-  page: Page,
-  ruleIdx: number,
-  affinityRuleFormArgs: AffinityRuleFormArgs
-) => {
-  const rule = page.getByTestId('editable-item').nth(ruleIdx);
-  await rule.getByTestId('edit-editable-item-button-affinity-rule').click();
-  await fillAffinityRuleForm(page, affinityRuleFormArgs);
-  await page.getByTestId('form-dialog-edit-rule').click();
-};
-
 const PG_POLICY_NAME = 'policy-pg-test';
 const PSMDB_POLICY_NAME = 'policy-psmdb-test';
 const DB_CLUSTER_NAME = 'policy-test-cluster';
@@ -155,7 +135,7 @@ test.describe('Create rules', () => {
       page.getByRole('option', { name: 'Config Server', exact: true })
     ).not.toBeVisible();
     await page.getByRole('option', { name: 'exists', exact: true }).click();
-    await page.getByTestId('form-dialog-add-rule').click();
+    await page.getByTestId('form-dialog-add').click();
     const row = page
       .locator('.MuiTableRow-root')
       .filter({ hasText: 'PG Bouncer' });
@@ -186,7 +166,7 @@ test.describe('Create rules', () => {
     await page.getByTestId('select-operator-button').click();
     await page.getByRole('option', { name: 'in', exact: true }).click();
     await page.getByTestId('text-input-values').fill('my-value');
-    await page.getByTestId('form-dialog-add-rule').click();
+    await page.getByTestId('form-dialog-add').click();
     const row = page
       .locator('.MuiTableRow-root')
       .filter({ hasText: 'Config Server' });
@@ -207,7 +187,7 @@ test.describe('Create rules', () => {
       .click();
     await page.getByRole('table').waitFor();
     await page.getByTestId('add-rule-button').click();
-    await page.getByTestId('form-dialog-add-rule').click();
+    await page.getByTestId('form-dialog-add').click();
     const row = page
       .locator('.MuiTableRow-root')
       .filter({ hasText: 'DB Node' });
