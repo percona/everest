@@ -15,7 +15,7 @@ export interface DBClusterComponent {
   status: COMPONENT_STATUS;
   name: string;
   type: string;
-  started: string;
+  started?: string;
   restarts: number;
   ready: string;
   containers: Container[];
