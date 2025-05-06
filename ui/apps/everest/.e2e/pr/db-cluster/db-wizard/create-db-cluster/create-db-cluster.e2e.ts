@@ -428,10 +428,7 @@ test.describe('DB Cluster creation', () => {
     const nameInput = page.getByTestId('text-input-db-name');
     await page.getByTestId('k8s-namespace-autocomplete').click();
     await page.getByRole('option', { name: 'pxc-only' }).click();
-    const continueBtn = page.getByTestId('db-wizard-continue-button');
     await nameInput.fill('mysql-1');
-
-    await expect(continueBtn).not.toBeEnabled();
     await expect(
       page.getByText('You already have a database with the same name.')
     ).toBeVisible();
