@@ -22,6 +22,7 @@ import { ScheduleModalContext } from './backups.context.ts';
 import { NoStoragesMessage } from './no-storages-message/no-storages-message';
 import { ScheduledBackupModal } from './scheduled-backup-modal/scheduled-backup-modal';
 import { OnDemandBackupModal } from './on-demand-backup-modal/on-demand-backup-modal';
+import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types.ts';
 
 export const Backups = () => {
   const { dbClusterName = '', namespace = '' } = useParams();
@@ -30,7 +31,7 @@ export const Backups = () => {
   const { data: backupStorages = [], isLoading } =
     useBackupStoragesByNamespace(namespace);
 
-  const [mode, setMode] = useState<'new' | 'edit'>('new');
+  const [mode, setMode] = useState<ScheduleWizardMode>(WizardMode.New);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [openOnDemandModal, setOpenOnDemandModal] = useState(false);
   const [selectedScheduleName, setSelectedScheduleName] = useState<string>('');

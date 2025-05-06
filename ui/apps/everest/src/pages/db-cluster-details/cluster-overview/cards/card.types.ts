@@ -43,6 +43,7 @@ export type ConnectionDetailsOverviewCardProps = {
 export type AdvancedConfigurationOverviewCardProps = {
   externalAccess: boolean;
   parameters: boolean;
+  storageClass: string;
 } & OverviewCardProps;
 
 export type MonitoringConfigurationOverviewCardProps = {
@@ -59,7 +60,7 @@ export type DatabaseDetailsOverviewCardProps =
 export type ResourcesDetailsOverviewProps = {
   dbCluster: DbCluster;
   sharding: DbCluster['spec']['sharding'];
-  canUpdateDb: boolean;
+  canUpdate: boolean;
 } & OverviewCardProps;
 
 export type BackupsDetailsOverviewCardProps = {

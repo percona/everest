@@ -18,6 +18,7 @@ import { Messages } from './monitoring.messages.ts';
 import ActionableAlert from 'components/actionable-alert';
 import { convertMonitoringInstancesPayloadToTableFormat } from 'pages/settings/monitoring-endpoints/monitoring-endpoints.utils.ts';
 import { useRBACPermissions } from 'hooks/rbac';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
 export const Monitoring = () => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
@@ -103,22 +104,24 @@ export const Monitoring = () => {
   useEffect(() => {
     const selectedInstance = getValues(DbWizardFormFields.monitoringInstance);
 
-    if (mode === 'new') {
+    if (mode === WizardMode.New) {
       if (monitoring && availableMonitoringInstances?.length) {
         setValue(
           DbWizardFormFields.monitoringInstance,
-          availableMonitoringInstances[0].name
+          availableMonitoringInstances[0].name,
+          { shouldValidate: true }
         );
       }
     }
     if (
-      mode === 'restoreFromBackup' &&
+      mode === WizardMode.Restore &&
       availableMonitoringInstances?.length &&
       !selectedInstance
     ) {
       setValue(
         DbWizardFormFields.monitoringInstance,
-        availableMonitoringInstances[0].name
+        availableMonitoringInstances[0].name,
+        { shouldValidate: true }
       );
     }
   }, [monitoring]);

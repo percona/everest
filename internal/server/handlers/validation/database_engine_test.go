@@ -92,42 +92,63 @@ func TestValidateDBEngineUpgrade(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
 		name       string
+		engineType everestv1alpha1.EngineType
 		oldVersion string
 		newVersion string
 		err        error
 	}{
 		{
 			name:       "invalid version",
+			engineType: everestv1alpha1.DatabaseEnginePXC,
 			oldVersion: "1.0.0",
 			newVersion: "1!00;",
 			err:        errInvalidVersion,
 		},
 		{
-			name:       "major upgrade",
+			name:       "major upgrade PXC",
+			engineType: everestv1alpha1.DatabaseEnginePXC,
 			oldVersion: "8.0.22",
 			newVersion: "9.0.0",
 			err:        errDBEngineMajorVersionUpgrade,
 		},
 		{
+			name:       "major upgrade PSMDB",
+			engineType: everestv1alpha1.DatabaseEnginePSMDB,
+			oldVersion: "8.0.22",
+			newVersion: "9.0.0",
+			err:        nil,
+		},
+		{
+			name:       "skipping major upgrade PSMDB",
+			engineType: everestv1alpha1.DatabaseEnginePSMDB,
+			oldVersion: "8.0.22",
+			newVersion: "10.0.0",
+			err:        errDBEngineMajorUpgradeNotSeq,
+		},
+		{
 			name:       "downgrade",
+			engineType: everestv1alpha1.DatabaseEnginePXC,
 			oldVersion: "8.0.22",
 			newVersion: "8.0.21",
 			err:        errDBEngineDowngrade,
 		},
 		{
 			name:       "valid upgrade",
+			engineType: everestv1alpha1.DatabaseEnginePXC,
 			oldVersion: "8.0.22",
 			newVersion: "8.0.23",
 			err:        nil,
 		},
 		{
 			name:       "valid upgrade (with 'v' prefix)",
+			engineType: everestv1alpha1.DatabaseEnginePXC,
 			oldVersion: "v8.0.22",
 			newVersion: "v8.0.23",
 			err:        nil,
 		},
 		{
 			name:       "major version downgrade",
+			engineType: everestv1alpha1.DatabaseEnginePXC,
 			oldVersion: "16.1",
 			newVersion: "15.5",
 			err:        errDBEngineDowngrade,
@@ -136,7 +157,7 @@ func TestValidateDBEngineUpgrade(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := validateDBEngineVersionUpgrade(tc.newVersion, tc.oldVersion)
+			err := validateDBEngineVersionUpgrade(tc.engineType, tc.newVersion, tc.oldVersion)
 			assert.ErrorIs(t, err, tc.err)
 		})
 	}

@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
 	"golang.org/x/mod/semver"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -30,6 +33,15 @@ func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, db *everest
 	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
+
+	if currentDB, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: db.GetNamespace(), Name: db.GetName()}); err != nil {
+		if !k8serrors.IsNotFound(err) {
+			return nil, fmt.Errorf("failed to check if DB cluster with name already exists in namespace: %w", err)
+		}
+	} else if currentDB.GetName() != "" {
+		return nil, fmt.Errorf("db cluster with name '%s' already exists in namespace '%s'", db.GetName(), db.GetNamespace())
+	}
+
 	return h.next.CreateDatabaseCluster(ctx, db)
 }
 
@@ -46,7 +58,7 @@ func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, db *everest
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
-	current, err := h.kubeClient.GetDatabaseCluster(ctx, db.GetNamespace(), db.GetName())
+	current, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: db.GetNamespace(), Name: db.GetName()})
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetDatabaseCluster: %w", err)
 	}
@@ -89,7 +101,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 	if !ok {
 		return errors.New("unsupported database engine")
 	}
-	engine, err := h.kubeClient.GetDatabaseEngine(ctx, namespace, engineName)
+	engine, err := h.kubeConnector.GetDatabaseEngine(ctx, types.NamespacedName{Namespace: namespace, Name: engineName})
 	if err != nil {
 		return err
 	}
@@ -119,7 +131,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 		if err = h.validatePGSchedulesRestrictions(ctx, databaseCluster); err != nil {
 			return err
 		}
-		if err = validatePGReposForAPIDB(ctx, databaseCluster, h.kubeClient.ListDatabaseClusterBackups); err != nil {
+		if err = validatePGReposForAPIDB(ctx, databaseCluster, h.kubeConnector.ListDatabaseClusterBackups); err != nil {
 			return err
 		}
 	}
@@ -327,7 +339,12 @@ func (h *validateHandler) validateBackupStoragesFor(
 		if databaseCluster.Spec.Backup.PITR.BackupStorageName == nil || *databaseCluster.Spec.Backup.PITR.BackupStorageName == "" {
 			return errPitrNoBackupStorageName
 		}
-		storage, err := h.kubeClient.GetBackupStorage(ctx, namespace, *databaseCluster.Spec.Backup.PITR.BackupStorageName)
+		storage, err := h.kubeConnector.GetBackupStorage(ctx,
+			types.NamespacedName{
+				Namespace: namespace,
+				Name:      *databaseCluster.Spec.Backup.PITR.BackupStorageName,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -378,7 +395,7 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 func (h *validateHandler) validatePGSchedulesRestrictions(ctx context.Context, newDbc *everestv1alpha1.DatabaseCluster) error {
 	dbcName := newDbc.GetName()
 	dbcNamespace := newDbc.GetNamespace()
-	existingDbc, err := h.kubeClient.GetDatabaseCluster(ctx, dbcNamespace, dbcName)
+	existingDbc, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: dbcNamespace, Name: dbcName})
 	if err != nil {
 		// if there was no such cluster before (creating cluster) - check only the duplicates for storages
 		if k8serrors.IsNotFound(err) {
@@ -427,7 +444,7 @@ func checkSchedulesChanges(oldDbc, newDbc *everestv1alpha1.DatabaseCluster) erro
 func validatePGReposForAPIDB(
 	ctx context.Context,
 	dbc *everestv1alpha1.DatabaseCluster,
-	getBackupsFunc func(context.Context, string, metav1.ListOptions) (*everestv1alpha1.DatabaseClusterBackupList, error),
+	getBackupsFunc func(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterBackupList, error),
 ) error {
 	bs := make(map[string]bool)
 	for _, shed := range dbc.Spec.Backup.Schedules {
@@ -437,9 +454,7 @@ func validatePGReposForAPIDB(
 	dbcName := dbc.GetName()
 	dbcNamespace := dbc.GetNamespace()
 
-	backups, err := getBackupsFunc(ctx, dbcNamespace, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("clusterName=%s", dbcName),
-	})
+	backups, err := getBackupsFunc(ctx, ctrlclient.InNamespace(dbcNamespace), ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: dbcName})
 	if err != nil {
 		return err
 	}
@@ -522,10 +537,14 @@ func validateMetadata(obj metav1.Object) error {
 func (h *validateHandler) validateDatabaseClusterOnUpdate(
 	dbc, oldDB *everestv1alpha1.DatabaseCluster,
 ) error {
+	if !isDatabaseClusterUpdateAllowed(oldDB) {
+		return fmt.Errorf("db operations are not allowed in current db state: %s", oldDB.Status.Status)
+	}
+
 	newVersion := dbc.Spec.Engine.Version
 	oldVersion := oldDB.Spec.Engine.Version
 	if newVersion != "" && newVersion != oldVersion {
-		if err := validateDBEngineVersionUpgrade(newVersion, oldVersion); err != nil {
+		if err := validateDBEngineVersionUpgrade(oldDB.Spec.Engine.Type, newVersion, oldVersion); err != nil {
 			return err
 		}
 	}
@@ -537,11 +556,6 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 		//
 		// Once it is supported by all operators we can revert this.
 		return fmt.Errorf("cannot scale down %d node cluster to 1. The operation is not supported", oldDB.Spec.Engine.Replicas)
-	}
-
-	// Do not allow updating storage size.
-	if dbc.Spec.Engine.Storage.Size.Cmp(oldDB.Spec.Engine.Storage.Size) != 0 {
-		return errCannotChangeStorageSize
 	}
 
 	// Do not allow shrinking storage size.
@@ -556,7 +570,7 @@ func (h *validateHandler) validateDatabaseClusterOnUpdate(
 }
 
 // validateDBEngineVersionUpgrade validates if upgrade of DBEngine from `oldVersion` to `newVersion` is allowed.
-func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
+func validateDBEngineVersionUpgrade(engineType everestv1alpha1.EngineType, newVersion, oldVersion string) error {
 	// Ensure a "v" prefix so that it is a valid semver.
 	if !strings.HasPrefix(newVersion, "v") {
 		newVersion = "v" + newVersion
@@ -574,14 +588,20 @@ func validateDBEngineVersionUpgrade(newVersion, oldVersion string) error {
 	if semver.Compare(newVersion, oldVersion) < 0 {
 		return errDBEngineDowngrade
 	}
-	// We will not allow major upgrades.
-	// Major upgrades are handled differently for different operators, so for now we simply won't allow it.
-	// For example:
-	// - PXC operator allows major upgrades.
-	// - PSMDB operator allows major upgrades, but we need to handle FCV.
-	// - PG operator does not allow major upgrades.
-	if semver.Major(oldVersion) != semver.Major(newVersion) {
+	// We will not allow major upgrades for PXC and PG.
+	// - PXC: Major upgrades are not supported.
+	// - PG: Major upgrades are in technical preview. https://docs.percona.com/percona-operator-for-postgresql/2.0/update.html#major-version-upgrade
+	if engineType != everestv1alpha1.DatabaseEnginePSMDB && semver.Major(oldVersion) != semver.Major(newVersion) {
 		return errDBEngineMajorVersionUpgrade
+	}
+
+	// It's fine to ignore the errors here because we have already validated the version.
+	newMajorInt, _ := strconv.Atoi(semver.Major(newVersion)[1:])
+	oldMajorInt, _ := strconv.Atoi(semver.Major(oldVersion)[1:])
+	// We will not allow major upgrades if the versions are not sequential.
+	if newMajorInt-oldMajorInt > 1 {
+		fmt.Println("errDBEngineMajorUpgradeNotSeq")
+		return errDBEngineMajorUpgradeNotSeq
 	}
 	return nil
 }
@@ -597,4 +617,26 @@ func validateShardingOnUpdate(dbc, oldDB *everestv1alpha1.DatabaseCluster) error
 		return errDisableShardingNotSupported
 	}
 	return validateSharding(dbc)
+}
+
+// isDatabaseClusterUpdateAllowed checks if the requested change is allowed for the database cluster.
+// The returns false in case DB cluster is in one of the following states:
+// - restoring
+// - deleting
+// - upgrading
+// - resizingVolumes
+func isDatabaseClusterUpdateAllowed(currentDB *everestv1alpha1.DatabaseCluster) bool {
+	if currentDB == nil {
+		return false
+	}
+
+	switch currentDB.Status.Status {
+	case everestv1alpha1.AppStateRestoring,
+		everestv1alpha1.AppStateDeleting,
+		everestv1alpha1.AppStateUpgrading,
+		everestv1alpha1.AppStateResizingVolumes:
+		return false
+	}
+
+	return true
 }
