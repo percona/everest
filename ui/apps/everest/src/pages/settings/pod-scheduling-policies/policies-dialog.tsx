@@ -9,26 +9,34 @@ import { DbEngineType } from '@percona/types';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { rfc_123_schema } from 'utils/common-validation';
 
-const schema = z.object({
-  name: rfc_123_schema({
-    fieldName: 'name',
-    maxLength: 63,
-  }),
-  type: z.nativeEnum(DbEngineType).refine((val) => val !== undefined),
-});
+const schema = (existingPolicies: PodSchedulingPolicy[]) =>
+  z.object({
+    name: rfc_123_schema({
+      fieldName: 'name',
+      maxLength: 63,
+    }).refine((val) => {
+      const isNameTaken = existingPolicies.some(
+        (policy) => policy.metadata.name === val
+      );
+      return !isNameTaken;
+    }, 'Policy name already exists'),
+    type: z.nativeEnum(DbEngineType).refine((val) => val !== undefined),
+  });
 
 type Props = {
   open: boolean;
   policy?: PodSchedulingPolicy;
+  existingPolicies?: PodSchedulingPolicy[];
   submitting?: boolean;
   onClose: () => void;
-  onSubmit: (data: z.infer<typeof schema>) => void;
+  onSubmit: (data: z.infer<ReturnType<typeof schema>>) => void;
 };
 
 const PoliciesDialog = ({
   open,
   policy,
   submitting,
+  existingPolicies = [],
   onClose,
   onSubmit,
 }: Props) => {
@@ -43,7 +51,7 @@ const PoliciesDialog = ({
       headerMessage={isEditing ? 'Edit policy details' : 'Create policy'}
       onSubmit={onSubmit}
       submitMessage={isEditing ? 'Save' : 'Create'}
-      schema={schema}
+      schema={schema(existingPolicies)}
       defaultValues={{
         name: policy?.metadata.name || '',
         type:

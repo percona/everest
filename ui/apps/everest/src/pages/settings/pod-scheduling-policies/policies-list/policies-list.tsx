@@ -148,6 +148,7 @@ const PoliciesList = () => {
       {dialogOpen && (
         <PoliciesDialog
           open
+          existingPolicies={podSchedulingPolicies}
           onClose={() => setDialogOpen(false)}
           onSubmit={handleOnCreatePolicy}
         />
