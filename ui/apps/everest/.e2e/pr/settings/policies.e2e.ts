@@ -195,7 +195,7 @@ test.describe('Create rules', () => {
     await page.getByTestId('text-input-key').fill('edit-rule-key');
     await page.getByTestId('select-operator-button').click();
     await page.getByRole('option', { name: 'exists', exact: true }).click();
-    await page.getByTestId('form-dialog-edit-rule').click();
+    await page.getByTestId('form-dialog-save').click();
     await expect(
       row.getByText('kubernetes.io/hostname | edit-rule-key | Exists')
     ).toBeVisible();
