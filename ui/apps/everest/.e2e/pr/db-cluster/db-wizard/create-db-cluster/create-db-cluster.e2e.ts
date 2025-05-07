@@ -18,7 +18,7 @@ import {
   getEnginesLatestRecommendedVersions,
   getEnginesVersions,
 } from '@e2e/utils/database-engines';
-import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { advancedConfigurationStepCheck } from './steps/advanced-configuration-step';
 import { backupsStepCheck } from './steps/backups-step';
@@ -406,5 +406,33 @@ test.describe('DB Cluster creation', () => {
     expect(await monitoringPreviewContent.textContent()).toBe('Disabled');
     await expect(page.getByText('Backups disabled')).toBeVisible();
     await expect(page.getByText('PITR disabled')).toBeVisible();
+  });
+
+  test('Duplicate name should throw an error', async ({ page, request }) => {
+    await createDbClusterFn(
+      request,
+      {
+        dbName: 'mysql-1',
+        dbType: 'mysql',
+
+        numberOfNodes: '1',
+        backup: {
+          enabled: false,
+          schedules: [],
+        },
+      },
+      'pxc-only'
+    );
+    await selectDbEngine(page, 'pxc');
+
+    const nameInput = page.getByTestId('text-input-db-name');
+    await page.getByTestId('k8s-namespace-autocomplete').click();
+    await page.getByRole('option', { name: 'pxc-only' }).click();
+    await nameInput.fill('mysql-1');
+    await expect(
+      page.getByText('You already have a database with the same name.')
+    ).toBeVisible();
+
+    await deleteDbClusterFn(request, 'mysql-1', 'pxc-only');
   });
 });
