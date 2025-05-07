@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/utils"
@@ -231,7 +232,7 @@ func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName strin
 		return errDeleteDefaultPSP(psp.GetName())
 	}
 
-	if slices.Contains(psp.GetFinalizers(), everestv1alpha1.UsedResourceFinalizer) {
+	if slices.Contains(psp.GetFinalizers(), everestv1alpha1.InUseResourceFinalizer) {
 		// policy is used by some DB cluster
 		return errDeleteInUseDefaultPSP(psp.GetName())
 	}
