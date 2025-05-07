@@ -490,9 +490,7 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Wait for binlogs to be uploaded', async () => {
-          const delay = (ms: number) =>
-            new Promise((resolve) => setTimeout(resolve, ms));
-          await delay(60000);
+          await page.waitForTimeout(60000);
         });
 
         let newClusterName: string;
