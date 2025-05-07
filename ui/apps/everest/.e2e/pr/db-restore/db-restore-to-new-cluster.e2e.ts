@@ -131,7 +131,7 @@ test.describe('DB Cluster Restore to the new cluster', () => {
     const comboboxes = page.getByRole('combobox');
     const dbVersionCombobox = comboboxes.nth(1);
     expect(await dbVersionCombobox.textContent()).toBe('8.0.4-1');
-
+    await page.getByTestId('text-input-db-name').fill('new-db-cluster');
     await moveForward(page);
 
     await expect(page.getByTestId('text-input-shard-nr')).toHaveValue('2');
