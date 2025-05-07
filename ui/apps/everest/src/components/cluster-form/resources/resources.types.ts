@@ -32,3 +32,8 @@ export type ResourceInputProps = {
   numberOfUnits: number;
   disabled?: boolean;
 };
+
+export type MapItem = {
+  postfix: 'K' | 'M' | 'B';
+  sliceIndex: 1 | 2 | 3;
+};
