@@ -383,7 +383,8 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         page,
       }) => {
         // TODO: Remove the if statement after fix for https://perconadev.atlassian.net/browse/EVEREST-1012
-        if (db === 'postgresql') { //Skip the test for PostgreSQL
+        if (db === 'postgresql') {
+          //Skip the test for PostgreSQL
           test.skip();
           return;
         }
