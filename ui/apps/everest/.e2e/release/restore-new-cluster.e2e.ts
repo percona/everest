@@ -70,7 +70,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
       // Define primary and restored cluster names to use across related tests
       const clusterName = `${db}-${size}-pri`;
-      const restoredClusterName = `rest-${clusterName}`;
+      const restoredClusterName = `${db}-${size}-rest`;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -414,7 +414,6 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         };
 
         await test.step('Create schedule', async () => {
-          console.log(`Querying cluster: ${restoredClusterName}`);
           await gotoDbClusterBackups(page, restoredClusterName);
           await clickCreateSchedule(page);
           await fillScheduleModalForm(
@@ -446,13 +445,13 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test(`Wait for backup to succeed for the restored database [${db} size ${size}]`, async ({
         page,
       }) => {
-        await gotoDbClusterBackups(page, clusterName);
-        await expect(page.getByText(`rest-${db}-${size}-`)).toHaveCount(1, {
+        await gotoDbClusterBackups(page, restoredClusterName);
+        await expect(page.getByText(`${db}-${size}-rest-`)).toHaveCount(1, {
           timeout: 360000,
         });
         await expect(
           page
-            .locator('tr', { has: page.getByText(`rest-${db}-${size}-`) })
+            .locator('tr', { has: page.getByText(`${db}-${size}-rest-`) })
             .getByText('Succeeded')
         ).toBeVisible({ timeout: 360000 });
       });
