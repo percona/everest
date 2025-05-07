@@ -28,6 +28,7 @@ import {
   populateBasicInformation,
   populateResources,
   populateAdvancedConfig,
+  goToLastStepByStepAndSubmit,
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
@@ -102,7 +103,7 @@ test.describe.configure({ retries: 0 });
     },
     () => {
       test.skip(!shouldExecuteDBCombination(db, size));
-      test.describe.configure({ timeout: 720000 });
+      test.describe.configure({ timeout: 1_200_000 }); // 20 minutes
 
       const clusterName = `${db}-${size}-pitr`;
 
@@ -285,7 +286,8 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Wait 1 min for binlogs to be uploaded [${db} size ${size}]`, async () => {
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const delay = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, ms));
         await delay(65000);
       });
 
@@ -393,7 +395,8 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Wait 1 min for binlogs to be uploaded for second restore [${db} size ${size}]`, async () => {
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const delay = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, ms));
         await delay(65000);
       });
 
@@ -444,6 +447,126 @@ test.describe.configure({ retries: 0 });
             expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6\n 7\n 8');
             break;
         }
+      });
+
+      test(`PITR restore to new cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
+        await test.step('Create a backup to restore from', async () => {
+          await gotoDbClusterBackups(page, clusterName);
+          await clickOnDemandBackup(page);
+          await page
+            .getByTestId('text-input-name')
+            .fill(baseBackupName + '-new-cluster');
+          await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
+          await expect(
+            page.getByTestId('text-input-storage-location')
+          ).not.toBeEmpty();
+          await page.getByTestId('form-dialog-create').click();
+          await waitForStatus(
+            page,
+            baseBackupName + '-new-cluster',
+            'Succeeded',
+            240000
+          );
+        });
+
+        await test.step('Add some data after the backup', async () => {
+          await insertTestDB(
+            clusterName,
+            namespace,
+            ['9'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+          );
+          // for PG we need one more transaction to be able to restore to the previous one
+          if (db == 'postgresql') {
+            await insertTestDB(
+              clusterName,
+              namespace,
+              ['10'],
+              ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+            );
+          }
+        });
+
+        await test.step('Wait for binlogs to be uploaded', async () => {
+          await page.waitForTimeout(60000);
+        });
+
+        let newClusterName: string;
+        await test.step('Create DB from latest PITR', async () => {
+          // Go to restore wizard
+          await page.goto('databases');
+          await findDbAndClickActions(
+            page,
+            clusterName,
+            'Create DB from a backup'
+          );
+          await page
+            .getByTestId('radio-option-fromPITR')
+            .click({ timeout: 5000 });
+          await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({
+            timeout: 5000,
+          });
+
+          await expect(
+            page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
+          ).toBeVisible({ timeout: 5000 });
+          await expect(
+            page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
+          ).not.toBeEmpty({ timeout: 5000 });
+
+          // Submit and open DB creation wizard
+          await page.getByTestId('form-dialog-create').click({ timeout: 5000 });
+          let currentUrl = page.url();
+          expect(currentUrl).toContain('/databases/new');
+
+          newClusterName = await page
+            .getByTestId('text-input-db-name')
+            .inputValue();
+          expect(newClusterName).not.toBe('');
+          await goToLastStepByStepAndSubmit(page, 5000);
+        });
+
+        await test.step('Wait for the new cluster to be created and ready', async () => {
+          await page.goto('/databases');
+          await waitForStatus(page, newClusterName, 'Initializing', 30000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, newClusterName, 'Restoring', 600000);
+          }
+          await waitForStatus(page, newClusterName, 'Up', 600000);
+        });
+
+        await test.step('Verify the restore was successful', async () => {
+          // PG does not create a DBR object when restoring to new cluster.
+          if (db !== 'postgresql') {
+            await gotoDbClusterRestores(page, newClusterName);
+            await waitForStatus(page, newClusterName, 'Succeeded', 120000);
+          }
+        });
+
+        await test.step('Verify the data in the new cluster', async () => {
+          const result = await queryTestDB(newClusterName, namespace);
+          switch (db) {
+            case 'pxc':
+              expect(result.trim()).toBe('1\n2\n3\n4\n5\n6\n7\n8\n9');
+              break;
+            case 'psmdb':
+              expect(result.trim()).toBe(
+                '[{"a":1},{"a":2},{"a":3},{"a":4},{"a":5},{"a":6},{"a":7},{"a":8},{"a":9}]'
+              );
+              break;
+            case 'postgresql':
+              expect(result.trim()).toBe('1\n 2\n 3\n 4\n 5\n 6\n 7\n 8\n 9');
+              break;
+          }
+        });
+
+        await test.step('Delete the restored cluster', async () => {
+          await deleteDbCluster(page, newClusterName);
+          await waitForStatus(page, newClusterName, 'Deleting', 15000);
+          await waitForDelete(page, newClusterName, 240000);
+        });
       });
 
       test(`Delete second restore [${db} size ${size}]`, async ({ page }) => {
