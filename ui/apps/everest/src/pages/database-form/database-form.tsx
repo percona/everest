@@ -30,7 +30,11 @@ import { useDbValidationSchema } from './useDbValidationSchema';
 import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
-import { DB_CLUSTERS_QUERY_KEY } from 'hooks';
+import {
+  useDBClustersForNamespaces,
+  useNamespaces,
+  DB_CLUSTERS_QUERY_KEY,
+} from 'hooks';
 import { WizardMode } from 'shared-types/wizard.types';
 
 export const DatabasePage = () => {
@@ -46,10 +50,26 @@ export const DatabasePage = () => {
   const queryClient = useQueryClient();
   const { defaultValues, isFetching: loadingClusterValues } =
     useDatabasePageDefaultValues(mode);
+  const { data: namespaces = [] } = useNamespaces({
+    refetchInterval: 10 * 1000,
+  });
+  const dbClustersResults = useDBClustersForNamespaces(
+    namespaces.map((ns) => ({
+      namespace: ns,
+    }))
+  );
+  const dbClustersNamesList = Object.values(dbClustersResults)
+    .map((item) => item.queryResult.data)
+    .flat()
+    .map((db) => ({
+      name: db?.metadata?.name!,
+      namespace: db?.metadata.namespace!,
+    }));
 
   const validationSchema = useDbValidationSchema(
     activeStep,
     defaultValues,
+    dbClustersNamesList,
     mode
   );
 
