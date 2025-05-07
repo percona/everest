@@ -28,7 +28,9 @@ export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
   );
   const sortedBackups = sortBackupsByTime(finishedBackups);
   const lastFinishedBackup = sortedBackups[sortedBackups.length - 1];
-  const lastFinishedBackupDate = lastFinishedBackup?.completed || new Date();
+  const lastFinishedBackupDate = lastFinishedBackup?.completed
+    ? new Date(lastFinishedBackup?.completed)
+    : new Date();
 
   const navigate = useNavigate();
 
