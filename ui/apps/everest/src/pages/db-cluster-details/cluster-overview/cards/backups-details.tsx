@@ -33,9 +33,11 @@ import { useContext, useMemo, useState } from 'react';
 import { MRT_ColumnDef } from 'material-react-table';
 import { DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
+import { dbEngineToDbType } from '@percona/utils';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 import { PitrEditModal } from './pitr-details/edit-pitr';
 import { changeDbClusterPITR, shouldDbActionsBeBlocked } from 'utils/db';
+import { DbType } from '@percona/types';
 
 export const BackupsDetails = ({
   dbClusterName,
@@ -50,7 +52,9 @@ export const BackupsDetails = ({
   const editable =
     canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
-  const backupsEnabled = (schedules || []).length > 0;
+  const dbType = dbEngineToDbType(dbCluster!.spec.engine.type);
+  const backupsEnabled =
+    (schedules || []).length > 0 && dbType !== DbType.Postresql;
 
   const [openEditModal, setOpenEditModal] = useState(false);
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
@@ -63,6 +67,22 @@ export const BackupsDetails = ({
       onSuccess: () => handleCloseModal(),
     }
   );
+
+  const schedulesExists = (schedules || []).length > 0;
+  const backupsExists = backups.length > 0;
+
+  const getTooltipText = () => {
+    if (dbType === DbType.Postresql) {
+      if (schedulesExists && !backupsExists) {
+        return Messages.titles.scheduleExists;
+      }
+      if (backupsExists || (backupsExists && schedulesExists)) {
+        return Messages.titles.onDemandBackupExists;
+      }
+      return Messages.titles.noPitr;
+    }
+    return Messages.titles.createScheduleToEnable;
+  };
 
   const handleCloseModal = () => {
     setOpenEditModal(false);
@@ -202,7 +222,7 @@ export const BackupsDetails = ({
           }}
           editable={editable && backupsEnabled}
           showTooltip={editable && !backupsEnabled}
-          disabledEditTooltipText={Messages.titles.createScheduleToEnable}
+          disabledEditTooltipText={getTooltipText()}
         >
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
           <OverviewSectionRow
