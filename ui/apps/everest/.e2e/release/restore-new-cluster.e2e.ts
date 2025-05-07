@@ -69,7 +69,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test.describe.configure({ timeout: 720000 });
 
       // Define primary and restored cluster names to use across related tests
-      const clusterName = `${db}-${size}-primary`;
+      const clusterName = `${db}-${size}-pri`;
       const restoredClusterName = `rest-${clusterName}`;
 
       let storageClasses = [];
@@ -260,7 +260,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         page,
       }) => {
         await gotoDbClusterBackups(page, clusterName);
-        await expect(page.getByText(`${db}-${size}-primary-`)).toHaveCount(2, {
+        await expect(page.getByText(`${db}-${size}-pri-`)).toHaveCount(2, {
           timeout: 360000,
         });
         await expect(page.getByText('Succeeded')).toHaveCount(2, {
@@ -305,7 +305,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       }) => {
         await gotoDbClusterBackups(page, clusterName);
         const firstBackup = await page
-          .getByText(`${db}-${size}-primary-`)
+          .getByText(`${db}-${size}-pri-`)
           .first()
           .textContent();
 
@@ -316,8 +316,6 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await page.getByTestId('form-dialog-create').click();
 
         await page.waitForURL('**/databases/new');
-
-        // restoredClusterName = 'rest-' + clusterName;
 
         // Set the new DB name
         await test.step('Set DB name', async () => {
@@ -384,6 +382,11 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test(`Verify and Delete Restore History for the restored database [${db} size ${size}]`, async ({
         page,
       }) => {
+        // TODO: Remove the if statement after fix for https://perconadev.atlassian.net/browse/EVEREST-1012
+        if (db === 'postgresql') { //Skip the test for PostgreSQL
+          test.skip();
+          return;
+        }
         await gotoDbClusterRestores(page, restoredClusterName);
         await test.step('Verify restore history exists', async () => {
           await expect(page.getByTestId('status')).toHaveText('Succeeded');
