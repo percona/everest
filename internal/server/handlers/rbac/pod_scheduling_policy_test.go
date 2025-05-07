@@ -552,7 +552,6 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		next := handlers.MockHandler{}
 		next.On("UpdatePodSchedulingPolicy",
 			mock.Anything,
-			mock.Anything,
 			mock.Anything).
 			Return(
 				&everestv1alpha1.PodSchedulingPolicy{}, nil,
@@ -674,7 +673,10 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 				enforcer:   enf,
 				userGetter: testUserGetter,
 			}
-			_, err = h.UpdatePodSchedulingPolicy(ctx, "test-policy-1", &everestv1alpha1.PodSchedulingPolicy{})
+			_, err = h.UpdatePodSchedulingPolicy(ctx, &everestv1alpha1.PodSchedulingPolicy{ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-policy-1",
+				Namespace: common.SystemNamespace,
+			}})
 			assert.ErrorIs(t, err, tc.wantErr)
 		})
 	}

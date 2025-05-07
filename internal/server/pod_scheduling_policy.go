@@ -87,7 +87,7 @@ func (e *EverestServer) UpdatePodSchedulingPolicy(c echo.Context, policyName str
 		psp.Namespace = common.SystemNamespace
 	}
 
-	result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), policyName, psp)
+	result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), psp)
 	if err != nil {
 		e.l.Errorf("UpdatePodSchedulingPolicy failed: %v", err)
 		return err

@@ -29,7 +29,6 @@ import (
 )
 
 const (
-	// maxNameLength      = 22
 	timeoutS3AccessSec = 2
 )
 

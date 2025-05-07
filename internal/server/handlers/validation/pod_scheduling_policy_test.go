@@ -18,7 +18,6 @@ package validation
 import (
 	"context"
 	"errors"
-	"fmt"
 	"slices"
 	"testing"
 
@@ -58,7 +57,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					Name: "test",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid namespace '': pod scheduling policy must be in '%s' namespace only", common.SystemNamespace)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPNamespace("")),
 		},
 		{
 			name: "non everest-system namespace",
@@ -68,7 +67,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					Namespace: "test",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid namespace 'test': pod scheduling policy must be in '%s' namespace only", common.SystemNamespace)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPNamespace("test")),
 		},
 		// invalid PodSchedulingPolicy names
 		{
@@ -145,7 +144,11 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-existing-name' already exists")),
+			wantErr: k8sError.NewAlreadyExists(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "podschedulingpolicies",
+			},
+				"everest-existing-name"),
 		},
 		// unsupported engineType
 		{
@@ -159,11 +162,11 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					EngineType: "unsupported",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("unsupported .spec.engineType='unsupported'")),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPEngineType("unsupported")),
 		},
 		// empty affinity configs
 		{
-			name: "empty pxc affinity config",
+			name: "empty PXC affinity config",
 			policyToCreate: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "empty-affinity",
@@ -174,10 +177,10 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					AffinityConfig: &everestv1alpha1.AffinityConfig{},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.pxc is required")),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPXCEmpty),
 		},
 		{
-			name: "empty psmdb affinity config",
+			name: "empty PSMDB affinity config",
 			policyToCreate: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "empty-affinity",
@@ -188,10 +191,10 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					AffinityConfig: &everestv1alpha1.AffinityConfig{},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.psmdb is required")),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPSMDBEmpty),
 		},
 		{
-			name: "empty postgresql affinity config",
+			name: "empty Postgresql affinity config",
 			policyToCreate: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "empty-affinity",
@@ -202,7 +205,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					AffinityConfig: &everestv1alpha1.AffinityConfig{},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.postgresql is required")),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPostgresqlEmpty),
 		},
 		// empty DB components affinity configs
 		{
@@ -219,7 +222,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.pxc.engine or .spec.affinityConfig.pxc.proxy is required")),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPXCComponentsEmpty),
 		},
 		{
 			name: "empty PSMDB components config",
@@ -235,7 +238,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.psmdb.engine or .spec.affinityConfig.psmdb.proxy or .spec.affinityConfig.psmdb.configServer is required")),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPSMDBComponentsEmpty),
 		},
 		{
 			name: "empty PostgreSQL components config",
@@ -251,7 +254,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("invalid affinity config: .spec.affinityConfig.postgresql.engine or .spec.affinityConfig.postgresql.proxy is required")),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPostgresqlComponentsEmpty),
 		},
 		// affinity config mismatches with engineType
 		{
@@ -271,7 +274,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPXCWithPSMDB),
 		},
 		{
 			name: "PXC affinity config mismatch PostgreSQL",
@@ -290,7 +293,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPXCWithPostgresql),
 		},
 		{
 			name: "PSMDB affinity config mismatch PXC",
@@ -309,7 +312,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPSMDBWithPXC),
 		},
 		{
 			name: "PSMDB affinity config mismatch PosgreSQL",
@@ -328,7 +331,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPSMDBWithPostgresql),
 		},
 		{
 			name: "PostgreSQL affinity config mismatch PXC",
@@ -347,7 +350,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPostgresqlWithPXC),
 		},
 		{
 			name: "PostgreSQL affinity config mismatch PSMDB",
@@ -366,7 +369,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPostgresqlWithPSMDB),
 		},
 		// valid simple cases
 		{
@@ -802,7 +805,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					Name: "test",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid namespace '': pod scheduling policy must be in '%s' namespace only", common.SystemNamespace)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPNamespace("")),
 		},
 		{
 			name: "non everest-system namespace",
@@ -812,7 +815,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					Namespace: "test",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid namespace 'test': pod scheduling policy must be in '%s' namespace only", common.SystemNamespace)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPNamespace("test")),
 		},
 		// policies are absent
 		{
@@ -923,7 +926,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-pxc' is default and cannot be updated")),
+			wantErr: errors.Join(ErrInvalidRequest, errUpdateDefaultPSP("everest-default-pxc")),
 		},
 		// update default policy PSMDB
 		{
@@ -966,7 +969,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-psmdb' is default and cannot be updated")),
+			wantErr: errors.Join(ErrInvalidRequest, errUpdateDefaultPSP("everest-default-psmdb")),
 		},
 		// update default policy PostgreSQL
 		{
@@ -1009,7 +1012,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-postgresql' is default and cannot be updated")),
+			wantErr: errors.Join(ErrInvalidRequest, errUpdateDefaultPSP("everest-default-postgresql")),
 		},
 		// affinity config mismatches with engineType
 		{
@@ -1039,7 +1042,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPXCWithPSMDB),
 		},
 		{
 			name: "PXC affinity config mismatch PostgreSQL",
@@ -1068,7 +1071,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPXCWithPostgresql),
 		},
 		{
 			name: "PSMDB affinity config mismatch PXC",
@@ -1097,7 +1100,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPSMDBWithPXC),
 		},
 		{
 			name: "PSMDB affinity config mismatch PosgreSQL",
@@ -1126,7 +1129,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPSMDBWithPostgresql),
 		},
 		{
 			name: "PostgreSQL affinity config mismatch PXC",
@@ -1155,7 +1158,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPostgresqlWithPXC),
 		},
 		{
 			name: "PostgreSQL affinity config mismatch PSMDB",
@@ -1184,7 +1187,190 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)),
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPostgresqlWithPSMDB),
+		},
+		// empty affinity configs
+		{
+			name: "empty PXC affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-policy",
+						Namespace: common.SystemNamespace,
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-policy",
+					Namespace: common.SystemNamespace,
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType:     everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPXCEmpty),
+		},
+		{
+			name: "empty PSMDB affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-policy",
+						Namespace: common.SystemNamespace,
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-policy",
+					Namespace: common.SystemNamespace,
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType:     everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPSMDBEmpty),
+		},
+		{
+			name: "empty Postgresql affinity config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-policy",
+						Namespace: common.SystemNamespace,
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-policy",
+					Namespace: common.SystemNamespace,
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType:     everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPostgresqlEmpty),
+		},
+		// empty DB components affinity configs
+		{
+			name: "empty PXC components config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-policy",
+						Namespace: common.SystemNamespace,
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-policy",
+					Namespace: common.SystemNamespace,
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePXC,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PXC: &everestv1alpha1.PXCAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPXCComponentsEmpty),
+		},
+		{
+			name: "empty PSMDB components config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-policy",
+						Namespace: common.SystemNamespace,
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-policy",
+					Namespace: common.SystemNamespace,
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PSMDB: &everestv1alpha1.PSMDBAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPSMDBComponentsEmpty),
+		},
+		{
+			name: "empty PostgreSQL components config",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-policy",
+						Namespace: common.SystemNamespace,
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-policy",
+					Namespace: common.SystemNamespace,
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePostgresql,
+					AffinityConfig: &everestv1alpha1.AffinityConfig{
+						PostgreSQL: &everestv1alpha1.PostgreSQLAffinityConfig{},
+					},
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errInvalidPSPAffinityPostgresqlComponentsEmpty),
+		},
+		// change an engine type
+		{
+			name: "update engine type",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.PodSchedulingPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-policy",
+						Namespace: common.SystemNamespace,
+					},
+					Spec: everestv1alpha1.PodSchedulingPolicySpec{
+						EngineType: everestv1alpha1.DatabaseEnginePXC,
+					},
+				},
+			},
+			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-policy",
+					Namespace: common.SystemNamespace,
+				},
+				Spec: everestv1alpha1.PodSchedulingPolicySpec{
+					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
+				},
+			},
+			wantErr: errors.Join(ErrInvalidRequest, errUpdatePSPEngineType),
 		},
 		// valid update - add full affinity config
 		{
@@ -1976,7 +2162,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 			valHandler := New(zap.NewNop().Sugar(), k)
 			valHandler.SetNext(k8sHandler)
 
-			psp, err := valHandler.UpdatePodSchedulingPolicy(context.Background(), tc.updatedPolicy.GetName(), tc.updatedPolicy)
+			psp, err := valHandler.UpdatePodSchedulingPolicy(context.Background(), tc.updatedPolicy)
 			if tc.wantErr != nil {
 				assert.Equal(t, tc.wantErr.Error(), err.Error())
 				return
@@ -2071,7 +2257,7 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 				},
 			},
 			pspNameToDelete: "everest-default-pxc",
-			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-pxc' is default and cannot be deleted")),
+			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-pxc")),
 		},
 		// delete default PSMDB policy
 		{
@@ -2101,7 +2287,7 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 				},
 			},
 			pspNameToDelete: "everest-default-psmdb",
-			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-psmdb' is default and cannot be deleted")),
+			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-psmdb")),
 		},
 		// delete default PostgreSQL policy
 		{
@@ -2131,7 +2317,7 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 				},
 			},
 			pspNameToDelete: "everest-default-postgresql",
-			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='everest-default-postgresql' is default and cannot be deleted")),
+			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-postgresql")),
 		},
 		// delete non-used policy
 		{
@@ -2205,7 +2391,7 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 				},
 			},
 			pspNameToDelete: "test-policy",
-			wantErr:         errors.Join(ErrInvalidRequest, errors.New("pod scheduling policy with name='test-policy' is used by some DB cluster and cannot be deleted")),
+			wantErr:         errors.Join(ErrInvalidRequest, errDeleteInUseDefaultPSP("test-policy")),
 		},
 	}
 
