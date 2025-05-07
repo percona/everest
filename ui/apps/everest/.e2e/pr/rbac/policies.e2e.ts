@@ -1,0 +1,146 @@
+import {
+  createPodSchedulingPolicy,
+  deletePodSchedulingPolicy,
+} from '@e2e/utils/policies';
+import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
+import { expect, test } from '@playwright/test';
+import { mockEngines } from './utils';
+import { getNamespacesFn } from '@e2e/utils/namespaces';
+import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+
+const POD_SCHEDULING_POLICY_NAME = 'pod-scheduling-policy-rbac-test';
+test.describe('Pod scheduling policies RBAC', () => {
+  let namespace = '';
+  test.beforeAll(async ({ request }) => {
+    const namespaces = await getNamespacesFn(
+      await getTokenFromLocalStorage(),
+      request
+    );
+    namespace = namespaces[0];
+    await createPodSchedulingPolicy(request, POD_SCHEDULING_POLICY_NAME, 'pxc');
+  });
+
+  test.afterAll(async ({ request }) => {
+    await setRBACPermissionsK8S([
+      ['pod-scheduling-policies', '*', 'everest-system/*'],
+    ]);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await deletePodSchedulingPolicy(request, POD_SCHEDULING_POLICY_NAME);
+  });
+
+  test('Show Pod scheduling policies when allowed', async ({ page }) => {
+    await setRBACPermissionsK8S([
+      ['pod-scheduling-policies', 'read', `everest-system/*`],
+    ]);
+    await page.goto('/settings/pod-scheduling-policies');
+    await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
+  });
+
+  test('Hide Pod scheduling policies when not allowed', async ({ page }) => {
+    await setRBACPermissionsK8S([
+      ['pod-scheduling-policies', 'read', 'everest-system/some-other-policy'],
+    ]);
+    await page.goto('/settings/pod-scheduling-policies');
+    await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).not.toBeVisible();
+  });
+
+  test('Ability to delete policy when allowed', async ({ page }) => {
+    await setRBACPermissionsK8S([
+      [
+        'pod-scheduling-policies',
+        'read',
+        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+      ],
+      [
+        'pod-scheduling-policies',
+        'delete',
+        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+      ],
+    ]);
+    await page.goto('/settings/pod-scheduling-policies');
+    await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
+    await page
+      .locator('.MuiTableRow-root')
+      .filter({ hasText: POD_SCHEDULING_POLICY_NAME })
+      .getByTestId('MoreHorizIcon')
+      .click();
+    await expect(page.getByText('Delete')).toBeVisible();
+  });
+
+  test('Hide policy delete icon when not allowed', async ({ page }) => {
+    await setRBACPermissionsK8S([
+      [
+        'pod-scheduling-policies',
+        'read',
+        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+      ],
+      ['pod-scheduling-policies', 'delete', `everest-system/some-other-policy`],
+    ]);
+    await page.goto('/settings/pod-scheduling-policies');
+    await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
+    await page
+      .locator('.MuiTableRow-root')
+      .filter({ hasText: POD_SCHEDULING_POLICY_NAME })
+      .getByTestId('MoreHorizIcon')
+      .click();
+    await expect(page.getByText('Delete')).not.toBeVisible();
+  });
+
+  test('Ability to update policy rules when allowed', async ({ page }) => {
+    await setRBACPermissionsK8S([
+      [
+        'pod-scheduling-policies',
+        'read',
+        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+      ],
+      [
+        'pod-scheduling-policies',
+        'update',
+        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+      ],
+    ]);
+    await page.goto(
+      `/settings/pod-scheduling-policies/${POD_SCHEDULING_POLICY_NAME}`
+    );
+    await expect(page.getByTestId('add-rule-button')).toBeVisible();
+    await page.getByTestId('add-rule-button').click();
+    await page.getByTestId('form-dialog-add').waitFor();
+    await page.getByTestId('form-dialog-add').click();
+    await expect(page.getByTestId('edit-rule-button')).toBeVisible();
+    await expect(page.getByTestId('delete-rule-button')).toBeVisible();
+  });
+
+  test('Hide rule actions when not allowed', async ({ page }) => {
+    await setRBACPermissionsK8S([
+      [
+        'pod-scheduling-policies',
+        'read',
+        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+      ],
+      [
+        'pod-scheduling-policies',
+        'update',
+        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+      ],
+    ]);
+    await page.goto(
+      `/settings/pod-scheduling-policies/${POD_SCHEDULING_POLICY_NAME}`
+    );
+    await page.getByTestId('add-rule-button').waitFor();
+    await page.getByTestId('add-rule-button').click();
+    await page.getByTestId('form-dialog-add').waitFor();
+    await page.getByTestId('form-dialog-add').click();
+
+    await setRBACPermissionsK8S([
+      [
+        'pod-scheduling-policies',
+        'read',
+        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+      ],
+      ['pod-scheduling-policies', 'update', `everest-system/some-other-policy`],
+    ]);
+    await expect(page.getByTestId('add-rule-button')).not.toBeVisible();
+    await expect(page.getByTestId('edit-rule-button')).not.toBeVisible();
+    await expect(page.getByTestId('delete-rule-button')).not.toBeVisible();
+  });
+});
