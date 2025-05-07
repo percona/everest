@@ -28,6 +28,7 @@ import (
 
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/common"
 )
 
 const (
@@ -64,6 +65,25 @@ func (e *EverestServer) CreateSession(ctx echo.Context) error {
 	e.attemptsStore.CleanupVisitor(ctx.RealIP())
 
 	return ctx.JSON(http.StatusOK, map[string]string{"token": jwtToken})
+}
+
+// DeleteSession invalidates the user token by adding it to the blocklist
+func (e *EverestServer) DeleteSession(ctx echo.Context) error {
+	e.attemptsStore.IncreaseTimeout(ctx.RealIP())
+	c := ctx.Request().Context()
+	token, err := common.ExtractToken(c)
+	if err != nil {
+		return err
+	}
+	err = e.sessionMgr.Block(c, token)
+	if err != nil {
+		e.l.Errorf("blocklist error: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, api.Error{
+			Message: pointer.To("Failed to logout user"),
+		})
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }
 
 func sessionErrToHTTPRes(ctx echo.Context, err error) error {
