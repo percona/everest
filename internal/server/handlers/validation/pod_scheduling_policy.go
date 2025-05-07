@@ -30,14 +30,58 @@ import (
 	"github.com/percona/everest/pkg/utils"
 )
 
+var (
+	errInvalidPSPNamespace = func(nsName string) error {
+		return fmt.Errorf("invalid namespace '%s': pod scheduling policy must be in '%s' namespace only", nsName, common.SystemNamespace)
+	}
+	// Invalid engine type error
+	errInvalidPSPEngineType = func(engineType everestv1alpha1.EngineType) error {
+		return fmt.Errorf("unsupported .spec.engineType='%s'", engineType)
+	}
+	errUpdatePSPEngineType = errors.New("changing .spec.engineType is forbidden")
+	// PXC affinity config errors
+	errInvalidPSPAffinityPXCWithPSMDB       = newPspValidationAffinityError(fmt.Sprintf(".spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC))
+	errInvalidPSPAffinityPXCWithPostgresql  = newPspValidationAffinityError(fmt.Sprintf(".spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC))
+	errInvalidPSPAffinityPXCEmpty           = newPspValidationAffinityError(".spec.affinityConfig.pxc is required")
+	errInvalidPSPAffinityPXCComponentsEmpty = newPspValidationAffinityError(".spec.affinityConfig.pxc.engine or .spec.affinityConfig.pxc.proxy is required")
+	// PSMDB affinity config errors
+	errInvalidPSPAffinityPSMDBWithPXC         = newPspValidationAffinityError(fmt.Sprintf(".spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB))
+	errInvalidPSPAffinityPSMDBWithPostgresql  = newPspValidationAffinityError(fmt.Sprintf(".spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB))
+	errInvalidPSPAffinityPSMDBEmpty           = newPspValidationAffinityError(".spec.affinityConfig.psmdb is required")
+	errInvalidPSPAffinityPSMDBComponentsEmpty = newPspValidationAffinityError(".spec.affinityConfig.psmdb.engine or .spec.affinityConfig.psmdb.proxy or .spec.affinityConfig.psmdb.configServer is required")
+	// Postgresql affinity config errors
+	errInvalidPSPAffinityPostgresqlWithPXC         = newPspValidationAffinityError(fmt.Sprintf(".spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql))
+	errInvalidPSPAffinityPostgresqlWithPSMDB       = newPspValidationAffinityError(fmt.Sprintf(".spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql))
+	errInvalidPSPAffinityPostgresqlEmpty           = newPspValidationAffinityError(".spec.affinityConfig.postgresql is required")
+	errInvalidPSPAffinityPostgresqlComponentsEmpty = newPspValidationAffinityError(".spec.affinityConfig.postgresql.engine or .spec.affinityConfig.postgresql.proxy is required")
+	// Default policies errors
+	errUpdateDefaultPSP = func(name string) error {
+		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be updated", name)
+	}
+	errDeleteDefaultPSP = func(name string) error {
+		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be deleted", name)
+	}
+	// Used policy error
+	errDeleteInUseDefaultPSP = func(name string) error {
+		return fmt.Errorf("pod scheduling policy with name='%s' is used by some DB cluster and cannot be deleted", name)
+	}
+)
+
+type pspValidationAffinityError struct {
+	err error
+}
+
+func (e *pspValidationAffinityError) Error() string {
+	return fmt.Sprintf("invalid affinity config: %v", e.err)
+}
+
+func newPspValidationAffinityError(msg string) *pspValidationAffinityError {
+	return &pspValidationAffinityError{err: errors.New(msg)}
+}
+
 // CreatePodSchedulingPolicy creates a new pod scheduling policy.
 func (h *validateHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	if err := h.validatePSPCR(psp); err != nil {
-		return nil, errors.Join(ErrInvalidRequest, err)
-	}
-
-	// validate new policy params
-	if err := h.validatePSPOnCreate(ctx, psp); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
@@ -45,7 +89,7 @@ func (h *validateHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *ev
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
-func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	if err := h.validatePSPCR(psp); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
@@ -58,7 +102,7 @@ func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, name st
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
-	return h.next.UpdatePodSchedulingPolicy(ctx, name, psp)
+	return h.next.UpdatePodSchedulingPolicy(ctx, psp)
 }
 
 // ListPodSchedulingPolicies lists all pod scheduling policies.
@@ -84,7 +128,7 @@ func (h *validateHandler) GetPodSchedulingPolicy(ctx context.Context, name strin
 
 func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy) error {
 	if psp.GetNamespace() != common.SystemNamespace {
-		return fmt.Errorf("invalid namespace '%s': pod scheduling policy must be in '%s' namespace only", psp.GetNamespace(), common.SystemNamespace)
+		return errInvalidPSPNamespace(psp.GetNamespace())
 	}
 
 	if err := utils.ValidateRFC1035(psp.GetName(), "metadata.name"); err != nil {
@@ -93,7 +137,7 @@ func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy
 
 	_, ok := common.OperatorTypeToName[psp.Spec.EngineType]
 	if !ok {
-		return fmt.Errorf("unsupported .spec.engineType='%s'", psp.Spec.EngineType)
+		return errInvalidPSPEngineType(psp.Spec.EngineType)
 	}
 
 	// The following cases are possible:
@@ -110,64 +154,48 @@ func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy
 	case everestv1alpha1.DatabaseEnginePXC:
 		if affinityConfig.PSMDB != nil {
 			// .spec.affinityConfig.psmdb shall not be set with engineType=pxc
-			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)
+			return errInvalidPSPAffinityPXCWithPSMDB
 		}
 		if affinityConfig.PostgreSQL != nil {
 			// .spec.affinityConfig.postgresql shall not be set with engineType=pxc
-			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC)
+			return errInvalidPSPAffinityPXCWithPostgresql
 		}
 		if affinityConfig.PXC == nil {
-			return errors.New("invalid affinity config: .spec.affinityConfig.pxc is required")
+			return errInvalidPSPAffinityPXCEmpty
 		}
 		if affinityConfig.PXC.Engine == nil && affinityConfig.PXC.Proxy == nil {
-			return errors.New("invalid affinity config: .spec.affinityConfig.pxc.engine or .spec.affinityConfig.pxc.proxy is required")
+			return errInvalidPSPAffinityPXCComponentsEmpty
 		}
 	case everestv1alpha1.DatabaseEnginePSMDB:
 		if affinityConfig.PXC != nil {
 			// .spec.affinityConfig.pxc shall not be set with engineType=psmdb
-			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)
+			return errInvalidPSPAffinityPSMDBWithPXC
 		}
 		if affinityConfig.PostgreSQL != nil {
 			// .spec.affinityConfig.postgresql shall not be set with engineType=psmdb
-			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.postgresql is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB)
+			return errInvalidPSPAffinityPSMDBWithPostgresql
 		}
 		if affinityConfig.PSMDB == nil {
-			return errors.New("invalid affinity config: .spec.affinityConfig.psmdb is required")
+			return errInvalidPSPAffinityPSMDBEmpty
 		}
 		if affinityConfig.PSMDB.Engine == nil && affinityConfig.PSMDB.Proxy == nil && affinityConfig.PSMDB.ConfigServer == nil {
-			return errors.New("invalid affinity config: .spec.affinityConfig.psmdb.engine or .spec.affinityConfig.psmdb.proxy or .spec.affinityConfig.psmdb.configServer is required")
+			return errInvalidPSPAffinityPSMDBComponentsEmpty
 		}
 	case everestv1alpha1.DatabaseEnginePostgresql:
 		if affinityConfig.PXC != nil {
 			// .spec.affinityConfig.pxc shall not be set with engineType=postgresql
-			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.pxc is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)
+			return errInvalidPSPAffinityPostgresqlWithPXC
 		}
 		if affinityConfig.PSMDB != nil {
 			// .spec.affinityConfig.psmdb shall not be set with engineType=postgresql
-			return fmt.Errorf("invalid affinity config: .spec.affinityConfig.psmdb is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql)
+			return errInvalidPSPAffinityPostgresqlWithPSMDB
 		}
 		if affinityConfig.PostgreSQL == nil {
-			return errors.New("invalid affinity config: .spec.affinityConfig.postgresql is required")
+			return errInvalidPSPAffinityPostgresqlEmpty
 		}
 		if affinityConfig.PostgreSQL.Engine == nil && affinityConfig.PostgreSQL.Proxy == nil {
-			return errors.New("invalid affinity config: .spec.affinityConfig.postgresql.engine or .spec.affinityConfig.postgresql.proxy is required")
+			return errInvalidPSPAffinityPostgresqlComponentsEmpty
 		}
-	}
-	return nil
-}
-
-func (h *validateHandler) validatePSPOnCreate(ctx context.Context, newPsp *everestv1alpha1.PodSchedulingPolicy) error {
-	if existingPolicy, err := h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: newPsp.GetName()}); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return nil
-		}
-
-		if !k8serrors.IsNotFound(err) {
-			h.log.Errorf("failed to check if pod scheduling policy with name='%s' already exists: %v", newPsp.GetName(), err)
-			return fmt.Errorf("failed to check if pod scheduling policy with name='%s' already exists: %w", newPsp.GetName(), err)
-		}
-	} else if existingPolicy.GetName() != "" {
-		return fmt.Errorf("pod scheduling policy with name='%s' already exists", newPsp.GetName())
 	}
 	return nil
 }
@@ -176,21 +204,17 @@ func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *evere
 	var oldPsp *everestv1alpha1.PodSchedulingPolicy
 	var err error
 	if oldPsp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: newPsp.GetName()}); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return err
-		}
-		h.log.Errorf("failed to check if pod scheduling policy with name='%s' exists: %v", newPsp.GetName(), err)
-		return fmt.Errorf("failed to check if pod scheduling policy with name='%s' exists: %w", newPsp.GetName(), err)
+		return err
 	}
 
 	if h.isDefaultPSP(oldPsp) {
 		// default policy update is not allowed
-		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be updated", newPsp.GetName())
+		return errUpdateDefaultPSP(newPsp.GetName())
 	}
 
 	if oldPsp.Spec.EngineType != newPsp.Spec.EngineType {
 		// changing .spec.engineType is not allowed
-		return errors.New("changing .spec.engineType is forbidden")
+		return errUpdatePSPEngineType
 	}
 	return nil
 }
@@ -199,21 +223,17 @@ func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName strin
 	var psp *everestv1alpha1.PodSchedulingPolicy
 	var err error
 	if psp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: pspName}); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return err
-		}
-		h.log.Errorf("failed to check if pod scheduling policy with name='%s' exists: %v", pspName, err)
-		return fmt.Errorf("failed to check if pod scheduling policy with name='%s' exists: %w", pspName, err)
+		return err
 	}
 
 	if h.isDefaultPSP(psp) {
 		// default policy deletion is not allowed
-		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be deleted", psp.GetName())
+		return errDeleteDefaultPSP(psp.GetName())
 	}
 
 	if slices.Contains(psp.GetFinalizers(), everestv1alpha1.UsedResourceFinalizer) {
 		// policy is used by some DB cluster
-		return fmt.Errorf("pod scheduling policy with name='%s' is used by some DB cluster and cannot be deleted", psp.GetName())
+		return errDeleteInUseDefaultPSP(psp.GetName())
 	}
 	return nil
 }

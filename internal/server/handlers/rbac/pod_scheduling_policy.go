@@ -35,11 +35,11 @@ func (h *rbacHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everes
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
-func (h *rbacHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionUpdate, rbac.ObjectName(common.SystemNamespace, name)); err != nil {
+func (h *rbacHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionUpdate, rbac.ObjectName(common.SystemNamespace, psp.GetName())); err != nil {
 		return nil, err
 	}
-	return h.next.UpdatePodSchedulingPolicy(ctx, name, psp)
+	return h.next.UpdatePodSchedulingPolicy(ctx, psp)
 }
 
 // ListPodSchedulingPolicies lists all pod scheduling policies.

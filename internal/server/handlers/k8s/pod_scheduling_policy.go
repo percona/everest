@@ -32,7 +32,7 @@ func (h *k8sHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everest
 	return h.kubeConnector.CreatePodSchedulingPolicy(ctx, psp)
 }
 
-func (h *k8sHandler) UpdatePodSchedulingPolicy(ctx context.Context, name string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+func (h *k8sHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	return h.kubeConnector.UpdatePodSchedulingPolicy(ctx, psp)
 }
 

@@ -19,7 +19,6 @@ package rbac
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -252,16 +251,12 @@ func loadAdminPolicy(enf casbin.IEnforcer) error {
 	for _, resource := range paths {
 		resources[resource] = struct{}{}
 	}
-	action := "*"
-	var object string
+
+	action := ActionAll
 	for resource := range resources {
-		switch resource {
-		case ResourceNamespaces:
+		object := "*/*"
+		if resource == ResourceNamespaces {
 			object = "*"
-		case ResourcePodSchedulingPolicies:
-			object = fmt.Sprintf("%s/*", common.SystemNamespace)
-		default:
-			object = "*/*"
 		}
 
 		if _, err := enf.AddPolicy(common.EverestAdminRole, resource, action, object); err != nil {
