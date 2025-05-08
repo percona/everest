@@ -2,7 +2,6 @@ package validation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -18,6 +17,7 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/internal/server/handlers/k8s"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -1976,8 +1976,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "everest-default-postgresql",
-						Namespace: common.SystemNamespace,
+						Name: "everest-default-postgresql",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
@@ -1996,15 +1995,14 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "everest-default-postgresql",
 				},
 			},
-			wantErr: fmt.Errorf("requested pod scheduling policy='everest-default-postgresql' is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePXC),
+			wantErr: errDBClusterPSPEngineTypeMismatch("everest-default-postgresql", everestv1alpha1.DatabaseEnginePXC),
 		},
 		{
 			name: "engineType mismatch PSMDB",
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "everest-default-postgresql",
-						Namespace: common.SystemNamespace,
+						Name: "everest-default-postgresql",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
@@ -2023,15 +2021,14 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "everest-default-postgresql",
 				},
 			},
-			wantErr: fmt.Errorf("requested pod scheduling policy='everest-default-postgresql' is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePSMDB),
+			wantErr: errDBClusterPSPEngineTypeMismatch("everest-default-postgresql", everestv1alpha1.DatabaseEnginePSMDB),
 		},
 		{
 			name: "engineType mismatch PostgreSQL",
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "everest-default-pxc",
-						Namespace: common.SystemNamespace,
+						Name: "everest-default-pxc",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -2050,7 +2047,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "everest-default-pxc",
 				},
 			},
-			wantErr: fmt.Errorf("requested pod scheduling policy='everest-default-pxc' is not applicable with engineType='%s'", everestv1alpha1.DatabaseEnginePostgresql),
+			wantErr: errDBClusterPSPEngineTypeMismatch("everest-default-pxc", everestv1alpha1.DatabaseEnginePostgresql),
 		},
 		// affinityConfig is absent
 		{
@@ -2058,8 +2055,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-pxc-policy",
-						Namespace: common.SystemNamespace,
+						Name: "test-pxc-policy",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -2078,7 +2074,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "test-pxc-policy",
 				},
 			},
-			wantErr: errors.New("pod scheduling policy='test-pxc-policy' is not applicable: affinityConfig is absent or empty"),
+			wantErr: errDBClusterInvalidPSPAffinityConfig("test-pxc-policy"),
 		},
 		// affinityConfig.PXC is absent
 		{
@@ -2086,8 +2082,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-pxc-policy",
-						Namespace: common.SystemNamespace,
+						Name: "test-pxc-policy",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType:     everestv1alpha1.DatabaseEnginePXC,
@@ -2107,7 +2102,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "test-pxc-policy",
 				},
 			},
-			wantErr: errors.New("pod scheduling policy='test-pxc-policy' is not applicable: .spec.affinityConfig.pxc is required"),
+			wantErr: errDBClusterInvalidPSPAffinityPXCEmpty("test-pxc-policy"),
 		},
 		// affinityConfig.PXC DB components are absent
 		{
@@ -2115,8 +2110,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-pxc-policy",
-						Namespace: common.SystemNamespace,
+						Name: "test-pxc-policy",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -2138,7 +2132,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "test-pxc-policy",
 				},
 			},
-			wantErr: errors.New("pod scheduling policy='test-pxc-policy' is not applicable: .spec.affinityConfig.pxc.engine or .spec.affinityConfig.pxc.proxy is required"),
+			wantErr: errDBClusterInvalidPSPAffinityPXCComponentsEmpty("test-pxc-policy"),
 		},
 		// affinityConfig.PSMDB is absent
 		{
@@ -2146,8 +2140,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-psmdb-policy",
-						Namespace: common.SystemNamespace,
+						Name: "test-psmdb-policy",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType:     everestv1alpha1.DatabaseEnginePSMDB,
@@ -2167,7 +2160,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "test-psmdb-policy",
 				},
 			},
-			wantErr: errors.New("pod scheduling policy='test-psmdb-policy' is not applicable: .spec.affinityConfig.psmdb is required"),
+			wantErr: errDBClusterInvalidPSPAffinityPSMDBEmpty("test-psmdb-policy"),
 		},
 		// affinityConfig.PSMDB DB components are absent
 		{
@@ -2175,8 +2168,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-psmdb-policy",
-						Namespace: common.SystemNamespace,
+						Name: "test-psmdb-policy",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePSMDB,
@@ -2198,7 +2190,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "test-psmdb-policy",
 				},
 			},
-			wantErr: errors.New("pod scheduling policy='test-psmdb-policy' is not applicable: .spec.affinityConfig.psmdb.engine or .spec.affinityConfig.psmdb.proxy or .spec.affinityConfig.psmdb.configServer is required"),
+			wantErr: errDBClusterInvalidPSPAffinityPSMDBComponentsEmpty("test-psmdb-policy"),
 		},
 		// affinityConfig.PostgreSQL is absent
 		{
@@ -2206,8 +2198,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-pg-policy",
-						Namespace: common.SystemNamespace,
+						Name: "test-pg-policy",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType:     everestv1alpha1.DatabaseEnginePostgresql,
@@ -2227,7 +2218,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "test-pg-policy",
 				},
 			},
-			wantErr: errors.New("pod scheduling policy='test-pg-policy' is not applicable: .spec.affinityConfig.postgresql is required"),
+			wantErr: errDBClusterInvalidPSPAffinityPostgresqlEmpty("test-pg-policy"),
 		},
 		// affinityConfig.PostgreSQL DB components are absent
 		{
@@ -2235,8 +2226,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-pg-policy",
-						Namespace: common.SystemNamespace,
+						Name: "test-pg-policy",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePostgresql,
@@ -2258,7 +2248,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					PodSchedulingPolicyName: "test-pg-policy",
 				},
 			},
-			wantErr: errors.New("pod scheduling policy='test-pg-policy' is not applicable: .spec.affinityConfig.postgresql.engine or .spec.affinityConfig.postgresql.proxy is required"),
+			wantErr: errDBClusterInvalidPSPAffinityPostgresqlComponentsEmpty("test-pg-policy"),
 		},
 	}
 

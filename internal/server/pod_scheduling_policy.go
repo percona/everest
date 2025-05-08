@@ -23,7 +23,6 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
-	"github.com/percona/everest/pkg/common"
 )
 
 // ListPodSchedulingPolicy lists all pod scheduling policies.
@@ -41,10 +40,6 @@ func (e *EverestServer) CreatePodSchedulingPolicy(c echo.Context) error {
 	psp := &everestv1alpha1.PodSchedulingPolicy{}
 	if err := e.getBodyFromContext(c, psp); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
-	}
-
-	if psp.GetNamespace() == "" {
-		psp.Namespace = common.SystemNamespace
 	}
 
 	result, err := e.handler.CreatePodSchedulingPolicy(c.Request().Context(), psp)
@@ -82,10 +77,6 @@ func (e *EverestServer) UpdatePodSchedulingPolicy(c echo.Context, policyName str
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	psp.SetName(policyName)
-
-	if psp.GetNamespace() == "" {
-		psp.Namespace = common.SystemNamespace
-	}
 
 	result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), psp)
 	if err != nil {

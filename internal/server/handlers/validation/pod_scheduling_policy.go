@@ -31,9 +31,6 @@ import (
 )
 
 var (
-	errInvalidPSPNamespace = func(nsName string) error {
-		return fmt.Errorf("invalid namespace '%s': pod scheduling policy must be in '%s' namespace only", nsName, common.SystemNamespace)
-	}
 	// Invalid engine type error
 	errInvalidPSPEngineType = func(engineType everestv1alpha1.EngineType) error {
 		return fmt.Errorf("unsupported .spec.engineType='%s'", engineType)
@@ -127,10 +124,6 @@ func (h *validateHandler) GetPodSchedulingPolicy(ctx context.Context, name strin
 }
 
 func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy) error {
-	if psp.GetNamespace() != common.SystemNamespace {
-		return errInvalidPSPNamespace(psp.GetNamespace())
-	}
-
 	if err := utils.ValidateRFC1035(psp.GetName(), "metadata.name"); err != nil {
 		return err
 	}
@@ -203,7 +196,7 @@ func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy
 func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *everestv1alpha1.PodSchedulingPolicy) error {
 	var oldPsp *everestv1alpha1.PodSchedulingPolicy
 	var err error
-	if oldPsp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: newPsp.GetName()}); err != nil {
+	if oldPsp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: newPsp.GetName()}); err != nil {
 		return err
 	}
 
@@ -222,7 +215,7 @@ func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *evere
 func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName string) error {
 	var psp *everestv1alpha1.PodSchedulingPolicy
 	var err error
-	if psp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: pspName}); err != nil {
+	if psp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: pspName}); err != nil {
 		return err
 	}
 
