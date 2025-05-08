@@ -128,8 +128,7 @@ test.describe.configure({ retries: 0 });
           // For clusters of size 3 we test with external access enabled
           if (size === 3) {
             await populateAdvancedConfig(page, db, true, '', true, '');
-          }
-          else {
+          } else {
             await populateAdvancedConfig(page, db, false, '', true, '');
           }
           await moveForward(page);
@@ -177,8 +176,7 @@ test.describe.configure({ retries: 0 });
           expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
           if (size === 3) {
             expect(addedCluster?.spec.proxy.expose.type).toBe('external');
-          }
-          else {
+          } else {
             expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
           }
           if (db != 'psmdb') {
@@ -425,21 +423,30 @@ test.describe.configure({ retries: 0 });
         });
       });
 
-      test(`Change external access options [${db} size ${size}]`, async ({ page, request }) => {
+      test(`Change external access options [${db} size ${size}]`, async ({
+        page,
+        request,
+      }) => {
         test.skip(size !== 3);
 
         await test.step('Set ipSourceRange', async () => {
           await page.goto('databases');
           await findDbAndClickRow(page, clusterName);
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
-          await page.getByTestId('text-input-source-ranges.0.source-range').fill('192.168.1.0/32');
+          await page
+            .getByTestId('text-input-source-ranges.0.source-range')
+            .fill('192.168.1.0/32');
           await page.getByTestId('form-dialog-save').click();
         });
 
         await test.step('Check new external access values in UI', async () => {
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
-          await expect(page.getByLabel('Enable External Access Enable')).toBeChecked();
-          const rawValue = await page.getByTestId('text-input-source-ranges.0.source-range').inputValue();
+          await expect(
+            page.getByLabel('Enable External Access Enable')
+          ).toBeChecked();
+          const rawValue = await page
+            .getByTestId('text-input-source-ranges.0.source-range')
+            .inputValue();
           await expect(rawValue).toEqual('192.168.1.0/32');
         });
 
@@ -452,7 +459,9 @@ test.describe.configure({ retries: 0 });
           );
 
           expect(cluster?.spec.proxy.expose.type).toBe('external');
-          expect(cluster?.spec.proxy.expose.ipSourceRanges).toEqual(['192.168.1.0/32']);
+          expect(cluster?.spec.proxy.expose.ipSourceRanges).toEqual([
+            '192.168.1.0/32',
+          ]);
         });
       });
 

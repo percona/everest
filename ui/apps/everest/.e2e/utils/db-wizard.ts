@@ -243,8 +243,8 @@ export const populateAdvancedConfig = async (
     await page.getByLabel('Enable External Access').check();
     if (externalAccessSourceRange != '') {
       await page
-      .getByTestId('text-input-source-ranges.0.source-range')
-      .fill(externalAccessSourceRange);
+        .getByTestId('text-input-source-ranges.0.source-range')
+        .fill(externalAccessSourceRange);
     }
   }
   if (engineParameters != '' || addDefaultEngineParameters) {
