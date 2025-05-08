@@ -30,7 +30,7 @@ export const Messages = {
     },
     policies: {
       title: 'Pod scheduling policy',
-      description: 'Select one of the available templates',
+      description: 'Select one of the available pod scheduling policies.',
     },
     enableExternalAccess: {
       title: 'Enable External Access',
