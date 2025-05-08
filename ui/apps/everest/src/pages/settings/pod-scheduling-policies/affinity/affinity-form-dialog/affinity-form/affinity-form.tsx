@@ -58,7 +58,6 @@ export const AffinityForm = ({ dbType, showInUseWarning = false }: Props) => {
       </Box>
       <RuleTypeSection
         dbType={dbType}
-        // disableComponent={selectedAffinityUid !== null}
         showWeight={priority === AffinityPriority.Preferred}
       />
       <RuleDetailsSection
