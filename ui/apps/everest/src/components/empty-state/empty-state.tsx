@@ -3,23 +3,19 @@ import {
   Divider,
   Typography,
   Link,
-  useTheme,
   Stack,
   ButtonProps,
 } from '@mui/material';
-import HelpIcon from '@mui/icons-material/Help';
+import HelpIcon from '@mui/icons-material/HelpOutlineOutlined';
 import { EmptyStateIcon } from '@percona/ui-lib';
 
 const ContactSupportLink = ({ msg }: { msg: string }) => {
-  const theme = useTheme();
   return (
     <Link target="_blank" rel="noopener" href="https://hubs.ly/Q02YRLsL0">
       <Button
         startIcon={
           <HelpIcon
             sx={{
-              color: theme.palette.background.paper,
-              backgroundColor: theme.palette.primary.main,
               borderRadius: '10px',
             }}
           />
