@@ -42,7 +42,7 @@ import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { MAX_SELECT_WIDTH, MIN_SELECT_WIDTH } from './constants';
+import { SELECT_WIDTH } from './constants';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -153,8 +153,7 @@ export const AdvancedConfigurationForm = ({
             autoCompleteProps={{
               disableClearable: true,
               sx: {
-                minWidth: MIN_SELECT_WIDTH,
-                maxWidth: MAX_SELECT_WIDTH,
+                width: SELECT_WIDTH,
                 mt: 0,
               },
             }}
@@ -180,8 +179,7 @@ export const AdvancedConfigurationForm = ({
                   loading={fetchingPolicies || loadingDefaultsForEdition}
                   formControlProps={{
                     sx: {
-                      minWidth: MIN_SELECT_WIDTH,
-                      maxWidth: MAX_SELECT_WIDTH,
+                      width: SELECT_WIDTH,
                       mt: 0,
                     },
                   }}
