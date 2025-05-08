@@ -14,7 +14,6 @@ const Header = ({
     <Box
       sx={{
         flexBasis: '20%',
-        flexGrow: 1,
         maxWidth: '40%',
         textAlign: 'right',
       }}
