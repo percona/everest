@@ -1,15 +1,7 @@
 import { TextInput } from '@percona/ui-lib';
 import { AffinityFormFields } from '../affinity-form.types';
 import { AffinityType } from 'shared-types/affinity.types';
-
-const getHelperTextForAffinityType = (affinityType: AffinityType) => {
-  switch (affinityType) {
-    case AffinityType.NodeAffinity:
-      return 'A label key assigned to nodes that defines scheduling rules';
-    default:
-      return 'A label key assigned to pods that defines scheduling rules';
-  }
-};
+import { Messages } from '../../affinity-form-dialog.messages';
 
 const KeyInput = ({ affinityType }: { affinityType: AffinityType }) => (
   <TextInput
@@ -25,7 +17,7 @@ const KeyInput = ({ affinityType }: { affinityType: AffinityType }) => (
       sx: {
         flex: '0 0 35%',
       },
-      helperText: getHelperTextForAffinityType(affinityType),
+      helperText: Messages.affinityTypeHelperText(affinityType),
     }}
   />
 );
