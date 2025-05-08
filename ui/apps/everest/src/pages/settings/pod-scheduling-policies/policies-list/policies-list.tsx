@@ -96,6 +96,10 @@ const PoliciesList = () => {
 
   return (
     <>
+      <Typography variant="body2" py={2}>
+        Manage database pod scheduling across your Kubernetes cluster with
+        custom policies for optimal placement and resource efficiency.
+      </Typography>
       <Table
         tableName="pod-scheduling-policies"
         emptyState={
