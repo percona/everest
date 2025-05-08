@@ -126,18 +126,19 @@ const PodSchedulingPoliciesTable = ({
       renderTopToolbarCustomActions={
         viewOnly || !canDoChanges
           ? undefined
-          : () => (
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={onAddRuleClick}
-                data-testid="add-rule-button"
-                sx={{ display: 'flex' }}
-                startIcon={<Add />}
-              >
-                Add rule
-              </Button>
-            )
+          : () =>
+              rules.length > 0 && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={onAddRuleClick}
+                  data-testid="add-rule-button"
+                  sx={{ display: 'flex' }}
+                  startIcon={<Add />}
+                >
+                  Add rule
+                </Button>
+              )
       }
       enableRowActions
       renderRowActions={
