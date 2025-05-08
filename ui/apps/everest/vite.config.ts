@@ -11,7 +11,6 @@ export default defineConfig({
       ignored: path.resolve(__dirname, '.e2e/**/*.*'),
     },
     proxy: {
-      '/v1/podschedulingpolicy': 'http://127.0.0.1:5000',
       '/v1': `http://127.0.0.1:${process.env.API_PORT || '8080'}`,
     },
     open: true,
