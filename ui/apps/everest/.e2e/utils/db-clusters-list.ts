@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { APIRequestContext, expect, Page } from '@playwright/test';
-import { findRowAndClickActions } from './table';
+import { findRowAndClickActions, waitForDbListLoad } from './table';
 import { checkError } from '@e2e/utils/generic';
 
 export const getDbClustersListAPI = async (
@@ -72,6 +72,7 @@ export const gotoDbClusterRestores = async (
 
 export const deleteDbCluster = async (page: Page, clusterName: string) => {
   await page.goto('databases');
+  await waitForDbListLoad(page);
   await findDbAndClickActions(page, clusterName, 'delete', 'Up');
   await expect(page.getByText('Delete database')).toBeVisible();
   await expect(page.getByText('Irreversible action')).toBeVisible();
