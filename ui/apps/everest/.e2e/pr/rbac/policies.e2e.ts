@@ -22,7 +22,7 @@ test.describe('Pod scheduling policies RBAC', () => {
 
   test.afterAll(async ({ request }) => {
     await setRBACPermissionsK8S([
-      ['pod-scheduling-policies', '*', 'everest-system/*'],
+      ['pod-scheduling-policies', '*', '*'],
     ]);
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await deletePodSchedulingPolicy(request, POD_SCHEDULING_POLICY_NAME);
@@ -30,7 +30,7 @@ test.describe('Pod scheduling policies RBAC', () => {
 
   test('Show Pod scheduling policies when allowed', async ({ page }) => {
     await setRBACPermissionsK8S([
-      ['pod-scheduling-policies', 'read', `everest-system/*`],
+      ['pod-scheduling-policies', 'read', `*`],
     ]);
     await page.goto('/settings/pod-scheduling-policies');
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
@@ -38,7 +38,7 @@ test.describe('Pod scheduling policies RBAC', () => {
 
   test('Hide Pod scheduling policies when not allowed', async ({ page }) => {
     await setRBACPermissionsK8S([
-      ['pod-scheduling-policies', 'read', 'everest-system/some-other-policy'],
+      ['pod-scheduling-policies', 'read', 'some-other-policy'],
     ]);
     await page.goto('/settings/pod-scheduling-policies');
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).not.toBeVisible();
@@ -49,12 +49,12 @@ test.describe('Pod scheduling policies RBAC', () => {
       [
         'pod-scheduling-policies',
         'read',
-        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+        `${POD_SCHEDULING_POLICY_NAME}`,
       ],
       [
         'pod-scheduling-policies',
         'delete',
-        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+        `${POD_SCHEDULING_POLICY_NAME}`,
       ],
     ]);
     await page.goto('/settings/pod-scheduling-policies');
@@ -72,9 +72,9 @@ test.describe('Pod scheduling policies RBAC', () => {
       [
         'pod-scheduling-policies',
         'read',
-        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+        `${POD_SCHEDULING_POLICY_NAME}`,
       ],
-      ['pod-scheduling-policies', 'delete', `everest-system/some-other-policy`],
+      ['pod-scheduling-policies', 'delete', `some-other-policy`],
     ]);
     await page.goto('/settings/pod-scheduling-policies');
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
@@ -91,12 +91,12 @@ test.describe('Pod scheduling policies RBAC', () => {
       [
         'pod-scheduling-policies',
         'read',
-        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+        `${POD_SCHEDULING_POLICY_NAME}`,
       ],
       [
         'pod-scheduling-policies',
         'update',
-        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+        `${POD_SCHEDULING_POLICY_NAME}`,
       ],
     ]);
     await page.goto(
@@ -115,12 +115,12 @@ test.describe('Pod scheduling policies RBAC', () => {
       [
         'pod-scheduling-policies',
         'read',
-        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+        `${POD_SCHEDULING_POLICY_NAME}`,
       ],
       [
         'pod-scheduling-policies',
         'update',
-        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+        `${POD_SCHEDULING_POLICY_NAME}`,
       ],
     ]);
     await page.goto(
@@ -135,9 +135,9 @@ test.describe('Pod scheduling policies RBAC', () => {
       [
         'pod-scheduling-policies',
         'read',
-        `everest-system/${POD_SCHEDULING_POLICY_NAME}`,
+        `${POD_SCHEDULING_POLICY_NAME}`,
       ],
-      ['pod-scheduling-policies', 'update', `everest-system/some-other-policy`],
+      ['pod-scheduling-policies', 'update', `some-other-policy`],
     ]);
     await expect(page.getByTestId('add-rule-button')).not.toBeVisible();
     await expect(page.getByTestId('edit-rule-button')).not.toBeVisible();
