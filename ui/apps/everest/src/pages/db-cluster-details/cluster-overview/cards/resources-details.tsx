@@ -40,8 +40,11 @@ import {
 import { dbEngineToDbType } from '@percona/utils';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { DbType } from '@percona/types';
-import { changeDbClusterResources, isProxy } from 'utils/db';
-import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
+import {
+  changeDbClusterResources,
+  isProxy,
+  getProxyUnitNamesFromDbType,
+} from 'utils/db';
 
 export const ResourcesDetails = ({
   dbCluster,

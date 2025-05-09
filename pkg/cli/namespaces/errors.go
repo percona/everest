@@ -68,13 +68,6 @@ var (
 	// ErrCannotRemoveOperators appears when user tries to delete operator from namespace.
 	ErrCannotRemoveOperators = errors.New("cannot remove operators")
 
-	// ErrNameNotRFC1035Compatible appears when some of the provided names are not RFC1035 compatible.
-	ErrNameNotRFC1035Compatible = func(fieldName string) error {
-		return fmt.Errorf(`'%s' is not RFC 1035 compatible. The name should contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric character`,
-			fieldName,
-		)
-	}
-
 	// ErrNamespaceNotEmpty is returned when the namespace is not empty.
 	ErrNamespaceNotEmpty = errors.New("cannot remove namespace with running database clusters")
 

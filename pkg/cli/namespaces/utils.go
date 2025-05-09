@@ -18,7 +18,6 @@ package namespaces
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -29,10 +28,8 @@ import (
 
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
+	"github.com/percona/everest/pkg/utils"
 )
-
-// Regexp used to validate RFC1035 compatible names.
-var rfc1035Regexp = regexp.MustCompile("^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$")
 
 // ParseNamespaceNames parses a comma-separated namespaces string.
 // It returns a list of namespaces.
@@ -70,19 +67,10 @@ func validateNamespaceNames(nsList []string) error {
 			return ErrNamespaceReserved(ns)
 		}
 
-		if err := validateRFC1035(ns); err != nil {
+		if err := utils.ValidateRFC1035(ns, "namespace name"); err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-// validates names to be RFC-1035 compatible  https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
-func validateRFC1035(s string) error {
-	if !rfc1035Regexp.MatchString(s) {
-		return ErrNameNotRFC1035Compatible(s)
-	}
-
 	return nil
 }
 

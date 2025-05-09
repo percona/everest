@@ -120,6 +120,7 @@ export interface Spec {
   dataSource?: DataSource;
   monitoring: Monitoring;
   sharding?: Sharding;
+  podSchedulingPolicyName?: string;
 }
 export interface StatusCondition {
   type: DbErrorType;

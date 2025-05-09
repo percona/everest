@@ -184,6 +184,36 @@ func (_m *MockHandler) CreateMonitoringInstance(ctx context.Context, namespace s
 	return r0, r1
 }
 
+// CreatePodSchedulingPolicy provides a mock function with given fields: ctx, psp
+func (_m *MockHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *v1alpha1.PodSchedulingPolicy) (*v1alpha1.PodSchedulingPolicy, error) {
+	ret := _m.Called(ctx, psp)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePodSchedulingPolicy")
+	}
+
+	var r0 *v1alpha1.PodSchedulingPolicy
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.PodSchedulingPolicy) (*v1alpha1.PodSchedulingPolicy, error)); ok {
+		return rf(ctx, psp)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.PodSchedulingPolicy) *v1alpha1.PodSchedulingPolicy); ok {
+		r0 = rf(ctx, psp)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.PodSchedulingPolicy)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.PodSchedulingPolicy) error); ok {
+		r1 = rf(ctx, psp)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteBackupStorage provides a mock function with given fields: ctx, namespace, name
 func (_m *MockHandler) DeleteBackupStorage(ctx context.Context, namespace string, name string) error {
 	ret := _m.Called(ctx, namespace, name)
@@ -267,6 +297,24 @@ func (_m *MockHandler) DeleteMonitoringInstance(ctx context.Context, namespace s
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
 		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeletePodSchedulingPolicy provides a mock function with given fields: ctx, name
+func (_m *MockHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeletePodSchedulingPolicy")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -604,6 +652,36 @@ func (_m *MockHandler) GetMonitoringInstance(ctx context.Context, namespace stri
 	return r0, r1
 }
 
+// GetPodSchedulingPolicy provides a mock function with given fields: ctx, name
+func (_m *MockHandler) GetPodSchedulingPolicy(ctx context.Context, name string) (*v1alpha1.PodSchedulingPolicy, error) {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPodSchedulingPolicy")
+	}
+
+	var r0 *v1alpha1.PodSchedulingPolicy
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1alpha1.PodSchedulingPolicy, error)); ok {
+		return rf(ctx, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1alpha1.PodSchedulingPolicy); ok {
+		r0 = rf(ctx, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.PodSchedulingPolicy)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSettings provides a mock function with given fields: ctx
 func (_m *MockHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
 	ret := _m.Called(ctx)
@@ -904,6 +982,36 @@ func (_m *MockHandler) ListNamespaces(ctx context.Context) ([]string, error) {
 	return r0, r1
 }
 
+// ListPodSchedulingPolicies provides a mock function with given fields: ctx, params
+func (_m *MockHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*v1alpha1.PodSchedulingPolicyList, error) {
+	ret := _m.Called(ctx, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPodSchedulingPolicies")
+	}
+
+	var r0 *v1alpha1.PodSchedulingPolicyList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *api.ListPodSchedulingPolicyParams) (*v1alpha1.PodSchedulingPolicyList, error)); ok {
+		return rf(ctx, params)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *api.ListPodSchedulingPolicyParams) *v1alpha1.PodSchedulingPolicyList); ok {
+		r0 = rf(ctx, params)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.PodSchedulingPolicyList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *api.ListPodSchedulingPolicyParams) error); ok {
+		r1 = rf(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SetNext provides a mock function with given fields: h
 func (_m *MockHandler) SetNext(h Handler) {
 	_m.Called(h)
@@ -1052,6 +1160,36 @@ func (_m *MockHandler) UpdateMonitoringInstance(ctx context.Context, namespace s
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string, *api.MonitoringInstanceUpdateParams) error); ok {
 		r1 = rf(ctx, namespace, name, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdatePodSchedulingPolicy provides a mock function with given fields: ctx, psp
+func (_m *MockHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *v1alpha1.PodSchedulingPolicy) (*v1alpha1.PodSchedulingPolicy, error) {
+	ret := _m.Called(ctx, psp)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdatePodSchedulingPolicy")
+	}
+
+	var r0 *v1alpha1.PodSchedulingPolicy
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.PodSchedulingPolicy) (*v1alpha1.PodSchedulingPolicy, error)); ok {
+		return rf(ctx, psp)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.PodSchedulingPolicy) *v1alpha1.PodSchedulingPolicy); ok {
+		r0 = rf(ctx, psp)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.PodSchedulingPolicy)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.PodSchedulingPolicy) error); ok {
+		r1 = rf(ctx, psp)
 	} else {
 		r1 = ret.Error(1)
 	}

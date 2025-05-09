@@ -23,4 +23,5 @@ export interface EditableItemProps {
   };
   dataTestId: string;
   paperProps?: PaperProps;
+  endText?: string;
 }

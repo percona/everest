@@ -4,7 +4,6 @@ import { ConfirmDialogProps } from './confirm-dialog.types';
 import { kebabize } from '@percona/utils';
 
 export const ConfirmDialog = ({
-  isOpen,
   closeModal,
   selectedId,
   selectedNamespace,
@@ -12,9 +11,10 @@ export const ConfirmDialog = ({
   handleConfirm = () => {},
   handleConfirmNamespace = () => {},
   headerMessage,
-  cancelMessage = 'Cancel',
+  cancelMessage,
   submitMessage = 'Delete',
   disabledButtons = false,
+  ...dialogProps
 }: ConfirmDialogProps) => {
   const onClick = () => {
     if (selectedNamespace) {
@@ -26,28 +26,34 @@ export const ConfirmDialog = ({
 
   return (
     <Dialog
-      open={isOpen}
       onClose={closeModal}
       data-testid={`${selectedId}-confirm-dialog`}
+      maxWidth="sm"
+      {...dialogProps}
+      open={dialogProps.open}
     >
       <DialogTitle onClose={closeModal}>{headerMessage}</DialogTitle>
-      <DialogContent sx={{ width: '480px' }}>{content}</DialogContent>
+      <DialogContent>{content}</DialogContent>
       <DialogActions>
-        <Button
-          onClick={closeModal}
-          disabled={disabledButtons}
-          data-testid={`confirm-dialog-${kebabize(cancelMessage)}`}
-        >
-          {cancelMessage}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={onClick}
-          disabled={disabledButtons}
-          data-testid={`confirm-dialog-${kebabize(submitMessage)}`}
-        >
-          {submitMessage}
-        </Button>
+        {!!cancelMessage && (
+          <Button
+            onClick={closeModal}
+            disabled={disabledButtons}
+            data-testid={`confirm-dialog-${kebabize(cancelMessage)}`}
+          >
+            {cancelMessage}
+          </Button>
+        )}
+        {!!submitMessage && (
+          <Button
+            variant="contained"
+            onClick={onClick}
+            disabled={disabledButtons}
+            data-testid={`confirm-dialog-${kebabize(submitMessage)}`}
+          >
+            {submitMessage}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

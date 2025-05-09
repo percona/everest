@@ -32,6 +32,7 @@ export const AdvancedConfiguration = ({
   externalAccess,
   parameters,
   storageClass,
+  podSchedulingPolicy,
 }: AdvancedConfigurationOverviewCardProps) => {
   const {
     canUpdateDb,
@@ -40,6 +41,7 @@ export const AdvancedConfiguration = ({
   } = useContext(DbClusterContext);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
     {
@@ -62,6 +64,8 @@ export const AdvancedConfiguration = ({
     sourceRanges,
     engineParametersEnabled,
     engineParameters,
+    podSchedulingPolicyEnabled,
+    podSchedulingPolicy,
   }: AdvancedConfigurationFormType) => {
     setUpdating(true);
     updateCluster(
@@ -70,7 +74,9 @@ export const AdvancedConfiguration = ({
         engineParametersEnabled,
         externalAccess,
         engineParameters,
-        sourceRanges
+        sourceRanges,
+        podSchedulingPolicyEnabled,
+        podSchedulingPolicy
       )
     );
   };
@@ -108,6 +114,13 @@ export const AdvancedConfiguration = ({
       <OverviewSectionRow
         label={Messages.fields.storageClass}
         contentString={storageClass}
+      />
+
+      <OverviewSectionRow
+        label={Messages.fields.podSchedulingPolicy}
+        contentString={
+          podSchedulingPolicy ? podSchedulingPolicy : Messages.fields.disabled
+        }
       />
       {openEditModal && dbCluster && (
         <AdvancedConfigurationEditModal
