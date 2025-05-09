@@ -32,13 +32,14 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/internal/server/handlers/k8s"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/utils"
 )
 
-var (
-	defaultPXCPolicy = &everestv1alpha1.PodSchedulingPolicy{
+func getDefaultPXCPolicy() *everestv1alpha1.PodSchedulingPolicy {
+	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "everest-default-pxc",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
@@ -47,7 +48,10 @@ var (
 			EngineType: everestv1alpha1.DatabaseEnginePXC,
 		},
 	}
-	defaultPGPolicy = &everestv1alpha1.PodSchedulingPolicy{
+}
+
+func getDefaultPGPolicy() *everestv1alpha1.PodSchedulingPolicy {
+	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "everest-default-postgresql",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
@@ -56,7 +60,10 @@ var (
 			EngineType: everestv1alpha1.DatabaseEnginePostgresql,
 		},
 	}
-	defaultPSMDBPolicy = &everestv1alpha1.PodSchedulingPolicy{
+}
+
+func getDefaultPSMDBPolicy() *everestv1alpha1.PodSchedulingPolicy {
+	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "everest-default-psmdb",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
@@ -65,7 +72,7 @@ var (
 			EngineType: everestv1alpha1.DatabaseEnginePSMDB,
 		},
 	}
-)
+}
 
 func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 	t.Parallel()
@@ -589,9 +596,9 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 		{
 			name: "default policies",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 3 &&
@@ -657,20 +664,20 @@ func TestValidate_GetPodSchedulingPolicy(t *testing.T) {
 		{
 			name: "get default policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			policyName: "everest-default-pxc",
-			wantPolicy: defaultPXCPolicy,
+			wantPolicy: getDefaultPXCPolicy(),
 		},
 		// get absent policy
 		{
 			name: "get absent policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			policyName: "non-existing-policy",
 			wantErr: k8sError.NewNotFound(schema.GroupResource{
@@ -740,9 +747,9 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "update non-existing policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -768,9 +775,9 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "update default PXC policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -792,9 +799,9 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "update default PSMDB policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -815,9 +822,9 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "update default PosgreSQL policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1965,9 +1972,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete non-existing policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			pspNameToDelete: "non-existing-policy",
 			wantErr: k8sError.NewNotFound(schema.GroupResource{
@@ -1981,9 +1988,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete default PXC policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			pspNameToDelete: "everest-default-pxc",
 			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-pxc")),
@@ -1992,9 +1999,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete default PSMDB policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			pspNameToDelete: "everest-default-psmdb",
 			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-psmdb")),
@@ -2003,9 +2010,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete default PostgreSQL policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			pspNameToDelete: "everest-default-postgresql",
 			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-postgresql")),
@@ -2014,9 +2021,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete non-used policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-policy",
@@ -2030,9 +2037,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete used policy",
 			objs: []ctrlclient.Object{
-				defaultPXCPolicy,
-				defaultPGPolicy,
-				defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:       "test-policy",

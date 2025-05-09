@@ -36,8 +36,8 @@ import (
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
-var (
-	defaultPXCPolicy = everestv1alpha1.PodSchedulingPolicy{
+func getDefaultPXCPolicy() *everestv1alpha1.PodSchedulingPolicy {
+	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "everest-default-pxc",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
@@ -46,7 +46,10 @@ var (
 			EngineType: everestv1alpha1.DatabaseEnginePXC,
 		},
 	}
-	defaultPGPolicy = everestv1alpha1.PodSchedulingPolicy{
+}
+
+func getDefaultPGPolicy() *everestv1alpha1.PodSchedulingPolicy {
+	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "everest-default-postgresql",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
@@ -55,7 +58,10 @@ var (
 			EngineType: everestv1alpha1.DatabaseEnginePostgresql,
 		},
 	}
-	defaultPSMDBPolicy = everestv1alpha1.PodSchedulingPolicy{
+}
+
+func getDefaultPSMDBPolicy() *everestv1alpha1.PodSchedulingPolicy {
+	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "everest-default-psmdb",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
@@ -64,7 +70,7 @@ var (
 			EngineType: everestv1alpha1.DatabaseEnginePSMDB,
 		},
 	}
-)
+}
 
 func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 	t.Parallel()
@@ -91,9 +97,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete non-existing policy",
 			objs: []ctrlclient.Object{
-				&defaultPXCPolicy,
-				&defaultPGPolicy,
-				&defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			pspNameToDelete: "non-existing-policy",
 			wantErr: k8sError.NewNotFound(schema.GroupResource{
@@ -107,9 +113,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete used policy",
 			objs: []ctrlclient.Object{
-				&defaultPXCPolicy,
-				&defaultPGPolicy,
-				&defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "used-policy",
@@ -133,9 +139,9 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 		{
 			name: "delete unused policy",
 			objs: []ctrlclient.Object{
-				&defaultPXCPolicy,
-				&defaultPGPolicy,
-				&defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "unused-policy",
@@ -190,9 +196,9 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 		{
 			name: "default policies without filter",
 			objs: []ctrlclient.Object{
-				&defaultPXCPolicy,
-				&defaultPGPolicy,
-				&defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 3 &&
@@ -211,9 +217,9 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 		{
 			name: "default policies PXC filter",
 			objs: []ctrlclient.Object{
-				&defaultPXCPolicy,
-				&defaultPGPolicy,
-				&defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			listParams: &api.ListPodSchedulingPolicyParams{
 				EngineType: pointer.To(api.Pxc),
@@ -229,9 +235,9 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 		{
 			name: "default policies PSMDB filter",
 			objs: []ctrlclient.Object{
-				&defaultPXCPolicy,
-				&defaultPGPolicy,
-				&defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			listParams: &api.ListPodSchedulingPolicyParams{
 				EngineType: pointer.To(api.Psmdb),
@@ -247,9 +253,9 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 		{
 			name: "default policies PostgreSQL filter",
 			objs: []ctrlclient.Object{
-				&defaultPXCPolicy,
-				&defaultPGPolicy,
-				&defaultPSMDBPolicy,
+				getDefaultPXCPolicy(),
+				getDefaultPGPolicy(),
+				getDefaultPSMDBPolicy(),
 			},
 			listParams: &api.ListPodSchedulingPolicyParams{
 				EngineType: pointer.To(api.Postgresql),
