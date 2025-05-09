@@ -21,17 +21,13 @@ test.describe('Pod scheduling policies RBAC', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    await setRBACPermissionsK8S([
-      ['pod-scheduling-policies', '*', '*'],
-    ]);
+    await setRBACPermissionsK8S([['pod-scheduling-policies', '*', '*']]);
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await deletePodSchedulingPolicy(request, POD_SCHEDULING_POLICY_NAME);
   });
 
   test('Show Pod scheduling policies when allowed', async ({ page }) => {
-    await setRBACPermissionsK8S([
-      ['pod-scheduling-policies', 'read', `*`],
-    ]);
+    await setRBACPermissionsK8S([['pod-scheduling-policies', 'read', `*`]]);
     await page.goto('/settings/pod-scheduling-policies');
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
   });
@@ -46,16 +42,8 @@ test.describe('Pod scheduling policies RBAC', () => {
 
   test('Ability to delete policy when allowed', async ({ page }) => {
     await setRBACPermissionsK8S([
-      [
-        'pod-scheduling-policies',
-        'read',
-        `${POD_SCHEDULING_POLICY_NAME}`,
-      ],
-      [
-        'pod-scheduling-policies',
-        'delete',
-        `${POD_SCHEDULING_POLICY_NAME}`,
-      ],
+      ['pod-scheduling-policies', 'read', `${POD_SCHEDULING_POLICY_NAME}`],
+      ['pod-scheduling-policies', 'delete', `${POD_SCHEDULING_POLICY_NAME}`],
     ]);
     await page.goto('/settings/pod-scheduling-policies');
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
@@ -69,11 +57,7 @@ test.describe('Pod scheduling policies RBAC', () => {
 
   test('Hide policy delete icon when not allowed', async ({ page }) => {
     await setRBACPermissionsK8S([
-      [
-        'pod-scheduling-policies',
-        'read',
-        `${POD_SCHEDULING_POLICY_NAME}`,
-      ],
+      ['pod-scheduling-policies', 'read', `${POD_SCHEDULING_POLICY_NAME}`],
       ['pod-scheduling-policies', 'delete', `some-other-policy`],
     ]);
     await page.goto('/settings/pod-scheduling-policies');
@@ -88,16 +72,8 @@ test.describe('Pod scheduling policies RBAC', () => {
 
   test('Ability to update policy rules when allowed', async ({ page }) => {
     await setRBACPermissionsK8S([
-      [
-        'pod-scheduling-policies',
-        'read',
-        `${POD_SCHEDULING_POLICY_NAME}`,
-      ],
-      [
-        'pod-scheduling-policies',
-        'update',
-        `${POD_SCHEDULING_POLICY_NAME}`,
-      ],
+      ['pod-scheduling-policies', 'read', `${POD_SCHEDULING_POLICY_NAME}`],
+      ['pod-scheduling-policies', 'update', `${POD_SCHEDULING_POLICY_NAME}`],
     ]);
     await page.goto(
       `/settings/pod-scheduling-policies/${POD_SCHEDULING_POLICY_NAME}`
@@ -112,16 +88,8 @@ test.describe('Pod scheduling policies RBAC', () => {
 
   test('Hide rule actions when not allowed', async ({ page }) => {
     await setRBACPermissionsK8S([
-      [
-        'pod-scheduling-policies',
-        'read',
-        `${POD_SCHEDULING_POLICY_NAME}`,
-      ],
-      [
-        'pod-scheduling-policies',
-        'update',
-        `${POD_SCHEDULING_POLICY_NAME}`,
-      ],
+      ['pod-scheduling-policies', 'read', `${POD_SCHEDULING_POLICY_NAME}`],
+      ['pod-scheduling-policies', 'update', `${POD_SCHEDULING_POLICY_NAME}`],
     ]);
     await page.goto(
       `/settings/pod-scheduling-policies/${POD_SCHEDULING_POLICY_NAME}`
@@ -132,11 +100,7 @@ test.describe('Pod scheduling policies RBAC', () => {
     await page.getByTestId('form-dialog-add').click();
 
     await setRBACPermissionsK8S([
-      [
-        'pod-scheduling-policies',
-        'read',
-        `${POD_SCHEDULING_POLICY_NAME}`,
-      ],
+      ['pod-scheduling-policies', 'read', `${POD_SCHEDULING_POLICY_NAME}`],
       ['pod-scheduling-policies', 'update', `some-other-policy`],
     ]);
     await expect(page.getByTestId('add-rule-button')).not.toBeVisible();
