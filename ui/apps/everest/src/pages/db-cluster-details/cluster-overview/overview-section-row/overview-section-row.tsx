@@ -33,15 +33,13 @@ export const OverviewSectionRow = ({
         {label}
       </Typography>
     </Grid>
-    {!!content && (
-      <Grid item>
-        {typeof content === 'string' ? (
-          <Typography variant="body2">{content}</Typography>
-        ) : (
-          content
-        )}
-      </Grid>
-    )}
+    <Grid item>
+      {typeof content === 'string' ? (
+        <Typography variant="body2">{content}</Typography>
+      ) : (
+        content
+      )}
+    </Grid>
   </Grid>
 );
 
