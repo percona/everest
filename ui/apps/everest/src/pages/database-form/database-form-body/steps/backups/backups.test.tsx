@@ -6,7 +6,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TestWrapper } from 'utils/test';
 import { Backups } from './backups.tsx';
 
-vi.mock('hooks/api/backup-storages/useBackupStorages');
+const backupStoragesMocks = vi.hoisted(() => ({
+  useBackupStoragesByNamespace: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock('hooks/api/backup-storages/useBackupStorages', async () => {
+  const actual = await vi.importActual(
+    'hooks/api/backup-storages/useBackupStorages'
+  );
+  return {
+    ...actual,
+    useBackupStoragesByNamespace:
+      backupStoragesMocks.useBackupStoragesByNamespace,
+  };
+});
 vi.mock('hooks/api/db-cluster/useDbCluster');
 vi.mock('hooks/api/backups/useBackups', () => ({
   useDbBackups: () => ({
@@ -60,6 +73,53 @@ describe('BackupsStep', () => {
 
     expect(screen.getByTestId('no-storage-message')).toBeInTheDocument();
     expect(screen.queryByTestId('editable-item')).not.toBeInTheDocument();
+  });
+
+  it('should display the Create backup schedule link', () => {
+    backupStoragesMocks.useBackupStoragesByNamespace.mockReturnValue({
+      data: [
+        {
+          bucketName: 'bs-tds-1',
+          description: 'bs-tds-1',
+          forcePathStyle: false,
+          name: 'bs-tds-1',
+          namespace: 'everest-ui',
+          region: 'us-east-1',
+          type: 's3',
+          url: 'https://minio.minio.svc.cluster.local',
+          verifyTLS: false,
+        },
+      ],
+      isFetching: false,
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TestWrapper>
+          <FormProviderWrapper>
+            <Backups />
+          </FormProviderWrapper>
+        </TestWrapper>
+      </QueryClientProvider>
+    );
+    const CreateButton = screen.getByTestId('create-schedule');
+    expect(CreateButton).toBeInTheDocument();
+  });
+  it('should not display the Create backup schedule link if more backup storages are not available', () => {
+    backupStoragesMocks.useBackupStoragesByNamespace.mockReturnValue({
+      data: [],
+      isFetching: false,
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TestWrapper>
+          <FormProviderWrapper>
+            <Backups />
+          </FormProviderWrapper>
+        </TestWrapper>
+      </QueryClientProvider>
+    );
+    const CreateButton = screen.queryByTestId('create-schedule');
+    expect(CreateButton).not.toBeInTheDocument();
   });
 
   // it('should render everything when backups are enabled', () => {
