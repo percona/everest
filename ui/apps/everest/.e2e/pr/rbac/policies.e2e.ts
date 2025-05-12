@@ -4,7 +4,6 @@ import {
 } from '@e2e/utils/policies';
 import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
-import { mockEngines } from './utils';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 

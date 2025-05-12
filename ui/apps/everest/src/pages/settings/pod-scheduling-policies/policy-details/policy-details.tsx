@@ -20,7 +20,6 @@ import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac';
 import {
   EVEREST_POLICY_IN_USE_FINALIZER,
   EVEREST_READ_ONLY_FINALIZER,
-  EVEREST_SYSTEM_NS,
 } from 'consts';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { Messages } from '../pod-scheduling-policies.messages';
@@ -36,14 +35,14 @@ const PolicyDetails = () => {
   const queryClient = useQueryClient();
   const { canUpdate } = useRBACPermissions(
     'pod-scheduling-policies',
-    `${EVEREST_SYSTEM_NS}/${policyName}`
+    policyName
   );
 
   useRBACPermissionRoute([
     {
       action: 'read',
       resource: 'pod-scheduling-policies',
-      specificResources: [`${EVEREST_SYSTEM_NS}/${policyName}`],
+      specificResources: [policyName],
     },
   ]);
 

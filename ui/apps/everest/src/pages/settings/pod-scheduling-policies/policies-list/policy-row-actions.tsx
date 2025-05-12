@@ -4,7 +4,6 @@ import Visibility from '@mui/icons-material/Visibility';
 import TableActionsMenu from 'components/table-actions-menu';
 import { useRBACPermissions } from 'hooks/rbac';
 import { useNavigate } from 'react-router-dom';
-import { EVEREST_SYSTEM_NS } from 'consts';
 
 type Props = {
   policyName: string;
@@ -19,7 +18,7 @@ const PolicyRowActions = ({
 }: Props) => {
   const { canDelete } = useRBACPermissions(
     'pod-scheduling-policies',
-    `${EVEREST_SYSTEM_NS}/${policyName}`
+    policyName
   );
   const navigate = useNavigate();
 

@@ -23,17 +23,13 @@ import PolicyRowActions from './policy-row-actions';
 import {
   EVEREST_POLICY_IN_USE_FINALIZER,
   EVEREST_READ_ONLY_FINALIZER,
-  EVEREST_SYSTEM_NS,
 } from 'consts';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const selectedPolicy = useRef<PodSchedulingPolicy>();
-  const { canCreate } = useRBACPermissions(
-    'pod-scheduling-policies',
-    `${EVEREST_SYSTEM_NS}/*`
-  );
+  const { canCreate } = useRBACPermissions('pod-scheduling-policies');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { mutate: createPolicy } = useCreatePodSchedulingPolicy();
