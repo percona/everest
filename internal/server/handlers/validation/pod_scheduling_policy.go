@@ -19,10 +19,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -59,7 +59,7 @@ var (
 		return fmt.Errorf("pod scheduling policy with name='%s' is default and cannot be deleted", name)
 	}
 	// Used policy error
-	errDeleteInUseDefaultPSP = func(name string) error {
+	errDeleteInUsePSP = func(name string) error {
 		return fmt.Errorf("pod scheduling policy with name='%s' is used by some DB cluster and cannot be deleted", name)
 	}
 )
@@ -224,13 +224,13 @@ func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName strin
 		return errDeleteDefaultPSP(psp.GetName())
 	}
 
-	if slices.Contains(psp.GetFinalizers(), everestv1alpha1.InUseResourceFinalizer) {
+	if controllerutil.ContainsFinalizer(psp, everestv1alpha1.InUseResourceFinalizer) {
 		// policy is used by some DB cluster
-		return errDeleteInUseDefaultPSP(psp.GetName())
+		return errDeleteInUsePSP(psp.GetName())
 	}
 	return nil
 }
 
 func (h *validateHandler) isDefaultPSP(psp *everestv1alpha1.PodSchedulingPolicy) bool {
-	return slices.Contains(psp.GetFinalizers(), everestv1alpha1.ReadOnlyFinalizer)
+	return controllerutil.ContainsFinalizer(psp, everestv1alpha1.ReadOnlyFinalizer)
 }

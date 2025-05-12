@@ -2048,7 +2048,7 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 				},
 			},
 			pspNameToDelete: "test-policy",
-			wantErr:         errors.Join(ErrInvalidRequest, errDeleteInUseDefaultPSP("test-policy")),
+			wantErr:         errors.Join(ErrInvalidRequest, errDeleteInUsePSP("test-policy")),
 		},
 	}
 
