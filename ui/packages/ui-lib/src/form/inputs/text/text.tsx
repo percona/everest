@@ -35,6 +35,18 @@ const TextInput = ({
             onWheel: (e) => {
               (e.target as HTMLElement).blur();
             },
+            onBlur: (event: React.FocusEvent<HTMLInputElement>) => {
+              if (textFieldProps?.onBlur) {
+                const modifiedEvent = {
+                  ...event,
+                  target: {
+                    ...event.target,
+                    value: textFieldProps.onBlur(event),
+                  },
+                };
+                field.onChange(modifiedEvent);
+              }
+            },
             onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
               if (onChange) {
                 const modifiedEvent = {
