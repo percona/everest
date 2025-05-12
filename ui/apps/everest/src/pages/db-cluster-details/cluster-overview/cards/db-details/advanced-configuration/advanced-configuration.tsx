@@ -26,6 +26,7 @@ import {
   changeDbClusterAdvancedConfig,
   shouldDbActionsBeBlocked,
 } from 'utils/db';
+import { Link } from 'react-router-dom';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -101,25 +102,33 @@ export const AdvancedConfiguration = ({
     >
       <OverviewSectionRow
         label={Messages.fields.externalAccess}
-        contentString={
+        content={
           externalAccess ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
       <OverviewSectionRow
         label={Messages.fields.parameters}
-        contentString={
+        content={
           parameters ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
       <OverviewSectionRow
         label={Messages.fields.storageClass}
-        contentString={storageClass}
+        content={storageClass}
       />
 
       <OverviewSectionRow
         label={Messages.fields.podSchedulingPolicy}
-        contentString={
-          podSchedulingPolicy ? podSchedulingPolicy : Messages.fields.disabled
+        content={
+          podSchedulingPolicy ? (
+            <Link
+              to={`/settings/pod-scheduling-policies/${podSchedulingPolicy}`}
+            >
+              {podSchedulingPolicy}
+            </Link>
+          ) : (
+            Messages.fields.disabled
+          )
         }
       />
       {openEditModal && dbCluster && (

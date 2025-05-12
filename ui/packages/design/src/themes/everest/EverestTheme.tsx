@@ -50,6 +50,13 @@ const everestThemeOptions = (mode: PaletteMode): ThemeOptions => {
           }),
     },
     components: {
+      MuiCssBaseline: {
+        styleOverrides: `
+          a {
+            color: inherit;
+          }
+        `,
+      },
       MuiIconButton: {
         defaultProps: {
           disableTouchRipple: true,

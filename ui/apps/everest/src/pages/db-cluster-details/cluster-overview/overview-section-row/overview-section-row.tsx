@@ -20,9 +20,7 @@ import { kebabize } from '@percona/utils';
 export const OverviewSectionRow = ({
   label,
   labelProps,
-  contentString,
   content,
-  contentProps,
   dataTestId,
 }: OverviewSectionRowProps) => (
   <Grid
@@ -35,14 +33,15 @@ export const OverviewSectionRow = ({
         {label}
       </Typography>
     </Grid>
-    <Grid item>
-      {contentString && (
-        <Typography {...contentProps} variant="body2">
-          {contentString}
-        </Typography>
-      )}
-      {content}
-    </Grid>
+    {!!content && (
+      <Grid item>
+        {typeof content === 'string' ? (
+          <Typography variant="body2">{content}</Typography>
+        ) : (
+          content
+        )}
+      </Grid>
+    )}
   </Grid>
 );
 

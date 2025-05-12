@@ -163,7 +163,7 @@ export const ResourcesDetails = ({
               <OverviewSectionRow
                 dataTestId="sharding-status"
                 label={Messages.fields.status}
-                contentString={
+                content={
                   sharding?.enabled
                     ? Messages.fields.enabled
                     : Messages.fields.disabled
@@ -173,14 +173,14 @@ export const ResourcesDetails = ({
                 <OverviewSectionRow
                   dataTestId="number-of-shards"
                   label={Messages.fields.shards}
-                  contentString={sharding?.shards?.toString()}
+                  content={sharding?.shards?.toString()}
                 />
               )}
               {sharding?.enabled && (
                 <OverviewSectionRow
                   dataTestId="config-servers"
                   label={Messages.fields.configServers}
-                  contentString={sharding?.configServer?.replicas?.toString()}
+                  content={sharding?.configServer?.replicas?.toString()}
                 />
               )}
             </OverviewSection>
@@ -192,7 +192,7 @@ export const ResourcesDetails = ({
             <OverviewSectionRow
               dataTestId="node-cpu"
               label={Messages.fields.cpu}
-              contentString={getTotalResourcesDetailedString(
+              content={getTotalResourcesDetailedString(
                 cpuParser(cpu.toString() || '0'),
                 parseInt(replicas, 10),
                 'CPU',
@@ -202,7 +202,7 @@ export const ResourcesDetails = ({
             />
             <OverviewSectionRow
               label={Messages.fields.memory}
-              contentString={getTotalResourcesDetailedString(
+              content={getTotalResourcesDetailedString(
                 parsedMemoryValues.value,
                 parseInt(replicas, 10),
                 parsedMemoryValues.originalUnit,
@@ -212,7 +212,7 @@ export const ResourcesDetails = ({
             />
             <OverviewSectionRow
               label={Messages.fields.disk}
-              contentString={getTotalResourcesDetailedString(
+              content={getTotalResourcesDetailedString(
                 parsedDiskValues.value,
                 parseInt(replicas, 10),
                 parsedDiskValues.originalUnit,
@@ -229,7 +229,7 @@ export const ResourcesDetails = ({
               <OverviewSectionRow
                 dataTestId={`${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}-cpu`}
                 label={Messages.fields.cpu}
-                contentString={getTotalResourcesDetailedString(
+                content={getTotalResourcesDetailedString(
                   cpuParser(proxyCpu.toString() || '0'),
                   parseInt(proxies, 10),
                   'CPU'
@@ -237,7 +237,7 @@ export const ResourcesDetails = ({
               />
               <OverviewSectionRow
                 label={Messages.fields.memory}
-                contentString={getTotalResourcesDetailedString(
+                content={getTotalResourcesDetailedString(
                   parsedProxyMemoryValues.value,
                   parseInt(proxies, 10),
                   parsedProxyMemoryValues.originalUnit

@@ -1,11 +1,9 @@
 import { ReactNode } from 'react';
-import { GridProps, TypographyProps } from '@mui/material';
+import { GridProps } from '@mui/material';
 
 export interface OverviewSectionRowProps {
   label: string;
   labelProps?: GridProps;
-  contentString?: ReactNode;
-  content?: ReactNode;
-  contentProps?: TypographyProps;
+  content: ReactNode;
   dataTestId?: string;
 }
