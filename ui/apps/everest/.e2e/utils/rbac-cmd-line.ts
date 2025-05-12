@@ -29,6 +29,6 @@ export const setRBACPermissionsK8S = async (
   return new Promise<void>((resolve) =>
     setTimeout(() => {
       resolve();
-    }, 500)
+    }, 1000)
   );
 };
