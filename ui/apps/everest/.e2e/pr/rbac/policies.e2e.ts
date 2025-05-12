@@ -11,6 +11,7 @@ const POD_SCHEDULING_POLICY_NAME = 'pod-scheduling-policy-rbac-test';
 test.describe('Pod scheduling policies RBAC', () => {
   let namespace = '';
   test.beforeAll(async ({ request }) => {
+    await setRBACPermissionsK8S([['pod-scheduling-policies', '*', '*']]);
     const namespaces = await getNamespacesFn(
       await getTokenFromLocalStorage(),
       request
