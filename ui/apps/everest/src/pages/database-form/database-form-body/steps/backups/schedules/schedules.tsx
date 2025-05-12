@@ -38,12 +38,14 @@ import { PG_SLOTS_LIMIT } from 'consts';
 import { useRBACPermissions } from 'hooks/rbac';
 import { transformSchedulesIntoManageableSchedules } from 'utils/db';
 import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types';
+import { BackupStorage } from 'shared-types/backupStorages.types';
 
 type Props = {
+  storagesToShow: BackupStorage[];
   disableCreateButton?: boolean;
 };
 
-const Schedules = ({ disableCreateButton = false }: Props) => {
+const Schedules = ({ storagesToShow, disableCreateButton = false }: Props) => {
   const { watch, setValue } = useFormContext();
   const dbWizardMode = useDatabasePageMode();
   const {
@@ -142,7 +144,7 @@ const Schedules = ({ disableCreateButton = false }: Props) => {
       <ActionableLabeledContent
         label={Messages.label}
         actionButtonProps={
-          canCreateBackups
+          storagesToShow.length && canCreateBackups
             ? {
                 disabled: createButtonDisabled,
                 dataTestId: 'create-schedule',
