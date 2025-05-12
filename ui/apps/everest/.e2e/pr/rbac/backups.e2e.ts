@@ -16,7 +16,6 @@ test.describe('Backups RBAC', () => {
     const token = await getTokenFromLocalStorage();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];
-    console.log('Namespace:', namespace);
   });
 
   test('Hide Backups', async ({ page }) => {
