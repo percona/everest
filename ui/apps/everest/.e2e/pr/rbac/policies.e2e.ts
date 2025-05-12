@@ -77,8 +77,9 @@ test.describe('Pod scheduling policies RBAC', () => {
     await page.goto(
       `/settings/pod-scheduling-policies/${POD_SCHEDULING_POLICY_NAME}`
     );
-    await expect(page.getByTestId('add-rule-button')).toBeVisible();
-    await page.getByTestId('add-rule-button').click();
+    const addBtn = page.getByRole('button', { name: 'Add rule' });
+    await expect(addBtn).toBeVisible();
+    await addBtn.click();
     await page.getByTestId('form-dialog-add').waitFor();
     await page.getByTestId('form-dialog-add').click();
     await expect(page.getByTestId('edit-rule-button')).toBeVisible();
@@ -93,8 +94,8 @@ test.describe('Pod scheduling policies RBAC', () => {
     await page.goto(
       `/settings/pod-scheduling-policies/${POD_SCHEDULING_POLICY_NAME}`
     );
-    await page.getByTestId('add-rule-button').waitFor();
-    await page.getByTestId('add-rule-button').click();
+    await page.getByRole('button', { name: 'Add rule' }).waitFor();
+    await page.getByRole('button', { name: 'Add rule' }).click();
     await page.getByTestId('form-dialog-add').waitFor();
     await page.getByTestId('form-dialog-add').click();
 
@@ -102,7 +103,9 @@ test.describe('Pod scheduling policies RBAC', () => {
       ['pod-scheduling-policies', 'read', `${POD_SCHEDULING_POLICY_NAME}`],
       ['pod-scheduling-policies', 'update', `some-other-policy`],
     ]);
-    await expect(page.getByTestId('add-rule-button')).not.toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Add rule' })
+    ).not.toBeVisible();
     await expect(page.getByTestId('edit-rule-button')).not.toBeVisible();
     await expect(page.getByTestId('delete-rule-button')).not.toBeVisible();
   });
