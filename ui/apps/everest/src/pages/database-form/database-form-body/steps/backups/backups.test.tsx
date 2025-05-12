@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { TimeValue } from 'components/time-selection/time-selection.types';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
