@@ -22,7 +22,7 @@ require (
 	github.com/casbin/govaluate v1.3.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/charmbracelet/bubbles v0.21.0
+	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/fsnotify/fsnotify v1.8.0
@@ -40,7 +40,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.27.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20250430150216-c0f883f209bf
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250501102841-49d26761d6a9
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250506180641-69a2d7fc2afd
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0

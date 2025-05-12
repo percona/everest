@@ -46,7 +46,20 @@ const TextInput = ({
                 field.onChange(modifiedEvent);
               }
             },
-            ...textFieldProps?.inputProps,
+            onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+              if (textFieldProps?.onChange) {
+                const modifiedEvent = {
+                  ...event,
+                  target: {
+                    ...event.target,
+                    value: textFieldProps.onChange(event),
+                  },
+                };
+                field.onChange(modifiedEvent);
+              } else {
+                field.onChange(event);
+              }
+            },
           }}
           helperText={error ? error.message : textFieldProps?.helperText}
         />
