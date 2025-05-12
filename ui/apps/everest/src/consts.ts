@@ -49,7 +49,7 @@ export const EVEREST_SYSTEM_NS = 'everest-system';
 export const EVEREST_READ_ONLY_FINALIZER =
   'everest.percona.com/readonly-protection';
 export const EVEREST_POLICY_IN_USE_FINALIZER =
-  'everest.percona.com/used-protection';
+  'everest.percona.com/in-use-protection';
 
 export enum DbWizardForm {
   dbName = 'dbName',
