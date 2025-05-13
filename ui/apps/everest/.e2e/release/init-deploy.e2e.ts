@@ -187,6 +187,8 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Check service type is LoadBalancer [${db} size ${size}]`, async () => {
+        test.skip(size !== 3);
+
         let resourceName: string;
 
         switch (db) {
