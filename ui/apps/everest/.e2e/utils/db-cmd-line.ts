@@ -27,7 +27,11 @@ export const getK8sUid = async () => {
   }
 };
 
-export const getK8sResource = async (resourceType: string, resourceName: string, namespace: string) => {
+export const getK8sResource = async (
+  resourceType: string,
+  resourceName: string,
+  namespace: string
+) => {
   try {
     if (resourceType === 'postgresql') {
       resourceType = 'pg';

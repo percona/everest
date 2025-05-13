@@ -204,7 +204,11 @@ test.describe.configure({ retries: 0 });
           }
         }
 
-        let resource = await getK8sResource('svc', `${resourceName}`, 'everest-ui');
+        let resource = await getK8sResource(
+          'svc',
+          `${resourceName}`,
+          'everest-ui'
+        );
         expect(resource?.spec.type).toBe('LoadBalancer');
       });
 
@@ -447,7 +451,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Change external access options [${db} size ${size}]`, async ({
-        page
+        page,
       }) => {
         test.skip(size !== 3);
 
@@ -491,9 +495,15 @@ test.describe.configure({ retries: 0 });
             }
           }
 
-          const resource = await getK8sResource('svc', `${resourceName}`, 'everest-ui');
+          const resource = await getK8sResource(
+            'svc',
+            `${resourceName}`,
+            'everest-ui'
+          );
           expect(resource?.spec.type).toBe('LoadBalancer');
-          expect(resource?.spec.loadBalancerSourceRanges).toEqual(['192.168.1.0/32']);
+          expect(resource?.spec.loadBalancerSourceRanges).toEqual([
+            '192.168.1.0/32',
+          ]);
         });
       });
 
