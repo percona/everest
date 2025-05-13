@@ -27,8 +27,11 @@ export const setRBACPermissionsK8S = async (
 
   // We need this to give time for the RBAC to be applied, or headless tests might fail for being too fast
   return new Promise<void>((resolve) =>
-    setTimeout(() => {
-      resolve();
-    }, 1000)
+    setTimeout(
+      () => {
+        resolve();
+      },
+      process.env.CI ? 3000 : 500
+    )
   );
 };
