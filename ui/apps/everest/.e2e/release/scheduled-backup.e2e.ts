@@ -121,7 +121,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
 
         await test.step('Populate advanced db config', async () => {
-          await populateAdvancedConfig(page, db, '', true, '');
+          await populateAdvancedConfig(page, db, false, '', true, '');
           await moveForward(page);
         });
 
