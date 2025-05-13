@@ -456,7 +456,7 @@ describe('removeRuleInExistingPolicy', () => {
       values: 'value1,value2',
     };
     removeRuleInExistingPolicy(policy, input);
-    expect(policy.spec.affinityConfig.psmdb).toBeUndefined();
+    expect(policy.spec.affinityConfig).toBeUndefined();
   });
 
   test('Do not remove unexisting rule', () => {
@@ -538,6 +538,17 @@ describe('removeRuleInExistingPolicy', () => {
                       ],
                     },
                   },
+                  {
+                    weight: 20,
+                    preference: {
+                      matchExpressions: [
+                        {
+                          key: 'my-other-key',
+                          operator: AffinityOperator.Exists,
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             },
@@ -560,6 +571,6 @@ describe('removeRuleInExistingPolicy', () => {
     expect(
       policy.spec.affinityConfig.psmdb?.engine?.nodeAffinity
         ?.preferredDuringSchedulingIgnoredDuringExecution
-    ).toBeUndefined();
+    ).toHaveLength(1);
   });
 });

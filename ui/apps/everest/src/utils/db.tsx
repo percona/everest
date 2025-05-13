@@ -649,6 +649,38 @@ export const removeRuleInExistingPolicy = (
     }
   }
 
+  if (
+    affinityConfig &&
+    affinityConfig[engineType] &&
+    affinityConfig[engineType][rule.component] &&
+    affinityConfig[engineType][rule.component]![rule.type] &&
+    Object.keys(affinityConfig[engineType][rule.component]![rule.type] || {})
+      .length === 0
+  ) {
+    delete affinityConfig[engineType][rule.component]![rule.type];
+  }
+
+  if (
+    affinityConfig &&
+    affinityConfig[engineType] &&
+    affinityConfig[engineType][rule.component] &&
+    Object.keys(affinityConfig[engineType][rule.component] || {}).length === 0
+  ) {
+    delete affinityConfig[engineType][rule.component];
+  }
+
+  if (
+    affinityConfig &&
+    Object.keys(affinityConfig[engineType] || {}).length === 0
+  ) {
+    delete affinityConfig[engineType];
+  }
+
+  if (Object.keys(affinityConfig || {}).length === 0) {
+    // @ts-expect-error
+    delete spec.affinityConfig;
+  }
+
   return policy;
 };
 
