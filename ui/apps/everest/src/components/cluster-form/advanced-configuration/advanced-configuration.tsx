@@ -107,7 +107,10 @@ export const AdvancedConfigurationForm = ({
   }, [clusterInfo, setDefaultsOnLoad, allowStorageClassChange]);
 
   useEffect(() => {
-    if (setDefaultsOnLoad && policies.length) {
+    const { isTouched: policyTouched } = getFieldState(
+      DbWizardFormFields.podSchedulingPolicy
+    );
+    if (setDefaultsOnLoad && policies.length && !policyTouched) {
       const defaultPolicy = policies.find((policy) =>
         policy.metadata.finalizers.includes(EVEREST_READ_ONLY_FINALIZER)
       );
