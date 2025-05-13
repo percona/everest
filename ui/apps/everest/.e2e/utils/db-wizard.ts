@@ -230,7 +230,8 @@ export const populateResources = async (
 export const populateAdvancedConfig = async (
   page: Page,
   dbType: string,
-  externalAccess: string,
+  externalAccess: boolean = false,
+  externalAccessSourceRange: string,
   addDefaultEngineParameters: boolean,
   engineParameters: string
 ) => {
@@ -238,11 +239,13 @@ export const populateAdvancedConfig = async (
   await combobox.waitFor({ state: 'visible', timeout: 5000 });
   await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
 
-  if (externalAccess != '') {
+  if (externalAccess) {
     await page.getByLabel('Enable External Access').check();
-    await page
-      .getByTestId('text-input-source-ranges.0.source-range')
-      .fill(externalAccess);
+    if (externalAccessSourceRange != '') {
+      await page
+        .getByTestId('text-input-source-ranges.0.source-range')
+        .fill(externalAccessSourceRange);
+    }
   }
   if (engineParameters != '' || addDefaultEngineParameters) {
     await page
