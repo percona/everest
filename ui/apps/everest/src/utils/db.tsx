@@ -434,7 +434,12 @@ export const insertAffinityRuleToExistingPolicy = (
   }
 
   if (rule.type === AffinityType.NodeAffinity) {
-    if (!policy.spec.affinityConfig[dbType][rule.component]?.nodeAffinity) {
+    if (
+      !policy.spec.affinityConfig[dbType][rule.component]?.nodeAffinity ||
+      Object.keys(
+        policy.spec.affinityConfig[dbType][rule.component]?.nodeAffinity || {}
+      ).length === 0
+    ) {
       policy.spec.affinityConfig[dbType][rule.component]!.nodeAffinity = {
         ...(rule.priority === AffinityPriority.Required
           ? {
@@ -472,7 +477,12 @@ export const insertAffinityRuleToExistingPolicy = (
   } else {
     const affinityType = rule.type;
 
-    if (!policy.spec.affinityConfig[dbType][rule.component]![affinityType]) {
+    if (
+      !policy.spec.affinityConfig[dbType][rule.component]![affinityType] ||
+      Object.keys(
+        policy.spec.affinityConfig[dbType][rule.component]![affinityType] || {}
+      ).length === 0
+    ) {
       policy.spec.affinityConfig[dbType][rule.component]![affinityType] = {
         ...(rule.priority === AffinityPriority.Required
           ? {
