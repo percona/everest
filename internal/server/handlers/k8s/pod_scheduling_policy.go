@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+
 	"github.com/percona/everest/api"
 )
 
@@ -47,6 +48,13 @@ func (h *k8sHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.
 			// filter out PodSchedulingPolicies that do not match a requested engine type
 			pspList.Items = slices.DeleteFunc(pspList.Items, func(psp everestv1alpha1.PodSchedulingPolicy) bool {
 				return psp.Spec.EngineType != engineType
+			})
+		}
+
+		if pointer.Get(params.HasRules) {
+			// filter out PodSchedulingPolicies that do not have rules
+			pspList.Items = slices.DeleteFunc(pspList.Items, func(psp everestv1alpha1.PodSchedulingPolicy) bool {
+				return !psp.HasRules()
 			})
 		}
 	}

@@ -1697,6 +1697,12 @@ paths:
               - pxc
               - psmdb
               - postgresql
+        - in: query
+          name: hasRules
+          description: Return list of Pod Scheduling Policy that has at least 1 rule.
+          required: false
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successful operation

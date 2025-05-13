@@ -4732,6 +4732,9 @@ type DeleteDatabaseClusterParams struct {
 type ListPodSchedulingPolicyParams struct {
 	// EngineType Database engine type that Pod Scheduling Policy is applicable to.
 	EngineType *ListPodSchedulingPolicyParamsEngineType `form:"engineType,omitempty" json:"engineType,omitempty"`
+
+	// HasRules Return list of Pod Scheduling Policy that has at least 1 rule.
+	HasRules *bool `form:"hasRules,omitempty" json:"hasRules,omitempty"`
 }
 
 // ListPodSchedulingPolicyParamsEngineType defines parameters for ListPodSchedulingPolicy.
@@ -7666,6 +7669,20 @@ func NewListPodSchedulingPolicyRequest(server string, params *ListPodSchedulingP
 
 		if params.EngineType != nil {
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "engineType", runtime.ParamLocationQuery, *params.EngineType); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+		}
+
+		if params.HasRules != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "hasRules", runtime.ParamLocationQuery, *params.HasRules); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -11803,18 +11820,19 @@ var swaggerSpec = []string{
 	"m43G9d8q8bQeGFm1fvphNrJ/Xo4Hlt4WbbfA5t/7O1ThZb5FHeY/lzPxxUnySMSbRF+fZsMFP5fzh2t1",
 	"MMRMsfy0tpwfMsqrVRU6le4W6WU0ZdYYMq/Zjwp9xYR2DSOz4uDgxV+I+VXm/FfbncsvoMFlPDEtiovE",
 	"qHdQmXw7RieTMamKIL4IH651XcxZLsCJ5NMLemKnT2V8XpZzCsp7k/V60iKrjdlnd49TGZOqNGKLM3uK",
-	"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",
+	"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",
+	"/J8AAAD//9UUN6ljBAUA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
