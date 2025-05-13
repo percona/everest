@@ -39,6 +39,7 @@ import {
   queryPSMDB,
   queryMySQL,
   getPGStsName,
+  getK8sResource,
 } from '@e2e/utils/db-cmd-line';
 import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
 
@@ -183,6 +184,28 @@ test.describe.configure({ retries: 0 });
             expect(addedCluster?.spec.proxy.replicas).toBe(size);
           }
         });
+      });
+
+      test(`Check service type is LoadBalancer [${db} size ${size}]`, async () => {
+        let resourceName: string;
+
+        switch (db) {
+          case 'pxc': {
+            resourceName = `${clusterName}-haproxy`;
+            break;
+          }
+          case 'psmdb': {
+            resourceName = `${clusterName}-rs0-0`;
+            break;
+          }
+          case 'postgresql': {
+            resourceName = `${clusterName}-pgbouncer`;
+            break;
+          }
+        }
+
+        let resource = await getK8sResource('svc', `${resourceName}`, 'everest-ui');
+        expect(resource?.spec.type).toBe('LoadBalancer');
       });
 
       test(`Check DB custom option [${db} size ${size}]`, async () => {
@@ -424,8 +447,7 @@ test.describe.configure({ retries: 0 });
       });
 
       test(`Change external access options [${db} size ${size}]`, async ({
-        page,
-        request,
+        page
       }) => {
         test.skip(size !== 3);
 
@@ -450,18 +472,28 @@ test.describe.configure({ retries: 0 });
           await expect(rawValue).toEqual('192.168.1.0/32');
         });
 
-        await test.step('Check new external access values with API', async () => {
-          const cluster = await getDbClusterAPI(
-            clusterName,
-            EVEREST_CI_NAMESPACES.EVEREST_UI,
-            request,
-            token
-          );
+        await test.step(`Check service in K8s [${db} size ${size}]`, async () => {
+          let resourceName: string;
 
-          expect(cluster?.spec.proxy.expose.type).toBe('external');
-          expect(cluster?.spec.proxy.expose.ipSourceRanges).toEqual([
-            '192.168.1.0/32',
-          ]);
+          await page.waitForTimeout(5000); // wait for svc to be updated
+          switch (db) {
+            case 'pxc': {
+              resourceName = `${clusterName}-haproxy`;
+              break;
+            }
+            case 'psmdb': {
+              resourceName = `${clusterName}-rs0-0`;
+              break;
+            }
+            case 'postgresql': {
+              resourceName = `${clusterName}-pgbouncer`;
+              break;
+            }
+          }
+
+          const resource = await getK8sResource('svc', `${resourceName}`, 'everest-ui');
+          expect(resource?.spec.type).toBe('LoadBalancer');
+          expect(resource?.spec.loadBalancerSourceRanges).toEqual(['192.168.1.0/32']);
         });
       });
 
