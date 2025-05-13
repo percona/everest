@@ -256,7 +256,7 @@ func extractCreationTime(token *jwt.Token) (*time.Time, error) {
 	if !ok {
 		return nil, errExtractIssueTime
 	}
-	parsedTime := time.Unix(int64(issTS), 0)
+	parsedTime := time.Unix(int64(issTS), 0).UTC()
 	return &parsedTime, nil
 }
 

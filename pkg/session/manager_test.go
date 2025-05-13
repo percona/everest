@@ -93,7 +93,7 @@ func TestExtractIssueTime(t *testing.T) {
 			name:  "valid iat field",
 			token: jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"iat": float64(1747060325)}),
 			error: nil,
-			time:  pointer.To[time.Time](time.Date(2025, 5, 12, 19, 32, 5, 0, time.Local)),
+			time:  pointer.To[time.Time](time.Date(2025, 5, 12, 14, 32, 5, 0, time.UTC)),
 		},
 	}
 
