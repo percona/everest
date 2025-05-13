@@ -39,6 +39,7 @@ export const AffinityForm = ({ dbType, showInUseWarning = false }: Props) => {
   useEffect(() => {
     resetField(AffinityFormFields.weight, {
       keepError: false,
+      defaultValue: 1,
     });
   }, [priority, resetField]);
 
