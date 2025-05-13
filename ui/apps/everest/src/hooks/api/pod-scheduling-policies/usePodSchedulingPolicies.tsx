@@ -15,6 +15,7 @@ import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const usePodSchedulingPolicies = (
   dbType?: DbEngineType,
+  hasRules = false,
   options?: PerconaQueryOptions<
     PodSchedulingPolicyGetPayload,
     unknown,
@@ -23,7 +24,7 @@ export const usePodSchedulingPolicies = (
 ) => {
   return useQuery({
     queryKey: ['pod-scheduling-policies', dbType],
-    queryFn: () => getPodSchedulingPolicies(dbType),
+    queryFn: () => getPodSchedulingPolicies(dbType, hasRules),
     select: (data) =>
       (data.items || []).map((policy) => ({
         ...policy,

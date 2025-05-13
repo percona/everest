@@ -36,6 +36,7 @@ const PoliciesList = () => {
   const { mutate: deletePolicy } = useDeletePodSchedulingPolicy();
   const { data: podSchedulingPolicies = [] } = usePodSchedulingPolicies(
     undefined,
+    false,
     {
       refetchInterval: 10000,
     }
