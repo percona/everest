@@ -49,8 +49,9 @@ const (
 )
 
 var (
-	errExtractSub = errors.New("could not extract sub")
-	errExtractIss = errors.New("could not extract iss")
+	errExtractSub       = errors.New("could not extract sub")
+	errExtractIss       = errors.New("could not extract iss")
+	errExtractIssueTime = errors.New("could not extract issue time")
 )
 
 // Manager provides functionality for creating and managing JWT tokens.
@@ -71,12 +72,27 @@ func (mgr *Manager) IsBlocked(ctx context.Context, token *jwt.Token) (bool, erro
 	}
 	// for the built-in users check if the account exists
 	if isBuiltInUser {
-		_, err := mgr.accountManager.Get(ctx, username)
+		user, err := mgr.accountManager.Get(ctx, username)
 		if err != nil {
 			if errors.Is(err, accounts.ErrAccountNotFound) {
 				return true, nil
 			}
 			return false, err
+		}
+		// checking the time when the password was last updated
+		if user.PasswordMtime != "" {
+			passwordCreationTime, err := time.Parse(time.RFC3339, user.PasswordMtime)
+			if err != nil {
+				return false, err
+			}
+			tokenIssueTime, err := extractCreationTime(token)
+			if err != nil {
+				return false, err
+			}
+			// if the token was issued before the password was last updated for the user - consider the token as invalid.
+			if tokenIssueTime.Before(passwordCreationTime) {
+				return true, nil
+			}
 		}
 	}
 	return mgr.Blocklist.IsBlocked(ctx, token)
@@ -197,7 +213,9 @@ func (mgr *Manager) BlocklistMiddleWare(skipperFunc func() (echomiddleware.Skipp
 			}
 			if isBlocked, err := mgr.IsBlocked(ctx, token); err != nil {
 				mgr.l.Error(err)
-				return err
+				return c.JSON(http.StatusInternalServerError, api.Error{
+					Message: pointer.ToString("Internal error"),
+				})
 			} else if isBlocked {
 				return c.JSON(http.StatusUnauthorized, api.Error{
 					Message: pointer.ToString("Invalid token"),
@@ -227,6 +245,19 @@ func extractUsername(token *jwt.Token) (string, bool, error) {
 	}
 	username := strings.TrimSuffix(sub, ":login")
 	return username, iss == SessionManagerClaimsIssuer, nil
+}
+
+func extractCreationTime(token *jwt.Token) (*time.Time, error) {
+	content, err := extractContent(token)
+	if err != nil {
+		return nil, err
+	}
+	issTS, ok := content.Payload["iat"].(float64)
+	if !ok {
+		return nil, errExtractIssueTime
+	}
+	parsedTime := time.Unix(int64(issTS), 0)
+	return &parsedTime, nil
 }
 
 // ClientCacheOptions returns the cache options for the session manager k8s client.

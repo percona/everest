@@ -82,6 +82,8 @@ const (
 	EverestAdminUser = "admin"
 	// EverestAdminRole is the name of the admin role.
 	EverestAdminRole = EverestRBACRolePrefix + "admin"
+	// EverestAccountsFileName is the key used in everest-accounts secret
+	EverestAccountsFileName = "users.yaml"
 
 	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
 	EverestSettingsConfigMapName = "everest-settings"
