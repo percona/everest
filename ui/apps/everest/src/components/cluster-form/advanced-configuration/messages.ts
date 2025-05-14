@@ -58,5 +58,7 @@ export const Messages = {
   },
   tooltipTexts: {
     storageClass: 'Storage can’t be changed.',
+    noPolicies:
+      'Seems like you don’t have permission to read any pod scheduling policy.',
   },
 };

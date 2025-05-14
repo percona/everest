@@ -31,6 +31,7 @@ import {
   IconButton,
   MenuItem,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
@@ -208,13 +209,21 @@ export const AdvancedConfigurationForm = ({
           </Box>
         }
         controlComponent={
-          <SwitchInput
-            label={Messages.enable}
-            name={AdvancedConfigurationFields.podSchedulingPolicyEnabled}
-            switchFieldProps={{
-              disabled: !policies?.length,
-            }}
-          />
+          <Tooltip
+            title={!policies?.length ? Messages.tooltipTexts.noPolicies : 'fff'}
+            placement="top"
+            arrow
+          >
+            <span>
+              <SwitchInput
+                label={Messages.enable}
+                name={AdvancedConfigurationFields.podSchedulingPolicyEnabled}
+                switchFieldProps={{
+                  disabled: !policies?.length,
+                }}
+              />
+            </span>
+          </Tooltip>
         }
       />
       <AdvancedCard
