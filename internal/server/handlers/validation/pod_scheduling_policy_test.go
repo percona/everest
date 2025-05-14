@@ -40,7 +40,7 @@ import (
 func getDefaultPXCPolicy() *everestv1alpha1.PodSchedulingPolicy {
 	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "everest-default-pxc",
+			Name:       "everest-default-mysql",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
 		},
 		Spec: everestv1alpha1.PodSchedulingPolicySpec{
@@ -64,7 +64,7 @@ func getDefaultPGPolicy() *everestv1alpha1.PodSchedulingPolicy {
 func getDefaultPSMDBPolicy() *everestv1alpha1.PodSchedulingPolicy {
 	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "everest-default-psmdb",
+			Name:       "everest-default-mongodb",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
 		},
 		Spec: everestv1alpha1.PodSchedulingPolicySpec{
@@ -602,13 +602,13 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 3 &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-pxc"
+						return bs.GetName() == "everest-default-mysql"
 					}) &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
 						return bs.GetName() == "everest-default-postgresql"
 					}) &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-psmdb"
+						return bs.GetName() == "everest-default-mongodb"
 					})
 			},
 		},
@@ -651,12 +651,12 @@ func TestValidate_GetPodSchedulingPolicy(t *testing.T) {
 		// policies are absent
 		{
 			name:       "no policies",
-			policyName: "everest-default-pxc",
+			policyName: "everest-default-mysql",
 			wantErr: k8sError.NewNotFound(schema.GroupResource{
 				Group:    everestv1alpha1.GroupVersion.Group,
 				Resource: "podschedulingpolicies",
 			},
-				"everest-default-pxc",
+				"everest-default-mysql",
 			),
 		},
 		// get default policy
@@ -667,7 +667,7 @@ func TestValidate_GetPodSchedulingPolicy(t *testing.T) {
 				getDefaultPGPolicy(),
 				getDefaultPSMDBPolicy(),
 			},
-			policyName: "everest-default-pxc",
+			policyName: "everest-default-mysql",
 			wantPolicy: getDefaultPXCPolicy(),
 		},
 		// get absent policy
@@ -780,7 +780,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 			},
 			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:       "everest-default-pxc",
+					Name:       "everest-default-mysql",
 					Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
 				},
 				Spec: everestv1alpha1.PodSchedulingPolicySpec{
@@ -792,7 +792,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errUpdateDefaultPSP("everest-default-pxc")),
+			wantErr: errors.Join(ErrInvalidRequest, errUpdateDefaultPSP("everest-default-mysql")),
 		},
 		// update default policy PSMDB
 		{
@@ -804,7 +804,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 			},
 			updatedPolicy: &everestv1alpha1.PodSchedulingPolicy{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "everest-default-psmdb",
+					Name: "everest-default-mongodb",
 				},
 				Spec: everestv1alpha1.PodSchedulingPolicySpec{
 					EngineType: everestv1alpha1.DatabaseEnginePSMDB,
@@ -815,7 +815,7 @@ func TestValidate_UpdatePodSchedulingPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, errUpdateDefaultPSP("everest-default-psmdb")),
+			wantErr: errors.Join(ErrInvalidRequest, errUpdateDefaultPSP("everest-default-mongodb")),
 		},
 		// update default policy PostgreSQL
 		{
@@ -1991,8 +1991,8 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 				getDefaultPGPolicy(),
 				getDefaultPSMDBPolicy(),
 			},
-			pspNameToDelete: "everest-default-pxc",
-			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-pxc")),
+			pspNameToDelete: "everest-default-mysql",
+			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-mysql")),
 		},
 		// delete default PSMDB policy
 		{
@@ -2002,8 +2002,8 @@ func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
 				getDefaultPGPolicy(),
 				getDefaultPSMDBPolicy(),
 			},
-			pspNameToDelete: "everest-default-psmdb",
-			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-psmdb")),
+			pspNameToDelete: "everest-default-mongodb",
+			wantErr:         errors.Join(ErrInvalidRequest, errDeleteDefaultPSP("everest-default-mongodb")),
 		},
 		// delete default PostgreSQL policy
 		{

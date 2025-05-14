@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-
 	"github.com/percona/everest/api"
 )
 

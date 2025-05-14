@@ -2027,7 +2027,7 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 			objs: []ctrlclient.Object{
 				&everestv1alpha1.PodSchedulingPolicy{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "everest-default-pxc",
+						Name: "everest-default-mysql",
 					},
 					Spec: everestv1alpha1.PodSchedulingPolicySpec{
 						EngineType: everestv1alpha1.DatabaseEnginePXC,
@@ -2043,10 +2043,10 @@ func TestValidatePodSchedulingPolicy(t *testing.T) {
 					Engine: everestv1alpha1.Engine{
 						Type: everestv1alpha1.DatabaseEnginePostgresql,
 					},
-					PodSchedulingPolicyName: "everest-default-pxc",
+					PodSchedulingPolicyName: "everest-default-mysql",
 				},
 			},
-			wantErr: errDBClusterPSPEngineTypeMismatch("everest-default-pxc", everestv1alpha1.DatabaseEnginePostgresql),
+			wantErr: errDBClusterPSPEngineTypeMismatch("everest-default-mysql", everestv1alpha1.DatabaseEnginePostgresql),
 		},
 		// affinityConfig is absent
 		{

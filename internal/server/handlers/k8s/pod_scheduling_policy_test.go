@@ -40,7 +40,7 @@ import (
 func getDefaultPXCPolicy() *everestv1alpha1.PodSchedulingPolicy {
 	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "everest-default-pxc",
+			Name:       "everest-default-mysql",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
 		},
 		Spec: everestv1alpha1.PodSchedulingPolicySpec{
@@ -108,7 +108,7 @@ func getDefaultPGPolicy() *everestv1alpha1.PodSchedulingPolicy {
 func getDefaultPSMDBPolicy() *everestv1alpha1.PodSchedulingPolicy {
 	return &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "everest-default-psmdb",
+			Name:       "everest-default-mongodb",
 			Finalizers: []string{everestv1alpha1.ReadOnlyFinalizer},
 		},
 		Spec: everestv1alpha1.PodSchedulingPolicySpec{
@@ -279,13 +279,13 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 3 &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-pxc"
+						return bs.GetName() == "everest-default-mysql"
 					}) &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
 						return bs.GetName() == "everest-default-postgresql"
 					}) &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-psmdb"
+						return bs.GetName() == "everest-default-mongodb"
 					})
 			},
 		},
@@ -303,13 +303,13 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 3 &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-pxc"
+						return bs.GetName() == "everest-default-mysql"
 					}) &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
 						return bs.GetName() == "everest-default-postgresql"
 					}) &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-psmdb"
+						return bs.GetName() == "everest-default-mongodb"
 					})
 			},
 		},
@@ -327,7 +327,7 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 1 &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-pxc"
+						return bs.GetName() == "everest-default-mysql"
 					})
 			},
 		},
@@ -346,7 +346,7 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 1 &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-pxc"
+						return bs.GetName() == "everest-default-mysql"
 					})
 			},
 		},
@@ -364,7 +364,7 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 1 &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-psmdb"
+						return bs.GetName() == "everest-default-mongodb"
 					})
 			},
 		},
@@ -383,7 +383,7 @@ func TestValidate_ListPodSchedulingPolicy(t *testing.T) {
 			assert: func(list *everestv1alpha1.PodSchedulingPolicyList) bool {
 				return len(list.Items) == 1 &&
 					slices.ContainsFunc(list.Items, func(bs everestv1alpha1.PodSchedulingPolicy) bool {
-						return bs.GetName() == "everest-default-psmdb"
+						return bs.GetName() == "everest-default-mongodb"
 					})
 			},
 		},
