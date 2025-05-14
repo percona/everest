@@ -27,6 +27,7 @@ import {
   shouldDbActionsBeBlocked,
 } from 'utils/db';
 import { Link } from 'react-router-dom';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -42,6 +43,10 @@ export const AdvancedConfiguration = ({
   } = useContext(DbClusterContext);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const { canRead: canReadPolicy } = useRBACPermissions(
+    'pod-scheduling-policies',
+    podSchedulingPolicy
+  );
 
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
@@ -121,11 +126,15 @@ export const AdvancedConfiguration = ({
         label={Messages.fields.podSchedulingPolicy}
         content={
           podSchedulingPolicy ? (
-            <Link
-              to={`/settings/pod-scheduling-policies/${podSchedulingPolicy}`}
-            >
-              {podSchedulingPolicy}
-            </Link>
+            canReadPolicy ? (
+              <Link
+                to={`/settings/pod-scheduling-policies/${podSchedulingPolicy}`}
+              >
+                {podSchedulingPolicy}
+              </Link>
+            ) : (
+              podSchedulingPolicy
+            )
           ) : (
             Messages.fields.disabled
           )
