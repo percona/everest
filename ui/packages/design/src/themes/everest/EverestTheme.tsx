@@ -51,11 +51,12 @@ const everestThemeOptions = (mode: PaletteMode): ThemeOptions => {
     },
     components: {
       MuiCssBaseline: {
-        styleOverrides: `
-          a {
-            color: inherit;
-          }
-        `,
+        styleOverrides: (theme) => ({
+          a: {
+            color: 'inherit',
+            ...theme.typography.body2,
+          },
+        }),
       },
       MuiIconButton: {
         defaultProps: {
