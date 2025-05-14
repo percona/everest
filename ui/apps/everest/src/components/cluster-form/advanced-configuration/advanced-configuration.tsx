@@ -211,6 +211,9 @@ export const AdvancedConfigurationForm = ({
           <SwitchInput
             label={Messages.enable}
             name={AdvancedConfigurationFields.podSchedulingPolicyEnabled}
+            switchFieldProps={{
+              disabled: !policies?.length,
+            }}
           />
         }
       />
