@@ -314,7 +314,7 @@ export const affinityRulesToDbPayload = (
 
   affinityRules.forEach((rule) => {
     const { values = '', type, weight, key, operator, topologyKey } = rule;
-    const valuesList = values.split(',');
+    const valuesList = values !== '' ? values.split(',') : [];
 
     const required = rule.priority === AffinityPriority.Required;
 
