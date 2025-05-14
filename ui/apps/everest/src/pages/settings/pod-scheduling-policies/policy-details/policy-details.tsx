@@ -1,6 +1,5 @@
 import { Alert, Box, Button, Skeleton, Typography } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
-import { SettingsTabs } from 'pages/settings/settings.types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePodSchedulingPolicy, useUpdatePodSchedulingPolicy } from 'hooks';
 import { NoMatch } from 'pages/404/NoMatch';
@@ -116,9 +115,7 @@ const PolicyDetails = () => {
       <Button
         sx={{ mt: 2 }}
         startIcon={<ArrowBack />}
-        onClick={() =>
-          navigate(`/settings/${SettingsTabs.podSchedulingPolicies}`)
-        }
+        onClick={() => navigate(-1)}
       >
         Back
       </Button>
