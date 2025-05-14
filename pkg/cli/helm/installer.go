@@ -368,7 +368,9 @@ func buildChartDeps(chartDir string) error {
 func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) {
 	logger := func(_ string, _ ...interface{}) {}
 	cfg := action.Configuration{}
-	restClientGetter := genericclioptions.ConfigFlags{}
+	restClientGetter := genericclioptions.ConfigFlags{
+		Namespace: &namespace,
+	}
 	if kubeconfig != "" {
 		home := os.Getenv("HOME")
 		kubeconfig = strings.ReplaceAll(kubeconfig, "~", home)
