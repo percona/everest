@@ -50,12 +50,14 @@ export const DbActions = ({
     handleCloseDetailsDialog,
     handleDbSuspendOrResumed,
     handleRestoreDbCluster,
-    handleOpenDbDetails,
+    handleNavigateToDbDetails,
     deleteMutation,
   } = useDbActions(dbCluster);
   const open = Boolean(anchorEl);
   const dbClusterName = dbCluster.metadata.name;
   const namespace = dbCluster.metadata.namespace;
+  const redirectURL = `/databases/${namespace}/${dbClusterName}/overview`;
+
   const actionsBlocked = shouldDbActionsBeBlocked(dbCluster.status?.status);
   const hasSchedules = !!(
     dbCluster.spec.backup && (dbCluster.spec.backup.schedules || []).length > 0
@@ -170,7 +172,7 @@ export const DbActions = ({
               data-testid={`${dbClusterName}-details`}
               key={0}
               onClick={() => {
-                handleOpenDbDetails();
+                handleNavigateToDbDetails(redirectURL);
               }}
               sx={sx}
             >
