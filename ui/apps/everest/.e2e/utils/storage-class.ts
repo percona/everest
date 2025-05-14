@@ -19,11 +19,33 @@ export const getClusterDetailedInfo = async (
   token: string,
   request: APIRequestContext
 ) => {
-  const clusterInfo = await request.get('/v1/cluster-info', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  expect(clusterInfo.ok()).toBeTruthy();
-  return clusterInfo.json();
+  const maxRetries = 3;
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const clusterInfo = await request.get('/v1/cluster-info', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (clusterInfo.ok()) {
+      return clusterInfo.json();
+    } else {
+      const status = clusterInfo.status();
+      const body = await clusterInfo.text();
+      console.warn(
+        `Attempt ${attempt} failed with status ${status}: ${body}`
+      );
+
+      if (attempt < maxRetries) {
+        await delay(1000); // wait 1 second before retrying
+      } else {
+        // Log the final failure before throwing
+        throw new Error(
+          `Failed to get cluster info after ${maxRetries} attempts. Status: ${status}, Response: ${body}`
+        );
+      }
+    }
+  }
 };
