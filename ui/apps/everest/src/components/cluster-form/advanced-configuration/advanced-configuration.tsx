@@ -210,7 +210,7 @@ export const AdvancedConfigurationForm = ({
         }
         controlComponent={
           <Tooltip
-            title={!policies?.length ? Messages.tooltipTexts.noPolicies : 'fff'}
+            title={!policies?.length ? Messages.tooltipTexts.noPolicies : ''}
             placement="top"
             arrow
           >
