@@ -24,6 +24,7 @@ import (
 
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
@@ -85,7 +86,7 @@ type (
 	NamespaceAdder struct {
 		l          *zap.SugaredLogger
 		cfg        NamespaceAddConfig
-		kubeClient *kubernetes.Kubernetes
+		kubeClient kubernetes.KubernetesConnector
 	}
 )
 
@@ -141,9 +142,9 @@ func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
 
 	// By default, all operators are selected.
 	defaultOpts := []tui.MultiSelectOption{
-		{common.PXCProductName, true},
-		{common.PSMDBProductName, true},
-		{common.PGProductName, true},
+		{common.MySQLProductName, true},
+		{common.MongoDBProductName, true},
+		{common.PostgreSQLProductName, true},
 	}
 
 	var selectedOpts []tui.MultiSelectOption
@@ -159,11 +160,11 @@ func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
 	// Copy user's choice to config.
 	for _, op := range selectedOpts {
 		switch op.Text {
-		case common.PXCProductName:
+		case common.MySQLProductName:
 			cfg.Operators.PXC = op.Selected
-		case common.PSMDBProductName:
+		case common.MongoDBProductName:
 			cfg.Operators.PSMDB = op.Selected
-		case common.PGProductName:
+		case common.PostgreSQLProductName:
 			cfg.Operators.PG = op.Selected
 		}
 	}
@@ -185,7 +186,7 @@ func (cfg *NamespaceAddConfig) ValidateNamespaces(ctx context.Context, nsList []
 		return err
 	}
 
-	k, err := cliutils.NewKubeclient(zap.NewNop().Sugar(), cfg.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(zap.NewNop().Sugar(), cfg.KubeconfigPath)
 	if err != nil {
 		return err
 	}
@@ -238,7 +239,7 @@ func (cfg *NamespaceAddConfig) detectKubernetesEnv(ctx context.Context, l *zap.S
 		return nil
 	}
 
-	client, err := cliutils.NewKubeclient(l, cfg.KubeconfigPath)
+	client, err := cliutils.NewKubeConnector(l, cfg.KubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
@@ -280,7 +281,7 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeclient(n.l, c.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(n.l, c.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +404,7 @@ func (n *NamespaceAdder) provisionDBNamespace(
 }
 
 func (n *NamespaceAdder) validateNamespaceUpdate(ctx context.Context, namespace string) error {
-	subscriptions, err := n.kubeClient.ListSubscriptions(ctx, namespace)
+	subscriptions, err := n.kubeClient.ListSubscriptions(ctx, client.InNamespace(namespace))
 	if err != nil {
 		return fmt.Errorf("cannot list subscriptions: %w", err)
 	}

@@ -30,9 +30,9 @@ type rbacHandler struct {
 func New(
 	ctx context.Context,
 	log *zap.SugaredLogger,
-	kubeClient *kubernetes.Kubernetes,
+	kubeConnector kubernetes.KubernetesConnector,
 ) (handlers.Handler, error) {
-	enf, err := rbac.NewEnforcerWithRefresh(ctx, kubeClient, log)
+	enf, err := rbac.NewEnforcerWithRefresh(ctx, kubeConnector, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create enforcer: %w", err)
 	}

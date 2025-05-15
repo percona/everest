@@ -8,9 +8,10 @@ import { Messages as ScheduleFormMessages } from 'components/schedule-form-dialo
 import { resourcesFormSchema } from 'components/cluster-form';
 import { dbVersionSchemaObject } from 'components/cluster-form/db-version/db-version-schema';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema.ts';
-import { DbWizardMode } from './database-form.types.ts';
+import { DbClusterName } from './database-form.types.ts';
+import { WizardMode } from 'shared-types/wizard.types.ts';
 
-const basicInfoSchema = () =>
+const basicInfoSchema = (dbClusters: DbClusterName[]) =>
   z
     .object({
       [DbWizardFormFields.dbType]: z.nativeEnum(DbType),
@@ -23,7 +24,20 @@ const basicInfoSchema = () =>
       ...dbVersionSchemaObject,
       [DbWizardFormFields.sharding]: z.boolean(),
     })
-    .passthrough();
+    .passthrough()
+    .superRefine(({ dbName, k8sNamespace }, ctx) => {
+      const dbClustersNamesList = dbClusters.filter(
+        (res) => res.namespace === k8sNamespace
+      );
+
+      if (dbClustersNamesList.find((item) => item.name === dbName)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [DbWizardFormFields.dbName],
+          message: Messages.errors.dbName.duplicate,
+        });
+      }
+    });
 
 // .passthrough tells Zod to not drop unrecognized keys
 // this is needed because we parse step by step
@@ -31,8 +45,8 @@ const basicInfoSchema = () =>
 
 const stepTwoSchema = (
   defaultValues: Record<string, unknown>,
-  mode: DbWizardMode
-) => resourcesFormSchema(defaultValues, mode === 'new');
+  mode: WizardMode
+) => resourcesFormSchema(defaultValues, mode === WizardMode.New, true, true);
 
 const backupsStepSchema = () =>
   z
@@ -88,10 +102,11 @@ const stepFiveSchema = () =>
 export const getDBWizardSchema = (
   activeStep: number,
   defaultValues: DbWizardType,
-  mode: DbWizardMode
+  dbClusters: DbClusterName[],
+  mode: WizardMode
 ) => {
   const schema = [
-    basicInfoSchema(),
+    basicInfoSchema(dbClusters),
     stepTwoSchema(defaultValues, mode),
     backupsStepSchema(),
     advancedConfigurationsSchema(),

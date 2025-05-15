@@ -4,6 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { TestWrapper } from 'utils/test';
 import { Monitoring } from './monitoring';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WizardMode } from 'shared-types/wizard.types';
 
 const mocks = vi.hoisted(() => {
   return {
@@ -53,7 +54,7 @@ vi.mock('hooks/api/monitoring/useMonitoringInstancesList', () => ({
 }));
 
 vi.mock('../../useDatabasePageMode', () => ({
-  useDatabasePageMode: () => 'new',
+  useDatabasePageMode: () => WizardMode.New,
 }));
 
 vi.mock('hooks/rbac', () => ({

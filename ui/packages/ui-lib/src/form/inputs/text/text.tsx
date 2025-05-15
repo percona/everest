@@ -34,7 +34,32 @@ const TextInput = ({
             onWheel: (e) => {
               (e.target as HTMLElement).blur();
             },
-            ...textFieldProps?.inputProps,
+            onBlur: (event: React.FocusEvent<HTMLInputElement>) => {
+              if (textFieldProps?.onBlur) {
+                const modifiedEvent = {
+                  ...event,
+                  target: {
+                    ...event.target,
+                    value: textFieldProps.onBlur(event),
+                  },
+                };
+                field.onChange(modifiedEvent);
+              }
+            },
+            onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+              if (textFieldProps?.onChange) {
+                const modifiedEvent = {
+                  ...event,
+                  target: {
+                    ...event.target,
+                    value: textFieldProps.onChange(event),
+                  },
+                };
+                field.onChange(modifiedEvent);
+              } else {
+                field.onChange(event);
+              }
+            },
           }}
           helperText={error ? error.message : textFieldProps?.helperText}
         />

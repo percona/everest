@@ -9,6 +9,7 @@ const DatabaseFormSideDrawer = ({
   longestAchievedStep,
   handleSectionEdit,
   disabled,
+  stepsWithErrors,
 }: DatabaseFormSideDrawerProps) => {
   const theme = useTheme();
   const { isDesktop } = useActiveBreakpoint();
@@ -20,6 +21,7 @@ const DatabaseFormSideDrawer = ({
         activeStep={activeStep}
         longestAchievedStep={longestAchievedStep}
         onSectionEdit={handleSectionEdit}
+        stepsWithErrors={stepsWithErrors}
         sx={{
           mt: 2,
           ...(!isDesktop && {
@@ -28,7 +30,14 @@ const DatabaseFormSideDrawer = ({
         }}
       />
     ),
-    [activeStep, longestAchievedStep, handleSectionEdit, isDesktop]
+    [
+      disabled,
+      activeStep,
+      longestAchievedStep,
+      handleSectionEdit,
+      stepsWithErrors,
+      isDesktop,
+    ]
   );
 
   if (isDesktop) {
