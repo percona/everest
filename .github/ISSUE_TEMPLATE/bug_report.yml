@@ -65,8 +65,6 @@ body:
       description: Please provide additional details about your environment that may be relevant.
       placeholder: |
         For example, Kubernetes version, cloud provider, etc.
-    validations:
-      required: true
 
   - type: textarea
     attributes:
