@@ -7,7 +7,9 @@ body:
       value: |
         Thanks for taking the time to suggest a new feature! Please fill out this form as completely as possible.
 
-        Please search to see if an issue already exists for the feature you are suggesting.
+        Before submitting, please search to see if an issue already exists for the feature you are suggesting:
+        - [Search GitHub Issues](https://github.com/percona/everest/issues)
+        - [Search JIRA Issues](https://perconadev.atlassian.net/issues/?jql=project+%3D+%22EVEREST%22+ORDER+BY+created+DESC&atlOrigin=eyJpIjoiYjI2ZDMzYzNlN2I2NGFkYzk2Zjg1MzEzMzkyN2M0ZjIiLCJwIjoiaiJ9)
 
   - type: textarea
     attributes:

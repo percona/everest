@@ -10,6 +10,10 @@ body:
         We're most likely to fix bugs that are easy to reproduce, 
         so please provide us with detailed steps to reproduce the issue.
 
+        Before submitting, please search to see if an issue already exists for the bug you are reporting:
+        - [Search GitHub Issues](https://github.com/percona/everest/issues)
+        - [Search JIRA Issues](https://perconadev.atlassian.net/issues/?jql=project+%3D+%22EVEREST%22+ORDER+BY+created+DESC&atlOrigin=eyJpIjoiYjI2ZDMzYzNlN2I2NGFkYzk2Zjg1MzEzMzkyN2M0ZjIiLCJwIjoiaiJ9)
+
   - type: textarea
     attributes:
       label: What is the issue?
