@@ -1,1 +1,1 @@
-export const SELECT_WIDTH = '240px';
+export const SELECT_WIDTH = '200px';
