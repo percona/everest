@@ -50,6 +50,14 @@ body:
 
   - type: dropdown
     attributes:
+      label: Installation method
+      description: How did you install Everest?
+      options:
+        - Helm
+        - CLI (everestctl)
+
+  - type: dropdown
+    attributes:
       label: Kubernetes Distribution
       description: Where are you running Kubernetes?
       options:
@@ -67,7 +75,7 @@ body:
       label: Environment Details
       description: Please provide additional details about your environment that may be relevant.
       placeholder: |
-        For example, Kubernetes version, cloud provider, etc.
+        For example, Kubernetes version, cloud provider, Host OS, etc.
 
   - type: textarea
     attributes:
