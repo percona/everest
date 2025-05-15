@@ -15,7 +15,6 @@
 
 import { expect } from '@playwright/test';
 import { execSync } from 'child_process';
-import { everestFeatureBuildForUpgrade } from '@e2e/constants';
 
 const { SELECT_DB, SELECT_SIZE } = process.env;
 
@@ -27,21 +26,18 @@ export const checkError = async (response) => {
   expect(response.ok()).toBeTruthy();
 };
 
-export const getVersionServiceURL = async () => {
-  if (
-    typeof everestFeatureBuildForUpgrade !== 'undefined' &&
-    everestFeatureBuildForUpgrade
-  ) {
-    return 'http://localhost:8081';
-  } else {
-    try {
-      const command = `kubectl get deployment everest-server --namespace everest-system -o jsonpath="{.spec.template.spec.containers[0].env[?(@.name=='VERSION_SERVICE_URL')].value}"`;
-      const output = execSync(command).toString();
-      return output;
-    } catch (error) {
-      console.error(`Error executing command: ${error}`);
-      throw error;
-    }
+export const getDbOperatorVersionK8s = async (
+  namespace: string,
+  operator: string
+) => {
+  try {
+    const command = `kubectl get deployment --namespace ${namespace} ${operator} -o jsonpath="{.spec.template.spec.containers[0].image}"`;
+    const output = execSync(command).toString();
+    const version = output.split(':')[1];
+    return version;
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
   }
 };
 

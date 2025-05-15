@@ -12,7 +12,11 @@ import {
 } from 'shared-types/dbCluster.types';
 import { DB_CLUSTER_QUERY } from './useDbCluster';
 import { useUpdateDbClusterWithConflictRetry } from './useUpdateDbCluster';
-import { setDbClusterPausedStatus, setDbClusterRestart } from 'utils/db';
+import {
+  mergeNewDbClusterData,
+  setDbClusterPausedStatus,
+  setDbClusterRestart,
+} from 'utils/db';
 
 export const useDbActions = (dbCluster: DbCluster) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -132,6 +136,7 @@ export const useDbActions = (dbCluster: DbCluster) => {
                       ...item,
                       status: {
                         ...item.status,
+                        conditions: item.status?.conditions || [],
                         crVersion: item.status?.crVersion || '',
                         hostname: item.status?.hostname || '',
                         port: item.status?.port || 0,
@@ -153,9 +158,10 @@ export const useDbActions = (dbCluster: DbCluster) => {
               }
 
               return {
-                ...oldData,
+                ...mergeNewDbClusterData(undefined, oldData, false),
                 status: {
                   ...oldData.status,
+                  conditions: oldData.status?.conditions || [],
                   hostname: oldData.status?.hostname || '',
                   port: oldData.status?.port || 0,
                   crVersion: oldData.status?.crVersion || '',

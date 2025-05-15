@@ -8,7 +8,8 @@ export type BaseStatus =
   | 'success'
   | 'deleting'
   | 'unknown'
-  | 'creating';
+  | 'creating'
+  | 'upgrading';
 
 export type StatusFieldProps<T extends string | number | symbol> = {
   status: T;

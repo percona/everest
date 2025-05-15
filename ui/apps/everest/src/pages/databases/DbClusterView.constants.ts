@@ -13,5 +13,7 @@ export const DB_CLUSTER_STATUS_TO_BASE_STATUS: Record<
   [DbClusterStatus.stopping]: 'pending',
   [DbClusterStatus.restoring]: 'pending',
   [DbClusterStatus.deleting]: 'deleting',
+  [DbClusterStatus.resizingVolumes]: 'pending',
   [DbClusterStatus.creating]: 'creating',
+  [DbClusterStatus.upgrading]: 'upgrading',
 };

@@ -70,7 +70,10 @@ export const Backups = () => {
             <BackupsActionableAlert namespace={selectedNamespace} />
           )}
           <FormGroup sx={{ mt: 3 }}>
-            <Schedules disableCreateButton={scheduleCreationDisabled} />
+            <Schedules
+              storagesToShow={storagesToShow}
+              disableCreateButton={scheduleCreationDisabled}
+            />
             <PITR />
           </FormGroup>
         </>

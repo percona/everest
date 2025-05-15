@@ -1,6 +1,7 @@
 import {
   CircularProgress,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -14,6 +15,7 @@ const SelectInput = ({
   name,
   control,
   label,
+  helperText,
   controllerProps,
   selectFieldProps,
   formControlProps,
@@ -78,6 +80,7 @@ const SelectInput = ({
         )}
         {...controllerProps}
       />
+      {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   );
 };

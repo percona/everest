@@ -24,6 +24,7 @@ import (
 	olmv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/percona/everest/pkg/common"
@@ -97,7 +98,7 @@ func namespaceExists(
 	k kubernetes.KubernetesConnector,
 	namespace string,
 ) (bool, bool, error) {
-	ns, err := k.GetNamespace(ctx, namespace)
+	ns, err := k.GetNamespace(ctx, types.NamespacedName{Name: namespace})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return false, false, nil
@@ -113,15 +114,15 @@ func ensureNoOperatorsRemoved(
 ) bool {
 	for _, subscription := range subscriptions {
 		switch subscription.GetName() {
-		case common.PGOperatorName:
+		case common.PostgreSQLOperatorName:
 			if !installPG {
 				return false
 			}
-		case common.PSMDBOperatorName:
+		case common.MongoDBOperatorName:
 			if !installPSMDB {
 				return false
 			}
-		case common.PXCOperatorName:
+		case common.MySQLOperatorName:
 			if !installPXC {
 				return false
 			}

@@ -14,6 +14,7 @@ import {
   transformSchedulesIntoManageableSchedules,
 } from 'utils/db';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
+import { WizardMode } from 'shared-types/wizard.types';
 
 const ScheduledBackupsList = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -44,7 +45,7 @@ const ScheduledBackupsList = () => {
   };
 
   const handleEdit = (scheduleName: string) => {
-    setScheduleModalMode('edit');
+    setScheduleModalMode(WizardMode.Edit);
     setSelectedScheduleToModalContext(scheduleName);
     setOpenScheduleModal(true);
   };

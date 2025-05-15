@@ -4,6 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { TestWrapper } from 'utils/test';
 import { Monitoring } from './monitoring';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WizardMode } from 'shared-types/wizard.types';
 
 const mocks = vi.hoisted(() => {
   return {
@@ -53,7 +54,7 @@ vi.mock('hooks/api/monitoring/useMonitoringInstancesList', () => ({
 }));
 
 vi.mock('../../useDatabasePageMode', () => ({
-  useDatabasePageMode: () => 'new',
+  useDatabasePageMode: () => WizardMode.New,
 }));
 
 vi.mock('hooks/rbac', () => ({
@@ -86,9 +87,7 @@ describe('Monitoring Step', () => {
       </QueryClientProvider>
     );
     expect(screen.getByTestId('switch-input-monitoring')).toBeInTheDocument();
-    expect(screen.getByTestId('switch-input-monitoring')).not.toHaveAttribute(
-      'aria-disabled'
-    );
+    expect(screen.getByTestId('switch-input-monitoring')).not.toBeDisabled();
     expect(screen.queryByTestId('monitoring-warning')).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('text-input-monitoring-instance')
@@ -128,9 +127,7 @@ describe('Monitoring Step', () => {
 
     expect(screen.queryByTestId('monitoring-warning')).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getByTestId('switch-input-monitoring')).toHaveAttribute(
-        'aria-disabled'
-      )
+      expect(screen.getByTestId('switch-input-monitoring')).toBeDisabled()
     );
   });
 });

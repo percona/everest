@@ -30,7 +30,7 @@ jobs:
         may-fail: [ false ]
 
     continue-on-error: ${{ matrix.may-fail }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Set up Go release
@@ -206,7 +206,7 @@ jobs:
         may-fail: [ false ]
 
     name: API Integration Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
     steps:
@@ -258,7 +258,7 @@ jobs:
         id: minikube
         with:
           cpus: 2
-          memory: 2000m
+          memory: 4000m
           addons: registry
           insecure-registry: 'localhost:5000'
 
@@ -336,9 +336,9 @@ jobs:
             --disable-telemetry \
             --version 0.0.0 \
             --version-metadata-url https://check-dev.percona.com \
-            --operator.mongodb \
-            --operator.postgresql \
-            --operator.xtradb-cluster \
+            --operator.mongodb=true \
+            --operator.postgresql=true \
+            --operator.mysql=true \
             --skip-wizard \
             --namespaces everest \
             --helm.set server.image=localhost:5000/perconalab/everest \
@@ -385,7 +385,7 @@ jobs:
         go-version: [ 1.24.x ]
         may-fail: [ false ]
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
     steps:
@@ -467,7 +467,7 @@ jobs:
     needs: [ test, check, integration_tests_api, integration_tests_flows, integration_tests_cli]
     name: Merge Gatekeeper
     if: ${{ always() }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Run Merge Gatekeeper
         uses: upsidr/merge-gatekeeper@v1.2.1
@@ -475,6 +475,6 @@ jobs:
           self: Merge Gatekeeper
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
-          timeout: 300
+          timeout: 600
           ignored: "license/snyk (Percona Everest), security/snyk (Percona Everest)"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}

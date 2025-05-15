@@ -39,6 +39,7 @@ import {
   queryPSMDB,
   queryMySQL,
   getPGStsName,
+  getK8sResource,
 } from '@e2e/utils/db-cmd-line';
 import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
 
@@ -49,9 +50,12 @@ test.describe.configure({ retries: 0 });
 [
   { db: 'psmdb', size: 1 },
   { db: 'psmdb', size: 3 },
+  { db: 'psmdb', size: 5 },
   { db: 'pxc', size: 1 },
   { db: 'pxc', size: 3 },
+  { db: 'pxc', size: 5 },
   { db: 'postgresql', size: 1 },
+  { db: 'postgresql', size: 2 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
@@ -100,7 +104,8 @@ test.describe.configure({ retries: 0 });
             clusterName,
             db,
             storageClasses[0],
-            false
+            false,
+            null
           );
           await moveForward(page);
         });
@@ -121,7 +126,12 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Populate advanced db config', async () => {
-          await populateAdvancedConfig(page, db, '', true, '');
+          // For clusters of size 3 we test with external access enabled
+          if (size === 3) {
+            await populateAdvancedConfig(page, db, true, '', true, '');
+          } else {
+            await populateAdvancedConfig(page, db, false, '', true, '');
+          }
           await moveForward(page);
         });
 
@@ -145,7 +155,7 @@ test.describe.configure({ retries: 0 });
           if (size != 1 || db != 'psmdb') {
             await waitForStatus(page, clusterName, 'Initializing', 30000);
           }
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          await waitForStatus(page, clusterName, 'Up', 720000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -165,11 +175,43 @@ test.describe.configure({ retries: 0 });
             '1G'
           );
           expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
-          expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
+          if (size === 3) {
+            expect(addedCluster?.spec.proxy.expose.type).toBe('external');
+          } else {
+            expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
+          }
           if (db != 'psmdb') {
             expect(addedCluster?.spec.proxy.replicas).toBe(size);
           }
         });
+      });
+
+      test(`Check service type is LoadBalancer [${db} size ${size}]`, async () => {
+        test.skip(size !== 3);
+
+        let resourceName: string;
+
+        switch (db) {
+          case 'pxc': {
+            resourceName = `${clusterName}-haproxy`;
+            break;
+          }
+          case 'psmdb': {
+            resourceName = `${clusterName}-rs0-0`;
+            break;
+          }
+          case 'postgresql': {
+            resourceName = `${clusterName}-pgbouncer`;
+            break;
+          }
+        }
+
+        let resource = await getK8sResource(
+          'svc',
+          `${resourceName}`,
+          'everest-ui'
+        );
+        expect(resource?.spec.type).toBe('LoadBalancer');
       });
 
       test(`Check DB custom option [${db} size ${size}]`, async () => {
@@ -334,7 +376,7 @@ test.describe.configure({ retries: 0 });
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 45000);
         }
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
       test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
@@ -344,16 +386,17 @@ test.describe.configure({ retries: 0 });
         }
         // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
         if (size != 1 || db != 'psmdb') {
-          await waitForStatus(page, clusterName, 'Initializing', 60000);
+          await waitForStatus(page, clusterName, 'Initializing', 120000);
         }
-        await waitForStatus(page, clusterName, 'Up', 300000);
+        await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
       test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
+        test.skip(size > 3);
         const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
 
-        await test.step('Change options', async () => {
+        await test.step('Change resource options', async () => {
           await page.goto('databases');
           await findDbAndClickRow(page, clusterName);
           await page.getByTestId('edit-resources-button').click();
@@ -377,7 +420,7 @@ test.describe.configure({ retries: 0 });
           await page.getByTestId('form-dialog-save').click();
         });
 
-        await test.step('Check new values', async () => {
+        await test.step('Check new resource values', async () => {
           if (db === 'pxc') {
             await expect(
               page
@@ -392,14 +435,11 @@ test.describe.configure({ retries: 0 });
             ).toBeVisible({ timeout: 10000 });
           }
 
-          // TODO: Re-enable for PG after fix for: https://perconadev.atlassian.net/browse/EVEREST-1920
-          if (db !== 'postgresql') {
-            await expect(
-              page
-                .getByTestId('overview-section')
-                .filter({ hasText: `${newSize} nodes` })
-            ).toBeVisible({ timeout: 10000 });
-          }
+          await expect(
+            page
+              .getByTestId('overview-section')
+              .filter({ hasText: `${newSize} nodes` })
+          ).toBeVisible({ timeout: 10000 });
         });
 
         await test.step('Wait for cluster status', async () => {
@@ -409,6 +449,63 @@ test.describe.configure({ retries: 0 });
             await waitForStatus(page, clusterName, 'Initializing', 60000);
           }
           await waitForStatus(page, clusterName, 'Up', 300000);
+        });
+      });
+
+      test(`Change external access options [${db} size ${size}]`, async ({
+        page,
+      }) => {
+        test.skip(size !== 3);
+
+        await test.step('Set ipSourceRange', async () => {
+          await page.goto('databases');
+          await findDbAndClickRow(page, clusterName);
+          await page.getByTestId('edit-advanced-configuration-db-btn').click();
+          await page
+            .getByTestId('text-input-source-ranges.0.source-range')
+            .fill('192.168.1.0/32');
+          await page.getByTestId('form-dialog-save').click();
+        });
+
+        await test.step('Check new external access values in UI', async () => {
+          await page.getByTestId('edit-advanced-configuration-db-btn').click();
+          await expect(
+            page.getByLabel('Enable External Access Enable')
+          ).toBeChecked();
+          const rawValue = await page
+            .getByTestId('text-input-source-ranges.0.source-range')
+            .inputValue();
+          await expect(rawValue).toEqual('192.168.1.0/32');
+        });
+
+        await test.step(`Check service in K8s [${db} size ${size}]`, async () => {
+          let resourceName: string;
+
+          await page.waitForTimeout(5000); // wait for svc to be updated
+          switch (db) {
+            case 'pxc': {
+              resourceName = `${clusterName}-haproxy`;
+              break;
+            }
+            case 'psmdb': {
+              resourceName = `${clusterName}-rs0-0`;
+              break;
+            }
+            case 'postgresql': {
+              resourceName = `${clusterName}-pgbouncer`;
+              break;
+            }
+          }
+
+          const resource = await getK8sResource(
+            'svc',
+            `${resourceName}`,
+            'everest-ui'
+          );
+          expect(resource?.spec.type).toBe('LoadBalancer');
+          expect(resource?.spec.loadBalancerSourceRanges).toEqual([
+            '192.168.1.0/32',
+          ]);
         });
       });
 

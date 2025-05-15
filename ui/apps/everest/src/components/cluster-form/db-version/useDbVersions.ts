@@ -18,6 +18,7 @@ import { dbTypeToDbEngine } from '@percona/utils';
 import { useMemo } from 'react';
 import { DbType } from '@percona/types';
 import { filterAvailableDbVersionsForDbEngineEdition } from './utils';
+import { WizardMode } from 'shared-types/wizard.types';
 
 interface UseDbVersionProps {
   namespace: string;
@@ -43,7 +44,8 @@ export const useDbVersionsList = ({
           ...data?.availableVersions,
           engine: filterAvailableDbVersionsForDbEngineEdition(
             data,
-            currentVersion
+            currentVersion,
+            WizardMode.Edit
           ),
         },
       };

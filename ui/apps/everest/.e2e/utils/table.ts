@@ -55,5 +55,19 @@ export const waitForDelete = async (
   name: string,
   timeout: number
 ) => {
-  await expect(page.getByText(name)).toHaveCount(0, { timeout: timeout });
+  const dbRow = page.getByRole('row').filter({ hasText: name });
+  await expect(dbRow).toHaveCount(0, { timeout: timeout });
+};
+
+export const waitForDbListLoad = async (page: Page) => {
+  const rows = page.locator('.MuiTableRow-root');
+  const start = Date.now();
+  const timeout = 10000;
+
+  while (Date.now() - start < timeout) {
+    const count = await rows.count();
+    if (count > 0) return;
+    await page.waitForTimeout(200); // pause before retrying
+  }
+  throw new Error('Timed out waiting for DB list to load');
 };

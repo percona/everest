@@ -24,26 +24,27 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/common"
 )
 
 type deploymentGetter interface {
-	GetDeployment(ctx context.Context, name, namespace string) (*appsv1.Deployment, error)
+	GetDeployment(ctx context.Context, key ctrlclient.ObjectKey) (*appsv1.Deployment, error)
 }
 
 // EverestVersionFromDeployment returns Everest version from the k8s deployment resource.
 func EverestVersionFromDeployment(ctx context.Context, dg deploymentGetter) (*goversion.Version, error) {
-	dep, err := dg.GetDeployment(ctx, common.PerconaEverestDeploymentName, common.SystemNamespace)
+	dep, err := dg.GetDeployment(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.PerconaEverestDeploymentName})
 	// Ignore not found error, we will try again with legacy name.
-	if client.IgnoreNotFound(err) != nil {
+	if ctrlclient.IgnoreNotFound(err) != nil {
 		return nil, err
 	}
 
 	// If the deployment is not found, try to get it with the legacy name.
 	if dep == nil || dep.GetCreationTimestamp().Time.IsZero() {
-		dep, err = dg.GetDeployment(ctx, common.PerconaEverestDeploymentNameLegacy, common.SystemNamespace)
+		dep, err = dg.GetDeployment(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.PerconaEverestDeploymentNameLegacy})
 		if err != nil {
 			return nil, err
 		}

@@ -11,6 +11,8 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff"
 	goversion "github.com/hashicorp/go-version"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -23,15 +25,15 @@ var (
 )
 
 func (h *k8sHandler) ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
-	return h.kubeClient.ListDatabaseEngines(ctx, namespace)
+	return h.kubeConnector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
 }
 
 func (h *k8sHandler) GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
-	return h.kubeClient.GetDatabaseEngine(ctx, namespace, name)
+	return h.kubeConnector.GetDatabaseEngine(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 }
 
 func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
-	return h.kubeClient.UpdateDatabaseEngine(ctx, req)
+	return h.kubeConnector.UpdateDatabaseEngine(ctx, req)
 }
 
 func (h *k8sHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api.UpgradePlan, error) {
@@ -42,7 +44,7 @@ func (h *k8sHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api
 	// No upgrades available, so we will check if our clusters are ready for current version.
 	if len(pointer.Get(result.Upgrades)) == 0 {
 		result.PendingActions = pointer.To([]api.UpgradeTask{})
-		engines, err := h.kubeClient.ListDatabaseEngines(ctx, namespace)
+		engines, err := h.kubeConnector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +103,7 @@ func (h *k8sHandler) setLockDBEnginesForUpgrade(
 ) error {
 	return backoff.Retry(func() error {
 		for _, upgrade := range pointer.Get(up.Upgrades) {
-			if err := h.kubeClient.SetDatabaseEngineLock(ctx, namespace, pointer.Get(upgrade.Name), lock); err != nil {
+			if err := h.kubeConnector.SetDatabaseEngineLock(ctx, types.NamespacedName{Namespace: namespace, Name: pointer.Get(upgrade.Name)}, lock); err != nil {
 				return err
 			}
 		}
@@ -114,7 +116,7 @@ func (h *k8sHandler) getUpgradePlan(
 	ctx context.Context,
 	namespace string,
 ) (*api.UpgradePlan, error) {
-	engines, err := h.kubeClient.ListDatabaseEngines(ctx, namespace)
+	engines, err := h.kubeConnector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +165,7 @@ func (h *k8sHandler) getOperatorUpgradePreflight(
 ) (*operatorUpgradePreflight, error) {
 	namespace := engine.GetNamespace()
 	// Get all database clusters in the namespace.
-	databases, err := h.kubeClient.ListDatabaseClusters(ctx, namespace)
+	databases, err := h.kubeConnector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -294,21 +296,36 @@ func preflightCheckDBEngineVersion(
 		return false, "", fmt.Errorf("unsupported engine type %s", engineType)
 	}
 
-	supportedVersions, err := args.versionService.GetSupportedEngineVersions(ctx, operator, args.targetVersion)
+	allSupportedVersions, err := args.versionService.GetSupportedEngineVersions(ctx, operator, args.targetVersion)
 	if err != nil {
 		return false, "", errors.Join(err, errors.New("failed to get supported engine versions"))
-	}
-
-	minVersion, err := goversion.NewVersion(supportedVersions[0]) // supported version will always return a non-zero length result.
-	if err != nil {
-		return false, "", err
 	}
 
 	currentVersion, err := goversion.NewVersion(database.Spec.Engine.Version)
 	if err != nil {
 		return false, "", err
 	}
-	return currentVersion.GreaterThanOrEqual(minVersion), minVersion.String(), nil
+
+	// We search for the smallest available version greater than or equal to the current major version.
+	var minSupportedMajVersion *goversion.Version
+	for _, supportedVersion := range allSupportedVersions {
+		ver, err := goversion.NewVersion(supportedVersion)
+		if err != nil {
+			return false, "", err
+		}
+		if currentVersion.Segments()[0] > ver.Segments()[0] {
+			continue // ignore if major version is less than the current major version.
+		}
+		if minSupportedMajVersion == nil || ver.LessThan(minSupportedMajVersion) {
+			minSupportedMajVersion = ver
+		}
+	}
+
+	if minSupportedMajVersion == nil {
+		return false, "", fmt.Errorf("no minimum supported versions found for %s", operator)
+	}
+
+	return currentVersion.GreaterThanOrEqual(minSupportedMajVersion), minSupportedMajVersion.Original(), nil
 }
 
 func (h *k8sHandler) getDBPostUpgradeTasks(
@@ -317,7 +334,7 @@ func (h *k8sHandler) getDBPostUpgradeTasks(
 ) ([]api.UpgradeTask, error) {
 	namespace := engine.GetNamespace()
 	// List all clusters in this namespace.
-	clusters, err := h.kubeClient.ListDatabaseClusters(ctx, namespace)
+	clusters, err := h.kubeConnector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +369,7 @@ func (h *k8sHandler) startOperatorUpgradeWithRetry(ctx context.Context, namespac
 }
 
 func (h *k8sHandler) startOperatorUpgrade(ctx context.Context, namespace string) error {
-	engines, err := h.kubeClient.ListDatabaseEngines(ctx, namespace)
+	engines, err := h.kubeConnector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return err
 	}
@@ -378,7 +395,7 @@ func (h *k8sHandler) startOperatorUpgrade(ctx context.Context, namespace string)
 	// approve install plans.
 	for _, plan := range installPlans {
 		if err := backoff.Retry(func() error {
-			_, err := h.kubeClient.ApproveInstallPlan(ctx, namespace, plan)
+			_, err := h.kubeConnector.ApproveInstallPlan(ctx, types.NamespacedName{Namespace: namespace, Name: plan})
 			return err
 		}, backoff.WithContext(everestAPIConstantBackoff, ctx),
 		); err != nil {

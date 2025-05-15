@@ -37,6 +37,8 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+
+	"github.com/percona/everest/pkg/cli/helm/utils"
 )
 
 // Everest Helm chart names.
@@ -86,6 +88,10 @@ type (
 		cfg   *action.Configuration
 		// This is set only after Install/Upgrade is called.
 		release *release.Release
+
+		// contains the complete set of values used to render the chart.
+		// This is set only after Init is called.
+		allParsedValues *utils.Values
 	}
 
 	// ChartOptions provide the options for loading a Helm chart.
@@ -120,12 +126,28 @@ func (i *Installer) Init(kubeconfigPath string, o ChartOptions) error {
 	}
 	i.chart = chart
 
+	defaultVals := chart.Values
+	userVals := i.Values
+	// copy userVals into a copy of defaultVals
+	merged := utils.MergeMaps(defaultVals, userVals)
+
+	parsedVals, err := utils.ParseValues(merged)
+	if err != nil {
+		return fmt.Errorf("failed to parse Helm chart values: %w", err)
+	}
+	i.allParsedValues = parsedVals
+
 	cfg, err := newActionsCfg(i.ReleaseNamespace, kubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to create Helm action configuration: %w", err)
 	}
 	i.cfg = cfg
 	return nil
+}
+
+// GetParsedValues returns the values parsed into a struct with the known values.
+func (i *Installer) GetParsedValues() *utils.Values {
+	return i.allParsedValues
 }
 
 // RenderTemplates renders the Helm templates from the provided chart.

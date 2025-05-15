@@ -23,9 +23,14 @@ import { UpgradeDbVersionModal } from './upgrade-db-version-modal/upgrade-db-ver
 import { useDbVersionsList } from 'components/cluster-form/db-version/useDbVersions';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { DbClusterContext } from '../../../../dbCluster.context';
-import { DbClusterStatus } from 'shared-types/dbCluster.types';
-import { useEffect } from 'react';
-import { changeDbClusterVersion } from 'utils/db';
+import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
+import {
+  changeDbClusterVersion,
+  mergeNewDbClusterData,
+  shouldDbActionsBeBlocked,
+} from 'utils/db';
+import { useQueryClient } from '@tanstack/react-query';
+import { DB_CLUSTER_QUERY } from 'hooks/api';
 
 export const BasicInformationSection = ({
   loading,
@@ -39,27 +44,32 @@ export const BasicInformationSection = ({
     setOpenEditModal(false);
   };
   const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
-
+  const queryClient = useQueryClient();
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
     {
-      onError: () => setUpgrading(false),
+      onSuccess: (data) => {
+        handleCloseModal();
+        queryClient.setQueryData<DbCluster>(
+          [DB_CLUSTER_QUERY, dbCluster?.metadata.name],
+          (oldData) =>
+            mergeNewDbClusterData(
+              oldData,
+              {
+                ...data,
+                status: { ...data.status, status: DbClusterStatus.upgrading },
+              } as DbCluster,
+              false
+            )
+        );
+      },
     }
   );
-
-  const [upgrading, setUpgrading] = useState(false);
+  const upgrading = dbCluster?.status?.status === DbClusterStatus.upgrading;
 
   const handleSubmit = async (dbVersion: string) => {
-    setUpgrading(true);
     updateCluster(changeDbClusterVersion(dbCluster!, dbVersion));
   };
-
-  useEffect(() => {
-    if (upgrading && dbCluster?.status?.status !== DbClusterStatus.ready) {
-      handleCloseModal();
-      setUpgrading(false);
-    }
-  }, [upgrading, dbCluster?.status?.status]);
 
   const dbVersionsUpgradeList = useDbVersionsList({
     namespace,
@@ -95,7 +105,7 @@ export const BasicInformationSection = ({
               onClick: () => {
                 setOpenEditModal(true);
               },
-              disabled: upgrading,
+              disabled: shouldDbActionsBeBlocked(dbCluster?.status?.status),
               children: 'Upgrade',
               'data-testid': 'upgrade-db-btn',
             },

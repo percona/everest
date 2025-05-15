@@ -79,7 +79,7 @@ jobs:
         may-fail: [ false ]
 
     continue-on-error: ${{ matrix.may-fail }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     env:
       TOOLS_PATH: "/opt/tools/bin"

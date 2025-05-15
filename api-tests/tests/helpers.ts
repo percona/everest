@@ -1,4 +1,5 @@
 import {expect} from '@playwright/test'
+import { execSync } from 'child_process';
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
@@ -65,9 +66,11 @@ export const deleteDBCluster = async (request, page, name) => {
 
     const data = await cluster.json()
 
-    data.metadata.finalizers = null
+    const engineType = data.spec.engine.type === 'postgresql' ? 'pg' : data.spec.engine.type
+    // remove finalizers but ignore errors, e.g. if the object is already deleted
+    const command = `kubectl patch --namespace ${testsNs} ${engineType} ${name} --type='merge' -p '{"metadata":{"finalizers":null}}' | true`;
+    const output = execSync(command).toString();
 
-    await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data })
     await page.waitForTimeout(1000)
   }
 }

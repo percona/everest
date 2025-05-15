@@ -30,6 +30,7 @@ import { useEffect } from 'react';
 import { DbWizardFormFields } from 'consts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
 import AdvancedCard from 'components/advanced-card';
+import { WizardMode } from 'shared-types/wizard.types';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -58,19 +59,21 @@ export const AdvancedConfigurationForm = ({
 
     if (
       !storageClassTouched &&
-      mode === 'new' &&
+      mode === WizardMode.New &&
       clusterInfo?.storageClassNames &&
       clusterInfo.storageClassNames.length > 0
     ) {
       setValue(
         DbWizardFormFields.storageClass,
-        clusterInfo?.storageClassNames[0]
+        clusterInfo?.storageClassNames[0],
+        { shouldValidate: true }
       );
     }
   }, [clusterInfo]);
+
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
-      setValue(fieldName, `${value}/32`);
+      setValue(fieldName, `${value}/32`, { shouldValidate: true });
     }
   };
 
@@ -78,18 +81,26 @@ export const AdvancedConfigurationForm = ({
     <>
       <AdvancedCard
         title={Messages.cards.storage.title}
-        description={Messages.cards.storage.description}
+        description={
+          !loadingDefaultsForEdition ? Messages.cards.storage.description : ''
+        }
         controlComponent={
           <AutoCompleteInput
             name={AdvancedConfigurationFields.storageClass}
             label={Messages.labels.storageClass}
             loading={clusterInfoLoading}
             options={clusterInfo?.storageClassNames || []}
+            disabled={loadingDefaultsForEdition}
+            tooltipText={
+              loadingDefaultsForEdition
+                ? Messages.tooltipTexts.storageClass
+                : undefined
+            }
             autoCompleteProps={{
               disableClearable: true,
-              disabled: loadingDefaultsForEdition,
               sx: {
                 mt: 0,
+                width: '135px',
               },
             }}
           />
@@ -101,7 +112,7 @@ export const AdvancedConfigurationForm = ({
         name={AdvancedConfigurationFields.externalAccess}
       />
       {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
+        <Stack sx={{ ml: 6 }} data-testid="external-access-fields">
           <TextArray
             placeholder={Messages.sourceRangePlaceholder}
             fieldName={AdvancedConfigurationFields.sourceRanges}

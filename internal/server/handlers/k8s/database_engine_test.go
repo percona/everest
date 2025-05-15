@@ -111,6 +111,128 @@ func TestGetUpgradePreflightChecks(t *testing.T) {
 		assert.Equal(t, "Upgrade DB version to 0.5.0 or higher", pointer.Get(dbResult.Message))
 	})
 
+	t.Run("pending minor version upgrade", func(t *testing.T) {
+		t.Parallel()
+
+		operatorVersion := "2.5.0"
+		targetVersion := "2.6.0"
+
+		// Setup mock
+		mockDBVersions := []string{"13.16", "14.12", "15.8", "16.4"}
+		versionService := versionservice.MockInterface{}
+		versionService.On(
+			"GetSupportedEngineVersions",
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Return(mockDBVersions, nil)
+
+		dbs := []everestv1alpha1.DatabaseCluster{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-db",
+				Namespace: "test-namespace",
+			},
+			Spec: everestv1alpha1.DatabaseClusterSpec{
+				Engine: everestv1alpha1.Engine{
+					Version: "16.3",
+				},
+			},
+			Status: everestv1alpha1.DatabaseClusterStatus{
+				Status: everestv1alpha1.AppStateReady,
+			},
+		}}
+		engine := everestv1alpha1.DatabaseEngine{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-engine",
+				Namespace: "test-namespace",
+			},
+			Spec: everestv1alpha1.DatabaseEngineSpec{
+				Type: everestv1alpha1.DatabaseEnginePXC,
+			},
+			Status: everestv1alpha1.DatabaseEngineStatus{
+				OperatorVersion: operatorVersion,
+				PendingOperatorUpgrades: []everestv1alpha1.OperatorUpgrade{
+					{TargetVersion: targetVersion},
+				},
+			},
+		}
+
+		result, err := getUpgradePreflightChecksResult(ctx, dbs, upgradePreflightCheckArgs{
+			targetVersion:  targetVersion,
+			versionService: &versionService,
+			engine:         &engine,
+		})
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, operatorVersion, result.currentVersion)
+		assert.Len(t, result.databases, 1)
+		dbResult := (result.databases)[0]
+		assert.Equal(t, "test-db", pointer.Get(dbResult.Name))
+		assert.Equal(t, api.UpgradeEngine, pointer.Get(dbResult.PendingTask))
+		assert.Equal(t, "Upgrade DB version to 16.4 or higher", pointer.Get(dbResult.Message))
+	})
+
+	t.Run("pending major version upgrade", func(t *testing.T) {
+		t.Parallel()
+
+		operatorVersion := "2.5.0"
+		targetVersion := "2.6.0"
+
+		// Setup mock
+		mockDBVersions := []string{"13.16", "14.12", "15.8", "16.4"}
+		versionService := versionservice.MockInterface{}
+		versionService.On(
+			"GetSupportedEngineVersions",
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Return(mockDBVersions, nil)
+
+		dbs := []everestv1alpha1.DatabaseCluster{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-db",
+				Namespace: "test-namespace",
+			},
+			Spec: everestv1alpha1.DatabaseClusterSpec{
+				Engine: everestv1alpha1.Engine{
+					Version: "12.19",
+				},
+			},
+			Status: everestv1alpha1.DatabaseClusterStatus{
+				Status: everestv1alpha1.AppStateReady,
+			},
+		}}
+		engine := everestv1alpha1.DatabaseEngine{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-engine",
+				Namespace: "test-namespace",
+			},
+			Spec: everestv1alpha1.DatabaseEngineSpec{
+				Type: everestv1alpha1.DatabaseEnginePXC,
+			},
+			Status: everestv1alpha1.DatabaseEngineStatus{
+				OperatorVersion: operatorVersion,
+				PendingOperatorUpgrades: []everestv1alpha1.OperatorUpgrade{
+					{TargetVersion: targetVersion},
+				},
+			},
+		}
+
+		result, err := getUpgradePreflightChecksResult(ctx, dbs, upgradePreflightCheckArgs{
+			targetVersion:  targetVersion,
+			versionService: &versionService,
+			engine:         &engine,
+		})
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, operatorVersion, result.currentVersion)
+		assert.Len(t, result.databases, 1)
+		dbResult := (result.databases)[0]
+		assert.Equal(t, "test-db", pointer.Get(dbResult.Name))
+		assert.Equal(t, api.UpgradeEngine, pointer.Get(dbResult.PendingTask))
+		assert.Equal(t, "Upgrade DB version to 13.16 or higher", pointer.Get(dbResult.Message))
+	})
+
 	t.Run("pending CRVersion update", func(t *testing.T) {
 		t.Parallel()
 		dbs := []everestv1alpha1.DatabaseCluster{{

@@ -41,5 +41,6 @@ export const Messages = {
     disk: 'Disk',
     memory: 'Memory',
     backupStorages: 'Backup\u00A0storage',
+    storageClass: 'Storage class',
   },
 };

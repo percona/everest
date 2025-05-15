@@ -19,6 +19,7 @@ export type ResourcesTogglesProps = {
   allowDiskInputUpdate?: boolean;
   dbType: DbType;
   disableCustom?: boolean;
+  warnForUpscaling?: boolean;
 };
 
 export type ResourceInputProps = {
