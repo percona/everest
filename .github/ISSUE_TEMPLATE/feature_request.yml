@@ -20,7 +20,7 @@ body:
   - type: textarea
     attributes:
       label: How should the problem be solved?
-      description: What do you want to happen? Add any considered drawbacks.
+      description: What do you expect to happen? Add any considered drawbacks.
     validations:
       required: true
 
