@@ -38,6 +38,7 @@ export const AdvancedConfigurations = ({
         dbType={dbType}
         loadingDefaultsForEdition={loadingDefaultsForEdition}
         setDefaultsOnLoad={mode === WizardMode.New}
+        automaticallyTogglePodSchedulingPolicySwitch={mode === WizardMode.New}
         allowStorageClassChange={mode === WizardMode.New}
       />
     </>

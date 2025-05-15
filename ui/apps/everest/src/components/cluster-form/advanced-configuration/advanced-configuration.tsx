@@ -49,6 +49,7 @@ interface AdvancedConfigurationFormProps {
   dbType: DbType;
   loadingDefaultsForEdition?: boolean;
   setDefaultsOnLoad?: boolean;
+  automaticallyTogglePodSchedulingPolicySwitch?: boolean;
   allowStorageClassChange?: boolean;
 }
 
@@ -56,6 +57,7 @@ export const AdvancedConfigurationForm = ({
   dbType,
   loadingDefaultsForEdition,
   setDefaultsOnLoad = false,
+  automaticallyTogglePodSchedulingPolicySwitch = false,
   allowStorageClassChange = false,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues } = useFormContext();
@@ -108,20 +110,34 @@ export const AdvancedConfigurationForm = ({
   }, [clusterInfo, setDefaultsOnLoad, allowStorageClassChange]);
 
   useEffect(() => {
+    if (!policies.length) {
+      return;
+    }
+
     const { isTouched: policyTouched } = getFieldState(
       DbWizardFormFields.podSchedulingPolicy
     );
-    if (setDefaultsOnLoad && policies.length && !policyTouched) {
-      const defaultPolicy = policies.find((policy) =>
-        policy.metadata.finalizers.includes(EVEREST_READ_ONLY_FINALIZER)
-      );
+
+    const defaultPolicy = policies.find((policy) =>
+      policy.metadata.finalizers.includes(EVEREST_READ_ONLY_FINALIZER)
+    );
+
+    if (setDefaultsOnLoad && !policyTouched) {
       setValue(
         AdvancedConfigurationFields.podSchedulingPolicy,
-        defaultPolicy?.metadata.name || policies[0].metadata.name
+        defaultPolicy ? defaultPolicy.metadata.name : policies[0].metadata.name
       );
+    }
+
+    if (defaultPolicy && automaticallyTogglePodSchedulingPolicySwitch) {
       setValue(AdvancedConfigurationFields.podSchedulingPolicyEnabled, true);
     }
-  }, [policies, setValue, setDefaultsOnLoad]);
+  }, [
+    policies,
+    setValue,
+    setDefaultsOnLoad,
+    automaticallyTogglePodSchedulingPolicySwitch,
+  ]);
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
