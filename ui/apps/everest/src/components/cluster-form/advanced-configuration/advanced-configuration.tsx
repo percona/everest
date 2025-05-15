@@ -119,6 +119,7 @@ export const AdvancedConfigurationForm = ({
         AdvancedConfigurationFields.podSchedulingPolicy,
         defaultPolicy?.metadata.name || policies[0].metadata.name
       );
+      setValue(AdvancedConfigurationFields.podSchedulingPolicyEnabled, true);
     }
   }, [policies, setValue, setDefaultsOnLoad]);
 
