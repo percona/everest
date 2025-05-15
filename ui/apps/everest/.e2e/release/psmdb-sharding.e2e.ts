@@ -45,6 +45,7 @@ import {
 } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
 let token: string;
 
@@ -59,6 +60,7 @@ test.describe(
     tag: '@release',
   },
   () => {
+    test.skip(!shouldExecuteDBCombination(db, size));
     test.describe.configure({ timeout: 720000 });
 
     const clusterName = `${db}-${size}-shard`;
@@ -138,7 +140,7 @@ test.describe(
       });
 
       await test.step('Populate advanced db config', async () => {
-        await populateAdvancedConfig(page, db, '', true, '');
+        await populateAdvancedConfig(page, db, false, '', true, '');
         await moveForward(page);
       });
 

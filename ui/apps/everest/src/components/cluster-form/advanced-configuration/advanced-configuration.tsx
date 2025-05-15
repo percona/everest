@@ -80,7 +80,9 @@ export const AdvancedConfigurationForm = ({
     <>
       <AdvancedCard
         title={Messages.cards.storage.title}
-        description={Messages.cards.storage.description}
+        description={
+          !loadingDefaultsForEdition ? Messages.cards.storage.description : ''
+        }
         controlComponent={
           <AutoCompleteInput
             name={AdvancedConfigurationFields.storageClass}
@@ -94,6 +96,7 @@ export const AdvancedConfigurationForm = ({
                 : undefined
             }
             autoCompleteProps={{
+              disableClearable: true,
               sx: {
                 mt: 0,
                 width: '135px',
