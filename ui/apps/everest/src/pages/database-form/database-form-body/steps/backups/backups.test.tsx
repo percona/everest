@@ -10,6 +10,20 @@ import { StorageType } from 'shared-types/backupStorages.types.ts';
 import { PG_SLOTS_LIMIT } from 'consts.ts';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 
+const backupStoragesMocks = vi.hoisted(() => ({
+  useBackupStoragesByNamespace: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock('hooks/api/backup-storages/useBackupStorages', async () => {
+  const actual = await vi.importActual(
+    'hooks/api/backup-storages/useBackupStorages'
+  );
+  return {
+    ...actual,
+    useBackupStoragesByNamespace:
+      backupStoragesMocks.useBackupStoragesByNamespace,
+  };
+});
 vi.mock('hooks/api/db-cluster/useDbCluster');
 vi.mock('hooks/api/backups/useBackups', () => ({
   useDbBackups: () => ({
@@ -23,21 +37,21 @@ vi.mock('hooks/rbac', () => ({
   }),
 }));
 
-const storagesMocks = vi.hoisted(() => ({
-  useBackupStoragesByNamespace: vi.fn().mockReturnValue({
-    data: [],
-    isLoading: false,
-  }),
-}));
+// const storagesMocks = vi.hoisted(() => ({
+//   useBackupStoragesByNamespace: vi.fn().mockReturnValue({
+//     data: [],
+//     isLoading: false,
+//   }),
+// }));
 
-vi.mock('hooks/api/backup-storages/useBackupStorages', () => ({
-  BACKUP_STORAGES_QUERY_KEY: 'backup-storages',
-  useBackupStoragesByNamespace: storagesMocks.useBackupStoragesByNamespace,
-  useCreateBackupStorage: vi.fn().mockReturnValue({
-    mutate: vi.fn((_, options) => options.onSuccess()),
-    isPending: false,
-  }),
-}));
+// vi.mock('hooks/api/backup-storages/useBackupStorages', () => ({
+//   BACKUP_STORAGES_QUERY_KEY: 'backup-storages',
+//   useBackupStoragesByNamespace: storagesMocks.useBackupStoragesByNamespace,
+//   useCreateBackupStorage: vi.fn().mockReturnValue({
+//     mutate: vi.fn((_, options) => options.onSuccess()),
+//     isPending: false,
+//   }),
+// }));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,13 +105,13 @@ describe('BackupsStep', () => {
   });
 
   it.each(
-    Array(PG_SLOTS_LIMIT + 1)
+    Array(PG_SLOTS_LIMIT)
       .fill(0)
       .map((_, idx) => [idx, idx])
   )(
     'should enforce storage creation when %s schedules and %s storages are in use for PG',
     async (_nrSchedules, _nrStorages) => {
-      storagesMocks.useBackupStoragesByNamespace.mockReturnValueOnce({
+      backupStoragesMocks.useBackupStoragesByNamespace.mockReturnValueOnce({
         data: Array(_nrStorages)
           .fill(0)
           .map((_, idx) => ({
@@ -143,6 +157,55 @@ describe('BackupsStep', () => {
       }
     }
   );
+  it('should display the Create backup schedule link', async () => {
+    backupStoragesMocks.useBackupStoragesByNamespace.mockReturnValue({
+      data: [
+        {
+          bucketName: 'bs-tds-1',
+          description: 'bs-tds-1',
+          forcePathStyle: false,
+          name: 'bs-tds-1',
+          namespace: 'everest-ui',
+          region: 'us-east-1',
+          type: 's3',
+          url: 'https://minio.minio.svc.cluster.local',
+          verifyTLS: false,
+        },
+      ],
+      isFetching: false,
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TestWrapper>
+          <FormProviderWrapper>
+            <Backups />
+          </FormProviderWrapper>
+        </TestWrapper>
+      </QueryClientProvider>
+    );
+    await waitFor(() =>
+      expect(screen.queryByTestId('no-storage-message')).not.toBeInTheDocument()
+    );
+    const CreateButton = screen.getByTestId('create-schedule');
+    expect(CreateButton).toBeInTheDocument();
+  });
+  it('should not display the Create backup schedule link if more backup storages are not available', () => {
+    backupStoragesMocks.useBackupStoragesByNamespace.mockReturnValue({
+      data: [],
+      isFetching: false,
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TestWrapper>
+          <FormProviderWrapper>
+            <Backups />
+          </FormProviderWrapper>
+        </TestWrapper>
+      </QueryClientProvider>
+    );
+    const CreateButton = screen.queryByTestId('create-schedule');
+    expect(CreateButton).not.toBeInTheDocument();
+  });
 
   // it('should render everything when backups are enabled', () => {
   //   render(
