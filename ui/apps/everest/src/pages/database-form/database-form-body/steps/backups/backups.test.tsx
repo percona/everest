@@ -1,10 +1,14 @@
-import { render, screen } from '@testing-library/react';
-import { TimeValue } from 'components/time-selection/time-selection.types';
 import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { DbType } from '@percona/types';
+import { TimeValue } from 'components/time-selection/time-selection.types';
 import { FormProvider, useForm } from 'react-hook-form';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TestWrapper } from 'utils/test';
 import { Backups } from './backups.tsx';
+import { StorageType } from 'shared-types/backupStorages.types.ts';
+import { PG_SLOTS_LIMIT } from 'consts.ts';
+import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 
 const backupStoragesMocks = vi.hoisted(() => ({
   useBackupStoragesByNamespace: vi.fn().mockReturnValue({}),
@@ -33,6 +37,22 @@ vi.mock('hooks/rbac', () => ({
   }),
 }));
 
+// const storagesMocks = vi.hoisted(() => ({
+//   useBackupStoragesByNamespace: vi.fn().mockReturnValue({
+//     data: [],
+//     isLoading: false,
+//   }),
+// }));
+
+// vi.mock('hooks/api/backup-storages/useBackupStorages', () => ({
+//   BACKUP_STORAGES_QUERY_KEY: 'backup-storages',
+//   useBackupStoragesByNamespace: storagesMocks.useBackupStoragesByNamespace,
+//   useCreateBackupStorage: vi.fn().mockReturnValue({
+//     mutate: vi.fn((_, options) => options.onSuccess()),
+//     isPending: false,
+//   }),
+// }));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -41,18 +61,27 @@ const queryClient = new QueryClient({
   },
 });
 
-const FormProviderWrapper = ({ children }: { children: React.ReactNode }) => {
+const FormProviderWrapper = ({
+  children,
+  values,
+}: {
+  children: React.ReactNode;
+  values?: Partial<DbWizardType>;
+}) => {
   const methods = useForm({
     defaultValues: {
+      dbType: DbType.Postresql,
       backupsEnabled: true,
       storageLocation: 'S3',
       selectedTime: TimeValue.hours,
+      k8sNamespace: 'test',
       minute: 0,
       hour: 12,
       amPm: 'AM',
       weekDay: 'Monday',
       onDay: 1,
       schedules: [],
+      ...values,
     },
   });
 
@@ -75,7 +104,60 @@ describe('BackupsStep', () => {
     expect(screen.queryByTestId('editable-item')).not.toBeInTheDocument();
   });
 
-  it('should display the Create backup schedule link', () => {
+  it.each(
+    Array(PG_SLOTS_LIMIT)
+      .fill(0)
+      .map((_, idx) => [idx, idx])
+  )(
+    'should enforce storage creation when %s schedules and %s storages are in use for PG',
+    async (_nrSchedules, _nrStorages) => {
+      backupStoragesMocks.useBackupStoragesByNamespace.mockReturnValueOnce({
+        data: Array(_nrStorages)
+          .fill(0)
+          .map((_, idx) => ({
+            name: `storage-${idx}`,
+            type: StorageType.S3,
+            bucketName: `bucket-${idx}`,
+            region: 'us-east-1',
+          })),
+        isLoading: false,
+      });
+      render(
+        <QueryClientProvider client={queryClient}>
+          <TestWrapper>
+            <FormProviderWrapper
+              values={{
+                schedules: Array(_nrSchedules)
+                  .fill(0)
+                  .map((_, idx) => ({
+                    backupStorageName: `storage-${idx}`,
+                    enabled: true,
+                    name: `schedule-${idx}`,
+                    schedule: '',
+                  })),
+              }}
+            >
+              <Backups />
+            </FormProviderWrapper>
+          </TestWrapper>
+        </QueryClientProvider>
+      );
+
+      if (_nrStorages < PG_SLOTS_LIMIT) {
+        await waitFor(() =>
+          expect(screen.getByTestId('no-storage-message')).toBeInTheDocument()
+        );
+      } else {
+        await waitFor(() =>
+          expect(
+            screen.queryByTestId('no-storage-message')
+          ).not.toBeInTheDocument()
+        );
+        expect(screen.getByTestId('create-schedule')).toBeDisabled();
+      }
+    }
+  );
+  it('should display the Create backup schedule link', async () => {
     backupStoragesMocks.useBackupStoragesByNamespace.mockReturnValue({
       data: [
         {
@@ -100,6 +182,9 @@ describe('BackupsStep', () => {
           </FormProviderWrapper>
         </TestWrapper>
       </QueryClientProvider>
+    );
+    await waitFor(() =>
+      expect(screen.queryByTestId('no-storage-message')).not.toBeInTheDocument()
     );
     const CreateButton = screen.getByTestId('create-schedule');
     expect(CreateButton).toBeInTheDocument();
