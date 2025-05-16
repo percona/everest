@@ -62,5 +62,9 @@ export const advancedConfigurationModalDefaultValues = (
     [AdvancedConfigurationFields.sourceRanges]: sourceRangesSource
       ? sourceRangesSource.map((sourceRange) => ({ sourceRange }))
       : [{ sourceRange: '' }],
+    [AdvancedConfigurationFields.podSchedulingPolicyEnabled]:
+      !!dbCluster?.spec.podSchedulingPolicyName,
+    [AdvancedConfigurationFields.podSchedulingPolicy]:
+      dbCluster?.spec.podSchedulingPolicyName,
   };
 };

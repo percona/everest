@@ -11,7 +11,7 @@ import {
 
 export const useRBACPermissions = (
   resource: RBACResource,
-  specificResources: string | string[]
+  specificResources: string | string[] = '*'
 ) => {
   const [permissions, setPermissions] = useState<Record<RBACAction, boolean>>({
     read: false,

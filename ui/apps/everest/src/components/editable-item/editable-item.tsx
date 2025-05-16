@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, IconButton, Paper, Tooltip } from '@mui/material';
+import { Box, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { EditableItemProps } from './editable-item.types';
@@ -24,6 +24,7 @@ const EditableItem = ({
   paperProps,
   deleteButtonProps,
   editButtonProps,
+  endText,
 }: EditableItemProps) => {
   return (
     <Paper
@@ -41,11 +42,17 @@ const EditableItem = ({
       {...paperProps}
     >
       {children}
+
+      {!!endText && (
+        <Typography variant="body2" sx={{ color: 'grey', width: '100px' }}>
+          {endText}
+        </Typography>
+      )}
       <Box flexWrap="nowrap" display="flex">
         {editButtonProps && (
           <IconButton
             size="small"
-            data-testid={`delete-editable-item-button-${dataTestId}`}
+            data-testid={`edit-editable-item-button-${dataTestId}`}
             color="primary"
             {...editButtonProps}
           >

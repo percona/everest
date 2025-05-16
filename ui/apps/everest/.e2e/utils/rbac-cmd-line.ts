@@ -11,6 +11,12 @@ export const restoreOldRBACPermissions = async () => {
   const oldRbacFileContent = execSync(`cat ${OLD_RBAC_FILE}`).toString();
   const command = `kubectl patch configmap/everest-rbac --namespace everest-system --type merge -p '{"data":${oldRbacFileContent}}'`;
   execSync(command);
+
+  return new Promise<void>((resolve) =>
+    setTimeout(() => {
+      resolve();
+    }, 1000)
+  );
 };
 
 export const setRBACPermissionsK8S = async (
@@ -21,8 +27,11 @@ export const setRBACPermissionsK8S = async (
 
   // We need this to give time for the RBAC to be applied, or headless tests might fail for being too fast
   return new Promise<void>((resolve) =>
-    setTimeout(() => {
-      resolve();
-    }, 500)
+    setTimeout(
+      () => {
+        resolve();
+      },
+      process.env.CI ? 3000 : 500
+    )
   );
 };
