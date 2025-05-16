@@ -32,7 +32,6 @@ import {
   convertDbClusterPayloadToTableFormat,
 } from './DbClusterView.utils';
 import { DbClusterTableElement } from './dbClusterView.types';
-import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { LastBackup } from './lastBackup/LastBackup';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
@@ -179,7 +178,6 @@ export const DbClusterView = () => {
           renderRowActions={({ row }) => {
             return <DbActions dbCluster={row.original.raw} />;
           }}
-          renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
           muiTableBodyRowProps={({ row, isDetailPanel }) => ({
             onClick: (e) => {
               if (
