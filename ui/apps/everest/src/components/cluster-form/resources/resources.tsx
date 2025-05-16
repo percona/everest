@@ -40,6 +40,7 @@ import {
   ResourceSize,
   PROXIES_DEFAULT_SIZES,
   resourcesFormSchema,
+  ResourcesInputMap,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
@@ -104,6 +105,29 @@ const ResourceInput = ({
     numberOfUnits = 1;
   }
 
+  const endValue = (value * numberOfUnits).toString();
+
+  const getShortedValue = () => {
+    let initialValue = endValue;
+    let length = initialValue.length;
+    const isMoreThanThousand = +initialValue > 999;
+
+    if (initialValue.includes('.')) {
+      initialValue = (+initialValue).toFixed(1);
+      length = initialValue.length;
+
+      if (isMoreThanThousand) {
+        length = initialValue.length - 2;
+      }
+    }
+
+    if (isMoreThanThousand) {
+      const { sliceIndex, postfix } = ResourcesInputMap[length];
+      return ` = ${initialValue.slice(0, sliceIndex)}.${initialValue[sliceIndex]}${postfix + ' ' + endSuffix}`;
+    }
+    return ` = ${initialValue} ${endSuffix}`;
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
       <TextInput
@@ -118,6 +142,7 @@ const ResourceInput = ({
               <InputAdornment position="end">{endSuffix}</InputAdornment>
             ),
           },
+          sx: { minWidth: '140px' },
         }}
       />
       {isDesktop && numberOfUnits && (
@@ -127,13 +152,15 @@ const ResourceInput = ({
             sx={{ whiteSpace: 'nowrap' }}
             color={theme.palette.text.secondary}
           >{`x ${numberOfUnits} ${+numberOfUnits > 1 ? unitPlural : unit}`}</Typography>
-          {!!value && numberOfUnits && (
+          {!!endValue && (
             <Typography
               variant="body1"
               sx={{ whiteSpace: 'nowrap' }}
               color={theme.palette.text.secondary}
               data-testid={`${name}-resource-sum`}
-            >{` = ${(value * numberOfUnits).toFixed(2)} ${endSuffix}`}</Typography>
+            >
+              {getShortedValue()}
+            </Typography>
           )}
         </Box>
       )}
