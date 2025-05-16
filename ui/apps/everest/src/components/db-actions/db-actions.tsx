@@ -30,7 +30,8 @@ import { useDbActions } from 'hooks';
 import { shouldDbActionsBeBlocked } from 'utils/db';
 
 export const DbActions = ({
-  isDetailView = false,
+  isDbDetailsView = false,
+  isStatusDetailView = false,
   dbCluster,
 }: DbActionsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -49,11 +50,14 @@ export const DbActions = ({
     handleCloseDetailsDialog,
     handleDbSuspendOrResumed,
     handleRestoreDbCluster,
+    handleNavigateToDbDetails,
     deleteMutation,
   } = useDbActions(dbCluster);
   const open = Boolean(anchorEl);
   const dbClusterName = dbCluster.metadata.name;
   const namespace = dbCluster.metadata.namespace;
+  const redirectURL = `/databases/${namespace}/${dbClusterName}/overview`;
+
   const actionsBlocked = shouldDbActionsBeBlocked(dbCluster.status?.status);
   const hasSchedules = !!(
     dbCluster.spec.backup && (dbCluster.spec.backup.schedules || []).length > 0
@@ -127,7 +131,7 @@ export const DbActions = ({
   return (
     <>
       <Box>
-        {isDetailView ? (
+        {isStatusDetailView ? (
           <Button
             id="actions-button"
             data-testid="actions-button"
@@ -163,6 +167,18 @@ export const DbActions = ({
             'aria-labelledby': 'row-actions-button',
           }}
         >
+          {isDbDetailsView && (
+            <MenuItem
+              data-testid={`${dbClusterName}-details`}
+              key={0}
+              onClick={() => {
+                handleNavigateToDbDetails(redirectURL);
+              }}
+              sx={sx}
+            >
+              <VisibilityOutlinedIcon /> {Messages.menuItems.dbDetails}
+            </MenuItem>
+          )}
           {canUpdate && (
             <MenuItem
               disabled={actionsBlocked}
@@ -203,7 +219,7 @@ export const DbActions = ({
               <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
             </MenuItem>
           )}
-          {isDetailView && dbCluster?.status?.details && (
+          {isStatusDetailView && dbCluster?.status?.details && (
             <MenuItem
               key={6}
               sx={sx}
