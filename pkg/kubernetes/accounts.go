@@ -33,7 +33,6 @@ import (
 )
 
 const (
-	usersFile = "users.yaml"
 	// We set this annotation on the secret to indicate which passwords are stored in plain text.
 	insecurePasswordAnnotation = "insecure-password/%s"
 	insecurePasswordValueTrue  = "true"
@@ -76,7 +75,7 @@ func (a *configMapsClient) listAllAccounts(ctx context.Context) (map[string]*acc
 	if err != nil {
 		return nil, err
 	}
-	if err := yaml.Unmarshal(secret.Data[usersFile], result); err != nil {
+	if err := yaml.Unmarshal(secret.Data[common.EverestAccountsFileName], result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -141,7 +140,7 @@ func (a *configMapsClient) insertOrUpdateAccount(
 	}
 
 	accounts := make(map[string]*accounts.Account)
-	if err := yaml.Unmarshal(secret.Data[usersFile], &accounts); err != nil {
+	if err := yaml.Unmarshal(secret.Data[common.EverestAccountsFileName], &accounts); err != nil {
 		return err
 	}
 
@@ -154,7 +153,7 @@ func (a *configMapsClient) insertOrUpdateAccount(
 	if secret.Data == nil {
 		secret.Data = make(map[string][]byte)
 	}
-	secret.Data[usersFile] = data
+	secret.Data[common.EverestAccountsFileName] = data
 
 	annotations := secret.GetAnnotations()
 	if annotations == nil {
@@ -200,7 +199,7 @@ func (a *configMapsClient) Delete(ctx context.Context, username string) error {
 	if err != nil {
 		return err
 	}
-	secret.Data[usersFile] = data
+	secret.Data[common.EverestAccountsFileName] = data
 	if _, err := a.k.UpdateSecret(ctx, secret); err != nil {
 		return err
 	}
@@ -214,7 +213,7 @@ func (a *configMapsClient) Verify(ctx context.Context, username, password string
 	}
 
 	users := make(map[string]*accounts.Account)
-	if err := yaml.Unmarshal(secret.Data[usersFile], users); err != nil {
+	if err := yaml.Unmarshal(secret.Data[common.EverestAccountsFileName], users); err != nil {
 		return err
 	}
 	user, found := users[username]
