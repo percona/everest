@@ -46,8 +46,8 @@ export const useDbBackups = (
           items.map(
             ({ metadata: { name }, status, spec: { backupStorageName } }) => ({
               name,
-              created: status?.created ? new Date(status.created) : null,
-              completed: status?.completed ? new Date(status.completed) : null,
+              created: status?.created,
+              completed: status?.completed,
               state: status
                 ? mapBackupState(status?.state)
                 : BackupStatus.UNKNOWN,
