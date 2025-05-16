@@ -19,7 +19,7 @@ import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBacku
 import { useDbBackups } from 'hooks/api/backups/useBackups.ts';
 import { useFormContext } from 'react-hook-form';
 import { getAvailableBackupStoragesForBackups } from 'utils/backups.ts';
-import { DbWizardFormFields } from 'consts.ts';
+import { DbWizardFormFields, PG_SLOTS_LIMIT } from 'consts.ts';
 import BackupsActionableAlert from 'components/actionable-alert/backups-actionable-alert';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './backups.messages.ts';
@@ -40,17 +40,16 @@ export const Backups = () => {
   const { data: backups = [] } = useDbBackups(dbName, selectedNamespace, {
     enabled: dbType === DbType.Postresql,
   });
-  const { storagesToShow } = getAvailableBackupStoragesForBackups(
-    backups,
-    schedules,
-    backupStorages,
-    dbType,
-    dbType === DbType.Postresql
-  );
+  const { storagesToShow, uniqueStoragesInUse } =
+    getAvailableBackupStoragesForBackups(
+      backups,
+      schedules,
+      backupStorages,
+      dbType,
+      dbType === DbType.Postresql
+    );
   const scheduleCreationDisabled =
-    dbType === DbType.Postresql &&
-    storagesToShow.length === 0 &&
-    schedules.length === 0;
+    dbType === DbType.Postresql && storagesToShow.length === 0;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -66,9 +65,10 @@ export const Backups = () => {
         </>
       ) : backupStorages.length > 0 ? (
         <>
-          {scheduleCreationDisabled && (
-            <BackupsActionableAlert namespace={selectedNamespace} />
-          )}
+          {scheduleCreationDisabled &&
+            uniqueStoragesInUse.length < PG_SLOTS_LIMIT && (
+              <BackupsActionableAlert namespace={selectedNamespace} />
+            )}
           <FormGroup sx={{ mt: 3 }}>
             <Schedules
               storagesToShow={storagesToShow}

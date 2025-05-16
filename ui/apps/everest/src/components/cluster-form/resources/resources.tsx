@@ -662,7 +662,7 @@ const ResourcesForm = ({
         onChange={handleAccordionChange('nodes')}
         sx={{
           px: 2,
-          pb: 2,
+          pb: expanded === 'nodes' ? 2 : 0,
         }}
       >
         <CustomAccordionSummary
@@ -696,6 +696,7 @@ const ResourcesForm = ({
           sx={{
             px: 2,
             mt: 1,
+            pb: expanded === 'proxies' ? 2 : 0,
           }}
         >
           <CustomAccordionSummary
