@@ -47,6 +47,7 @@ import (
 	k8shandler "github.com/percona/everest/internal/server/handlers/k8s"
 	rbachandler "github.com/percona/everest/internal/server/handlers/rbac"
 	valhandler "github.com/percona/everest/internal/server/handlers/validation"
+	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/certwatcher"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
@@ -92,7 +93,7 @@ func getOIDCProviderConfig(ctx context.Context, kubeClient kubernetes.Kubernetes
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeConnector, err := kubernetes.NewInCluster(l)
+	kubeConnector, err := kubernetes.NewInCluster(l, ctx, nil)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
 	}
@@ -106,8 +107,14 @@ func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.Sugar
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
+
+	sessionManagerClient, err := createSessionManagerClient(ctx, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed creating session manager client"))
+	}
 	sessMgr, err := session.New(
-		session.WithAccountManager(kubeConnector.Accounts()),
+		ctx, l,
+		session.WithAccountManager(sessionManagerClient),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
@@ -209,6 +216,12 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return err
 	}
 	apiGroup.Use(jwtMW)
+
+	blocklistMW, err := e.sessionMgr.BlocklistMiddleWare(newSkipperFunc)
+	if err != nil {
+		return err
+	}
+	apiGroup.Use(blocklistMW)
 
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	api.RegisterHandlers(apiGroup, e)
@@ -397,7 +410,7 @@ func (e *EverestServer) getBodyFromContext(ctx echo.Context, into any) error {
 
 func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore) {
 	allButSession := func(c echo.Context) bool {
-		return c.Request().Method != echo.POST || c.Request().URL.Path != "/v1/session"
+		return c.Request().URL.Path != "/v1/session"
 	}
 	config := echomiddleware.DefaultRateLimiterConfig
 	config.Skipper = allButSession
@@ -447,4 +460,14 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
+}
+
+// createSessionManagerClient creates a k8s client for a session manager.
+func createSessionManagerClient(ctx context.Context, l *zap.SugaredLogger) (accounts.Interface, error) {
+	sessionMgrClientCacheOptions := session.ClientCacheOptions()
+	sessionMgrClient, err := kubernetes.NewInCluster(l, ctx, sessionMgrClientCacheOptions)
+	if err != nil {
+		return nil, err
+	}
+	return sessionMgrClient.Accounts(), nil
 }

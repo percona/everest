@@ -23,11 +23,22 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
+	echomiddleware "github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/accounts"
 	"github.com/percona/everest/pkg/common"
 )
@@ -37,17 +48,58 @@ const (
 	SessionManagerClaimsIssuer = "everest"
 )
 
+var (
+	errExtractSub       = errors.New("could not extract sub")
+	errExtractIss       = errors.New("could not extract iss")
+	errExtractIssueTime = errors.New("could not extract issue time")
+)
+
 // Manager provides functionality for creating and managing JWT tokens.
 type Manager struct {
 	accountManager accounts.Interface
 	signingKey     *rsa.PrivateKey
+	Blocklist
+	l *zap.SugaredLogger
 }
 
 // Option is a function that modifies a SessionManager.
 type Option func(*Manager)
 
+func (mgr *Manager) IsBlocked(ctx context.Context, token *jwt.Token) (bool, error) {
+	username, isBuiltInUser, err := extractUsername(token)
+	if err != nil {
+		return false, fmt.Errorf("failed to extract username: %w", err)
+	}
+	// for the built-in users check if the account exists
+	if isBuiltInUser {
+		user, err := mgr.accountManager.Get(ctx, username)
+		if err != nil {
+			if errors.Is(err, accounts.ErrAccountNotFound) {
+				return true, nil
+			}
+			return false, err
+		}
+		// checking the time when the password was last updated
+		if user.PasswordMtime != "" {
+			passwordCreationTime, err := time.Parse(time.RFC3339, user.PasswordMtime)
+			if err != nil {
+				return false, err
+			}
+			tokenIssueTime, err := extractCreationTime(token)
+			if err != nil {
+				return false, err
+			}
+			// if the token was issued before the password was last updated for the user - consider the token as invalid.
+			if tokenIssueTime.Before(passwordCreationTime) {
+				return true, nil
+			}
+		}
+	}
+	return mgr.Blocklist.IsBlocked(ctx, token)
+}
+
 // New creates a new session manager with the given options.
-func New(options ...Option) (*Manager, error) {
+func New(ctx context.Context, l *zap.SugaredLogger, options ...Option) (*Manager, error) {
 	m := &Manager{}
 	for _, opt := range options {
 		opt(m)
@@ -57,6 +109,14 @@ func New(options ...Option) (*Manager, error) {
 		return nil, errors.Join(err, errors.New("failed to get private key"))
 	}
 	m.signingKey = privKey
+	m.l = l
+
+	blockList, err := NewBlocklist(ctx, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to configure tokens blocklist"))
+	}
+
+	m.Blocklist = blockList
 	return m, nil
 }
 
@@ -133,5 +193,86 @@ func getPrivateKey() (*rsa.PrivateKey, error) {
 func (mgr *Manager) KeyFunc() jwt.Keyfunc {
 	return func(_ *jwt.Token) (interface{}, error) {
 		return mgr.signingKey.Public(), nil
+	}
+}
+
+func (mgr *Manager) BlocklistMiddleWare(skipperFunc func() (echomiddleware.Skipper, error)) (echo.MiddlewareFunc, error) {
+	skipper, err := skipperFunc()
+	if err != nil {
+		return nil, err
+	}
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if skipper(c) {
+				return next(c)
+			}
+			ctx := c.Request().Context()
+			token, tErr := common.ExtractToken(ctx)
+			if tErr != nil {
+				return tErr
+			}
+			if isBlocked, err := mgr.IsBlocked(ctx, token); err != nil {
+				mgr.l.Error(err)
+				return c.JSON(http.StatusInternalServerError, api.Error{
+					Message: pointer.ToString("Internal error"),
+				})
+			} else if isBlocked {
+				return c.JSON(http.StatusUnauthorized, api.Error{
+					Message: pointer.ToString("Invalid token"),
+				})
+			}
+			return next(c)
+		}
+	}, nil
+}
+
+// extractUsername returns
+// - the current username from the token
+// - a bool flag that indicates whereas it's a built-in auth user
+// - an error
+func extractUsername(token *jwt.Token) (string, bool, error) {
+	content, err := extractContent(token)
+	if err != nil {
+		return "", false, err
+	}
+	sub, ok := content.Payload["sub"].(string)
+	if !ok {
+		return "", false, errExtractSub
+	}
+	iss, ok := content.Payload["iss"].(string)
+	if !ok {
+		return "", false, errExtractIss
+	}
+	username := strings.TrimSuffix(sub, ":login")
+	return username, iss == SessionManagerClaimsIssuer, nil
+}
+
+func extractCreationTime(token *jwt.Token) (*time.Time, error) {
+	content, err := extractContent(token)
+	if err != nil {
+		return nil, err
+	}
+	issTS, ok := content.Payload["iat"].(float64)
+	if !ok {
+		return nil, errExtractIssueTime
+	}
+	parsedTime := time.Unix(int64(issTS), 0).UTC()
+	return &parsedTime, nil
+}
+
+// ClientCacheOptions returns the cache options for the session manager k8s client.
+// To avoid overwhelming k8s API with requests, the client should cache the accounts secret,
+// because every authenticated API request checks the secret.
+// It also defines a rule for the system namespace which gets requested otherwise the ByObject won't allow to read the ns.
+func ClientCacheOptions() *cache.Options {
+	return &cache.Options{
+		ByObject: map[client.Object]cache.ByObject{
+			&corev1.Secret{}: {
+				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.EverestAccountsSecretName}),
+			},
+			&corev1.Namespace{}: {
+				Field: fields.SelectorFromSet(fields.Set{"metadata.name": common.SystemNamespace}),
+			},
+		},
 	}
 }
