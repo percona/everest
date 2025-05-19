@@ -70,9 +70,10 @@ export const AdvancedConfigurationForm = ({
       );
     }
   }, [clusterInfo]);
+
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
-      setValue(fieldName, `${value}/32`);
+      setValue(fieldName, `${value}/32`, { shouldValidate: true });
     }
   };
 
@@ -111,7 +112,7 @@ export const AdvancedConfigurationForm = ({
         name={AdvancedConfigurationFields.externalAccess}
       />
       {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
+        <Stack sx={{ ml: 6 }} data-testid="external-access-fields">
           <TextArray
             placeholder={Messages.sourceRangePlaceholder}
             fieldName={AdvancedConfigurationFields.sourceRanges}
