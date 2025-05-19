@@ -40,7 +40,7 @@ paths:
       tags:
         - Authentication & Authorization
       security: []
-      summary: Everest UI Login
+      summary: Everest API Login
       description: |
         This API issues a new JWT token for logging in from the Everest API.
         The provided user must have the `login` capability.
@@ -61,6 +61,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal server error
           content:
@@ -74,6 +80,28 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserCredentials'
+    delete:
+      tags:
+        - Authentication & Authorization
+      summary: Everest API Logout
+      description: |
+        This API invalidates Everest API JWT token.
+      operationId: deleteSession
+      responses:
+        '204':
+          description: Successful operation
+        '429':
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/permissions':
     get:
       tags:
