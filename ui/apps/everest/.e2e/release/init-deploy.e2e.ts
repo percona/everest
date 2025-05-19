@@ -83,7 +83,7 @@ test.describe.configure({ retries: 0 });
         storageClasses = storageClassNames;
       });
 
-      test(`Cluster creation [${db} size ${size}]`, async ({
+      test(`EVEREST-T66 T67 T68 T72 T73 T74 T77 T78 T79 - Cluster creation [${db} size ${size}]`, async ({
         page,
         request,
       }) => {
@@ -135,7 +135,7 @@ test.describe.configure({ retries: 0 });
           await moveForward(page);
         });
 
-        await test.step('Populate monitoring', async () => {
+        await test.step('EVEREST-T69 T75 T81 - Populate monitoring', async () => {
           await page.getByTestId('switch-input-monitoring').click();
           await page
             .getByTestId('text-input-monitoring-instance')
@@ -361,7 +361,9 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`Suspend cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`EVEREST-T90 T91 T92 - Suspend cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
@@ -370,7 +372,9 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Paused', 240000);
       });
 
-      test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`EVEREST-T93 T94 T95 - Resume cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await resumeDbCluster(page, clusterName);
         // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
         if (size != 1 || db != 'psmdb') {
@@ -379,7 +383,9 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
-      test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`EVEREST-T87 T88 T89 - Restart cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await restartDbCluster(page, clusterName);
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
@@ -391,7 +397,9 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
-      test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
+      test(`EVEREST-T84 T85 T86 - Edit cluster/scale up [${db} size ${size}]`, async ({
+        page,
+      }) => {
         test.skip(size > 3);
         const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
@@ -452,7 +460,7 @@ test.describe.configure({ retries: 0 });
         });
       });
 
-      test(`Change external access options [${db} size ${size}]`, async ({
+      test(`EVEREST-T7 T76 T82 - Change external access options [${db} size ${size}]`, async ({
         page,
       }) => {
         test.skip(size !== 3);
