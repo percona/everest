@@ -100,3 +100,8 @@ CHART_BRANCH ?= main
 update-dev-chart:
 	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@$(CHART_BRANCH)
 	go mod tidy
+
+EVEREST_OPERATOR_BRANCH ?= main
+update-dev-everest-operator:
+	GOPROXY=direct go get -u -v github.com/percona/everest-operator@$(EVEREST_OPERATOR_BRANCH)
+	go mod tidy

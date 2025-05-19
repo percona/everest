@@ -37,10 +37,10 @@ import { LastBackup } from './lastBackup/LastBackup';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
-import CreateDbButton from './create-db-button/create-db-button';
-import { EmptyStateDatabases } from 'pages/common/empty-state/databases';
-import { EmptyStateNamespaces } from 'pages/common/empty-state/namespaces';
+import CreateDbButton from '../../components/create-db-button/create-db-button';
 import { PendingIcon } from '@percona/ui-lib';
+import EmptyStateDatabases from 'components/empty-state-databases';
+import EmptyStateNamespaces from 'components/empty-state-namespaces';
 
 export const DbClusterView = () => {
   const { data: namespaces = [], isLoading: loadingNamespaces } = useNamespaces(
@@ -180,23 +180,12 @@ export const DbClusterView = () => {
             return <DbActions dbCluster={row.original.raw} />;
           }}
           renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
-          muiTableBodyRowProps={({ row, isDetailPanel }) => ({
-            onClick: (e) => {
-              if (
-                !isDetailPanel &&
-                e.currentTarget.contains(e.target as Node)
-              ) {
-                navigate(
-                  `/databases/${row.original.namespace}/${row.original.databaseName}/overview`
-                );
-              }
-            },
-            sx: {
-              ...(!isDetailPanel && {
-                cursor: 'pointer', // you might want to change the cursor too when adding an onClick
-              }),
-            },
-          })}
+          enableRowHoverAction
+          rowHoverAction={(row) =>
+            navigate(
+              `/databases/${row.original.namespace}/${row.original.databaseName}/overview`
+            )
+          }
           renderTopToolbarCustomActions={() =>
             canAddCluster && tableData.length > 0 && <CreateDbButton />
           }

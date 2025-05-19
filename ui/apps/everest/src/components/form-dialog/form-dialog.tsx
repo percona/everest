@@ -27,9 +27,10 @@ export const FormDialog = <T extends FieldValues>({
   schema,
   defaultValues,
   values,
+  disableSubmit = false,
   onSubmit,
   cancelMessage = 'Cancel',
-  submitMessage,
+  submitMessage = 'Create',
   validationMode = 'onChange',
   subHead2,
   size = 'L',
@@ -111,7 +112,7 @@ export const FormDialog = <T extends FieldValues>({
         <Button
           variant="contained"
           onClick={methods.handleSubmit(handleSubmit)}
-          disabled={submitting || !isValid}
+          disabled={submitting || !isValid || disableSubmit}
           data-testid={`form-dialog-${kebabize(submitMessage)}`}
         >
           {submitMessage}
