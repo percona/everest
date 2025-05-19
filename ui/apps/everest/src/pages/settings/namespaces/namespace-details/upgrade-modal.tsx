@@ -12,7 +12,8 @@ const UpgradeModal = ({
 }: UpgradeModalProps) => {
   return (
     <ConfirmDialog
-      isOpen={open}
+      open={open}
+      cancelMessage="Cancel"
       selectedId={namespace}
       closeModal={onClose}
       headerMessage="Upgrade Operators"

@@ -248,7 +248,10 @@ export const populateAdvancedConfig = async (
     }
   }
   if (engineParameters != '' || addDefaultEngineParameters) {
-    await page.getByLabel('Database engine parameters').check();
+    await page
+      .getByTestId('switch-input-engine-parameters-enabled-label')
+      .getByRole('checkbox')
+      .check();
     if (engineParameters != '') {
       await page
         .getByTestId('text-input-engine-parameters')
