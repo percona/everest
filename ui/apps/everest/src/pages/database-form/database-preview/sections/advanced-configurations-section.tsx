@@ -6,6 +6,8 @@ export const AdvancedConfigurationsPreviewSection = ({
   engineParametersEnabled,
   engineParameters,
   storageClass,
+  podSchedulingPolicyEnabled,
+  podSchedulingPolicy,
 }: AdvancedConfigurationType) => (
   <>
     <PreviewContentText text={`Storage class: ${storageClass ?? ''}`} />
@@ -14,6 +16,11 @@ export const AdvancedConfigurationsPreviewSection = ({
     />
     {engineParametersEnabled && engineParameters && (
       <PreviewContentText text="Database engine parameters set" />
+    )}
+    {podSchedulingPolicyEnabled && podSchedulingPolicy && (
+      <PreviewContentText
+        text={`Pod scheduling policy: ${podSchedulingPolicy}`}
+      />
     )}
   </>
 );

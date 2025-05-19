@@ -1,7 +1,7 @@
+import { DialogProps } from '@mui/material';
 import { ReactNode } from 'react';
 
-export interface ConfirmDialogProps {
-  isOpen: boolean;
+export type ConfirmDialogProps = {
   selectedId: string;
   selectedNamespace?: string;
   closeModal: () => void;
@@ -12,4 +12,4 @@ export interface ConfirmDialogProps {
   cancelMessage?: string;
   submitMessage?: string;
   disabledButtons?: boolean;
-}
+} & DialogProps;

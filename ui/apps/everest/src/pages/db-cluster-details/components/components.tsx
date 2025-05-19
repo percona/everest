@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
+import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { Box, FormControlLabel, Stack, Switch, TextField } from '@mui/material';
 import ComponentsDiagramView from './diagram-view/components-diagram-view';
 import { ReactFlowProvider } from '@xyflow/react';
-import { useParams } from 'react-router-dom';
-import { useDbClusterComponents } from 'hooks';
 import ComponentsTableView from './table-view';
 
 const Components = () => {

@@ -9,7 +9,7 @@ import { operatorUpgradePlanQueryFn } from 'hooks/api/db-engines';
 import { Messages } from './namespaces.messages';
 import { OperatorCell } from './OperatorCell';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
-import { EmptyStateNamespaces } from 'pages/common/empty-state/namespaces';
+import EmptyStateNamespaces from 'components/empty-state-namespaces';
 
 export const Namespaces = () => {
   const { results: rawDbEngines } = useDBEnginesForNamespaces();
