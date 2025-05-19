@@ -43,13 +43,13 @@ import {
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
-import { someErrorInStateFields, getProxyUnitNamesFromDbType } from './utils';
 
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
 import { z } from 'zod';
 import { memoryParser } from 'utils/k8ResourceParser';
 import { DbWizardType } from 'pages/database-form/database-form-schema';
+import { getProxyUnitNamesFromDbType, someErrorInStateFields } from 'utils/db';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
