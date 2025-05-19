@@ -8,6 +8,7 @@ test.describe('Namespaces RBAC', () => {
   let namespaces = [];
 
   test.beforeAll(async ({ request }) => {
+    await setRBACPermissionsK8S([['namespaces', 'read', '*']]);
     const token = await getTokenFromLocalStorage();
     namespaces = await getNamespacesFn(token, request);
   });
