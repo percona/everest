@@ -36,7 +36,7 @@ import {
   schema,
 } from './restore-db-modal-schema';
 import { Messages } from './restore-db-modal.messages';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const ModalContent = ({
   backupName,
@@ -234,7 +234,10 @@ const RestoreDbModal = <T extends FieldValues>({
   );
   const { data: pitrData } = useDbClusterPitr(
     dbCluster.metadata.name,
-    namespace
+    namespace,
+    {
+      queryKey: [dbCluster.metadata.name, namespace, 'pitr', 'restore-modal'],
+    }
   );
 
   const { mutate: restoreBackupFromBackup, isPending: restoringFromBackup } =
@@ -243,6 +246,12 @@ const RestoreDbModal = <T extends FieldValues>({
     mutate: restoreBackupFromPointInTime,
     isPending: restoringFromPointInTime,
   } = useDbClusterRestoreFromPointInTime(dbCluster.metadata.name);
+
+  const pitrSchema = useMemo(
+    () =>
+      schema(!!pitrData?.gaps, pitrData?.earliestDate, pitrData?.latestDate),
+    [pitrData]
+  );
 
   return (
     <FormDialog
@@ -253,11 +262,7 @@ const RestoreDbModal = <T extends FieldValues>({
       headerMessage={
         isNewClusterMode ? Messages.headerMessageCreate : Messages.headerMessage
       }
-      schema={schema(
-        !!pitrData?.gaps,
-        pitrData?.earliestDate,
-        pitrData?.latestDate
-      )}
+      schema={pitrSchema}
       submitting={restoringFromBackup || restoringFromPointInTime}
       defaultValues={{ ...defaultValues, backupName: backupName || '' }}
       onSubmit={({ backupName, backupType, pitrBackup }) => {

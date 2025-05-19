@@ -17,7 +17,7 @@ export const schema = (gaps: boolean, minDate?: Date, maxDate?: Date) =>
     .object({
       [RestoreDbFields.backupType]: z.nativeEnum(BackuptypeValues),
       [RestoreDbFields.backupName]: z.string().optional(),
-      [RestoreDbFields.pitrBackup]: z.string().optional(),
+      [RestoreDbFields.pitrBackup]: z.string().or(z.date()).optional(),
     })
     .superRefine(({ backupType, backupName, pitrBackup }, ctx) => {
       if (backupType === BackuptypeValues.fromBackup) {
@@ -30,8 +30,14 @@ export const schema = (gaps: boolean, minDate?: Date, maxDate?: Date) =>
           });
         }
       } else {
-        if (isDate(minDate) && isDate(maxDate) && isDate(pitrBackup)) {
-          if (isAfter(pitrBackup, maxDate) || isBefore(pitrBackup, minDate)) {
+        if (isDate(minDate) && isDate(maxDate) && !!pitrBackup) {
+          const pitrBackupDate = isDate(pitrBackup)
+            ? pitrBackup
+            : new Date(pitrBackup);
+          if (
+            isAfter(pitrBackupDate, maxDate) ||
+            isBefore(pitrBackupDate, minDate)
+          ) {
             ctx.addIssue({
               code: z.ZodIssueCode.invalid_date,
             });
