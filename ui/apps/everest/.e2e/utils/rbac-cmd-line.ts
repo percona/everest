@@ -23,6 +23,17 @@ export const setRBACPermissionsK8S = async (
   return new Promise<void>((resolve) =>
     setTimeout(() => {
       resolve();
-    }, 500)
+    }, 2000)
   );
+};
+
+export const giveUserAllPermissions = async () => {
+  await setRBACPermissionsK8S([
+    ['namespaces', 'read', '*'],
+    ['database-clusters', '*', '*/*'],
+    ['database-engines', '*', '*/*'],
+    ['backup-storages', '*', '*/*'],
+    ['database-cluster-backups', '*', '*/*'],
+    ['monitoring-instances', '*', '*/*'],
+  ]);
 };

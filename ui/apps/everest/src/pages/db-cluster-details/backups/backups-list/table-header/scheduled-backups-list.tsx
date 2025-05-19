@@ -90,7 +90,7 @@ const ScheduledBackupsList = () => {
             borderRadius: 1,
             boxShadow: 'none',
           }}
-          data-testid={`schedule-${item?.schedule}`}
+          data-testid={`schedule-${item?.name}`}
         >
           <Box
             sx={{

@@ -91,6 +91,7 @@ export default defineConfig({
     },
     {
       name: 'rbac-setup',
+      teardown: 'rbac-teardown',
       testDir: './setup',
       testMatch: /rbac.setup\.ts/,
       use: {
@@ -115,7 +116,6 @@ export default defineConfig({
       use: {
         storageState: STORAGE_STATE_FILE,
       },
-      dependencies: ['rbac'],
     },
     {
       name: 'pr',
@@ -129,8 +129,18 @@ export default defineConfig({
         ...(process.env.IGNORE_RBAC_TESTS &&
         process.env.IGNORE_RBAC_TESTS !== 'false'
           ? []
-          : ['rbac', 'rbac-teardown']),
+          : ['rbac']),
       ],
+    },
+    {
+      name: 'release-rbac',
+      use: {
+        browserName: 'chromium',
+        channel: 'chrome',
+        storageState: STORAGE_STATE_FILE,
+      },
+      testDir: './release/rbac',
+      dependencies: ['setup', 'rbac-setup'],
     },
     {
       name: 'release',
@@ -139,7 +149,14 @@ export default defineConfig({
         actionTimeout: 10000,
       },
       testDir: 'release',
-      dependencies: ['setup'],
+      testIgnore: ['release/rbac/**/*'],
+      dependencies: [
+        'setup',
+        ...(process.env.IGNORE_RBAC_TESTS &&
+        process.env.IGNORE_RBAC_TESTS !== 'false'
+          ? []
+          : ['release-rbac']),
+      ],
     },
     {
       name: 'upgrade',
