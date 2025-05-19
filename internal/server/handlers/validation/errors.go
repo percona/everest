@@ -67,21 +67,9 @@ func ErrUpdateStorageNotSupported(storageType string) error {
 	return fmt.Errorf("updating storage is not implemented for '%s'", storageType)
 }
 
-// ErrNameTooLong when the given fieldName is too long.
-func ErrNameTooLong(fieldName string) error {
-	return fmt.Errorf("'%s' can be at most 22 characters long", fieldName)
-}
-
 // ErrInvalidURL when the given fieldName contains invalid URL.
 func ErrInvalidURL(fieldName string) error {
 	return fmt.Errorf("'%s' is an invalid URL", fieldName)
-}
-
-// ErrNameNotRFC1035Compatible when the given fieldName doesn't contain RFC 1035 compatible string.
-func ErrNameNotRFC1035Compatible(fieldName string) error {
-	return fmt.Errorf(`'%s' is not RFC 1035 compatible. The name should contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric character`,
-		fieldName,
-	)
 }
 
 // ErrCreateStorageNotSupported appears when trying to create a storage of a type that is not supported.

@@ -60,15 +60,12 @@ export const ConnectionDetails = ({
           </Box>
         ))}
       />
-      <OverviewSectionRow
-        label={Messages.fields.port}
-        contentString={`${port}`}
-      />
+      <OverviewSectionRow label={Messages.fields.port} content={`${port}`} />
       {canReadCredentials && (
         <>
           <OverviewSectionRow
             label={Messages.fields.username}
-            contentString={username}
+            content={username}
           />
           <OverviewSectionRow
             label={Messages.fields.password}

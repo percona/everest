@@ -26,12 +26,15 @@ import {
   changeDbClusterAdvancedConfig,
   shouldDbActionsBeBlocked,
 } from 'utils/db';
+import { Link } from 'react-router-dom';
+import { useRBACPermissions } from 'hooks/rbac';
 
 export const AdvancedConfiguration = ({
   loading,
   externalAccess,
   parameters,
   storageClass,
+  podSchedulingPolicy,
 }: AdvancedConfigurationOverviewCardProps) => {
   const {
     canUpdateDb,
@@ -40,6 +43,11 @@ export const AdvancedConfiguration = ({
   } = useContext(DbClusterContext);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const { canRead: canReadPolicy } = useRBACPermissions(
+    'pod-scheduling-policies',
+    podSchedulingPolicy
+  );
+
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
     {
@@ -62,6 +70,8 @@ export const AdvancedConfiguration = ({
     sourceRanges,
     engineParametersEnabled,
     engineParameters,
+    podSchedulingPolicyEnabled,
+    podSchedulingPolicy,
   }: AdvancedConfigurationFormType) => {
     setUpdating(true);
     updateCluster(
@@ -70,7 +80,9 @@ export const AdvancedConfiguration = ({
         engineParametersEnabled,
         externalAccess,
         engineParameters,
-        sourceRanges
+        sourceRanges,
+        podSchedulingPolicyEnabled,
+        podSchedulingPolicy
       )
     );
   };
@@ -95,19 +107,38 @@ export const AdvancedConfiguration = ({
     >
       <OverviewSectionRow
         label={Messages.fields.externalAccess}
-        contentString={
+        content={
           externalAccess ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
       <OverviewSectionRow
         label={Messages.fields.parameters}
-        contentString={
+        content={
           parameters ? Messages.fields.enabled : Messages.fields.disabled
         }
       />
       <OverviewSectionRow
         label={Messages.fields.storageClass}
-        contentString={storageClass}
+        content={storageClass}
+      />
+
+      <OverviewSectionRow
+        label={Messages.fields.podSchedulingPolicy}
+        content={
+          podSchedulingPolicy ? (
+            canReadPolicy ? (
+              <Link
+                to={`/settings/pod-scheduling-policies/${podSchedulingPolicy}`}
+              >
+                {podSchedulingPolicy}
+              </Link>
+            ) : (
+              podSchedulingPolicy
+            )
+          ) : (
+            Messages.fields.disabled
+          )
+        }
       />
       {openEditModal && dbCluster && (
         <AdvancedConfigurationEditModal
