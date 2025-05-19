@@ -17,7 +17,6 @@ package k8s
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	"github.com/AlekSi/pointer"
@@ -61,14 +60,6 @@ func (h *k8sHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.
 }
 
 func (h *k8sHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {
-	used, err := h.kubeConnector.IsPodSchedulingPolicyUsed(ctx, types.NamespacedName{Name: name})
-	if err != nil {
-		return err
-	}
-	if used {
-		return fmt.Errorf("the pod scheduling poicy='%s' is in use. Unassign the policy first", name)
-	}
-
 	delObj := &everestv1alpha1.PodSchedulingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,

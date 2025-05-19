@@ -17,7 +17,6 @@ package k8s
 
 import (
 	"context"
-	"errors"
 	"slices"
 	"testing"
 
@@ -26,9 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
-	k8sError "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -145,108 +142,6 @@ func getDefaultPSMDBPolicy() *everestv1alpha1.PodSchedulingPolicy {
 				},
 			},
 		},
-	}
-}
-
-func TestValidate_DeletePodSchedulingPolicy(t *testing.T) {
-	t.Parallel()
-
-	type testCase struct {
-		name            string
-		objs            []ctrlclient.Object
-		pspNameToDelete string
-		wantErr         error
-	}
-	testCases := []testCase{
-		// no policies
-		{
-			name:            "no policies",
-			pspNameToDelete: "test-policy",
-			wantErr: k8sError.NewNotFound(schema.GroupResource{
-				Group:    everestv1alpha1.GroupVersion.Group,
-				Resource: "podschedulingpolicies",
-			},
-				"test-policy",
-			),
-		},
-		// delete non-existing policy
-		{
-			name: "delete non-existing policy",
-			objs: []ctrlclient.Object{
-				getDefaultPXCPolicy(),
-				getDefaultPGPolicy(),
-				getDefaultPSMDBPolicy(),
-			},
-			pspNameToDelete: "non-existing-policy",
-			wantErr: k8sError.NewNotFound(schema.GroupResource{
-				Group:    everestv1alpha1.GroupVersion.Group,
-				Resource: "podschedulingpolicies",
-			},
-				"non-existing-policy",
-			),
-		},
-		// delete used policy
-		{
-			name: "delete used policy",
-			objs: []ctrlclient.Object{
-				getDefaultPXCPolicy(),
-				getDefaultPGPolicy(),
-				getDefaultPSMDBPolicy(),
-				&everestv1alpha1.PodSchedulingPolicy{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "used-policy",
-					},
-					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
-				},
-				&everestv1alpha1.DatabaseCluster{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cluster",
-						Namespace: "test-ns",
-						Labels: map[string]string{
-							kubernetes.PodSchedulingPolicyNameLabel: "used-policy",
-						},
-					},
-				},
-			},
-			pspNameToDelete: "used-policy",
-			wantErr:         errors.New("the pod scheduling poicy='used-policy' is in use. Unassign the policy first"),
-		},
-		// delete unused policy
-		{
-			name: "delete unused policy",
-			objs: []ctrlclient.Object{
-				getDefaultPXCPolicy(),
-				getDefaultPGPolicy(),
-				getDefaultPSMDBPolicy(),
-				&everestv1alpha1.PodSchedulingPolicy{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "unused-policy",
-					},
-					Spec: everestv1alpha1.PodSchedulingPolicySpec{},
-				},
-			},
-			pspNameToDelete: "unused-policy",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			mockClient := fakeclient.NewClientBuilder().
-				WithScheme(kubernetes.CreateScheme()).
-				WithObjects(tc.objs...).
-				Build()
-			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
-			k8sH := New(zap.NewNop().Sugar(), k, "")
-
-			err := k8sH.DeletePodSchedulingPolicy(context.Background(), tc.pspNameToDelete)
-			if tc.wantErr != nil {
-				assert.Equal(t, tc.wantErr.Error(), err.Error())
-				return
-			}
-			require.NoError(t, err)
-		})
 	}
 }
 
