@@ -5,6 +5,7 @@ p, role:admin, database-cluster-backups, *, */*
 p, role:admin, database-cluster-restores, *, */*
 p, role:admin, backup-storages, *, */*
 p, role:admin, monitoring-instances, *, */*
+p, role:admin, pod-scheduling-policies, *, *
 
 p, role:readonly, namespaces, read, *
 p, role:readonly, database-engines, read, */*
@@ -13,6 +14,7 @@ p, role:readonly, database-cluster-backups, read, */*
 p, role:readonly, database-cluster-restores, read, */*
 p, role:readonly, backup-storages, read, */*
 p, role:readonly, monitoring-instances, read, */*
+p, role:readonly, pod-scheduling-policies, read, *
 
 p, role:devteam, namespaces, *, *
 p, role:devteam, database-engines, *, dev/*
@@ -21,6 +23,7 @@ p, role:devteam, database-cluster-backups, *, dev/*
 p, role:devteam, database-cluster-restores, *, dev/*
 p, role:devteam, backup-storages, *, */*
 p, role:devteam, monitoring-instances, *, */*
+p, role:devteam, pod-scheduling-policies, *, *
 
 p, alice, database-clusters, create, alice/*
 
