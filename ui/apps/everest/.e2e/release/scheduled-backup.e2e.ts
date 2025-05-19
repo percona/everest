@@ -257,7 +257,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             .first();
           await scheduleForDeleteBtn.click();
           await page.getByTestId('confirm-dialog-delete').click();
-          await expect(page.getByText('1 active schedule')).toBeVisible({ timeout: 10000 });
+          await expect(page.getByText('1 active schedule')).toBeVisible({
+            timeout: 10000,
+          });
         });
 
         await test.step('Delete second schedule', async () => {
