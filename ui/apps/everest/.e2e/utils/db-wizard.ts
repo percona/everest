@@ -65,9 +65,15 @@ export const cancelWizard = async (page: Page) => {
   await page.waitForURL('**/databases');
 };
 
-export const goToLastStepByStepAndSubmit = async (page: Page) => {
+export const goToLastStepByStepAndSubmit = async (
+  page: Page,
+  waitMs?: number
+) => {
   let createDbVisible = false;
   while (!createDbVisible) {
+    if (waitMs) {
+      await page.waitForTimeout(waitMs);
+    }
     await moveForward(page);
     const a = await page.getByTestId('db-wizard-submit-button').isVisible();
     if (a) {
@@ -224,7 +230,8 @@ export const populateResources = async (
 export const populateAdvancedConfig = async (
   page: Page,
   dbType: string,
-  externalAccess: string,
+  externalAccess: boolean = false,
+  externalAccessSourceRange: string,
   addDefaultEngineParameters: boolean,
   engineParameters: string
 ) => {
@@ -232,14 +239,19 @@ export const populateAdvancedConfig = async (
   await combobox.waitFor({ state: 'visible', timeout: 5000 });
   await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
 
-  if (externalAccess != '') {
+  if (externalAccess) {
     await page.getByLabel('Enable External Access').check();
-    await page
-      .getByTestId('text-input-source-ranges.0.source-range')
-      .fill(externalAccess);
+    if (externalAccessSourceRange != '') {
+      await page
+        .getByTestId('text-input-source-ranges.0.source-range')
+        .fill(externalAccessSourceRange);
+    }
   }
   if (engineParameters != '' || addDefaultEngineParameters) {
-    await page.getByLabel('Database engine parameters').check();
+    await page
+      .getByTestId('switch-input-engine-parameters-enabled-label')
+      .getByRole('checkbox')
+      .check();
     if (engineParameters != '') {
       await page
         .getByTestId('text-input-engine-parameters')

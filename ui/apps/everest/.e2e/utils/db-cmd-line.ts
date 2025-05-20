@@ -27,6 +27,24 @@ export const getK8sUid = async () => {
   }
 };
 
+export const getK8sResource = async (
+  resourceType: string,
+  resourceName: string,
+  namespace: string
+) => {
+  try {
+    if (resourceType === 'postgresql') {
+      resourceType = 'pg';
+    }
+    const command = `kubectl get --namespace ${namespace} ${resourceType} ${resourceName} -ojson`;
+    const output = execSync(command);
+    return JSON.parse(output.toString());
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
+};
+
 export const getPGStsName = async (cluster: string, namespace: string) => {
   try {
     const command = `kubectl get sts --namespace ${namespace} --selector=app.kubernetes.io/instance=${cluster},app.kubernetes.io/component=pg -o 'jsonpath={.items[*].metadata.name}'`;
@@ -275,8 +293,13 @@ export const insertTestDB = async (
         `INSERT INTO t1 VALUES ${values};`
       );
       const result = await queryTestDB(cluster, namespace);
-      const expected_result = expected.join('\n ');
-      expect(result.trim()).toBe(expected_result);
+      const expected_result = expected.join('\n');
+      // Output lines contain leading spaces depending on the number of digits.
+      const normalizedResult = result
+        .split('\n')
+        .map((line) => line.trim())
+        .join('\n');
+      expect(normalizedResult.trim()).toBe(expected_result);
       break;
     }
     default:

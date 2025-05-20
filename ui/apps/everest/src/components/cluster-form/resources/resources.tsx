@@ -43,13 +43,13 @@ import {
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
-import { someErrorInStateFields, getProxyUnitNamesFromDbType } from './utils';
 
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
 import { z } from 'zod';
 import { memoryParser } from 'utils/k8ResourceParser';
 import { DbWizardType } from 'pages/database-form/database-form-schema';
+import { getProxyUnitNamesFromDbType, someErrorInStateFields } from 'utils/db';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
@@ -661,7 +661,7 @@ const ResourcesForm = ({
         onChange={handleAccordionChange('nodes')}
         sx={{
           px: 2,
-          pb: 2,
+          pb: expanded === 'nodes' ? 2 : 0,
         }}
       >
         <CustomAccordionSummary
@@ -695,6 +695,7 @@ const ResourcesForm = ({
           sx={{
             px: 2,
             mt: 1,
+            pb: expanded === 'proxies' ? 2 : 0,
           }}
         >
           <CustomAccordionSummary

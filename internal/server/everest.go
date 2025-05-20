@@ -18,12 +18,14 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
+	"path"
 	"slices"
 	"text/template"
 
@@ -45,6 +47,8 @@ import (
 	k8shandler "github.com/percona/everest/internal/server/handlers/k8s"
 	rbachandler "github.com/percona/everest/internal/server/handlers/rbac"
 	valhandler "github.com/percona/everest/internal/server/handlers/validation"
+	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/certwatcher"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
@@ -89,17 +93,28 @@ func getOIDCProviderConfig(ctx context.Context, kubeClient kubernetes.Kubernetes
 
 // NewEverestServer creates and configures everest API.
 func NewEverestServer(ctx context.Context, c *config.EverestConfig, l *zap.SugaredLogger) (*EverestServer, error) {
-	kubeConnector, err := kubernetes.NewInCluster(l)
+	kubeConnector, err := kubernetes.NewInCluster(l, ctx, nil)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed creating Kubernetes client"))
+	}
+
+	if c.HTTPPort != 0 {
+		l.Warn("HTTP_PORT is deprecated, use PORT instead")
+		c.ListenPort = c.HTTPPort
 	}
 
 	echoServer := echo.New()
 	echoServer.Use(echomiddleware.RateLimiter(echomiddleware.NewRateLimiterMemoryStore(rate.Limit(c.APIRequestsRateLimit))))
 	middleware, store := sessionRateLimiter(c.CreateSessionRateLimit)
 	echoServer.Use(middleware)
+
+	sessionManagerClient, err := createSessionManagerClient(ctx, l)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed creating session manager client"))
+	}
 	sessMgr, err := session.New(
-		session.WithAccountManager(kubeConnector.Accounts()),
+		ctx, l,
+		session.WithAccountManager(sessionManagerClient),
 	)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to create session manager"))
@@ -153,9 +168,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return c.Render(http.StatusOK, "index.html",
 			map[string]interface{}{"CSPNonce": secure.CSPNonce(c.Request().Context())},
 		)
-	},
-		securityHeaders(e.oidcProvider),
-	)
+	}, e.securityHeaders())
 
 	// Serve static files.
 	fsys, err := fs.Sub(public.Static, "dist")
@@ -163,7 +176,7 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return errors.Join(err, errors.New("error reading filesystem"))
 	}
 	staticFilesHandler := http.FileServer(http.FS(fsys))
-	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler), securityHeaders(e.oidcProvider))
+	e.echo.GET("/static/*", echo.WrapHandler(staticFilesHandler), e.securityHeaders())
 
 	// Middlewares
 	e.echo.Use(echomiddleware.LoggerWithConfig(echomiddleware.LoggerConfig{
@@ -203,6 +216,12 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return err
 	}
 	apiGroup.Use(jwtMW)
+
+	blocklistMW, err := e.sessionMgr.BlocklistMiddleWare(newSkipperFunc)
+	if err != nil {
+		return err
+	}
+	apiGroup.Use(blocklistMW)
 
 	apiGroup.Use(e.checkOperatorUpgradeState)
 	api.RegisterHandlers(apiGroup, e)
@@ -333,8 +352,34 @@ func newSkipperFunc() (echomiddleware.Skipper, error) {
 }
 
 // Start starts everest server.
-func (e *EverestServer) Start() error {
-	return e.echo.Start(fmt.Sprintf("0.0.0.0:%d", e.config.HTTPPort))
+func (e *EverestServer) Start(ctx context.Context) error {
+	addr := fmt.Sprintf("0.0.0.0:%d", e.config.ListenPort)
+	if e.config.TLSCertsPath != "" {
+		return e.startHTTPS(ctx, addr)
+	}
+	return e.echo.Start(addr)
+}
+
+func (e *EverestServer) startHTTPS(ctx context.Context, addr string) error {
+	tlsKeyPath := path.Join(e.config.TLSCertsPath, "tls.key")
+	tlsCertPath := path.Join(e.config.TLSCertsPath, "tls.crt")
+
+	watcher, err := certwatcher.New(e.l, tlsCertPath, tlsKeyPath)
+	if err != nil {
+		return fmt.Errorf("failed to create cert watcher: %w", err)
+	}
+	if err := watcher.Start(ctx); err != nil {
+		return fmt.Errorf("failed to start cert watcher: %w", err)
+	}
+
+	e.echo.TLSServer = &http.Server{
+		Addr: addr,
+		TLSConfig: &tls.Config{
+			// server periodically calls GetCertificate and reloads the certificate.
+			GetCertificate: watcher.GetCertificate,
+		},
+	}
+	return e.echo.StartServer(e.echo.TLSServer)
 }
 
 // Shutdown gracefully stops the Everest server.
@@ -365,7 +410,7 @@ func (e *EverestServer) getBodyFromContext(ctx echo.Context, into any) error {
 
 func sessionRateLimiter(limit int) (echo.MiddlewareFunc, *RateLimiterMemoryStore) {
 	allButSession := func(c echo.Context) bool {
-		return c.Request().Method != echo.POST || c.Request().URL.Path != "/v1/session"
+		return c.Request().URL.Path != "/v1/session"
 	}
 	config := echomiddleware.DefaultRateLimiterConfig
 	config.Skipper = allButSession
@@ -415,4 +460,14 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
+}
+
+// createSessionManagerClient creates a k8s client for a session manager.
+func createSessionManagerClient(ctx context.Context, l *zap.SugaredLogger) (accounts.Interface, error) {
+	sessionMgrClientCacheOptions := session.ClientCacheOptions()
+	sessionMgrClient, err := kubernetes.NewInCluster(l, ctx, sessionMgrClientCacheOptions)
+	if err != nil {
+		return nil, err
+	}
+	return sessionMgrClient.Accounts(), nil
 }
