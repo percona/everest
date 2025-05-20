@@ -38,9 +38,9 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/operator-framework/api v0.27.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250430150216-c0f883f209bf
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250515124332-21b882ceb5f8
+	github.com/operator-framework/api v0.31.0
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250520105149-6e84ff3ec7de
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250520105017-366ecfd393d8
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
