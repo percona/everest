@@ -45,6 +45,10 @@ export const MAX_DB_CLUSTER_NAME_LENGTH = 22;
 export const MAX_SCHEDULE_NAME_LENGTH = 57;
 export const EVEREST_JWT_ISSUER = 'everest';
 export const PG_SLOTS_LIMIT = 3;
+export const EVEREST_READ_ONLY_FINALIZER =
+  'everest.percona.com/readonly-protection';
+export const EVEREST_POLICY_IN_USE_FINALIZER =
+  'everest.percona.com/in-use-protection';
 
 export enum DbWizardForm {
   dbName = 'dbName',

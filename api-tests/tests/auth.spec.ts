@@ -39,3 +39,25 @@ test.describe('no authorization header', () => {
     expect(version.status()).toEqual(400);
   });
 });
+
+test.describe('logout', () => {
+    test.use({
+        extraHTTPHeaders: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${process.env.API_TOKEN_TEST}`,
+        },
+    });
+
+    test('authenticated api request fails after logout', async ({request}) => {
+        const versionBeforeLogout = await request.get('/v1/version');
+        // NOTE: this test is сontext-dependent, the API_TOKEN_TEST needs to be valid before each run
+        expect(versionBeforeLogout.status()).toEqual(200);
+
+        const response = await request.delete('/v1/session');
+        expect(response.status()).toEqual(204);
+
+        const versionAfterLogout = await request.get('/v1/version');
+        expect(versionAfterLogout.status()).toEqual(401);
+    });
+});

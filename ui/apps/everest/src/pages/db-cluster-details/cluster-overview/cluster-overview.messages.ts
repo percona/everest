@@ -14,6 +14,8 @@ export const Messages = {
     editMonitoring: 'Edit Monitoring',
     noData: 'You currently do not have any backups. Create one to get started.',
     createScheduleToEnable: 'Create a schedule first to enable PITR.',
+    default: 'Default',
+    custom: 'Custom',
   },
   actions: {
     edit: 'Edit',
@@ -42,5 +44,6 @@ export const Messages = {
     memory: 'Memory',
     backupStorages: 'Backup\u00A0storage',
     storageClass: 'Storage class',
+    podSchedulingPolicy: 'Pod scheduling policy',
   },
 };

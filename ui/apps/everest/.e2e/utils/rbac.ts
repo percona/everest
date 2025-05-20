@@ -51,7 +51,7 @@ export const createDbWithParameters = async ({
   await moveForward(page);
 
   //A dvanced db config step
-  await populateAdvancedConfig(page, dbType, '', true, '');
+  await populateAdvancedConfig(page, dbType, false, '', true, '');
   await moveForward(page);
 
   // Monitoring step
