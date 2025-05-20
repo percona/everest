@@ -25,10 +25,10 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
+	"github.com/percona/everest/pkg/utils"
 )
 
 const (
-	maxNameLength      = 22
 	timeoutS3AccessSec = 2
 )
 
@@ -84,7 +84,7 @@ func validateCreateBackupStorageRequest(
 		}
 	}
 
-	if err := validateRFC1035(params.Name, "name"); err != nil {
+	if err := utils.ValidateEverestResourceName(params.Name, "name"); err != nil {
 		return err
 	}
 
@@ -93,7 +93,7 @@ func validateCreateBackupStorageRequest(
 	}
 
 	if params.Url != nil {
-		if ok := validateURL(*params.Url); !ok {
+		if ok := utils.ValidateURL(*params.Url); !ok {
 			err := ErrInvalidURL("url")
 			return err
 		}
@@ -114,21 +114,6 @@ func validateCreateBackupStorageRequest(
 	return nil
 }
 
-// validates names to be RFC-1035 compatible  https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#rfc-1035-label-names
-func validateRFC1035(s, name string) error {
-	if len(s) > maxNameLength {
-		return ErrNameTooLong(name)
-	}
-
-	rfc1035Regex := "^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$"
-	re := regexp.MustCompile(rfc1035Regex)
-	if !re.MatchString(s) {
-		return ErrNameNotRFC1035Compatible(name)
-	}
-
-	return nil
-}
-
 func validateBucketName(s string) error {
 	// sanitize: accept only lowercase letters, numbers, dots and hyphens.
 	// can be applied to both s3 bucket name and azure container name.
@@ -139,11 +124,6 @@ func validateBucketName(s string) error {
 	}
 
 	return nil
-}
-
-func validateURL(urlStr string) bool {
-	_, err := url.ParseRequestURI(urlStr)
-	return err == nil
 }
 
 func validateStorageAccessByCreate(ctx context.Context, params *api.CreateBackupStorageParams, l *zap.SugaredLogger) error {
@@ -349,7 +329,7 @@ func (h *validateHandler) validateUpdateBackupStorageRequest(
 
 	url := &existing.Spec.EndpointURL
 	if params.Url != nil {
-		if ok := validateURL(*params.Url); !ok {
+		if ok := utils.ValidateURL(*params.Url); !ok {
 			err := ErrInvalidURL("url")
 			return err
 		}

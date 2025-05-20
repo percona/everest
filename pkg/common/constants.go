@@ -69,6 +69,8 @@ const (
 	EverestAccountsSecretName = "everest-accounts"
 	// EverestJWTSecretName is the name of the secret that holds JWT secret.
 	EverestJWTSecretName = "everest-jwt"
+	// EverestBlocklistSecretName is the name of the secret that holds JWT blocklist.
+	EverestBlocklistSecretName = "everest-blocklist"
 	// EverestJWTPrivateKeyFile is the path to the JWT private key.
 	EverestJWTPrivateKeyFile = "/etc/jwt/id_rsa"
 	// EverestJWTPublicKeyFile is the path to the JWT public key.
@@ -80,6 +82,8 @@ const (
 	EverestAdminUser = "admin"
 	// EverestAdminRole is the name of the admin role.
 	EverestAdminRole = EverestRBACRolePrefix + "admin"
+	// EverestAccountsFileName is the key used in everest-accounts secret
+	EverestAccountsFileName = "users.yaml"
 
 	// EverestSettingsConfigMapName is the name of the Everest settings ConfigMap.
 	EverestSettingsConfigMapName = "everest-settings"

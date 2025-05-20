@@ -219,7 +219,8 @@ export const MonitoringEndpoints = () => {
       )}
       {openDeleteDialog && (
         <ConfirmDialog
-          isOpen={openDeleteDialog}
+          open={openDeleteDialog}
+          cancelMessage="Cancel"
           selectedId={selectedInstance?.name || ''}
           selectedNamespace={selectedInstance?.namespace || ''}
           closeModal={handleCloseDeleteDialog}
