@@ -1,0 +1,88 @@
+name: "🐛 Bug Report"
+description: If you've found a reproducible bug
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report!
+
+        We're most likely to fix bugs that are easy to reproduce, 
+        so please provide us with detailed steps to reproduce the issue.
+
+        Before submitting, please search to see if an issue already exists for the bug you are reporting:
+        - [Search GitHub Issues](https://github.com/percona/everest/issues)
+        - [Search JIRA Issues](https://perconadev.atlassian.net/issues/?jql=project+%3D+%22EVEREST%22+ORDER+BY+created+DESC&atlOrigin=eyJpIjoiYjI2ZDMzYzNlN2I2NGFkYzk2Zjg1MzEzMzkyN2M0ZjIiLCJwIjoiaiJ9)
+
+  - type: textarea
+    attributes:
+      label: What is the issue?
+      description: |
+        A clear and concise description of what Everest is doing and what you
+        would expect.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: How can it be reproduced?
+      description:
+        A clear and concise description of how to reproduce the issue. If
+        possible, include a minimal example that can be run in a test
+        environment.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Logs, error output, etc
+      description: |
+        Please include any relevant logs, error output, or screenshots that
+        might help us understand the issue. If you have a lot of logs, please
+        consider using a service like [Gist](https://gist.github.com/) to share them.
+
+  - type: input
+    attributes:
+      label: Everest Version
+      description: What version of Everest are you running?
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Installation method
+      description: How did you install Everest?
+      options:
+        - Helm
+        - CLI (everestctl)
+
+  - type: dropdown
+    attributes:
+      label: Kubernetes Distribution
+      description: Where are you running Kubernetes?
+      options:
+        - GKE
+        - AKS
+        - EKS
+        - OpenShift
+        - DigitalOcean
+        - kind
+        - minikube
+        - Other (please specify in environment details)
+
+  - type: textarea
+    attributes:
+      label: Environment Details
+      description: Please provide additional details about your environment that may be relevant.
+      placeholder: |
+        For example, Kubernetes version, cloud provider, Host OS, etc.
+
+  - type: textarea
+    attributes:
+      label: Possible solution
+      description: "If you have suggestions on a fix for the bug."
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: "Add any other context about the problem here. Or a screenshot if applicable."

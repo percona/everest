@@ -1,10 +1,7 @@
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { PreviewContentText } from '../preview-section';
 import { SectionProps } from './section.types';
-import {
-  getPreviewResourcesText,
-  getProxyUnitNamesFromDbType,
-} from 'components/cluster-form/resources/utils';
+import { getPreviewResourcesText, getProxyUnitNamesFromDbType } from 'utils/db';
 import { DbType } from '@percona/types';
 
 export const ResourcesPreviewSection = ({
