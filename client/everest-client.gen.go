@@ -45,9 +45,9 @@ const (
 
 // Defines values for DatabaseClusterSpecEngineType.
 const (
-	Postgresql DatabaseClusterSpecEngineType = "postgresql"
-	Psmdb      DatabaseClusterSpecEngineType = "psmdb"
-	Pxc        DatabaseClusterSpecEngineType = "pxc"
+	DatabaseClusterSpecEngineTypePostgresql DatabaseClusterSpecEngineType = "postgresql"
+	DatabaseClusterSpecEngineTypePsmdb      DatabaseClusterSpecEngineType = "psmdb"
+	DatabaseClusterSpecEngineTypePxc        DatabaseClusterSpecEngineType = "pxc"
 )
 
 // Defines values for DatabaseClusterSpecProxyExposeType.
@@ -97,12 +97,26 @@ const (
 	MonitoringInstanceUpdateParamsTypePmm MonitoringInstanceUpdateParamsType = "pmm"
 )
 
+// Defines values for PodSchedulingPolicySpecEngineType.
+const (
+	PodSchedulingPolicySpecEngineTypePostgresql PodSchedulingPolicySpecEngineType = "postgresql"
+	PodSchedulingPolicySpecEngineTypePsmdb      PodSchedulingPolicySpecEngineType = "psmdb"
+	PodSchedulingPolicySpecEngineTypePxc        PodSchedulingPolicySpecEngineType = "pxc"
+)
+
 // Defines values for UpgradeTaskPendingTask.
 const (
 	NotReady      UpgradeTaskPendingTask = "notReady"
 	Ready         UpgradeTaskPendingTask = "ready"
 	Restart       UpgradeTaskPendingTask = "restart"
 	UpgradeEngine UpgradeTaskPendingTask = "upgradeEngine"
+)
+
+// Defines values for ListPodSchedulingPolicyParamsEngineType.
+const (
+	Postgresql ListPodSchedulingPolicyParamsEngineType = "postgresql"
+	Psmdb      ListPodSchedulingPolicyParamsEngineType = "psmdb"
+	Pxc        ListPodSchedulingPolicyParamsEngineType = "pxc"
 )
 
 // BackupStorage Backup storage information
@@ -325,6 +339,9 @@ type DatabaseCluster struct {
 
 		// Paused Paused is a flag to stop the cluster
 		Paused *bool `json:"paused,omitempty"`
+
+		// PodSchedulingPolicyName PodSchedulingPolicyName is the name of the PodSchedulingPolicy CR that defines rules for DB cluster pods allocation across the cluster.
+		PodSchedulingPolicyName *string `json:"podSchedulingPolicyName,omitempty"`
 
 		// Proxy Proxy is the proxy specification. If not set, an appropriate
 		// proxy specification will be applied for the given engine. A
@@ -936,6 +953,3599 @@ type OIDCConfig struct {
 	Scopes []string `json:"scopes"`
 }
 
+// PodSchedulingPolicy PodSchedulingPolicy is the Schema for the Pod Scheduling Policy API.
+type PodSchedulingPolicy struct {
+	// ApiVersion APIVersion defines the versioned schema of this representation of an object.
+	// Servers should convert recognized schemas to the latest internal value, and
+	// may reject unrecognized values.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+	ApiVersion *string `json:"apiVersion,omitempty"`
+
+	// Kind Kind is a string value representing the REST resource this object represents.
+	// Servers may infer this from the endpoint the client submits requests to.
+	// Cannot be updated.
+	// In CamelCase.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+	Kind     *string                 `json:"kind,omitempty"`
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+
+	// Spec PodSchedulingPolicySpec defines the desired state of PodSchedulingPolicy.
+	Spec *struct {
+		// AffinityConfig AffinityConfig is a configuration for the affinity settings depending on the engine type.
+		AffinityConfig *struct {
+			// Postgresql PostgreSQL is the affinity configuration for the PostgreSQL DB clusters.
+			Postgresql *struct {
+				// Engine Engine is the affinity configuration for the DB Engine pods.
+				Engine *struct {
+					// NodeAffinity Describes node affinity scheduling rules for the pod.
+					NodeAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node matches the corresponding matchExpressions; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// Preference A node selector term, associated with the corresponding weight.
+							Preference struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"preference"`
+
+							// Weight Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to an update), the system
+						// may or may not try to eventually evict the pod from its node.
+						RequiredDuringSchedulingIgnoredDuringExecution *struct {
+							// NodeSelectorTerms Required. A list of node selector terms. The terms are ORed.
+							NodeSelectorTerms []struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"nodeSelectorTerms"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"nodeAffinity,omitempty"`
+
+					// PodAffinity Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+					PodAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAffinity,omitempty"`
+
+					// PodAntiAffinity Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+					PodAntiAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the anti-affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling anti-affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the anti-affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the anti-affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAntiAffinity,omitempty"`
+				} `json:"engine,omitempty"`
+
+				// Proxy Proxy is the affinity configuration for the DB Proxy pods.
+				Proxy *struct {
+					// NodeAffinity Describes node affinity scheduling rules for the pod.
+					NodeAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node matches the corresponding matchExpressions; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// Preference A node selector term, associated with the corresponding weight.
+							Preference struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"preference"`
+
+							// Weight Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to an update), the system
+						// may or may not try to eventually evict the pod from its node.
+						RequiredDuringSchedulingIgnoredDuringExecution *struct {
+							// NodeSelectorTerms Required. A list of node selector terms. The terms are ORed.
+							NodeSelectorTerms []struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"nodeSelectorTerms"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"nodeAffinity,omitempty"`
+
+					// PodAffinity Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+					PodAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAffinity,omitempty"`
+
+					// PodAntiAffinity Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+					PodAntiAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the anti-affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling anti-affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the anti-affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the anti-affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAntiAffinity,omitempty"`
+				} `json:"proxy,omitempty"`
+			} `json:"postgresql,omitempty"`
+
+			// Psmdb PSMDB is the affinity configuration for the PSMDB DB clusters.
+			Psmdb *struct {
+				// ConfigServer ConfigServer is the affinity configuration for the DB Config Server pods.
+				ConfigServer *struct {
+					// NodeAffinity Describes node affinity scheduling rules for the pod.
+					NodeAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node matches the corresponding matchExpressions; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// Preference A node selector term, associated with the corresponding weight.
+							Preference struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"preference"`
+
+							// Weight Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to an update), the system
+						// may or may not try to eventually evict the pod from its node.
+						RequiredDuringSchedulingIgnoredDuringExecution *struct {
+							// NodeSelectorTerms Required. A list of node selector terms. The terms are ORed.
+							NodeSelectorTerms []struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"nodeSelectorTerms"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"nodeAffinity,omitempty"`
+
+					// PodAffinity Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+					PodAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAffinity,omitempty"`
+
+					// PodAntiAffinity Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+					PodAntiAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the anti-affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling anti-affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the anti-affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the anti-affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAntiAffinity,omitempty"`
+				} `json:"configServer,omitempty"`
+
+				// Engine Engine is the affinity configuration for the DB Engine pods.
+				Engine *struct {
+					// NodeAffinity Describes node affinity scheduling rules for the pod.
+					NodeAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node matches the corresponding matchExpressions; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// Preference A node selector term, associated with the corresponding weight.
+							Preference struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"preference"`
+
+							// Weight Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to an update), the system
+						// may or may not try to eventually evict the pod from its node.
+						RequiredDuringSchedulingIgnoredDuringExecution *struct {
+							// NodeSelectorTerms Required. A list of node selector terms. The terms are ORed.
+							NodeSelectorTerms []struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"nodeSelectorTerms"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"nodeAffinity,omitempty"`
+
+					// PodAffinity Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+					PodAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAffinity,omitempty"`
+
+					// PodAntiAffinity Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+					PodAntiAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the anti-affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling anti-affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the anti-affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the anti-affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAntiAffinity,omitempty"`
+				} `json:"engine,omitempty"`
+
+				// Proxy Proxy is the affinity configuration for the DB Proxy pods.
+				Proxy *struct {
+					// NodeAffinity Describes node affinity scheduling rules for the pod.
+					NodeAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node matches the corresponding matchExpressions; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// Preference A node selector term, associated with the corresponding weight.
+							Preference struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"preference"`
+
+							// Weight Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to an update), the system
+						// may or may not try to eventually evict the pod from its node.
+						RequiredDuringSchedulingIgnoredDuringExecution *struct {
+							// NodeSelectorTerms Required. A list of node selector terms. The terms are ORed.
+							NodeSelectorTerms []struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"nodeSelectorTerms"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"nodeAffinity,omitempty"`
+
+					// PodAffinity Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+					PodAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAffinity,omitempty"`
+
+					// PodAntiAffinity Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+					PodAntiAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the anti-affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling anti-affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the anti-affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the anti-affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAntiAffinity,omitempty"`
+				} `json:"proxy,omitempty"`
+			} `json:"psmdb,omitempty"`
+
+			// Pxc PXC is the affinity configuration for the PXC DB clusters.
+			Pxc *struct {
+				// Engine Engine is the affinity configuration for the DB Engine pods.
+				Engine *struct {
+					// NodeAffinity Describes node affinity scheduling rules for the pod.
+					NodeAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node matches the corresponding matchExpressions; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// Preference A node selector term, associated with the corresponding weight.
+							Preference struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"preference"`
+
+							// Weight Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to an update), the system
+						// may or may not try to eventually evict the pod from its node.
+						RequiredDuringSchedulingIgnoredDuringExecution *struct {
+							// NodeSelectorTerms Required. A list of node selector terms. The terms are ORed.
+							NodeSelectorTerms []struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"nodeSelectorTerms"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"nodeAffinity,omitempty"`
+
+					// PodAffinity Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+					PodAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAffinity,omitempty"`
+
+					// PodAntiAffinity Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+					PodAntiAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the anti-affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling anti-affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the anti-affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the anti-affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAntiAffinity,omitempty"`
+				} `json:"engine,omitempty"`
+
+				// Proxy Proxy is the affinity configuration for the DB Proxy pods.
+				Proxy *struct {
+					// NodeAffinity Describes node affinity scheduling rules for the pod.
+					NodeAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node matches the corresponding matchExpressions; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// Preference A node selector term, associated with the corresponding weight.
+							Preference struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"preference"`
+
+							// Weight Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to an update), the system
+						// may or may not try to eventually evict the pod from its node.
+						RequiredDuringSchedulingIgnoredDuringExecution *struct {
+							// NodeSelectorTerms Required. A list of node selector terms. The terms are ORed.
+							NodeSelectorTerms []struct {
+								// MatchExpressions A list of node selector requirements by node's labels.
+								MatchExpressions *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchFields A list of node selector requirements by node's fields.
+								MatchFields *[]struct {
+									// Key The label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator Represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+									Operator string `json:"operator"`
+
+									// Values An array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. If the operator is Gt or Lt, the values
+									// array must have a single element, which will be interpreted as an integer.
+									// This array is replaced during a strategic merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchFields,omitempty"`
+							} `json:"nodeSelectorTerms"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"nodeAffinity,omitempty"`
+
+					// PodAffinity Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+					PodAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAffinity,omitempty"`
+
+					// PodAntiAffinity Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+					PodAntiAffinity *struct {
+						// PreferredDuringSchedulingIgnoredDuringExecution The scheduler will prefer to schedule pods to nodes that satisfy
+						// the anti-affinity expressions specified by this field, but it may choose
+						// a node that violates one or more of the expressions. The node that is
+						// most preferred is the one with the greatest sum of weights, i.e.
+						// for each node that meets all of the scheduling requirements (resource
+						// request, requiredDuringScheduling anti-affinity expressions, etc.),
+						// compute a sum by iterating through the elements of this field and adding
+						// "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+						// node(s) with the highest sum are the most preferred.
+						PreferredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// PodAffinityTerm Required. A pod affinity term, associated with the corresponding weight.
+							PodAffinityTerm struct {
+								// LabelSelector A label query over a set of resources, in this case pods.
+								// If it's null, this PodAffinityTerm matches with no Pods.
+								LabelSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"labelSelector,omitempty"`
+
+								// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+								// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+								MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+								// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+								// be taken into consideration. The keys are used to lookup values from the
+								// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+								// to select the group of existing pods which pods will be taken into consideration
+								// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+								// pod labels will be ignored. The default value is empty.
+								// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+								// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+								MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+								// NamespaceSelector A label query over the set of namespaces that the term applies to.
+								// The term is applied to the union of the namespaces selected by this field
+								// and the ones listed in the namespaces field.
+								// null selector and null or empty namespaces list means "this pod's namespace".
+								// An empty selector ({}) matches all namespaces.
+								NamespaceSelector *struct {
+									// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+									MatchExpressions *[]struct {
+										// Key key is the label key that the selector applies to.
+										Key string `json:"key"`
+
+										// Operator operator represents a key's relationship to a set of values.
+										// Valid operators are In, NotIn, Exists and DoesNotExist.
+										Operator string `json:"operator"`
+
+										// Values values is an array of string values. If the operator is In or NotIn,
+										// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+										// the values array must be empty. This array is replaced during a strategic
+										// merge patch.
+										Values *[]string `json:"values,omitempty"`
+									} `json:"matchExpressions,omitempty"`
+
+									// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+									// map is equivalent to an element of matchExpressions, whose key field is "key", the
+									// operator is "In", and the values array contains only "value". The requirements are ANDed.
+									MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+								} `json:"namespaceSelector,omitempty"`
+
+								// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+								// The term is applied to the union of the namespaces listed in this field
+								// and the ones selected by namespaceSelector.
+								// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+								Namespaces *[]string `json:"namespaces,omitempty"`
+
+								// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+								// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+								// whose value of the label with key topologyKey matches that of any node on which any of the
+								// selected pods is running.
+								// Empty topologyKey is not allowed.
+								TopologyKey string `json:"topologyKey"`
+							} `json:"podAffinityTerm"`
+
+							// Weight weight associated with matching the corresponding podAffinityTerm,
+							// in the range 1-100.
+							Weight int32 `json:"weight"`
+						} `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+
+						// RequiredDuringSchedulingIgnoredDuringExecution If the anti-affinity requirements specified by this field are not met at
+						// scheduling time, the pod will not be scheduled onto the node.
+						// If the anti-affinity requirements specified by this field cease to be met
+						// at some point during pod execution (e.g. due to a pod label update), the
+						// system may or may not try to eventually evict the pod from its node.
+						// When there are multiple elements, the lists of nodes corresponding to each
+						// podAffinityTerm are intersected, i.e. all terms must be satisfied.
+						RequiredDuringSchedulingIgnoredDuringExecution *[]struct {
+							// LabelSelector A label query over a set of resources, in this case pods.
+							// If it's null, this PodAffinityTerm matches with no Pods.
+							LabelSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"labelSelector,omitempty"`
+
+							// MatchLabelKeys MatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both matchLabelKeys and labelSelector.
+							// Also, matchLabelKeys cannot be set when labelSelector isn't set.
+							MatchLabelKeys *[]string `json:"matchLabelKeys,omitempty"`
+
+							// MismatchLabelKeys MismatchLabelKeys is a set of pod label keys to select which pods will
+							// be taken into consideration. The keys are used to lookup values from the
+							// incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`
+							// to select the group of existing pods which pods will be taken into consideration
+							// for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+							// pod labels will be ignored. The default value is empty.
+							// The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
+							// Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
+							MismatchLabelKeys *[]string `json:"mismatchLabelKeys,omitempty"`
+
+							// NamespaceSelector A label query over the set of namespaces that the term applies to.
+							// The term is applied to the union of the namespaces selected by this field
+							// and the ones listed in the namespaces field.
+							// null selector and null or empty namespaces list means "this pod's namespace".
+							// An empty selector ({}) matches all namespaces.
+							NamespaceSelector *struct {
+								// MatchExpressions matchExpressions is a list of label selector requirements. The requirements are ANDed.
+								MatchExpressions *[]struct {
+									// Key key is the label key that the selector applies to.
+									Key string `json:"key"`
+
+									// Operator operator represents a key's relationship to a set of values.
+									// Valid operators are In, NotIn, Exists and DoesNotExist.
+									Operator string `json:"operator"`
+
+									// Values values is an array of string values. If the operator is In or NotIn,
+									// the values array must be non-empty. If the operator is Exists or DoesNotExist,
+									// the values array must be empty. This array is replaced during a strategic
+									// merge patch.
+									Values *[]string `json:"values,omitempty"`
+								} `json:"matchExpressions,omitempty"`
+
+								// MatchLabels matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+								// map is equivalent to an element of matchExpressions, whose key field is "key", the
+								// operator is "In", and the values array contains only "value". The requirements are ANDed.
+								MatchLabels *map[string]string `json:"matchLabels,omitempty"`
+							} `json:"namespaceSelector,omitempty"`
+
+							// Namespaces namespaces specifies a static list of namespace names that the term applies to.
+							// The term is applied to the union of the namespaces listed in this field
+							// and the ones selected by namespaceSelector.
+							// null or empty namespaces list and null namespaceSelector means "this pod's namespace".
+							Namespaces *[]string `json:"namespaces,omitempty"`
+
+							// TopologyKey This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+							// the labelSelector in the specified namespaces, where co-located is defined as running on a node
+							// whose value of the label with key topologyKey matches that of any node on which any of the
+							// selected pods is running.
+							// Empty topologyKey is not allowed.
+							TopologyKey string `json:"topologyKey"`
+						} `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+					} `json:"podAntiAffinity,omitempty"`
+				} `json:"proxy,omitempty"`
+			} `json:"pxc,omitempty"`
+		} `json:"affinityConfig,omitempty"`
+
+		// EngineType EngineType is type of DB engine that this policy can be applied to.
+		EngineType PodSchedulingPolicySpecEngineType `json:"engineType"`
+	} `json:"spec,omitempty"`
+
+	// Status PodSchedulingPolicyStatus defines the observed state of PodSchedulingPolicy.
+	Status *struct {
+		// InUse InUse is a flag that indicates if the policy is used by any DB cluster.
+		InUse *bool `json:"inUse,omitempty"`
+
+		// LastObservedGeneration LastObservedGeneration is the most recent generation observed for this PodSchedulingPolicy.
+		LastObservedGeneration *int64 `json:"lastObservedGeneration,omitempty"`
+	} `json:"status,omitempty"`
+}
+
+// PodSchedulingPolicySpecEngineType EngineType is type of DB engine that this policy can be applied to.
+type PodSchedulingPolicySpecEngineType string
+
+// PodSchedulingPolicyList PodSchedulingPolicyList is an object that contains the list of the existing pod scheduling policies.
+type PodSchedulingPolicyList struct {
+	// ApiVersion APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+	ApiVersion *string                `json:"apiVersion,omitempty"`
+	Items      *[]PodSchedulingPolicy `json:"items,omitempty"`
+
+	// Kind Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+	Kind     *string                 `json:"kind,omitempty"`
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+}
+
 // Settings Everest global settings
 type Settings struct {
 	// OidcConfig Everest OIDC provider configuration
@@ -1118,6 +4728,18 @@ type DeleteDatabaseClusterParams struct {
 	CleanupBackupStorage *bool `form:"cleanupBackupStorage,omitempty" json:"cleanupBackupStorage,omitempty"`
 }
 
+// ListPodSchedulingPolicyParams defines parameters for ListPodSchedulingPolicy.
+type ListPodSchedulingPolicyParams struct {
+	// EngineType Database engine type that Pod Scheduling Policy is applicable to.
+	EngineType *ListPodSchedulingPolicyParamsEngineType `form:"engineType,omitempty" json:"engineType,omitempty"`
+
+	// HasRules Return list of Pod Scheduling Policy that has at least 1 rule.
+	HasRules *bool `form:"hasRules,omitempty" json:"hasRules,omitempty"`
+}
+
+// ListPodSchedulingPolicyParamsEngineType defines parameters for ListPodSchedulingPolicy.
+type ListPodSchedulingPolicyParamsEngineType string
+
 // CreateBackupStorageJSONRequestBody defines body for CreateBackupStorage for application/json ContentType.
 type CreateBackupStorageJSONRequestBody = CreateBackupStorageParams
 
@@ -1150,6 +4772,12 @@ type CreateMonitoringInstanceJSONRequestBody = MonitoringInstanceCreateParams
 
 // UpdateMonitoringInstanceJSONRequestBody defines body for UpdateMonitoringInstance for application/json ContentType.
 type UpdateMonitoringInstanceJSONRequestBody = MonitoringInstanceUpdateParams
+
+// CreatePodSchedulingPolicyJSONRequestBody defines body for CreatePodSchedulingPolicy for application/json ContentType.
+type CreatePodSchedulingPolicyJSONRequestBody = PodSchedulingPolicy
+
+// UpdatePodSchedulingPolicyJSONRequestBody defines body for UpdatePodSchedulingPolicy for application/json ContentType.
+type UpdatePodSchedulingPolicyJSONRequestBody = PodSchedulingPolicy
 
 // CreateSessionJSONRequestBody defines body for CreateSession for application/json ContentType.
 type CreateSessionJSONRequestBody = UserCredentials
@@ -1788,8 +5416,30 @@ type ClientInterface interface {
 	// GetUserPermissions request
 	GetUserPermissions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListPodSchedulingPolicy request
+	ListPodSchedulingPolicy(ctx context.Context, params *ListPodSchedulingPolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePodSchedulingPolicyWithBody request with any body
+	CreatePodSchedulingPolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreatePodSchedulingPolicy(ctx context.Context, body CreatePodSchedulingPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeletePodSchedulingPolicy request
+	DeletePodSchedulingPolicy(ctx context.Context, policyName string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPodSchedulingPolicy request
+	GetPodSchedulingPolicy(ctx context.Context, policyName string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdatePodSchedulingPolicyWithBody request with any body
+	UpdatePodSchedulingPolicyWithBody(ctx context.Context, policyName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdatePodSchedulingPolicy(ctx context.Context, policyName string, body UpdatePodSchedulingPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetKubernetesClusterResources request
 	GetKubernetesClusterResources(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteSession request
+	DeleteSession(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateSessionWithBody request with any body
 	CreateSessionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2355,8 +6005,104 @@ func (c *Client) GetUserPermissions(ctx context.Context, reqEditors ...RequestEd
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListPodSchedulingPolicy(ctx context.Context, params *ListPodSchedulingPolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPodSchedulingPolicyRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePodSchedulingPolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePodSchedulingPolicyRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePodSchedulingPolicy(ctx context.Context, body CreatePodSchedulingPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePodSchedulingPolicyRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeletePodSchedulingPolicy(ctx context.Context, policyName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeletePodSchedulingPolicyRequest(c.Server, policyName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPodSchedulingPolicy(ctx context.Context, policyName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPodSchedulingPolicyRequest(c.Server, policyName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdatePodSchedulingPolicyWithBody(ctx context.Context, policyName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdatePodSchedulingPolicyRequestWithBody(c.Server, policyName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdatePodSchedulingPolicy(ctx context.Context, policyName string, body UpdatePodSchedulingPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdatePodSchedulingPolicyRequest(c.Server, policyName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetKubernetesClusterResources(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetKubernetesClusterResourcesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteSession(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteSessionRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -3914,6 +7660,222 @@ func NewGetUserPermissionsRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListPodSchedulingPolicyRequest generates requests for ListPodSchedulingPolicy
+func NewListPodSchedulingPolicyRequest(server string, params *ListPodSchedulingPolicyParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/pod-scheduling-policies")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.EngineType != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "engineType", runtime.ParamLocationQuery, *params.EngineType); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+		}
+
+		if params.HasRules != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "hasRules", runtime.ParamLocationQuery, *params.HasRules); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePodSchedulingPolicyRequest calls the generic CreatePodSchedulingPolicy builder with application/json body
+func NewCreatePodSchedulingPolicyRequest(server string, body CreatePodSchedulingPolicyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePodSchedulingPolicyRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreatePodSchedulingPolicyRequestWithBody generates requests for CreatePodSchedulingPolicy with any type of body
+func NewCreatePodSchedulingPolicyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/pod-scheduling-policies")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeletePodSchedulingPolicyRequest generates requests for DeletePodSchedulingPolicy
+func NewDeletePodSchedulingPolicyRequest(server string, policyName string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "policy-name", runtime.ParamLocationPath, policyName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/pod-scheduling-policies/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetPodSchedulingPolicyRequest generates requests for GetPodSchedulingPolicy
+func NewGetPodSchedulingPolicyRequest(server string, policyName string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "policy-name", runtime.ParamLocationPath, policyName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/pod-scheduling-policies/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdatePodSchedulingPolicyRequest calls the generic UpdatePodSchedulingPolicy builder with application/json body
+func NewUpdatePodSchedulingPolicyRequest(server string, policyName string, body UpdatePodSchedulingPolicyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdatePodSchedulingPolicyRequestWithBody(server, policyName, "application/json", bodyReader)
+}
+
+// NewUpdatePodSchedulingPolicyRequestWithBody generates requests for UpdatePodSchedulingPolicy with any type of body
+func NewUpdatePodSchedulingPolicyRequestWithBody(server string, policyName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "policy-name", runtime.ParamLocationPath, policyName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/pod-scheduling-policies/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetKubernetesClusterResourcesRequest generates requests for GetKubernetesClusterResources
 func NewGetKubernetesClusterResourcesRequest(server string) (*http.Request, error) {
 	var err error
@@ -3934,6 +7896,33 @@ func NewGetKubernetesClusterResourcesRequest(server string) (*http.Request, erro
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteSessionRequest generates requests for DeleteSession
+func NewDeleteSessionRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/session")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -4205,8 +8194,30 @@ type ClientWithResponsesInterface interface {
 	// GetUserPermissionsWithResponse request
 	GetUserPermissionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUserPermissionsResponse, error)
 
+	// ListPodSchedulingPolicyWithResponse request
+	ListPodSchedulingPolicyWithResponse(ctx context.Context, params *ListPodSchedulingPolicyParams, reqEditors ...RequestEditorFn) (*ListPodSchedulingPolicyResponse, error)
+
+	// CreatePodSchedulingPolicyWithBodyWithResponse request with any body
+	CreatePodSchedulingPolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePodSchedulingPolicyResponse, error)
+
+	CreatePodSchedulingPolicyWithResponse(ctx context.Context, body CreatePodSchedulingPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePodSchedulingPolicyResponse, error)
+
+	// DeletePodSchedulingPolicyWithResponse request
+	DeletePodSchedulingPolicyWithResponse(ctx context.Context, policyName string, reqEditors ...RequestEditorFn) (*DeletePodSchedulingPolicyResponse, error)
+
+	// GetPodSchedulingPolicyWithResponse request
+	GetPodSchedulingPolicyWithResponse(ctx context.Context, policyName string, reqEditors ...RequestEditorFn) (*GetPodSchedulingPolicyResponse, error)
+
+	// UpdatePodSchedulingPolicyWithBodyWithResponse request with any body
+	UpdatePodSchedulingPolicyWithBodyWithResponse(ctx context.Context, policyName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePodSchedulingPolicyResponse, error)
+
+	UpdatePodSchedulingPolicyWithResponse(ctx context.Context, policyName string, body UpdatePodSchedulingPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdatePodSchedulingPolicyResponse, error)
+
 	// GetKubernetesClusterResourcesWithResponse request
 	GetKubernetesClusterResourcesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetKubernetesClusterResourcesResponse, error)
+
+	// DeleteSessionWithResponse request
+	DeleteSessionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteSessionResponse, error)
 
 	// CreateSessionWithBodyWithResponse request with any body
 	CreateSessionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSessionResponse, error)
@@ -5065,6 +9076,126 @@ func (r GetUserPermissionsResponse) StatusCode() int {
 	return 0
 }
 
+type ListPodSchedulingPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PodSchedulingPolicyList
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPodSchedulingPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPodSchedulingPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreatePodSchedulingPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PodSchedulingPolicy
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePodSchedulingPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePodSchedulingPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeletePodSchedulingPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *IoK8sApimachineryPkgApisMetaV1StatusV2
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r DeletePodSchedulingPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeletePodSchedulingPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetPodSchedulingPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PodSchedulingPolicy
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPodSchedulingPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPodSchedulingPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdatePodSchedulingPolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PodSchedulingPolicy
+	JSON400      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdatePodSchedulingPolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdatePodSchedulingPolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetKubernetesClusterResourcesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -5089,6 +9220,29 @@ func (r GetKubernetesClusterResourcesResponse) StatusCode() int {
 	return 0
 }
 
+type DeleteSessionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON429      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteSessionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteSessionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type CreateSessionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -5096,6 +9250,7 @@ type CreateSessionResponse struct {
 		Token *string `json:"token,omitempty"`
 	}
 	JSON400 *Error
+	JSON429 *Error
 	JSON500 *Error
 }
 
@@ -5562,6 +9717,67 @@ func (c *ClientWithResponses) GetUserPermissionsWithResponse(ctx context.Context
 	return ParseGetUserPermissionsResponse(rsp)
 }
 
+// ListPodSchedulingPolicyWithResponse request returning *ListPodSchedulingPolicyResponse
+func (c *ClientWithResponses) ListPodSchedulingPolicyWithResponse(ctx context.Context, params *ListPodSchedulingPolicyParams, reqEditors ...RequestEditorFn) (*ListPodSchedulingPolicyResponse, error) {
+	rsp, err := c.ListPodSchedulingPolicy(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPodSchedulingPolicyResponse(rsp)
+}
+
+// CreatePodSchedulingPolicyWithBodyWithResponse request with arbitrary body returning *CreatePodSchedulingPolicyResponse
+func (c *ClientWithResponses) CreatePodSchedulingPolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePodSchedulingPolicyResponse, error) {
+	rsp, err := c.CreatePodSchedulingPolicyWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePodSchedulingPolicyResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreatePodSchedulingPolicyWithResponse(ctx context.Context, body CreatePodSchedulingPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePodSchedulingPolicyResponse, error) {
+	rsp, err := c.CreatePodSchedulingPolicy(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePodSchedulingPolicyResponse(rsp)
+}
+
+// DeletePodSchedulingPolicyWithResponse request returning *DeletePodSchedulingPolicyResponse
+func (c *ClientWithResponses) DeletePodSchedulingPolicyWithResponse(ctx context.Context, policyName string, reqEditors ...RequestEditorFn) (*DeletePodSchedulingPolicyResponse, error) {
+	rsp, err := c.DeletePodSchedulingPolicy(ctx, policyName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeletePodSchedulingPolicyResponse(rsp)
+}
+
+// GetPodSchedulingPolicyWithResponse request returning *GetPodSchedulingPolicyResponse
+func (c *ClientWithResponses) GetPodSchedulingPolicyWithResponse(ctx context.Context, policyName string, reqEditors ...RequestEditorFn) (*GetPodSchedulingPolicyResponse, error) {
+	rsp, err := c.GetPodSchedulingPolicy(ctx, policyName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPodSchedulingPolicyResponse(rsp)
+}
+
+// UpdatePodSchedulingPolicyWithBodyWithResponse request with arbitrary body returning *UpdatePodSchedulingPolicyResponse
+func (c *ClientWithResponses) UpdatePodSchedulingPolicyWithBodyWithResponse(ctx context.Context, policyName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePodSchedulingPolicyResponse, error) {
+	rsp, err := c.UpdatePodSchedulingPolicyWithBody(ctx, policyName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdatePodSchedulingPolicyResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdatePodSchedulingPolicyWithResponse(ctx context.Context, policyName string, body UpdatePodSchedulingPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdatePodSchedulingPolicyResponse, error) {
+	rsp, err := c.UpdatePodSchedulingPolicy(ctx, policyName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdatePodSchedulingPolicyResponse(rsp)
+}
+
 // GetKubernetesClusterResourcesWithResponse request returning *GetKubernetesClusterResourcesResponse
 func (c *ClientWithResponses) GetKubernetesClusterResourcesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetKubernetesClusterResourcesResponse, error) {
 	rsp, err := c.GetKubernetesClusterResources(ctx, reqEditors...)
@@ -5569,6 +9785,15 @@ func (c *ClientWithResponses) GetKubernetesClusterResourcesWithResponse(ctx cont
 		return nil, err
 	}
 	return ParseGetKubernetesClusterResourcesResponse(rsp)
+}
+
+// DeleteSessionWithResponse request returning *DeleteSessionResponse
+func (c *ClientWithResponses) DeleteSessionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DeleteSessionResponse, error) {
+	rsp, err := c.DeleteSession(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteSessionResponse(rsp)
 }
 
 // CreateSessionWithBodyWithResponse request with arbitrary body returning *CreateSessionResponse
@@ -7040,6 +11265,206 @@ func ParseGetUserPermissionsResponse(rsp *http.Response) (*GetUserPermissionsRes
 	return response, nil
 }
 
+// ParseListPodSchedulingPolicyResponse parses an HTTP response from a ListPodSchedulingPolicyWithResponse call
+func ParseListPodSchedulingPolicyResponse(rsp *http.Response) (*ListPodSchedulingPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPodSchedulingPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PodSchedulingPolicyList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreatePodSchedulingPolicyResponse parses an HTTP response from a CreatePodSchedulingPolicyWithResponse call
+func ParseCreatePodSchedulingPolicyResponse(rsp *http.Response) (*CreatePodSchedulingPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePodSchedulingPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PodSchedulingPolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeletePodSchedulingPolicyResponse parses an HTTP response from a DeletePodSchedulingPolicyWithResponse call
+func ParseDeletePodSchedulingPolicyResponse(rsp *http.Response) (*DeletePodSchedulingPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeletePodSchedulingPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest IoK8sApimachineryPkgApisMetaV1StatusV2
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPodSchedulingPolicyResponse parses an HTTP response from a GetPodSchedulingPolicyWithResponse call
+func ParseGetPodSchedulingPolicyResponse(rsp *http.Response) (*GetPodSchedulingPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPodSchedulingPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PodSchedulingPolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdatePodSchedulingPolicyResponse parses an HTTP response from a UpdatePodSchedulingPolicyWithResponse call
+func ParseUpdatePodSchedulingPolicyResponse(rsp *http.Response) (*UpdatePodSchedulingPolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdatePodSchedulingPolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PodSchedulingPolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetKubernetesClusterResourcesResponse parses an HTTP response from a GetKubernetesClusterResourcesWithResponse call
 func ParseGetKubernetesClusterResourcesResponse(rsp *http.Response) (*GetKubernetesClusterResourcesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7067,6 +11492,39 @@ func ParseGetKubernetesClusterResourcesResponse(rsp *http.Response) (*GetKuberne
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteSessionResponse parses an HTTP response from a DeleteSessionWithResponse call
+func ParseDeleteSessionResponse(rsp *http.Response) (*DeleteSessionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteSessionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest Error
@@ -7109,6 +11567,13 @@ func ParseCreateSessionResponse(rsp *http.Response) (*CreateSessionResponse, err
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest Error
@@ -7174,196 +11639,319 @@ func ParseVersionInfoResponse(rsp *http.Response) (*VersionInfoResponse, error) 
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
-	"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",
-	"bORtLXXb9V09+nzx+f8HAAD//5OT678uSQEA",
+	"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",
+	"BgUA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

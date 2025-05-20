@@ -1,5 +1,27 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Typography, Box } from '@mui/material';
+import RoundedBox from 'components/rounded-box';
+
+const Header = ({
+  title,
+  controlComponent,
+}: {
+  title: string;
+  controlComponent: React.ReactNode;
+}) => (
+  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+    <Typography variant="sectionHeading">{title}</Typography>
+    <Box
+      sx={{
+        flexBasis: '20%',
+        maxWidth: '40%',
+        textAlign: 'right',
+      }}
+    >
+      {controlComponent}
+    </Box>
+  </Box>
+);
 
 type AdvancedCardProps = {
   title: string;
@@ -13,25 +35,15 @@ const AdvancedCard: React.FC<AdvancedCardProps> = ({
   controlComponent,
 }) => {
   return (
-    <Card variant="outlined" sx={{ marginBottom: 2 }}>
-      <CardContent>
-        <Box display="flex" alignItems="center">
-          <Typography variant="h6" sx={{ flexShrink: 0 }}>
-            {title}
-          </Typography>
-          <Box sx={{ flexBasis: '20%', textAlign: 'right', ml: 'auto' }}>
-            {controlComponent}
-          </Box>
-        </Box>
-        {typeof description === 'string' ? (
-          <Typography variant="body2" color="textSecondary" mt={1}>
-            {description}
-          </Typography>
-        ) : (
-          <Box mt={1}>{description}</Box>
-        )}
-      </CardContent>
-    </Card>
+    <RoundedBox
+      title={<Header title={title} controlComponent={controlComponent} />}
+    >
+      {typeof description === 'string' ? (
+        <Typography variant="caption">{description}</Typography>
+      ) : (
+        description
+      )}
+    </RoundedBox>
   );
 };
 

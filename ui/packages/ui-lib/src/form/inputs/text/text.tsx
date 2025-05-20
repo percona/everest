@@ -8,10 +8,11 @@ const TextInput = ({
   name,
   label,
   controllerProps,
-  textFieldProps,
+  textFieldProps = {},
   isRequired,
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
+  const { sx: textFieldPropsSx, onChange, ...restFieldProps } = textFieldProps;
   return (
     <Controller
       name={name}
@@ -20,9 +21,9 @@ const TextInput = ({
         <TextField
           label={label}
           {...field}
-          size={textFieldProps?.size || 'small'}
-          sx={{ mt: 3 }}
-          {...textFieldProps}
+          size={restFieldProps?.size || 'small'}
+          sx={{ mt: 3, ...textFieldPropsSx }}
+          {...restFieldProps}
           variant="outlined"
           required={isRequired}
           error={!!error}
@@ -34,13 +35,25 @@ const TextInput = ({
             onWheel: (e) => {
               (e.target as HTMLElement).blur();
             },
-            onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-              if (textFieldProps?.onChange) {
+            onBlur: (event: React.FocusEvent<HTMLInputElement>) => {
+              if (textFieldProps?.onBlur) {
                 const modifiedEvent = {
                   ...event,
                   target: {
                     ...event.target,
-                    value: textFieldProps.onChange(event),
+                    value: textFieldProps.onBlur(event),
+                  },
+                };
+                field.onChange(modifiedEvent);
+              }
+            },
+            onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+              if (onChange) {
+                const modifiedEvent = {
+                  ...event,
+                  target: {
+                    ...event.target,
+                    value: onChange(event),
                   },
                 };
                 field.onChange(modifiedEvent);
@@ -48,8 +61,9 @@ const TextInput = ({
                 field.onChange(event);
               }
             },
+            ...restFieldProps?.inputProps,
           }}
-          helperText={error ? error.message : textFieldProps?.helperText}
+          helperText={error ? error.message : restFieldProps?.helperText}
         />
       )}
       {...controllerProps}
