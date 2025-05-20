@@ -11,7 +11,7 @@ import {
   useEditBackupStorage,
 } from 'hooks/api/backup-storages/useBackupStorages';
 import { type MRT_ColumnDef } from 'material-react-table';
-import { LabelValue } from 'pages/databases/expandedRow/LabelValue';
+import { LabelValue } from 'pages/databases/labelValue/LabelValue';
 import { useMemo, useState } from 'react';
 import { BackupStorage, StorageType } from 'shared-types/backupStorages.types';
 import {
