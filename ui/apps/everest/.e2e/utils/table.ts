@@ -55,8 +55,7 @@ export const waitForDelete = async (
   name: string,
   timeout: number
 ) => {
-  const dbRow = page.getByRole('row').filter({ hasText: name });
-  await expect(dbRow).toHaveCount(0, { timeout: timeout });
+  await expect(page.getByText(name)).toHaveCount(0, { timeout: timeout });
 };
 
 export const waitForDbListLoad = async (page: Page) => {
