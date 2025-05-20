@@ -4,8 +4,8 @@ go 1.24
 
 require (
 	github.com/daixiang0/gci v0.13.6
-	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/golangci/golangci-lint v1.64.8
+	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
 	github.com/quasilyte/go-consistent v0.6.1
 	github.com/reviewdog/reviewdog v0.20.3
 	github.com/vburenin/ifacemaker v1.3.0
@@ -80,6 +80,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
+	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/ettle/strcase v0.2.0 // indirect
 	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
@@ -254,6 +255,7 @@ require (
 	github.com/sonatard/noctx v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcegraph/go-diff v0.7.0 // indirect
+	github.com/speakeasy-api/openapi-overlay v0.9.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
@@ -274,6 +276,7 @@ require (
 	github.com/ultraware/whitespace v0.2.0 // indirect
 	github.com/uudashr/gocognit v1.2.0 // indirect
 	github.com/uudashr/iface v1.3.1 // indirect
+	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/go-gitlab v0.114.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
