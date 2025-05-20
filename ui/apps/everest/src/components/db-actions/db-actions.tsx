@@ -26,12 +26,13 @@ import { useRBACPermissions } from 'hooks/rbac';
 import { Messages } from './db-actions.messages';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import DbActionsModals from './db-actions-modals';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDbActions } from 'hooks';
 import { shouldDbActionsBeBlocked } from 'utils/db';
 
 export const DbActions = ({
-  isDbDetailsView = false,
-  isStatusDetailView = false,
+  showDetailsAction = false,
+  showStatusActions = false,
   dbCluster,
 }: DbActionsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -50,7 +51,6 @@ export const DbActions = ({
     handleCloseDetailsDialog,
     handleDbSuspendOrResumed,
     handleRestoreDbCluster,
-    handleNavigateToDbDetails,
     deleteMutation,
   } = useDbActions(dbCluster);
   const open = Boolean(anchorEl);
@@ -58,6 +58,8 @@ export const DbActions = ({
   const namespace = dbCluster.metadata.namespace;
   const redirectURL = `/databases/${namespace}/${dbClusterName}/overview`;
 
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const actionsBlocked = shouldDbActionsBeBlocked(dbCluster.status?.status);
   const hasSchedules = !!(
     dbCluster.spec.backup && (dbCluster.spec.backup.schedules || []).length > 0
@@ -131,7 +133,7 @@ export const DbActions = ({
   return (
     <>
       <Box>
-        {isStatusDetailView ? (
+        {showStatusActions ? (
           <Button
             id="actions-button"
             data-testid="actions-button"
@@ -167,12 +169,12 @@ export const DbActions = ({
             'aria-labelledby': 'row-actions-button',
           }}
         >
-          {isDbDetailsView && (
+          {showDetailsAction && pathname !== redirectURL && (
             <MenuItem
               data-testid={`${dbClusterName}-details`}
               key={0}
               onClick={() => {
-                handleNavigateToDbDetails(redirectURL);
+                navigate(redirectURL);
               }}
               sx={sx}
             >
@@ -219,7 +221,7 @@ export const DbActions = ({
               <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
             </MenuItem>
           )}
-          {isStatusDetailView && dbCluster?.status?.details && (
+          {showStatusActions && dbCluster?.status?.details && (
             <MenuItem
               key={6}
               sx={sx}

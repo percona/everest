@@ -192,10 +192,6 @@ export const useDbActions = (dbCluster: DbCluster) => {
     setOpenDetailsDialog(false);
   };
 
-  const handleNavigateToDbDetails = (redirectURL: string) => {
-    navigate(redirectURL);
-  };
-
   return {
     openDeleteDialog,
     openRestoreDialog,
@@ -205,7 +201,6 @@ export const useDbActions = (dbCluster: DbCluster) => {
     handleDeleteDbCluster,
     handleConfirmDelete,
     handleOpenDbDetailsDialog,
-    handleNavigateToDbDetails,
     handleCloseDeleteDialog,
     handleCloseDetailsDialog,
     isPaused,

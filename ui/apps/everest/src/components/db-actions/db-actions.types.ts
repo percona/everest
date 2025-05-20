@@ -1,7 +1,7 @@
 import { DbCluster } from 'shared-types/dbCluster.types';
 
 export interface DbActionsProps {
-  isDbDetailsView?: boolean;
-  isStatusDetailView?: boolean;
+  showDetailsAction?: boolean;
+  showStatusActions?: boolean;
   dbCluster: DbCluster;
 }

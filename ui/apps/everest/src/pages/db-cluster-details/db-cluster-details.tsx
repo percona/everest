@@ -76,8 +76,8 @@ const WithPermissionDetails = ({
               )}
             </StatusField>
             <DbActions
-              isDbDetailsView={true}
-              isStatusDetailView={true}
+              showDetailsAction={true}
+              showStatusActions={true}
               dbCluster={dbCluster!}
             />
           </Box>
