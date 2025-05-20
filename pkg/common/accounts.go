@@ -5,6 +5,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/percona/everest/pkg/accounts"
 )
@@ -39,4 +42,13 @@ func CreateInitialAdminAccount(
 	}
 	// Create the admin account.
 	return c.SetPassword(ctx, EverestAdminUser, pass, false)
+}
+
+// ExtractToken extracts token from context
+func ExtractToken(ctx context.Context) (*jwt.Token, error) {
+	token, ok := ctx.Value(UserCtxKey).(*jwt.Token)
+	if !ok {
+		return nil, fmt.Errorf("failed to get token from context")
+	}
+	return token, nil
 }
