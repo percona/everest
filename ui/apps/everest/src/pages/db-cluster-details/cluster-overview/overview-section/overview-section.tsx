@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { LoadableChildren } from '@percona/ui-lib';
 import { OverviewSectionProps } from './overview-section.types';
-import { Messages } from './overview-section.messages';
+import { Messages } from '../cluster-overview.messages';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
 export const OverviewSection = ({
@@ -62,7 +62,9 @@ export const OverviewSection = ({
                 startIcon={<EditOutlinedIcon />}
                 {...actionButtonProps}
               >
-                {Messages.edit}
+                {title === Messages.titles.basicInformation
+                  ? Messages.actions.upgarde
+                  : Messages.actions.edit}
               </Button>
             </Box>
           </Tooltip>

@@ -19,6 +19,7 @@ export const Messages = {
   },
   actions: {
     edit: 'Edit',
+    upgarde: 'Upgrade',
     details: 'Details',
   },
   fields: {
