@@ -470,7 +470,7 @@ test.describe.configure({ retries: 0 });
         await test.step('Check new external access values in UI', async () => {
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
           await expect(
-            page.getByLabel('Enable External Access Enable')
+            page.getByTestId('switch-input-external-access')
           ).toBeChecked();
           const rawValue = await page
             .getByTestId('text-input-source-ranges.0.source-range')
