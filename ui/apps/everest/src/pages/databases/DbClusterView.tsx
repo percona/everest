@@ -195,6 +195,12 @@ export const DbClusterView = () => {
               }),
             },
           })}
+          enableRowHoverAction
+          rowHoverAction={(row) =>
+            navigate(
+              `/databases/${row.original.namespace}/${row.original.databaseName}/overview`
+            )
+          }
           renderTopToolbarCustomActions={() =>
             canAddCluster && tableData.length > 0 && <CreateDbButton />
           }
