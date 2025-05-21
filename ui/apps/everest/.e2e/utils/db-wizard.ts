@@ -240,7 +240,9 @@ export const populateAdvancedConfig = async (
   await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
 
   if (externalAccess) {
-    await page.getByLabel('Enable External Access').check();
+    await page.getByTestId('switch-input-external-access')
+    .getByRole('checkbox')
+    .check();
     if (externalAccessSourceRange != '') {
       await page
         .getByTestId('text-input-source-ranges.0.source-range')
