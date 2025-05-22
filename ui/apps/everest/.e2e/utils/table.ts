@@ -55,7 +55,9 @@ export const waitForDelete = async (
   name: string,
   timeout: number
 ) => {
-  await expect(page.getByText(name)).toHaveCount(0, { timeout: timeout });
+  await expect(page.getByRole('row').getByText(name)).toHaveCount(0, {
+    timeout: timeout,
+  });
 };
 
 export const waitForDbListLoad = async (page: Page) => {
