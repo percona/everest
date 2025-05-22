@@ -75,11 +75,7 @@ const WithPermissionDetails = ({
                 dbCluster?.status?.status || DbClusterStatus.creating
               )}
             </StatusField>
-            <DbActions
-              showDetailsAction={true}
-              showStatusActions={true}
-              dbCluster={dbCluster!}
-            />
+            <DbActions showStatusActions={true} dbCluster={dbCluster!} />
           </Box>
         </Box>
         <Box

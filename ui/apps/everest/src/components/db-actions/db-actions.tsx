@@ -26,7 +26,7 @@ import { useRBACPermissions } from 'hooks/rbac';
 import { Messages } from './db-actions.messages';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import DbActionsModals from './db-actions-modals';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useDbActions } from 'hooks';
 import { shouldDbActionsBeBlocked } from 'utils/db';
 
@@ -58,7 +58,6 @@ export const DbActions = ({
   const namespace = dbCluster.metadata.namespace;
   const redirectURL = `/databases/${namespace}/${dbClusterName}/overview`;
 
-  const { pathname } = useLocation();
   const navigate = useNavigate();
   const actionsBlocked = shouldDbActionsBeBlocked(dbCluster.status?.status);
   const hasSchedules = !!(
@@ -169,7 +168,7 @@ export const DbActions = ({
             'aria-labelledby': 'row-actions-button',
           }}
         >
-          {showDetailsAction && pathname !== redirectURL && (
+          {showDetailsAction && (
             <MenuItem
               data-testid={`${dbClusterName}-details`}
               key={0}
