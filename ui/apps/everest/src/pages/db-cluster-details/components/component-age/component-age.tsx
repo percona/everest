@@ -1,5 +1,5 @@
 import { Tooltip, Typography, TypographyProps } from '@mui/material';
-import { format, formatDistanceToNowStrict, isValid } from 'date-fns';
+import { format, formatDuration, intervalToDuration, isValid } from 'date-fns';
 import { DATE_FORMAT } from 'consts';
 
 export type ComponentAgeProps = {
@@ -12,8 +12,18 @@ const ComponentAge = ({ date, render, typographyProps }: ComponentAgeProps) => {
   const dateObj = new Date(date);
 
   const formattedDate = isValid(dateObj)
-    ? formatDistanceToNowStrict(dateObj)
+    ? formatDuration(
+        intervalToDuration({
+          start: date,
+          end: Date.now(),
+        }),
+        {
+          format: ['years', 'months', 'days', 'hours', 'minutes'],
+        }
+      )
     : '';
+
+  const resultStr = formattedDate ? `${formattedDate} ago` : '';
 
   return (
     <Tooltip
@@ -22,7 +32,7 @@ const ComponentAge = ({ date, render, typographyProps }: ComponentAgeProps) => {
       arrow
     >
       <Typography variant="caption" color="text.secondary" {...typographyProps}>
-        {render ? render(formattedDate) : formattedDate}
+        {render ? render(resultStr) : resultStr}
       </Typography>
     </Tooltip>
   );
