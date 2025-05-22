@@ -35,3 +35,14 @@ export const setRBACPermissionsK8S = async (
     )
   );
 };
+
+export const giveUserAllPermissions = async () => {
+  await setRBACPermissionsK8S([
+    ['namespaces', 'read', '*'],
+    ['database-clusters', '*', '*/*'],
+    ['database-engines', '*', '*/*'],
+    ['backup-storages', '*', '*/*'],
+    ['database-cluster-backups', '*', '*/*'],
+    ['monitoring-instances', '*', '*/*'],
+  ]);
+};
