@@ -10,6 +10,7 @@ const TextInput = ({
   controllerProps,
   textFieldProps = {},
   isRequired,
+  maxLength,
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
   const { sx: textFieldPropsSx, onChange, ...restFieldProps } = textFieldProps;
@@ -61,6 +62,7 @@ const TextInput = ({
                 field.onChange(event);
               }
             },
+            maxLength,
             ...restFieldProps?.inputProps,
           }}
           helperText={error ? error.message : restFieldProps?.helperText}

@@ -40,6 +40,7 @@ import {
   ResourceSize,
   PROXIES_DEFAULT_SIZES,
   resourcesFormSchema,
+  ResourcesInputMap,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
@@ -104,10 +105,34 @@ const ResourceInput = ({
     numberOfUnits = 1;
   }
 
+  const endValue = (value * numberOfUnits).toString();
+
+  const getShortedValue = () => {
+    let initialValue = endValue;
+    let length = initialValue.length;
+    const isMoreThanThousand = +initialValue > 999;
+
+    if (initialValue.includes('.')) {
+      initialValue = (+initialValue).toFixed(1);
+      length = initialValue.length;
+
+      if (isMoreThanThousand) {
+        length = initialValue.length - 2;
+      }
+    }
+
+    if (isMoreThanThousand) {
+      const { sliceIndex, postfix } = ResourcesInputMap[length];
+      return ` = ${initialValue.slice(0, sliceIndex)}.${initialValue[sliceIndex]}${postfix + ' ' + endSuffix}`;
+    }
+    return ` = ${initialValue} ${endSuffix}`;
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
       <TextInput
         name={name}
+        maxLength={12}
         textFieldProps={{
           variant: 'outlined',
           label,
@@ -118,22 +143,31 @@ const ResourceInput = ({
               <InputAdornment position="end">{endSuffix}</InputAdornment>
             ),
           },
+          sx: { minWidth: '140px' },
         }}
       />
       {isDesktop && numberOfUnits && (
-        <Box sx={{ ml: 1, pt: 0.5, flexBasis: 'fit-content' }}>
+        <Box
+          sx={{ ml: 1, pt: 0.5, width: '105px', flexShrink: 0, flexGrow: 0 }}
+        >
           <Typography
             variant="caption"
             sx={{ whiteSpace: 'nowrap' }}
             color={theme.palette.text.secondary}
           >{`x ${numberOfUnits} ${+numberOfUnits > 1 ? unitPlural : unit}`}</Typography>
-          {!!value && numberOfUnits && (
+          {!!endValue && (
             <Typography
               variant="body1"
-              sx={{ whiteSpace: 'nowrap' }}
+              sx={{
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+              }}
               color={theme.palette.text.secondary}
               data-testid={`${name}-resource-sum`}
-            >{` = ${(value * numberOfUnits).toFixed(2)} ${endSuffix}`}</Typography>
+            >
+              {getShortedValue()}
+            </Typography>
           )}
         </Box>
       )}
@@ -159,7 +193,7 @@ const ResourcesToggles = ({
   disableCustom = false,
   warnForUpscaling = false,
 }: ResourcesTogglesProps) => {
-  const { isMobile, isDesktop } = useActiveBreakpoint();
+  const { isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
     useKubernetesClusterResourcesInfo();
   const { watch, setValue, setError, clearErrors, getFieldState, resetField } =
@@ -336,16 +370,9 @@ const ResourcesToggles = ({
       </ToggleButtonGroupInput>
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          justifyContent: 'center',
-          marginTop: 2,
-          gap: isDesktop ? 4 : 2,
+          gap: isDesktop ? 3 : 2,
           '& > *': {
-            width: isMobile ? '100%' : '33%',
-            '&> *': {
-              width: '100%',
-            },
+            flex: '1 0 0 ',
           },
         }}
       >
