@@ -287,14 +287,16 @@ for namespace in pg_namespaces:
 ################################
 
 # First apply the CRDs since we will not apply them in the helm chart.
-everest_crds = kustomize('%s/config/crd' % operator_dir)
-k8s_yaml(everest_crds)
+# everest_crds = kustomize('%s/config/crd' % operator_dir)
+# k8s_yaml(everest_crds)
 
+# webhook_tls = read_yaml('webhook-tls.yaml')
 everest_yaml = helm(
     everest_chart_dir,
     name='everest',
     namespace=EVEREST_NAMESPACE,
-    skip_crds=True,
+    skip_crds=False,
+    values=['./helm-values/webhook-tls-cert-values.yaml'],
     set=[
         'dbNamespace.enabled=false',
         'upgrade.preflightChecks=false',
@@ -535,8 +537,9 @@ k8s_resource(
     'everest-operator-metrics-auth-rolebinding:clusterrolebinding',
     'everest-operator-manager-role:clusterrole',
     'everest-operator-leader-election-rolebinding:rolebinding',
-    'everest-operator-manager-rolebinding:clusterrolebinding'
-
+    'everest-operator-manager-rolebinding:clusterrolebinding',
+    'webhook-server-cert:secret',
+    'everest-operator-validating-webhook-configuration:validatingwebhookconfiguration'
     ],
     resource_deps = [
       'everest-namespace',
