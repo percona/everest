@@ -132,6 +132,7 @@ const ResourceInput = ({
     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
       <TextInput
         name={name}
+        maxLength={12}
         textFieldProps={{
           variant: 'outlined',
           label,
@@ -146,7 +147,9 @@ const ResourceInput = ({
         }}
       />
       {isDesktop && numberOfUnits && (
-        <Box sx={{ ml: 1, pt: 0.5, flexBasis: 'fit-content' }}>
+        <Box
+          sx={{ ml: 1, pt: 0.5, width: '105px', flexShrink: 0, flexGrow: 0 }}
+        >
           <Typography
             variant="caption"
             sx={{ whiteSpace: 'nowrap' }}
@@ -155,7 +158,11 @@ const ResourceInput = ({
           {!!endValue && (
             <Typography
               variant="body1"
-              sx={{ whiteSpace: 'nowrap' }}
+              sx={{
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+              }}
               color={theme.palette.text.secondary}
               data-testid={`${name}-resource-sum`}
             >
@@ -186,7 +193,7 @@ const ResourcesToggles = ({
   disableCustom = false,
   warnForUpscaling = false,
 }: ResourcesTogglesProps) => {
-  const { isMobile, isDesktop } = useActiveBreakpoint();
+  const { isDesktop } = useActiveBreakpoint();
   const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
     useKubernetesClusterResourcesInfo();
   const { watch, setValue, setError, clearErrors, getFieldState, resetField } =
@@ -363,16 +370,9 @@ const ResourcesToggles = ({
       </ToggleButtonGroupInput>
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          justifyContent: 'center',
-          marginTop: 2,
-          gap: isDesktop ? 4 : 2,
+          gap: isDesktop ? 3 : 2,
           '& > *': {
-            width: isMobile ? '100%' : '33%',
-            '&> *': {
-              width: '100%',
-            },
+            flex: '1 0 0 ',
           },
         }}
       >
