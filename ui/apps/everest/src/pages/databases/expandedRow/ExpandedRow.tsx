@@ -28,7 +28,7 @@ import {
   getResourcesDetailedString,
   memoryParser,
 } from 'utils/k8ResourceParser';
-import { getProxyUnitNamesFromDbType } from 'components/cluster-form/resources/utils';
+import { getProxyUnitNamesFromDbType } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
 import { DbEngineType } from '@percona/types';
 
