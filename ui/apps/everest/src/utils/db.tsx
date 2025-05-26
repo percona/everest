@@ -260,6 +260,10 @@ export const dbPayloadToAffinityRules = (
   return rules;
 };
 
+export const doesAffinityOperatorRequireValues = (
+  operator: AffinityOperator
+): boolean => [AffinityOperator.In, AffinityOperator.NotIn].includes(operator);
+
 export const affinityRulesToDbPayload = (
   affinityRules: AffinityRule[]
 ): Affinity => {
@@ -276,9 +280,10 @@ export const affinityRulesToDbPayload = (
           {
             key,
             operator: operator!,
-            ...(values.length > 0 && {
-              values,
-            }),
+            ...(doesAffinityOperatorRequireValues(operator!) &&
+              values.length > 0 && {
+                values,
+              }),
           },
         ],
       },
@@ -324,9 +329,7 @@ export const affinityRulesToDbPayload = (
           {
             key: key!,
             operator: operator!,
-            ...([AffinityOperator.In, AffinityOperator.NotIn].includes(
-              operator!
-            ) && {
+            ...(doesAffinityOperatorRequireValues(operator!) && {
               values: valuesList,
             }),
           },
