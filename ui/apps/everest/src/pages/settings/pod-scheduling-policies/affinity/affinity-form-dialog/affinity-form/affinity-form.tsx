@@ -28,7 +28,7 @@ type Props = {
 };
 
 export const AffinityForm = ({ dbType, showInUseWarning = false }: Props) => {
-  const { watch, resetField, trigger } = useFormContext();
+  const { watch, trigger } = useFormContext();
   const [operator, key, priority, type] = watch([
     AffinityFormFields.operator,
     AffinityFormFields.key,
@@ -37,15 +37,8 @@ export const AffinityForm = ({ dbType, showInUseWarning = false }: Props) => {
   ]);
 
   useEffect(() => {
-    resetField(AffinityFormFields.weight, {
-      keepError: false,
-      defaultValue: 1,
-    });
-  }, [priority, resetField]);
-
-  useEffect(() => {
     trigger();
-  }, [type, trigger]);
+  }, [type, priority, trigger]);
 
   return (
     <>
