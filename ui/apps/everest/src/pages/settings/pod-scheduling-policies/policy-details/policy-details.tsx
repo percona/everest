@@ -1,7 +1,10 @@
 import { Alert, Box, Button, Skeleton, Typography } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { useNavigate, useParams } from 'react-router-dom';
-import { usePodSchedulingPolicy, useUpdatePodSchedulingPolicy } from 'hooks';
+import {
+  usePodSchedulingPolicy,
+  useUpdateEntityWithConflictRetry,
+} from 'hooks';
 import { NoMatch } from 'pages/404/NoMatch';
 import { useRef, useState } from 'react';
 import { AffinityFormDialog } from '../affinity/affinity-form-dialog/affinity-form-dialog';
@@ -22,6 +25,7 @@ import {
 } from 'consts';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { Messages } from '../pod-scheduling-policies.messages';
+import { updatePodSchedulingPolicy } from 'api/podSchedulingPolicies';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
@@ -29,8 +33,6 @@ const PolicyDetails = () => {
   const [openAffinityDialog, setOpenAffinityDialog] = useState(false);
   const [openRemoveRuleDialog, setOpenRemoveRuleDialog] = useState(false);
   const selectedRule = useRef<AffinityRule>();
-  const { mutate: updatePolicy, isPending: updatingPolicy } =
-    useUpdatePodSchedulingPolicy();
   const queryClient = useQueryClient();
   const { canUpdate } = useRBACPermissions(
     'pod-scheduling-policies',
@@ -49,7 +51,23 @@ const PolicyDetails = () => {
     isLoading,
     isError,
     data: policy,
+    refetch: refetchPolicy,
   } = usePodSchedulingPolicy(policyName);
+
+  const { mutate: updatePolicy, isPending: updatingPolicy } =
+    useUpdateEntityWithConflictRetry(
+      ['pod-scheduling-policy', policyName],
+      () => updatePodSchedulingPolicy(policy!),
+      policy?.metadata.generation || 0,
+      refetchPolicy,
+      (_, newData) => newData,
+      {
+        onSuccess: () => {
+          setOpenRemoveRuleDialog(false);
+          selectedRule.current = undefined;
+        },
+      }
+    );
 
   if (isLoading) {
     return (
