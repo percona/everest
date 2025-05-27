@@ -55,6 +55,7 @@ export const waitForDelete = async (
   name: string,
   timeout: number
 ) => {
+  await page.reload({ waitUntil: 'networkidle' });
   await expect(page.getByRole('row').getByText(name)).toHaveCount(0, {
     timeout: timeout,
   });
