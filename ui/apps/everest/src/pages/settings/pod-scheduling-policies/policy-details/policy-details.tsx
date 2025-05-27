@@ -16,7 +16,6 @@ import {
 } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
 import { AffinityRule } from 'shared-types/affinity.types';
-import { useQueryClient } from '@tanstack/react-query';
 import PodSchedulingPoliciesTable from 'components/pod-scheduling-policies-table';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac';
 import {
@@ -33,7 +32,6 @@ const PolicyDetails = () => {
   const [openAffinityDialog, setOpenAffinityDialog] = useState(false);
   const [openRemoveRuleDialog, setOpenRemoveRuleDialog] = useState(false);
   const selectedRule = useRef<AffinityRule>();
-  const queryClient = useQueryClient();
   const { canUpdate } = useRBACPermissions(
     'pod-scheduling-policies',
     policyName
@@ -57,13 +55,14 @@ const PolicyDetails = () => {
   const { mutate: updatePolicy, isPending: updatingPolicy } =
     useUpdateEntityWithConflictRetry(
       ['pod-scheduling-policy', policyName],
-      () => updatePodSchedulingPolicy(policy!),
+      (newPolicy) => updatePodSchedulingPolicy(newPolicy),
       policy?.metadata.generation || 0,
       refetchPolicy,
       (_, newData) => newData,
       {
         onSuccess: () => {
           setOpenRemoveRuleDialog(false);
+          setOpenAffinityDialog(false);
           selectedRule.current = undefined;
         },
       }
@@ -97,29 +96,13 @@ const PolicyDetails = () => {
       removeRuleInExistingPolicy(policy, selectedRule.current);
     }
     insertAffinityRuleToExistingPolicy(policy, rule);
-    updatePolicy(policy, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ['pod-scheduling-policy', policyName],
-        });
-        setOpenAffinityDialog(false);
-        selectedRule.current = undefined;
-      },
-    });
+    updatePolicy(policy);
   };
 
   const handleConfirmDelete = () => {
     if (selectedRule.current) {
       removeRuleInExistingPolicy(policy, selectedRule.current);
-      updatePolicy(policy, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: ['pod-scheduling-policy', policyName],
-          });
-          setOpenRemoveRuleDialog(false);
-          selectedRule.current = undefined;
-        },
-      });
+      updatePolicy(policy);
     }
   };
 

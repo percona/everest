@@ -17,7 +17,7 @@ export const useUpdateEntityWithConflictRetry = <
   T extends { metadata: { generation: number; resourceVersion: string } },
 >(
   queryKey: string[],
-  apiMutationFn: () => Promise<T>,
+  apiMutationFn: (newEntityData: T) => Promise<T>,
   originalGeneration: number,
   refetch: (
     options?: RefetchOptions
@@ -38,7 +38,7 @@ export const useUpdateEntityWithConflictRetry = <
   const mutationMethods = useMutation<T, AxiosError, T, unknown>({
     mutationFn: (entity: T) => {
       dataToBeSent.current = entity;
-      return apiMutationFn();
+      return apiMutationFn(dataToBeSent.current);
     },
     onError: async (error, vars, ctx) => {
       const { status } = error;

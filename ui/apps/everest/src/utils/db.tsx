@@ -257,7 +257,18 @@ export const dbPayloadToAffinityRules = (
     }
   });
 
-  return rules;
+  return rules.sort((a, b) => {
+    if (a.component === b.component) {
+      if (a.type === b.type) {
+        if (a.priority === b.priority) {
+          return (b.weight ?? 0) - (a.weight ?? 0);
+        }
+        return a.priority.localeCompare(b.priority);
+      }
+      return a.type.localeCompare(b.type);
+    }
+    return a.component.localeCompare(b.component);
+  });
 };
 
 export const doesAffinityOperatorRequireValues = (

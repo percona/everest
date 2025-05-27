@@ -48,7 +48,10 @@ export const updatePodSchedulingPolicy = async (
 ) => {
   const response = await api.put<PodSchedulingPolicy>(
     `pod-scheduling-policies/${policy.metadata.name}`,
-    policy
+    policy,
+    {
+      disableNotifications: (e) => e.status === 409,
+    }
   );
   return response.data;
 };
