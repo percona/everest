@@ -154,7 +154,6 @@ func (e *EverestServer) securityHeaders() echo.MiddlewareFunc {
 	return echo.WrapMiddleware(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-store, max-age=0")
-			w.Header().Set("Clear-Site-Data", "\"cache\",\"cookies\"")
 			secureMiddleware.Handler(next).ServeHTTP(w, r)
 		})
 	})
