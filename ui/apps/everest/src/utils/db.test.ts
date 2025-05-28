@@ -123,6 +123,18 @@ describe('affinityRulesToDbPayload', () => {
           values: 'value1',
           uid: '',
         },
+        {
+          component: AffinityComponent.DbNode,
+          type: AffinityType.PodAntiAffinity,
+          priority: AffinityPriority.Preferred,
+          weight: 15,
+          topologyKey: 'my-topology-key',
+          operator: AffinityOperator.Exists,
+          key: 'my-key',
+          // This rule is not using values, but we test if it does not end up in the payload
+          values: 'value1',
+          uid: '',
+        },
       ],
       {
         nodeAffinity: {
@@ -164,6 +176,20 @@ describe('affinityRulesToDbPayload', () => {
                 },
               },
             },
+            {
+              weight: 15,
+              podAffinityTerm: {
+                topologyKey: 'my-topology-key',
+                labelSelector: {
+                  matchExpressions: [
+                    {
+                      key: 'my-key',
+                      operator: AffinityOperator.Exists,
+                    },
+                  ],
+                },
+              },
+            },
           ],
         },
       },
@@ -181,6 +207,8 @@ describe('insertAffinityRuleToExistingPolicy', () => {
   test('Add to empty policy', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
+        generation: 1,
+        resourceVersion: '1',
         name: 'test-policy',
         finalizers: [],
       },
@@ -251,6 +279,8 @@ describe('insertAffinityRuleToExistingPolicy', () => {
   test('Add to existing policy with different priority', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
+        generation: 1,
+        resourceVersion: '1',
         name: 'test-policy',
         finalizers: [],
       },
@@ -348,6 +378,8 @@ describe('insertAffinityRuleToExistingPolicy', () => {
   test('Add to existing policy with same priority', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
+        generation: 1,
+        resourceVersion: '1',
         name: 'test-policy',
         finalizers: [],
       },
@@ -437,6 +469,8 @@ describe('removeRuleInExistingPolicy', () => {
   test('Remove from empty policy', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
+        generation: 1,
+        resourceVersion: '1',
         name: 'test-policy',
         finalizers: [],
       },
@@ -462,6 +496,8 @@ describe('removeRuleInExistingPolicy', () => {
   test('Do not remove unexisting rule', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
+        generation: 1,
+        resourceVersion: '1',
         name: 'test-policy',
         finalizers: [],
       },
@@ -517,6 +553,8 @@ describe('removeRuleInExistingPolicy', () => {
   test('Remove existing rule', () => {
     const policy: PodSchedulingPolicy = {
       metadata: {
+        generation: 1,
+        resourceVersion: '1',
         name: 'test-policy',
         finalizers: [],
       },
