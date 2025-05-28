@@ -5,6 +5,7 @@ import {
   AffinityType,
 } from 'shared-types/affinity.types';
 import { PerconaZodCustomIssue } from 'utils/common-validation';
+import { doesAffinityOperatorRequireValues } from 'utils/db';
 import { z } from 'zod';
 
 enum AffinityForm {
@@ -44,9 +45,7 @@ const checkValuesPresenceForOperator = (
   values: string | undefined
 ) => {
   if (
-    [AffinityOperator.In, AffinityOperator.NotIn].includes(
-      operator as AffinityOperator
-    ) &&
+    doesAffinityOperatorRequireValues(operator as AffinityOperator) &&
     !values
   ) {
     ctx.addIssue(PerconaZodCustomIssue.required(AffinityFormFields.values));

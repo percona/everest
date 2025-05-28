@@ -1,7 +1,10 @@
 import { Alert, Box, Button, Skeleton, Typography } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { useNavigate, useParams } from 'react-router-dom';
-import { usePodSchedulingPolicy, useUpdatePodSchedulingPolicy } from 'hooks';
+import {
+  usePodSchedulingPolicy,
+  useUpdateEntityWithConflictRetry,
+} from 'hooks';
 import { NoMatch } from 'pages/404/NoMatch';
 import { useRef, useState } from 'react';
 import { AffinityFormDialog } from '../affinity/affinity-form-dialog/affinity-form-dialog';
@@ -13,7 +16,6 @@ import {
 } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
 import { AffinityRule } from 'shared-types/affinity.types';
-import { useQueryClient } from '@tanstack/react-query';
 import PodSchedulingPoliciesTable from 'components/pod-scheduling-policies-table';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac';
 import {
@@ -22,6 +24,7 @@ import {
 } from 'consts';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { Messages } from '../pod-scheduling-policies.messages';
+import { updatePodSchedulingPolicy } from 'api/podSchedulingPolicies';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
@@ -29,9 +32,6 @@ const PolicyDetails = () => {
   const [openAffinityDialog, setOpenAffinityDialog] = useState(false);
   const [openRemoveRuleDialog, setOpenRemoveRuleDialog] = useState(false);
   const selectedRule = useRef<AffinityRule>();
-  const { mutate: updatePolicy, isPending: updatingPolicy } =
-    useUpdatePodSchedulingPolicy();
-  const queryClient = useQueryClient();
   const { canUpdate } = useRBACPermissions(
     'pod-scheduling-policies',
     policyName
@@ -49,7 +49,24 @@ const PolicyDetails = () => {
     isLoading,
     isError,
     data: policy,
+    refetch: refetchPolicy,
   } = usePodSchedulingPolicy(policyName);
+
+  const { mutate: updatePolicy, isPending: updatingPolicy } =
+    useUpdateEntityWithConflictRetry(
+      ['pod-scheduling-policy', policyName],
+      (newPolicy) => updatePodSchedulingPolicy(newPolicy),
+      policy?.metadata.generation || 0,
+      refetchPolicy,
+      (_, newData) => newData,
+      {
+        onSuccess: () => {
+          setOpenRemoveRuleDialog(false);
+          setOpenAffinityDialog(false);
+          selectedRule.current = undefined;
+        },
+      }
+    );
 
   if (isLoading) {
     return (
@@ -79,29 +96,13 @@ const PolicyDetails = () => {
       removeRuleInExistingPolicy(policy, selectedRule.current);
     }
     insertAffinityRuleToExistingPolicy(policy, rule);
-    updatePolicy(policy, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ['pod-scheduling-policy', policyName],
-        });
-        setOpenAffinityDialog(false);
-        selectedRule.current = undefined;
-      },
-    });
+    updatePolicy(policy);
   };
 
   const handleConfirmDelete = () => {
     if (selectedRule.current) {
       removeRuleInExistingPolicy(policy, selectedRule.current);
-      updatePolicy(policy, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: ['pod-scheduling-policy', policyName],
-          });
-          setOpenRemoveRuleDialog(false);
-          selectedRule.current = undefined;
-        },
-      });
+      updatePolicy(policy);
     }
   };
 

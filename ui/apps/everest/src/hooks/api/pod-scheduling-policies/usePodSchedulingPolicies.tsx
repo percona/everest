@@ -67,7 +67,7 @@ export const useUpdatePodSchedulingPolicy = () => {
   return useMutation({
     mutationKey: ['update-pod-scheduling-policy'],
     mutationFn: (policy: PodSchedulingPolicy) =>
-      updatePodSchedulingPolicy(policy.metadata.name, policy),
+      updatePodSchedulingPolicy(policy),
   });
 };
 

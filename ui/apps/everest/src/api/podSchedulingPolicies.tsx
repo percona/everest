@@ -44,11 +44,16 @@ export const createPodSchedulingPolicy = async (
 };
 
 export const updatePodSchedulingPolicy = async (
-  name: string,
   policy: PodSchedulingPolicy
 ) => {
-  const response = await api.put(`pod-scheduling-policies/${name}`, policy);
-  return response;
+  const response = await api.put<PodSchedulingPolicy>(
+    `pod-scheduling-policies/${policy.metadata.name}`,
+    policy,
+    {
+      disableNotifications: (e) => e.status === 409,
+    }
+  );
+  return response.data;
 };
 
 export const deletePodSchedulingPolicy = async (name: string) => {
