@@ -257,8 +257,23 @@ export const dbPayloadToAffinityRules = (
     }
   });
 
-  return rules;
+  return rules.sort((a, b) => {
+    if (a.component === b.component) {
+      if (a.type === b.type) {
+        if (a.priority === b.priority) {
+          return (b.weight ?? 0) - (a.weight ?? 0);
+        }
+        return a.priority.localeCompare(b.priority);
+      }
+      return a.type.localeCompare(b.type);
+    }
+    return a.component.localeCompare(b.component);
+  });
 };
+
+export const doesAffinityOperatorRequireValues = (
+  operator: AffinityOperator
+): boolean => [AffinityOperator.In, AffinityOperator.NotIn].includes(operator);
 
 export const affinityRulesToDbPayload = (
   affinityRules: AffinityRule[]
@@ -276,9 +291,10 @@ export const affinityRulesToDbPayload = (
           {
             key,
             operator: operator!,
-            ...(values.length > 0 && {
-              values,
-            }),
+            ...(doesAffinityOperatorRequireValues(operator!) &&
+              values.length > 0 && {
+                values,
+              }),
           },
         ],
       },
@@ -324,9 +340,7 @@ export const affinityRulesToDbPayload = (
           {
             key: key!,
             operator: operator!,
-            ...([AffinityOperator.In, AffinityOperator.NotIn].includes(
-              operator!
-            ) && {
+            ...(doesAffinityOperatorRequireValues(operator!) && {
               values: valuesList,
             }),
           },
