@@ -6,6 +6,7 @@ import {
   ValueInput,
 } from '../fields';
 import { AffinityOperator, AffinityType } from 'shared-types/affinity.types';
+import { doesAffinityOperatorRequireValues } from 'utils/db';
 
 type Props = {
   disableOperator: boolean;
@@ -31,7 +32,7 @@ const RuleDetailsSection = ({
       <KeyInput affinityType={affinityType} />
       <OperatorInput disabled={disableOperator} />
     </Box>
-    {[AffinityOperator.In, AffinityOperator.NotIn].includes(operator) && (
+    {doesAffinityOperatorRequireValues(operator) && (
       <ValueInput disabled={disableValue} />
     )}
   </>
