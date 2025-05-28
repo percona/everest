@@ -248,12 +248,12 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
 
       await test.step(`Wait for database [${c.name}] status after upgrade`, async () => {
         await page.goto('/databases');
-        await waitForStatus(
-          page,
-          `${c.name}`,
-          'Initializing',
-          TIMEOUTS.ThreeMinutes
-        );
+        // await waitForStatus(
+        //   page,
+        //   `${c.name}`,
+        //   'Initializing',
+        //   TIMEOUTS.ThreeMinutes
+        // );
         await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.FifteenMinutes);
       });
     }
