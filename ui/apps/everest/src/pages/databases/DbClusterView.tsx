@@ -177,7 +177,7 @@ export const DbClusterView = () => {
           data={tableData}
           enableRowActions
           renderRowActions={({ row }) => {
-            return <DbActions dbCluster={row.original.raw} />;
+            return <DbActions dbCluster={row.original.raw} showDetailsAction />;
           }}
           renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
           enableRowHoverAction
