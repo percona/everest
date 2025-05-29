@@ -254,7 +254,7 @@ test.describe(
     });
 
     // step 10
-    test.only(`User can only access and create databases in ${namespace2} namespace`, async ({
+    test(`User can only access and create databases in ${namespace2} namespace`, async ({
       page,
     }) => {
       await setRBACPermissionsK8S([
