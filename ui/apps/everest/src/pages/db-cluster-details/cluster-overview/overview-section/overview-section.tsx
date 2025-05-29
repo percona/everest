@@ -36,6 +36,7 @@ export const OverviewSection = ({
   actionButtonProps,
   showTooltip = false,
   disabledEditTooltipText = '',
+  editText = Messages.actions.edit,
 }: OverviewSectionProps) => (
   <Grid
     item
@@ -62,9 +63,7 @@ export const OverviewSection = ({
                 startIcon={<EditOutlinedIcon />}
                 {...actionButtonProps}
               >
-                {title === Messages.titles.basicInformation
-                  ? Messages.actions.upgarde
-                  : Messages.actions.edit}
+                {editText}
               </Button>
             </Box>
           </Tooltip>

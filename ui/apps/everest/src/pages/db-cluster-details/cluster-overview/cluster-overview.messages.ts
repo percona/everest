@@ -19,7 +19,7 @@ export const Messages = {
   },
   actions: {
     edit: 'Edit',
-    upgarde: 'Upgrade',
+    upgrade: 'Upgrade',
     details: 'Details',
   },
   fields: {
