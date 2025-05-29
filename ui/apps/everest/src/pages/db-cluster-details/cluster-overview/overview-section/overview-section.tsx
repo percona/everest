@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { LoadableChildren } from '@percona/ui-lib';
 import { OverviewSectionProps } from './overview-section.types';
-import { Messages } from './overview-section.messages';
+import { Messages } from '../cluster-overview.messages';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
 export const OverviewSection = ({
@@ -36,6 +36,7 @@ export const OverviewSection = ({
   actionButtonProps,
   showTooltip = false,
   disabledEditTooltipText = '',
+  editText = Messages.actions.edit,
 }: OverviewSectionProps) => (
   <Grid
     item
@@ -62,7 +63,7 @@ export const OverviewSection = ({
                 startIcon={<EditOutlinedIcon />}
                 {...actionButtonProps}
               >
-                {Messages.edit}
+                {editText}
               </Button>
             </Box>
           </Tooltip>
