@@ -199,7 +199,7 @@ export const StorageLocations = () => {
               onClick={handleOpenCreateModal}
               sx={{ display: 'flex' }}
             >
-              {Messages.addStorageLocationButton}dsafadsfas
+              {Messages.addStorageLocationButton}
             </Button>
           )
         }
