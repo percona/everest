@@ -286,7 +286,7 @@ test.describe(
         await expect(page.getByRole('table')).toBeVisible();
         await expect(page.getByTestId('add-backup-storage')).not.toBeVisible();
         await expect(
-          page.getByRole('row').filter({ hasText: 'bucket-4' })
+          page.getByRole('row').filter({ hasText: 'bucket-1' })
         ).toBeVisible();
 
         await page.goto('/settings/monitoring-endpoints');

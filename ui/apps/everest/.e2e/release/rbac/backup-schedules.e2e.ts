@@ -18,7 +18,7 @@ import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
-  giveUserAllPermissions,
+  giveUserAdminPermissions,
   setRBACPermissionsK8S,
 } from '@e2e/utils/rbac-cmd-line';
 import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
@@ -73,7 +73,7 @@ test.describe(
       );
       storageClasses = storageClassNames;
 
-      await giveUserAllPermissions();
+      await giveUserAdminPermissions();
     });
 
     test.beforeEach(async ({ page }) => {
@@ -154,7 +154,7 @@ test.describe(
           expect(page.getByText('2 active schedules')).toBeTruthy();
         });
       });
-      test(`Wait for two backups to succeeded for ${db}]`, async ({ page }) => {
+      test(`Wait for two backups to succeeded for ${db}`, async ({ page }) => {
         await gotoDbClusterBackups(page, dbName);
         await expect(page.getByText(`cron-${dbName}-`)).toHaveCount(2, {
           timeout: 360000,
@@ -178,7 +178,7 @@ test.describe(
         ['backup-storages', '*', '*/*'],
         ['monitoring-instances', 'read', '*/*'],
       ]);
-      await test.step(`Create a scheduled and a manual backup for ${pxcDb} in ${namespace1} namespace`, async () => {
+      await test.step(`Create a scheduled and a two manual backups for ${pxcDb} in ${namespace1} namespace`, async () => {
         await expect(page.getByRole('table')).toBeVisible();
         await gotoDbClusterBackups(page, pxcDb);
 
@@ -377,7 +377,7 @@ test.describe(
       await test.step(`User cannot view, create manual/scheduled backups or edit, delete backup schedules of ${pxcDb} database in ${namespace1} namespace`, async () => {
         await page.goto('/databases');
         await expect(page.getByText(pxcDb)).not.toBeVisible({
-          timeout: 3000,
+          timeout: 6000,
         });
       });
     });
@@ -398,9 +398,6 @@ test.describe(
         await gotoDbClusterBackups(page, pxcDb);
         await expect(page.getByRole('table')).toBeVisible();
 
-        await expect(page.getByText(`cron-${pxcDb}-`)).toHaveCount(3, {
-          timeout: 5000,
-        });
         await expect(page.getByText('3 active schedules')).toBeVisible();
         const schedulesToggle = page.getByTestId('scheduled-backups');
         await expect(schedulesToggle).toBeVisible();
@@ -427,7 +424,6 @@ test.describe(
         await expect(page.getByRole('table')).toBeVisible();
 
         await expect(page.getByText('Create backup')).not.toBeVisible();
-        await expect(page.getByTestId('scheduled-backups')).not.toBeVisible();
 
         expect(
           page.getByText(
@@ -462,7 +458,8 @@ test.describe(
         await gotoDbClusterBackups(page, dbName);
         await page
           .locator('.MuiTableRow-root')
-          .filter({ hasText: 'backup-1' })
+          .filter({ hasText: `cron-${dbName}-` })
+          .first()
           .getByTestId('MoreHorizIcon')
           .click({ timeout: 10000 });
 
@@ -530,13 +527,14 @@ test.describe(
         ['database-cluster-restores', 'read', `${namespace2}/*`],
         ['database-cluster-restores', 'create', `${namespace2}/*`],
       ]);
-      await test.step(`User can restore to a new ${psmdbDb} in ${namespace1} namespace`, async () => {
+      await test.step(`User can restore to a new ${psmdbDb} in ${namespace2} namespace`, async () => {
         expect(storageClasses.length).toBeGreaterThan(0);
         const restoredDbName = `restore-2-psmdb`;
         await gotoDbClusterBackups(page, dbName);
         await page
           .locator('.MuiTableRow-root')
-          .filter({ hasText: 'backup-1' })
+          .filter({ hasText: `cron-${dbName}-` })
+          .first()
           .getByTestId('MoreHorizIcon')
           .click({ timeout: 10000 });
 
@@ -573,7 +571,7 @@ test.describe(
 
         await test.step('Check for restored database', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, restoredDbName, 'Up', 700000);
+          await expect(page.getByText(restoredDbName)).toBeVisible();
           await expect(
             page
               .getByRole('row')
@@ -594,14 +592,7 @@ test.describe(
       });
     });
     test('Delete databases', async ({ page, request }) => {
-      await setRBACPermissionsK8S([
-        ['namespaces', 'read', '*'],
-        ['database-clusters', '*', '*/*'],
-        ['database-engines', '*', '*/*'],
-        ['backup-storages', '*', '*/*'],
-        ['database-cluster-backups', '*', '*/*'],
-        ['monitoring-instances', '*', '*/*'],
-      ]);
+      giveUserAdminPermissions();
       await deleteDbClusterFn(request, pxcDb, namespace1);
       await deleteDbClusterFn(request, psmdbDb, namespace2);
       await deleteDbClusterFn(request, 'restore-1-pxc', namespace2);

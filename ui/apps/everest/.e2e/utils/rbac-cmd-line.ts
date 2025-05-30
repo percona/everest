@@ -36,13 +36,16 @@ export const setRBACPermissionsK8S = async (
   );
 };
 
-export const giveUserAllPermissions = async () => {
-  await setRBACPermissionsK8S([
-    ['namespaces', 'read', '*'],
-    ['database-clusters', '*', '*/*'],
-    ['database-engines', '*', '*/*'],
-    ['backup-storages', '*', '*/*'],
-    ['database-cluster-backups', '*', '*/*'],
-    ['monitoring-instances', '*', '*/*'],
-  ]);
+export const giveUserAdminPermissions = async () => {
+  const command = `kubectl patch configmap/everest-rbac --namespace everest-system --type merge -p '{"data":{"enabled": "false"}}'`;
+  execSync(command);
+
+  return new Promise<void>((resolve) =>
+    setTimeout(
+      () => {
+        resolve();
+      },
+      process.env.CI ? 3000 : 500
+    )
+  );
 };

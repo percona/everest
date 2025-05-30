@@ -18,7 +18,7 @@ import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
-  giveUserAllPermissions,
+  giveUserAdminPermissions,
   setRBACPermissionsK8S,
 } from '@e2e/utils/rbac-cmd-line';
 import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
@@ -57,7 +57,7 @@ test.describe(
       );
       storageClasses = storageClassNames;
 
-      await giveUserAllPermissions();
+      await giveUserAdminPermissions();
     });
 
     test.beforeEach(async ({ page }) => {
