@@ -17,7 +17,10 @@ import { expect, test } from '@playwright/test';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
+import {
+  giveUserAdminPermissions,
+  setRBACPermissionsK8S,
+} from '@e2e/utils/rbac-cmd-line';
 import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { createDbWithParameters } from '@e2e/utils/rbac';
 
@@ -32,8 +35,6 @@ test.describe(
   },
   () => {
     test.describe.configure({ timeout: 720000 });
-    const size = 3;
-
     let storageClasses = [];
     const namespace2 = EVEREST_CI_NAMESPACES.EVEREST_UI;
     const namespace1 = EVEREST_CI_NAMESPACES.PXC_ONLY;
@@ -49,6 +50,7 @@ test.describe(
         request
       );
       storageClasses = storageClassNames;
+      await giveUserAdminPermissions();
     });
 
     test.beforeEach(async ({ page }) => {
@@ -142,14 +144,7 @@ test.describe(
     });
 
     test('Delete databases', async ({ page, request }) => {
-      await setRBACPermissionsK8S([
-        ['namespaces', 'read', '*'],
-        ['database-clusters', '*', '*/*'],
-        ['database-engines', '*', '*/*'],
-        ['backup-storages', '*', '*/*'],
-        ['database-cluster-backups', '*', '*/*'],
-        ['monitoring-instances', '*', '*/*'],
-      ]);
+      await giveUserAdminPermissions();
       await deleteDbClusterFn(request, pxcDb, namespace1);
       await deleteDbClusterFn(request, psmdbDb, namespace2);
       await deleteDbClusterFn(request, pgDb, namespace2);

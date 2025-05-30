@@ -17,7 +17,10 @@ import { expect, test } from '@playwright/test';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
+import {
+  giveUserAdminPermissions,
+  setRBACPermissionsK8S,
+} from '@e2e/utils/rbac-cmd-line';
 import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { createDbWithParameters } from '@e2e/utils/rbac';
 
@@ -48,6 +51,7 @@ test.describe(
         request
       );
       storageClasses = storageClassNames;
+      await giveUserAdminPermissions();
     });
 
     test.beforeEach(async ({ page }) => {
@@ -155,14 +159,7 @@ test.describe(
     });
 
     test('Delete databases', async ({ page, request }) => {
-      await setRBACPermissionsK8S([
-        ['namespaces', 'read', '*'],
-        ['database-clusters', '*', '*/*'],
-        ['database-engines', '*', '*/*'],
-        ['backup-storages', '*', '*/*'],
-        ['database-cluster-backups', '*', '*/*'],
-        ['monitoring-instances', '*', '*/*'],
-      ]);
+      await giveUserAdminPermissions();
       await deleteDbClusterFn(request, pxcDb, namespace1);
       await deleteDbClusterFn(request, psmdbDb, namespace2);
       await deleteDbClusterFn(request, pgDb, namespace2);
@@ -305,18 +302,8 @@ test.describe(
       });
     });
 
-    test('Delete databases, storages and monitoring', async ({
-      page,
-      request,
-    }) => {
-      await setRBACPermissionsK8S([
-        ['namespaces', 'read', '*'],
-        ['database-clusters', '*', '*/*'],
-        ['database-engines', '*', '*/*'],
-        ['backup-storages', '*', '*/*'],
-        ['database-cluster-backups', '*', '*/*'],
-        ['monitoring-instances', '*', '*/*'],
-      ]);
+    test('Delete databases', async ({ page, request }) => {
+      await giveUserAdminPermissions();
       await deleteDbClusterFn(request, pxcDb, namespace1);
       await deleteDbClusterFn(request, psmdbDb, namespace2);
 
