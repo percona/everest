@@ -98,6 +98,8 @@ test.describe(
     test(`The user can list databases in all namespaces without backup schedules and monitoring `, async ({
       page,
     }) => {
+      await expect(page.getByRole('table')).toBeVisible();
+
       await expect(page.getByText(pxcDb)).toBeVisible();
       await expect(page.getByText(psmdbDb)).toBeVisible();
       await expect(page.getByText(pgDb)).toBeVisible();
@@ -107,6 +109,8 @@ test.describe(
         ['database-clusters', 'read', '*/*'],
         ['database-engines', 'read', '*/*'],
       ]);
+
+      await expect(page.getByRole('table')).toBeVisible();
 
       await expect(page.getByText(pxcDb)).not.toBeVisible();
       await expect(page.getByText(psmdbDb)).toBeVisible();
@@ -124,6 +128,8 @@ test.describe(
         ['monitoring-instances', 'read', '*/*'],
       ]);
 
+      await expect(page.getByRole('table')).toBeVisible();
+
       await expect(page.getByText(pxcDb)).toBeVisible();
       await expect(page.getByText(psmdbDb)).toBeVisible();
       await expect(page.getByText(pgDb)).toBeVisible();
@@ -137,6 +143,7 @@ test.describe(
         ['backup-storages', 'read', '*/*'],
         ['monitoring-instances', 'read', '*/*'],
       ]);
+      await expect(page.getByRole('table')).toBeVisible();
 
       await expect(page.getByText(pxcDb)).not.toBeVisible();
       await expect(page.getByText(psmdbDb)).toBeVisible();
