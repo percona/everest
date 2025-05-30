@@ -747,6 +747,7 @@ if need_backup_storage:
                             'bucket': '{0}'.format(storage_name),
                             'description': storage_name,
                             'credentialsSecretName': storage_name,
+                            'forcePathStyle': True,
                     })
             k8s_yaml(encode_yaml_stream(bs_objs))
             k8s_resource(
