@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/resource"
+
+	"github.com/percona/everest-operator/api/v1alpha1"
 )
 
 var (
@@ -75,4 +77,9 @@ func ErrInvalidURL(fieldName string) error {
 // ErrCreateStorageNotSupported appears when trying to create a storage of a type that is not supported.
 func ErrCreateStorageNotSupported(storageType string) error {
 	return fmt.Errorf("creating storage is not implemented for '%s'", storageType)
+}
+
+// ErrDuplicateSourceRange appears when a duplicated source range is found.
+func ErrDuplicateSourceRange(sourceRange v1alpha1.IPSourceRange) error {
+	return fmt.Errorf("duplicate expose ranges for source range %s", sourceRange)
 }
