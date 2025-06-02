@@ -522,6 +522,8 @@ k8s_resource(
         'databaseengines.everest.percona.com:customresourcedefinition',
         'monitoringconfigs.everest.percona.com:customresourcedefinition',
         'podschedulingpolicies.everest.percona.com:customresourcedefinition',
+        'dataimporters.everest.percona.com:customresourcedefinition',
+        'dataimportjobs.everest.percona.com:customresourcedefinition',
     ],
     new_name='everest-crds',
     labels=["everest-operator"]
