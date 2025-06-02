@@ -309,6 +309,9 @@ everest_yaml = helm(
 # we don't need the catalog source
 everest_catalog_source_yaml, everest_yaml = filter_yaml(everest_yaml, kind='CatalogSource', name='everest-catalog')
 
+# we don't need to run default PodSchedulingPolicies cleanup hook
+default_psp_cleanup_yaml, everest_yaml = filter_yaml(everest_yaml, kind='Job', namespace=EVEREST_NAMESPACE)
+
 # Patch Everest Server deployment for running with debugger
 def patch_everest_debug(in_yaml):
   if not everest_debug:
@@ -516,6 +519,7 @@ k8s_resource(
         'databaseclusters.everest.percona.com:customresourcedefinition',
         'databaseengines.everest.percona.com:customresourcedefinition',
         'monitoringconfigs.everest.percona.com:customresourcedefinition',
+        'podschedulingpolicies.everest.percona.com:customresourcedefinition',
     ],
     new_name='everest-crds',
     labels=["everest-operator"]

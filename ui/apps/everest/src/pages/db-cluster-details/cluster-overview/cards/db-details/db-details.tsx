@@ -41,6 +41,7 @@ export const DbDetails = ({
   externalAccess,
   parameters,
   storageClass,
+  podSchedulingPolicy,
 }: DatabaseDetailsOverviewCardProps) => {
   const { data: monitoringInstances } =
     useMonitoringInstancesForNamespace(namespace);
@@ -93,6 +94,7 @@ export const DbDetails = ({
           externalAccess={externalAccess}
           parameters={parameters}
           storageClass={storageClass}
+          podSchedulingPolicy={podSchedulingPolicy}
         />
       </Stack>
     </OverviewCard>
