@@ -24,16 +24,21 @@ const FormProviderWrapper = ({
       storageClass: 'standard',
       externalAccess: false,
       engineParametersEnabled: false,
+      podSchedulingPolicyEnabled: false,
       sourceRanges: [
         {
-          sourgeRange: '192.168.1.1',
+          sourceRange: '192.168.1.1',
         },
       ],
       ...values,
     },
   });
 
-  return <FormProvider {...methods}>{children}</FormProvider>;
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(vi.fn())}>{children}</form>
+    </FormProvider>
+  );
 };
 
 describe('FourthStep', () => {
@@ -108,8 +113,10 @@ describe('FourthStep', () => {
     );
 
     // Enable external access
-    const checkbox = screen.getByTestId('switch-input-external-access');
-    fireEvent.click(checkbox);
+    const checkbox = screen
+      .getByTestId('switch-input-external-access')
+      .querySelector('input');
+    fireEvent.click(checkbox!);
 
     expect(checkbox).toBeChecked();
 
