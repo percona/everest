@@ -1873,7 +1873,10 @@ paths:
         description: Filter data importers by supported database engine type. 
         required: false
         schema:
-          type: string
+          type: array
+          items:
+            type: string
+        style: form
       responses:
         '200':
           description: Successful operation

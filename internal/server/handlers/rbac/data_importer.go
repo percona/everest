@@ -16,7 +16,7 @@ func (h *rbacHandler) ListDataImporters(ctx context.Context, supportedEngines ..
 	}
 	filtered := make([]everestv1alpha1.DataImporter, 0, len(result.Items))
 	for _, di := range result.Items {
-		if err := h.enforce(ctx, rbac.ResourceDataImporters, rbac.ActionRead, rbac.ObjectName(di.Name)); errors.Is(err, ErrInsufficientPermissions) {
+		if err := h.enforce(ctx, rbac.ResourceDataImporters, rbac.ActionRead, rbac.ObjectName(di.GetName())); errors.Is(err, ErrInsufficientPermissions) {
 			continue
 		} else if err != nil {
 			return nil, err

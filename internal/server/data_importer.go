@@ -25,8 +25,7 @@ import (
 
 // ListDataImporters lists all data importers available in the Everest server.
 func (e *EverestServer) ListDataImporters(c echo.Context, params api.ListDataImportersParams) error {
-	qParam := pointer.Get(params.SupportedEngine)
-	list, err := e.handler.ListDataImporters(c.Request().Context(), qParam)
+	list, err := e.handler.ListDataImporters(c.Request().Context(), pointer.Get(params.SupportedEngine)...)
 	if err != nil {
 		return err
 	}
