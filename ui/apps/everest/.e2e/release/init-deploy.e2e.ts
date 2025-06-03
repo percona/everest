@@ -223,7 +223,7 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               `SHOW variables LIKE "max_connections";`,
-              15 // we retry here because LoadBalancer needs some time to be visible in DNS
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('max_connections	250');
             break;
@@ -234,7 +234,7 @@ test.describe.configure({ retries: 0 });
               namespace,
               'admin',
               `db.serverCmdLineOpts().parsed.systemLog;`,
-              15 // we retry here because LoadBalancer needs some time to be visible in DNS
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
             break;
@@ -245,7 +245,7 @@ test.describe.configure({ retries: 0 });
               namespace,
               'postgres',
               `SHOW shared_buffers;`,
-              15 // we retry here because LoadBalancer needs some time to be visible in DNS
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('192MB');
             break;

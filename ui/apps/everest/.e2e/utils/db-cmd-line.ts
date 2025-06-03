@@ -16,6 +16,8 @@
 import { execSync } from 'child_process';
 import { expect } from '@playwright/test';
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const getK8sUid = async () => {
   try {
     const command = `kubectl get namespace kube-system -o jsonpath='{.metadata.uid}'`;
@@ -150,8 +152,6 @@ export const queryMySQL = async (
   const password = await getPXCPassword(cluster, namespace);
   const clientPod = await getDBClientPod('mysql', 'db-client');
 
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
   let attempt = 0;
   let lastError: any;
 
@@ -189,8 +189,6 @@ export const queryPSMDB = async (
     (await getPSMDBShardingStatus(cluster, namespace)) === 'true';
   const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
 
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
   let attempt = 0;
   let lastError: any;
 
@@ -222,8 +220,6 @@ export const queryPG = async (
 ): Promise<string> => {
   const password = await getPGPassword(cluster, namespace);
   const clientPod = await getDBClientPod('postgresql', 'db-client');
-
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   let attempt = 0;
   let lastError: any;
