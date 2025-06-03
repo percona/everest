@@ -43,10 +43,7 @@ const SwitchInput = ({
                 }),
               }}
               checked={field.value}
-              inputProps={{
-                // @ts-expect-error
-                'data-testid': `switch-input-${kebabize(name)}`,
-              }}
+              data-testid={`switch-input-${kebabize(name)}`}
               {...restSwitchFieldProps}
             />
           )}
