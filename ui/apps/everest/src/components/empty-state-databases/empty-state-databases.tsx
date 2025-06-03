@@ -1,4 +1,4 @@
-import { Link, Typography } from '@mui/material';
+import { Box, Link, Typography } from '@mui/material';
 import CreateDbButton from 'components/create-db-button/create-db-button';
 import EmptyState from 'components/empty-state';
 import { Messages } from './messages';
@@ -37,7 +37,12 @@ const EmptyStateDatabases = ({
           </>
         }
         showCreationButton={showCreationButton}
-        buttonSlot={<CreateDbButton />}
+        buttonSlot={
+          <Box display="flex" mb={1}>
+            <CreateDbButton createFromImport />
+            <CreateDbButton />
+          </Box>
+        }
       />
     </>
   );
