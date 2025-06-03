@@ -29,7 +29,6 @@ import ComponentAge from '../component-age';
 const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
   const { containers, name } = row.original;
   const theme = useTheme();
-
   const columns = useMemo<MRT_ColumnDef<Container>[]>(() => {
     return [
       {

@@ -331,6 +331,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Delete first backup', async () => {
           const firstBackup = await page
+            .getByRole('row')
             .getByText(`${db}-${size}-schbkp-`)
             .first()
             .textContent();
@@ -343,6 +344,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Delete second backup', async () => {
           const secondBackup = await page
+            .getByRole('row')
             .getByText(`${db}-${size}-schbkp-`)
             .last()
             .textContent();
