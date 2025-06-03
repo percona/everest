@@ -700,6 +700,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  '/namespaces/{namespace}/database-clusters/{dbName}/data-import-jobs':
+    x-everest-resource-name: database-clusters
+    get:
+      tags:
+      - Database Cluster
+      summary: List data import jobs for a database cluster
+      description: |
+        This API lists all data import jobs for the database cluster specified by the `name` and `namespace`.
+      operationId: listDataImportJobs
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: dbName
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataImportJobList'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines':
     x-everest-resource-name: database-engines
     get:

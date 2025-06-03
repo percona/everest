@@ -802,6 +802,36 @@ func (_m *MockHandler) ListBackupStorages(ctx context.Context, namespace string)
 	return r0, r1
 }
 
+// ListDataImportJobs provides a mock function with given fields: ctx, namespace, dbName
+func (_m *MockHandler) ListDataImportJobs(ctx context.Context, namespace string, dbName string) (*v1alpha1.DataImportJobList, error) {
+	ret := _m.Called(ctx, namespace, dbName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDataImportJobs")
+	}
+
+	var r0 *v1alpha1.DataImportJobList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1alpha1.DataImportJobList, error)); ok {
+		return rf(ctx, namespace, dbName)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1alpha1.DataImportJobList); ok {
+		r0 = rf(ctx, namespace, dbName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DataImportJobList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, dbName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListDataImporters provides a mock function with given fields: ctx, supportedEngines
 func (_m *MockHandler) ListDataImporters(ctx context.Context, supportedEngines ...string) (*v1alpha1.DataImporterList, error) {
 	_va := make([]interface{}, len(supportedEngines))

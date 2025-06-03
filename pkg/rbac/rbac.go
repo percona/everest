@@ -56,6 +56,7 @@ const (
 	ResourceNamespaces                 = "namespaces"
 	ResourcePodSchedulingPolicies      = "pod-scheduling-policies"
 	ResourceDataImporters              = "data-importers"
+	ResourceDataImportJobs             = "data-import-jobs"
 )
 
 // RBAC actions.

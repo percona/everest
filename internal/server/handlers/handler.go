@@ -29,6 +29,7 @@ type Handler interface {
 	MonitoringInstanceHandler
 	PodSchedulingPolicyHandler
 	DataImporterHandler
+	DataImportJobHandler
 
 	GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error)
 	GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error)
@@ -109,4 +110,9 @@ type PodSchedulingPolicyHandler interface {
 // DataImporterHandler provides methods for handling operations on data importers.
 type DataImporterHandler interface {
 	ListDataImporters(ctx context.Context, supportedEngines ...string) (*everestv1alpha1.DataImporterList, error)
+}
+
+// DataImportJobHandler provides methods for handling operations on data import jobs.
+type DataImportJobHandler interface {
+	ListDataImportJobs(ctx context.Context, namespace, dbName string) (*everestv1alpha1.DataImportJobList, error)
 }
