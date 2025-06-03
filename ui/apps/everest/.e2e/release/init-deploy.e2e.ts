@@ -484,7 +484,7 @@ test.describe.configure({ retries: 0 });
         await test.step(`Check service in K8s [${db} size ${size}]`, async () => {
           let resourceName: string;
 
-          await page.waitForTimeout(5000); // wait for svc to be updated
+          await page.waitForTimeout(15000); // wait for svc to be updated
           switch (db) {
             case 'pxc': {
               resourceName = `${clusterName}-haproxy`;
