@@ -16,7 +16,7 @@
 import { execSync } from 'child_process';
 import { expect } from '@playwright/test';
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const getK8sUid = async () => {
   try {
@@ -170,7 +170,9 @@ export const queryMySQL = async (
     }
   }
 
-  console.error(`Failed to execute command in queryMySQL in ${attempt} attempts: ${lastError}`);
+  console.error(
+    `Failed to execute command in queryMySQL in ${attempt} attempts: ${lastError}`
+  );
   throw lastError;
 };
 
@@ -207,7 +209,9 @@ export const queryPSMDB = async (
     }
   }
 
-  console.error(`Failed to execute command in queryPSMDB in ${attempt} attempts: ${lastError}`);
+  console.error(
+    `Failed to execute command in queryPSMDB in ${attempt} attempts: ${lastError}`
+  );
   throw lastError;
 };
 
@@ -239,7 +243,9 @@ export const queryPG = async (
     }
   }
 
-  console.error(`Failed to execute command in queryPG in ${attempt} attempts: ${lastError}`);
+  console.error(
+    `Failed to execute command in queryPG in ${attempt} attempts: ${lastError}`
+  );
   throw lastError;
 };
 

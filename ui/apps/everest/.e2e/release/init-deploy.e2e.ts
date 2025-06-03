@@ -517,6 +517,6 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 240000);
       });
-     }
-   );
+    }
+  );
 });
