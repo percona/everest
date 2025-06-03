@@ -163,7 +163,6 @@ export const queryMySQL = async (
       return output;
     } catch (error) {
       lastError = error;
-      console.error(`Attempt ${attempt + 1} failed: ${error}`);
       attempt++;
       if (attempt < retry) {
         await delay(2000);
@@ -171,6 +170,7 @@ export const queryMySQL = async (
     }
   }
 
+  console.error(`Failed to execute command in queryMySQL in ${attempt} attempts: ${lastError}`);
   throw lastError;
 };
 
@@ -200,7 +200,6 @@ export const queryPSMDB = async (
       return output;
     } catch (error) {
       lastError = error;
-      console.error(`Attempt ${attempt + 1} failed: ${error}`);
       attempt++;
       if (attempt < retry) {
         await delay(2000);
@@ -208,6 +207,7 @@ export const queryPSMDB = async (
     }
   }
 
+  console.error(`Failed to execute command in queryMySQL in ${attempt} attempts: ${lastError}`);
   throw lastError;
 };
 
@@ -232,7 +232,6 @@ export const queryPG = async (
       return output;
     } catch (error) {
       lastError = error;
-      console.error(`Attempt ${attempt + 1} failed: ${error}`);
       attempt++;
       if (attempt < retry) {
         await delay(2000);
@@ -240,6 +239,7 @@ export const queryPG = async (
     }
   }
 
+  console.error(`Failed to execute command in queryMySQL in ${attempt} attempts: ${lastError}`);
   throw lastError;
 };
 
