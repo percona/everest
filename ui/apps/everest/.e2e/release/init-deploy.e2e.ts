@@ -222,7 +222,8 @@ test.describe.configure({ retries: 0 });
             result = await queryMySQL(
               clusterName,
               namespace,
-              `SHOW variables LIKE "max_connections";`
+              `SHOW variables LIKE "max_connections";`,
+              15 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('max_connections	250');
             break;
@@ -232,7 +233,8 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               'admin',
-              `db.serverCmdLineOpts().parsed.systemLog;`
+              `db.serverCmdLineOpts().parsed.systemLog;`,
+              15 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
             break;
@@ -242,7 +244,8 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               'postgres',
-              `SHOW shared_buffers;`
+              `SHOW shared_buffers;`,
+              15 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('192MB');
             break;
@@ -514,6 +517,6 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 240000);
       });
-    }
-  );
+     }
+   );
 });

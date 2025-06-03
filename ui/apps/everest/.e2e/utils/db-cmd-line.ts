@@ -144,65 +144,107 @@ export const getPSMDBShardingStatus = async (
 export const queryMySQL = async (
   cluster: string,
   namespace: string,
-  query: string
-) => {
+  query: string,
+  retry: number = 1
+): Promise<string> => {
   const password = await getPXCPassword(cluster, namespace);
-  const host = await getDBHost(cluster, namespace);
   const clientPod = await getDBClientPod('mysql', 'db-client');
 
-  try {
-    const command = `kubectl exec --namespace db-client ${clientPod} -- mysqlsh root@${host} -p'${password}' --sql --quiet-start=2 -e '${query}' | tail -n +2`;
-    const output = execSync(command).toString();
-    return output;
-  } catch (error) {
-    console.error(`Error executing command: ${error}`);
-    throw error;
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  let attempt = 0;
+  let lastError: any;
+
+  while (attempt < retry) {
+    try {
+      const host = await getDBHost(cluster, namespace);
+      const command = `kubectl exec --namespace db-client ${clientPod} -- mysqlsh root@${host} -p'${password}' --sql --quiet-start=2 -e '${query}' | tail -n +2`;
+      const output = execSync(command).toString();
+      return output;
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${attempt + 1} failed: ${error}`);
+      attempt++;
+      if (attempt < retry) {
+        await delay(2000);
+      }
+    }
   }
+
+  throw lastError;
 };
 
 export const queryPSMDB = async (
   cluster: string,
   namespace: string,
   db: string,
-  query: string
-) => {
+  query: string,
+  retry: number = 1
+): Promise<string> => {
   const password = await getPSMDBPassword(cluster, namespace);
-  const host = await getDBHost(cluster, namespace);
   const clientPod = await getDBClientPod('psmdb', 'db-client');
 
-  // Enable replicaSet option if sharding is enabled
+  // Enable replicaSet option if sharding is disabled
   const isShardingEnabled =
     (await getPSMDBShardingStatus(cluster, namespace)) === 'true';
   const replicaSetOption = isShardingEnabled ? '' : '&replicaSet=rs0';
 
-  try {
-    const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin${replicaSetOption}" --eval "${query}"`;
-    const output = execSync(command).toString();
-    return output;
-  } catch (error) {
-    console.error(`Error executing command: ${error}`);
-    throw error;
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  let attempt = 0;
+  let lastError: any;
+
+  while (attempt < retry) {
+    try {
+      const host = await getDBHost(cluster, namespace);
+      const command = `kubectl exec --namespace db-client ${clientPod} -- mongosh "mongodb://backup:${password}@${host}/${db}?authSource=admin${replicaSetOption}" --eval "${query}"`;
+      const output = execSync(command).toString();
+      return output;
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${attempt + 1} failed: ${error}`);
+      attempt++;
+      if (attempt < retry) {
+        await delay(2000);
+      }
+    }
   }
+
+  throw lastError;
 };
 
 export const queryPG = async (
   cluster: string,
   namespace: string,
   db: string,
-  query: string
-) => {
+  query: string,
+  retry: number = 1
+): Promise<string> => {
   const password = await getPGPassword(cluster, namespace);
-  const host = await getDBHost(cluster, namespace);
   const clientPod = await getDBClientPod('postgresql', 'db-client');
 
-  try {
-    const command = `kubectl exec --namespace db-client ${clientPod} -- bash -c "PGPASSWORD='${password}' psql -h${host} -p5432 -Upostgres -d${db} -t -q -c'${query}'"`;
-    const output = execSync(command).toString();
-    return output;
-  } catch (error) {
-    console.error(`Error executing command: ${error}`);
-    throw error;
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  let attempt = 0;
+  let lastError: any;
+
+  while (attempt < retry) {
+    try {
+      const host = await getDBHost(cluster, namespace);
+      const command = `kubectl exec --namespace db-client ${clientPod} -- bash -c "PGPASSWORD='${password}' psql -h${host} -p5432 -Upostgres -d${db} -t -q -c'${query}'"`;
+      const output = execSync(command).toString();
+      return output;
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${attempt + 1} failed: ${error}`);
+      attempt++;
+      if (attempt < retry) {
+        await delay(2000);
+      }
+    }
   }
+
+  throw lastError;
 };
 
 export const prepareTestDB = async (cluster: string, namespace: string) => {
