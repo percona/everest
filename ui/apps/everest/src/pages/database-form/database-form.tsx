@@ -22,7 +22,6 @@ import { Stepper } from '@percona/ui-lib';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
-import { steps } from './database-form-body/steps';
 import { DbWizardType } from './database-form-schema';
 import { useDatabasePageDefaultValues } from './useDatabaseFormDefaultValues';
 import { useDatabasePageMode } from './useDatabasePageMode';
@@ -36,6 +35,7 @@ import {
   DB_CLUSTERS_QUERY_KEY,
 } from 'hooks';
 import { WizardMode } from 'shared-types/wizard.types';
+import { useSteps } from './database-form-body/steps';
 
 export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -44,6 +44,8 @@ export const DatabasePage = () => {
   const [stepsWithErrors, setStepsWithErrors] = useState<number[]>([]);
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
   const location = useLocation();
+  const steps = useSteps();
+
   const navigate = useNavigate();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
