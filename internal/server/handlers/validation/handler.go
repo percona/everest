@@ -7,7 +7,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
-
 	"github.com/percona/everest/internal/server/handlers"
 	"github.com/percona/everest/pkg/kubernetes"
 )
