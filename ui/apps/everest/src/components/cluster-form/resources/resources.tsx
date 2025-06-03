@@ -410,7 +410,7 @@ const ResourcesToggles = ({
       </Box>
       {warnForUpscaling && (
         <Alert sx={{ mt: 2 }} severity="warning">
-          Upscaling disk size is an irreversible action.
+          {Messages.upscalingDiskWarning}
         </Alert>
       )}
     </FormGroup>
