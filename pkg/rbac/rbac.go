@@ -55,6 +55,7 @@ const (
 	ResourceMonitoringInstances        = "monitoring-instances"
 	ResourceNamespaces                 = "namespaces"
 	ResourcePodSchedulingPolicies      = "pod-scheduling-policies"
+	ResourceDataImporters              = "data-importers"
 )
 
 // RBAC actions.

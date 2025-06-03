@@ -84,7 +84,7 @@ func (h *validateHandler) validateDatabaseClusterRestore(
 		}
 		return err
 	}
-	if err := validateDataSource(&restore.Spec.DataSource); err != nil {
+	if err := validateDataSource(restore.Spec.DataSource.IntoDataSource()); err != nil {
 		return err
 	}
 	return err

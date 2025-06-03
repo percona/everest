@@ -1858,7 +1858,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
+  '/data-importers':
+    x-everest-resource-name: data-importers
+    get:
+      tags:
+        - Data Importer
+      summary: List data importers
+      description: |
+        This API lists all data importers in the kubernetes cluster.
+      operationId: listDataImporters
+      parameters:
+      - in: query
+        name: supportedEngine
+        description: Filter data importers by supported database engine type. 
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataImporterList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     BearerAuth:
@@ -2784,6 +2818,82 @@ components:
                     - backupStorageName
                     - path
                   type: object
+            
+                dataImport:
+                  description: DataImport allows importing data from an external
+                    backup source.
+                  properties:
+                    config:
+                      description: |-
+                        Config defines the configuration for the data import job.
+                        These options are specific to the DataImporter being used and must conform to
+                        the schema defined in the DataImporter's .spec.config.openAPIV3Schema.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    dataImporterName:
+                      description: DataImporterName is the data importer to use
+                        for the import.
+                      type: string
+                    source:
+                      description: Source is the source of the data to import.
+                      properties:
+                        path:
+                          description: |-
+                            Path is the path to the directory to import the data from.
+                            This may be a path to a file or a directory, depending on the data importer.
+                          type: string
+                        s3:
+                          description: S3 contains the S3 information for the data
+                            import.
+                          properties:
+                            bucket:
+                              description: Bucket is the name of the S3 bucket.
+                              type: string
+                            
+                            # This field is available in the API only, not in the CRD.
+                            accessKeyID:
+                              description: |-
+                                AccessKeyID is the access key ID for the S3 bucket.
+                              type: string
+                            # This field is available in the API only, not in the CRD.
+                            secretAccessKey:
+                              description: |-
+                                SecretAccessKey is the secret access key for the S3 bucket.
+                              type: string
+                              
+                            credentialsSecretName:
+                              description: |-
+                                CredentialsSecreName is the reference to the secret containing the S3 credentials.
+                                The Secret must contain the keys `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+                              type: string
+                            endpointURL:
+                              description: EndpointURL is an endpoint URL of backup
+                                storage.
+                              type: string
+                            forcePathStyle:
+                              default: false
+                              description: |-
+                                ForcePathStyle is set to use path-style URLs.
+                                If unspecified, the default value is false.
+                              type: boolean
+                            region:
+                              description: Region is the region of the S3 bucket.
+                              type: string
+                            verifyTLS:
+                              default: true
+                              description: |-
+                                VerifyTLS is set to ensure TLS/SSL verification.
+                                If unspecified, the default value is true.
+                              type: boolean
+                          required:
+                          - credentialsSecretName
+                          type: object
+                      type: object
+                  required:
+                  - dataImporterName
+                  - source
+                  type: object
+
                 dbClusterBackupName:
                   description: DBClusterBackupName is the name of the DB cluster
                     backup to restore from
@@ -3280,6 +3390,248 @@ components:
             state:
               description: RestoreState represents state of restoration.
               type: string
+          type: object
+      type: object
+    
+    DataImportJob:
+      description: DataImportJob is the schema for the dataimportjobs API.
+      properties:
+        apiVersion:
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+          type: string
+        kind:
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            config:
+              description: |-
+                Config defines the configuration for the data import job.
+                These options are specific to the DataImporter being used and must conform to
+                the schema defined in the DataImporter's .spec.config.openAPIV3Schema.
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            dataImporterName:
+              description: DataImporterName is the data importer to use for the
+                import.
+              type: string
+            source:
+              description: Source is the source of the data to import.
+              properties:
+                path:
+                  description: |-
+                    Path is the path to the directory to import the data from.
+                    This may be a path to a file or a directory, depending on the data importer.
+                  type: string
+                s3:
+                  description: S3 contains the S3 information for the data import.
+                  properties:
+                    bucket:
+                      description: Bucket is the name of the S3 bucket.
+                      type: string
+                    credentialsSecretName:
+                      description: |-
+                        CredentialsSecreName is the reference to the secret containing the S3 credentials.
+                        The Secret must contain the keys `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+                      type: string
+                    endpointURL:
+                      description: EndpointURL is an endpoint URL of backup storage.
+                      type: string
+                    forcePathStyle:
+                      default: false
+                      description: |-
+                        ForcePathStyle is set to use path-style URLs.
+                        If unspecified, the default value is false.
+                      type: boolean
+                    region:
+                      description: Region is the region of the S3 bucket.
+                      type: string
+                    verifyTLS:
+                      default: true
+                      description: |-
+                        VerifyTLS is set to ensure TLS/SSL verification.
+                        If unspecified, the default value is true.
+                      type: boolean
+                  required:
+                  - credentialsSecretName
+                  type: object
+              type: object
+            targetClusterName:
+              description: TargetClusterName is the reference to the target cluster.
+              type: string
+          required:
+          - dataImporterName
+          - source
+          - targetClusterName
+          type: object
+        status:
+          properties:
+            jobName:
+              description: JobName is the reference to the job that is running the
+                data import.
+              type: string
+            lastObservedGeneration:
+              description: LastObservedGeneration is the last observed generation
+                of the data import job.
+              format: int64
+              type: integer
+            message:
+              description: Message is the message of the data import job.
+              type: string
+            phase:
+              description: Phase is the current phase of the data import job.
+              type: string
+            startedAt:
+              description: StartedAt is the time when the data import job started.
+              format: date-time
+              type: string
+          type: object
+      type: object
+
+    
+    # -------------------------
+    # DataImporter spec is imported from the everest operator,
+    # please do not edit the definition below manually
+    # -------------------------
+    DataImporter:
+      description: DataImporter defines a reusable strategy for importing data into
+        a DatabaseCluster.
+      properties:
+        apiVersion:
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+          type: string
+        kind:
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DataImporterSpec defines the specification of a DataImporter.
+          properties:
+            config:
+              description: Config contains additional configuration defined for
+                the data importer.
+              properties:
+                openAPIV3Schema:
+                  description: OpenAPIV3Schema is the OpenAPI v3 schema of the data
+                    importer.
+                  x-kubernetes-preserve-unknown-fields: true
+              type: object
+            databaseClusterConstraints:
+              description: DatabaseClusterConstraints contains constraints for the
+                DatabaseCluster that the data importer can be used with.
+              properties:
+                requiredFields:
+                  description: |-
+                    RequiredFields contains a list of fields that must be set in the DatabaseCluster spec.
+                    Each key is a JSON path expressions that points to a field in the DatabaseCluster spec.
+                    For example, ".spec.engine.type" or ".spec.dataSource.dataImport.config.someField".
+                  items:
+                    type: string
+                  type: array
+              type: object
+            description:
+              description: Description is the description of the data importer.
+              type: string
+            displayName:
+              description: DisplayName is a human-readable name for the data importer.
+              type: string
+            jobSpec:
+              description: JobSpec is the specification of the data importer job.
+              properties:
+                command:
+                  description: Command is the command to run the data importer.
+                  items:
+                    type: string
+                  type: array
+                image:
+                  description: Image is the image of the data importer.
+                  type: string
+                serviceAccountName:
+                  description: |-
+                    ServiceAccountName is the name of the service account to use for the data importer job.
+                    This is useful if your Job needs to access the Kubernetes API or other resources.
+                  type: string
+              type: object
+            supportedEngines:
+              description: SupportedEngines is the list of engines that the data
+                importer supports.
+              items:
+                description: |-
+                  EngineType stands for the supported database engines. Right now it's only pxc
+                  and psmdb. However, it can be ps, pg and any other source.
+                type: string
+              type: array
+          type: object
+        status:
+          type: object
+      type: object
+      
+    DataImportJobList:
+      description: DataImportJobList is an object that contains the list of the existing data import jobs.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataImportJob'
+        metadata:
+          type: object
+      type: object
+
+    DataImporterList:
+      description: DataImporterList is an object that contains the list of the existing data importers.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataImporter'
+        metadata:
           type: object
       type: object
 

@@ -802,6 +802,43 @@ func (_m *MockHandler) ListBackupStorages(ctx context.Context, namespace string)
 	return r0, r1
 }
 
+// ListDataImporters provides a mock function with given fields: ctx, supportedEngines
+func (_m *MockHandler) ListDataImporters(ctx context.Context, supportedEngines ...string) (*v1alpha1.DataImporterList, error) {
+	_va := make([]interface{}, len(supportedEngines))
+	for _i := range supportedEngines {
+		_va[_i] = supportedEngines[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDataImporters")
+	}
+
+	var r0 *v1alpha1.DataImporterList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) (*v1alpha1.DataImporterList, error)); ok {
+		return rf(ctx, supportedEngines...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) *v1alpha1.DataImporterList); ok {
+		r0 = rf(ctx, supportedEngines...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DataImporterList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ...string) error); ok {
+		r1 = rf(ctx, supportedEngines...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListDatabaseClusterBackups provides a mock function with given fields: ctx, namespace, clusterName
 func (_m *MockHandler) ListDatabaseClusterBackups(ctx context.Context, namespace string, clusterName string) (*v1alpha1.DatabaseClusterBackupList, error) {
 	ret := _m.Called(ctx, namespace, clusterName)
