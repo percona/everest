@@ -207,7 +207,7 @@ export const queryPSMDB = async (
     }
   }
 
-  console.error(`Failed to execute command in queryMySQL in ${attempt} attempts: ${lastError}`);
+  console.error(`Failed to execute command in queryPSMDB in ${attempt} attempts: ${lastError}`);
   throw lastError;
 };
 
@@ -239,7 +239,7 @@ export const queryPG = async (
     }
   }
 
-  console.error(`Failed to execute command in queryMySQL in ${attempt} attempts: ${lastError}`);
+  console.error(`Failed to execute command in queryPG in ${attempt} attempts: ${lastError}`);
   throw lastError;
 };
 
