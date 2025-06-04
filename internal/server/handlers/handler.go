@@ -6,6 +6,8 @@ package handlers
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 )
@@ -47,6 +49,7 @@ type DatabaseClusterHandler interface {
 	GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error)
 	GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error)
 	GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error)
+	CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret) (*corev1.Secret, error)
 }
 
 // NamespacesHandler provides methods for handling operations on namespaces.

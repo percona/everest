@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
+	v1 "k8s.io/api/core/v1"
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	api "github.com/percona/everest/api"
@@ -147,6 +148,36 @@ func (_m *MockHandler) CreateDatabaseClusterRestore(ctx context.Context, req *v1
 
 	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.DatabaseClusterRestore) error); ok {
 		r1 = rf(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// CreateDatabaseClusterSecret provides a mock function with given fields: ctx, namespace, dbName, secret
+func (_m *MockHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace string, dbName string, secret *v1.Secret) (*v1.Secret, error) {
+	ret := _m.Called(ctx, namespace, dbName, secret)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateDatabaseClusterSecret")
+	}
+
+	var r0 *v1.Secret
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *v1.Secret) (*v1.Secret, error)); ok {
+		return rf(ctx, namespace, dbName, secret)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *v1.Secret) *v1.Secret); ok {
+		r0 = rf(ctx, namespace, dbName, secret)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Secret)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, *v1.Secret) error); ok {
+		r1 = rf(ctx, namespace, dbName, secret)
 	} else {
 		r1 = ret.Error(1)
 	}

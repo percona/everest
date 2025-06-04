@@ -736,6 +736,61 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  '/namespaces/{namespace}/database-clusters/{dbName}/secret':
+    post:
+      tags:
+        - Database Cluster
+      summary: Create a secret for the given database cluster
+      description: |
+        This API creates a secret for the database cluster specified by the `name` and `namespace`
+      operationId: createDatabaseClusterSecret
+      parameters:
+        - name: dbName
+          in: path
+          description: Name of the database cluster
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: secretName
+          in: query
+          description: Optional name of the secret to be created. If not provided, a random name will be generated.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Secret'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The Secret object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Secret'
+      
   '/namespaces/{namespace}/database-engines':
     x-everest-resource-name: database-engines
     get:
@@ -10225,7 +10280,6 @@ components:
               type: integer
           type: object
       type: object
-
     # -------------------------
     # StorageClass is imported from the k8s API,
     # but some fields are omitted that are not relevant to Everest.
@@ -10289,6 +10343,37 @@ components:
         status:
           description: 'Status of the operation. One of: "Success" or "Failure". More
             info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status'
+          type: string
+  
+    Secret:
+      description: Secret holds secret data of a certain type. The total bytes of the values in the Data field must be less than MaxSecretSize bytes.
+      type: object
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        data:
+          description: Data contains the secret data. Each key must consist of alphanumeric characters, '-', '_' or '.'. The serialized form of the secret data is a base64 encoded string, representing the arbitrary (possibly non-string) data value here. Described in https://tools.ietf.org/html/rfc4648#section-4
+          type: object
+          additionalProperties:
+            type: string
+            format: byte
+        immutable:
+          description: Immutable, if set to true, ensures that data stored in the Secret cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.
+          type: boolean
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+          type: object
+        stringData:
+          description: stringData allows specifying non-binary secret data in string form. It is provided as a write-only input field for convenience. All keys and values are merged into the data field on write, overwriting any existing values. The stringData field is never output when reading from the API.
+          type: object
+          additionalProperties:
+            type: string
+        type:
+          description: 'Used to facilitate programmatic handling of secret data. More info: https://kubernetes.io/docs/concepts/configuration/secret/#secret-types'
           type: string
 
     # -------------------------
