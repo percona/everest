@@ -7,7 +7,7 @@ export const Messages = {
     restoreFromBackup: 'Restore from a backup',
     createNewDbFromBackup: 'Create DB from a backup',
     dbStatusDetails: 'View DB status details',
-    dbDetails: 'View DB details',
+    dbDetails: 'View details',
   },
   deleteModal: {
     header: 'Delete database',
