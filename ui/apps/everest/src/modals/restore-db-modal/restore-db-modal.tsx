@@ -59,7 +59,13 @@ const ModalContent = ({
   const backupType: BackuptypeValues = watch(RestoreDbFields.backupType);
 
   useEffect(() => {
-    if (pitrData && !getValues(RestoreDbFields.pitrBackup)) {
+    if (!pitrData) {
+      return;
+    }
+    if (
+      !getValues(RestoreDbFields.pitrBackup) ||
+      pitrData.latestDate !== getValues(RestoreDbFields.pitrBackup)
+    ) {
       setValue(RestoreDbFields.pitrBackup, pitrData.latestDate);
     }
   }, [getValues, pitrData, setValue]);
