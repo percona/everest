@@ -74,6 +74,7 @@ export const addApiErrorInterceptor = () => {
 export const removeApiErrorInterceptor = () => {
   if (errorInterceptor !== null) {
     api.interceptors.response.eject(errorInterceptor);
+    errorInterceptor = null;
   }
 };
 
@@ -93,5 +94,6 @@ export const addApiAuthInterceptor = () => {
 export const removeApiAuthInterceptor = () => {
   if (authInterceptor !== null) {
     api.interceptors.response.eject(authInterceptor);
+    authInterceptor = null;
   }
 };
