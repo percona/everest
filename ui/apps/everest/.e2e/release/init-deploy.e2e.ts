@@ -39,6 +39,7 @@ import {
   queryPSMDB,
   queryMySQL,
   getPGStsName,
+  getK8sResource,
 } from '@e2e/utils/db-cmd-line';
 import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
 
@@ -125,7 +126,12 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Populate advanced db config', async () => {
-          await populateAdvancedConfig(page, db, '', true, '');
+          // For clusters of size 3 we test with external access enabled
+          if (size === 3) {
+            await populateAdvancedConfig(page, db, true, '', true, '');
+          } else {
+            await populateAdvancedConfig(page, db, false, '', true, '');
+          }
           await moveForward(page);
         });
 
@@ -169,11 +175,43 @@ test.describe.configure({ retries: 0 });
             '1G'
           );
           expect(addedCluster?.spec.engine.storage.size.toString()).toBe('1Gi');
-          expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
+          if (size === 3) {
+            expect(addedCluster?.spec.proxy.expose.type).toBe('external');
+          } else {
+            expect(addedCluster?.spec.proxy.expose.type).toBe('internal');
+          }
           if (db != 'psmdb') {
             expect(addedCluster?.spec.proxy.replicas).toBe(size);
           }
         });
+      });
+
+      test(`Check service type is LoadBalancer [${db} size ${size}]`, async () => {
+        test.skip(size !== 3);
+
+        let resourceName: string;
+
+        switch (db) {
+          case 'pxc': {
+            resourceName = `${clusterName}-haproxy`;
+            break;
+          }
+          case 'psmdb': {
+            resourceName = `${clusterName}-rs0-0`;
+            break;
+          }
+          case 'postgresql': {
+            resourceName = `${clusterName}-pgbouncer`;
+            break;
+          }
+        }
+
+        let resource = await getK8sResource(
+          'svc',
+          `${resourceName}`,
+          'everest-ui'
+        );
+        expect(resource?.spec.type).toBe('LoadBalancer');
       });
 
       test(`Check DB custom option [${db} size ${size}]`, async () => {
@@ -184,7 +222,8 @@ test.describe.configure({ retries: 0 });
             result = await queryMySQL(
               clusterName,
               namespace,
-              `SHOW variables LIKE "max_connections";`
+              `SHOW variables LIKE "max_connections";`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('max_connections	250');
             break;
@@ -194,7 +233,8 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               'admin',
-              `db.serverCmdLineOpts().parsed.systemLog;`
+              `db.serverCmdLineOpts().parsed.systemLog;`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
             break;
@@ -204,7 +244,8 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               'postgres',
-              `SHOW shared_buffers;`
+              `SHOW shared_buffers;`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('192MB');
             break;
@@ -358,7 +399,7 @@ test.describe.configure({ retries: 0 });
         const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
 
-        await test.step('Change options', async () => {
+        await test.step('Change resource options', async () => {
           await page.goto('databases');
           await findDbAndClickRow(page, clusterName);
           await page.getByTestId('edit-resources-button').click();
@@ -382,7 +423,7 @@ test.describe.configure({ retries: 0 });
           await page.getByTestId('form-dialog-save').click();
         });
 
-        await test.step('Check new values', async () => {
+        await test.step('Check new resource values', async () => {
           if (db === 'pxc') {
             await expect(
               page
@@ -411,6 +452,63 @@ test.describe.configure({ retries: 0 });
             await waitForStatus(page, clusterName, 'Initializing', 60000);
           }
           await waitForStatus(page, clusterName, 'Up', 300000);
+        });
+      });
+
+      test(`Change external access options [${db} size ${size}]`, async ({
+        page,
+      }) => {
+        test.skip(size !== 3);
+
+        await test.step('Set ipSourceRange', async () => {
+          await page.goto('databases');
+          await findDbAndClickRow(page, clusterName);
+          await page.getByTestId('edit-advanced-configuration-db-btn').click();
+          await page
+            .getByTestId('text-input-source-ranges.0.source-range')
+            .fill('192.168.1.0/32');
+          await page.getByTestId('form-dialog-save').click();
+        });
+
+        await test.step('Check new external access values in UI', async () => {
+          await page.getByTestId('edit-advanced-configuration-db-btn').click();
+          await expect(
+            page.getByTestId('switch-input-external-access')
+          ).toBeChecked();
+          const rawValue = await page
+            .getByTestId('text-input-source-ranges.0.source-range')
+            .inputValue();
+          await expect(rawValue).toEqual('192.168.1.0/32');
+        });
+
+        await test.step(`Check service in K8s [${db} size ${size}]`, async () => {
+          let resourceName: string;
+
+          await page.waitForTimeout(15000); // wait for svc to be updated
+          switch (db) {
+            case 'pxc': {
+              resourceName = `${clusterName}-haproxy`;
+              break;
+            }
+            case 'psmdb': {
+              resourceName = `${clusterName}-rs0-0`;
+              break;
+            }
+            case 'postgresql': {
+              resourceName = `${clusterName}-pgbouncer`;
+              break;
+            }
+          }
+
+          const resource = await getK8sResource(
+            'svc',
+            `${resourceName}`,
+            'everest-ui'
+          );
+          expect(resource?.spec.type).toBe('LoadBalancer');
+          expect(resource?.spec.loadBalancerSourceRanges).toEqual([
+            '192.168.1.0/32',
+          ]);
         });
       });
 

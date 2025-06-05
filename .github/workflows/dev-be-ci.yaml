@@ -21,7 +21,7 @@ permissions:
 jobs:
   test:
     name: Test
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
@@ -79,6 +79,7 @@ jobs:
         run: make build
 
       - name: Run tests
+        timeout-minutes: 20
         run: |
           go clean -testcache
           make test-crosscover
@@ -258,7 +259,7 @@ jobs:
         id: minikube
         with:
           cpus: 2
-          memory: 2000m
+          memory: 4000m
           addons: registry
           insecure-registry: 'localhost:5000'
 
@@ -349,8 +350,10 @@ jobs:
         run: |
           kubectl port-forward --namespace everest-system deployment/everest-server 8080:8080 &
 
-      - name: Create Everest test user
+      - name: Create Everest test users
         run: |
+          ./bin/everestctl accounts create -u test -p password
+          echo "API_TOKEN_TEST=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
           ./bin/everestctl accounts create -u everest_ci -p password
           echo "API_TOKEN=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
 

@@ -39,4 +39,21 @@ test.describe('On-demand backup', async () => {
       page.getByTestId('text-input-storage-location')
     ).not.toBeEmpty();
   });
+
+  test('Duplicate name should throw an error', async ({ page }) => {
+    await gotoDbClusterBackups(page, mySQLName);
+    await clickOnDemandBackup(page);
+    const nameInput = page.getByTestId('text-input-name');
+    const createBtn = page.getByTestId('form-dialog-create');
+    await nameInput.fill('backup-1');
+    await expect(createBtn).toBeEnabled();
+    await createBtn.click();
+
+    await clickOnDemandBackup(page);
+    await nameInput.fill('backup-1');
+    await expect(createBtn).not.toBeEnabled();
+    await expect(
+      page.getByText('You already have a backup with this name')
+    ).toBeVisible();
+  });
 });

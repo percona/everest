@@ -98,6 +98,7 @@ export const BasicInformationSection = ({
     <OverviewSection
       dataTestId="basic-information"
       title={Messages.titles.basicInformation}
+      editText={Messages.actions.upgrade}
       loading={loading}
       {...(shouldShowUpgrade && canUpdateDb
         ? {
@@ -112,13 +113,10 @@ export const BasicInformationSection = ({
           }
         : undefined)}
     >
-      <OverviewSectionRow
-        label="Type"
-        contentString={beautifyDbTypeName(type)}
-      />
-      <OverviewSectionRow label="Name" contentString={name} />
-      <OverviewSectionRow label="Namespace" contentString={namespace} />
-      <OverviewSectionRow label="Version" contentString={version} />
+      <OverviewSectionRow label="Type" content={beautifyDbTypeName(type)} />
+      <OverviewSectionRow label="Name" content={name} />
+      <OverviewSectionRow label="Namespace" content={namespace} />
+      <OverviewSectionRow label="Version" content={version} />
       {openEditModal && dbVersionsUpgradeList && (
         <UpgradeDbVersionModal
           open={openEditModal}

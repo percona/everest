@@ -13,31 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, Tooltip, Typography, useTheme } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { MRT_ColumnDef, MRT_Row } from 'material-react-table';
 import { DBClusterComponent } from 'shared-types/components.types';
-import { format, formatDistanceToNowStrict } from 'date-fns';
 import {
   CONTAINER_STATUS,
   containerStatusToBaseStatus,
 } from '../components.constants';
-import StatusField from 'components/status-field';
 import { useMemo } from 'react';
 import { Container } from 'shared-types/components.types';
 import { Table } from '@percona/ui-lib';
-import { DATE_FORMAT } from 'consts';
+import ComponentStatus from '../component-status';
+import ComponentAge from '../component-age';
 
 const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
   const { containers, name } = row.original;
   const theme = useTheme();
-
   const columns = useMemo<MRT_ColumnDef<Container>[]>(() => {
     return [
       {
         header: 'Status',
         accessorKey: 'status',
         Cell: ({ cell, row }) => (
-          <StatusField
+          <ComponentStatus
+            status={cell.getValue<CONTAINER_STATUS>()}
+            statusMap={containerStatusToBaseStatus(row.original.ready)}
             iconProps={{
               size: 'small',
             }}
@@ -46,13 +46,10 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
               gap: 2,
               alignItems: 'center',
             }}
-            status={cell.getValue<CONTAINER_STATUS>()}
-            statusMap={containerStatusToBaseStatus(row?.original?.ready)}
-          >
-            <Typography variant="body2">
-              {cell.getValue<CONTAINER_STATUS>()}
-            </Typography>
-          </StatusField>
+            typographyProps={{
+              variant: 'body2',
+            }}
+          />
         ),
       },
       {
@@ -76,30 +73,14 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
       {
         header: 'Fake column',
         accessorKey: 'type',
-        Cell: () => '',
       },
       {
         header: 'Age',
         accessorKey: 'started',
-        Cell: ({ cell, row }) => {
-          const date = new Date(cell.getValue<string>());
-          return date && row?.original?.status === CONTAINER_STATUS.RUNNING ? (
-            <Tooltip
-              title={`Started at ${format(date, DATE_FORMAT)}`}
-              placement="right"
-              arrow
-            >
-              <Typography
-                variant="caption"
-                color={theme.palette.text.secondary}
-              >
-                {formatDistanceToNowStrict(date)} ago{' '}
-              </Typography>
-            </Tooltip>
-          ) : (
-            ''
-          );
-        },
+        Cell: ({ cell, row }) =>
+          row?.original?.status === CONTAINER_STATUS.RUNNING ? (
+            <ComponentAge date={cell.getValue<string>()} />
+          ) : null,
       },
       {
         header: 'Restarts',
@@ -113,7 +94,7 @@ const ExpandedRow = ({ row }: { row: MRT_Row<DBClusterComponent> }) => {
         },
       },
     ];
-  }, []);
+  }, [theme.palette.text.secondary]);
 
   return (
     <Box

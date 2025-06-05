@@ -121,7 +121,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
 
         await test.step('Populate advanced db config', async () => {
-          await populateAdvancedConfig(page, db, '', true, '');
+          await populateAdvancedConfig(page, db, false, '', true, '');
           await moveForward(page);
         });
 
@@ -221,13 +221,14 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
 
         await test.step('Check schedules text in page', async () => {
+          await page.getByTestId('scheduled-backups').click();
           expect(
             page.getByText(`Every hour at minute ${scheduleMinute1}`)
-          ).toBeTruthy();
+          ).toBeVisible();
           expect(
             page.getByText(`Every hour at minute ${scheduleMinute2}`)
-          ).toBeTruthy();
-          expect(page.getByText('2 active schedules')).toBeTruthy();
+          ).toBeVisible();
+          expect(page.getByText('2 active schedules')).toBeVisible();
         });
       });
 
@@ -256,7 +257,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             .first();
           await scheduleForDeleteBtn.click();
           await page.getByTestId('confirm-dialog-delete').click();
-          expect(page.getByText('1 active schedule')).toBeTruthy();
+          await expect(page.getByText('1 active schedule')).toBeVisible({
+            timeout: 10000,
+          });
         });
 
         await test.step('Delete second schedule', async () => {
@@ -268,7 +271,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await scheduleForDeleteBtn2.click();
           await page.getByTestId('confirm-dialog-delete').click();
           await expect(page.getByText('1 active schedule')).toBeHidden({
-            timeout: 5000,
+            timeout: 10000,
           });
         });
       });
@@ -328,6 +331,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Delete first backup', async () => {
           const firstBackup = await page
+            .getByRole('row')
             .getByText(`${db}-${size}-schbkp-`)
             .first()
             .textContent();
@@ -340,8 +344,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Delete second backup', async () => {
           const secondBackup = await page
+            .getByRole('row')
             .getByText(`${db}-${size}-schbkp-`)
-            .first()
+            .last()
             .textContent();
 
           await findRowAndClickActions(page, secondBackup, 'Delete');
