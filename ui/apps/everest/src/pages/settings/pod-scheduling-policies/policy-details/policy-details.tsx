@@ -86,6 +86,9 @@ const PolicyDetails = () => {
   }
 
   const rules = dbPayloadToAffinityRules(policy);
+  const policyInUse = policy.metadata.finalizers.includes(
+    EVEREST_POLICY_IN_USE_FINALIZER
+  );
   const readOnlyPolicy = policy.metadata.finalizers?.includes(
     EVEREST_READ_ONLY_FINALIZER
   );
@@ -146,9 +149,7 @@ const PolicyDetails = () => {
         <AffinityFormDialog
           isOpen
           submitting={updatingPolicy}
-          showInUseWarning={policy.metadata.finalizers.includes(
-            EVEREST_POLICY_IN_USE_FINALIZER
-          )}
+          showInUseWarning={policyInUse}
           dbType={dbEngineToDbType(policy.spec.engineType)}
           handleClose={() => setOpenAffinityDialog(false)}
           handleSubmit={handleFormSubmit}
@@ -165,7 +166,9 @@ const PolicyDetails = () => {
           headerMessage="Delete Rule"
           submitMessage="Delete"
         >
-          <Alert severity="warning">{Messages.policyInUse}</Alert>
+          {policyInUse && (
+            <Alert severity="warning">{Messages.policyInUse}</Alert>
+          )}
           <Typography px={1} pt={2}>
             Are you sure you want to delete this rule?
           </Typography>
