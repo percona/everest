@@ -70,7 +70,7 @@ dbs.forEach((db) => {
         });
 
         await test.step('Populate advanced db config', async () => {
-          await populateAdvancedConfig(page, db, '', true, '');
+          await populateAdvancedConfig(page, db, true, '', false, '');
           await moveForward(page);
         });
 
