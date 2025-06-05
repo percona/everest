@@ -31,7 +31,7 @@ const ComponentAge = ({ date, render, typographyProps }: ComponentAgeProps) => {
       placement="right"
       arrow
     >
-      <Typography variant="caption" color="text.secondary" {...typographyProps}>
+      <Typography variant="body2" color="text.secondary" {...typographyProps}>
         {render ? render(resultStr) : resultStr}
       </Typography>
     </Tooltip>
