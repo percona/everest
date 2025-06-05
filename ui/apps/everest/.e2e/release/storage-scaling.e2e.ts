@@ -1,8 +1,5 @@
 import { expect, test } from '@playwright/test';
-import {
-  deleteDbCluster,
-  gotoDbClusterBackups,
-} from '@e2e/utils/db-clusters-list';
+import { deleteDbCluster } from '@e2e/utils/db-clusters-list';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import {
@@ -17,129 +14,135 @@ import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 
 let token: string;
 
-const db = 'psmdb';
-const clusterName = `${db}-storage-scaling`;
+const dbs = ['pxc', 'psmdb', 'postgresql'];
 const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
 
 test.describe.configure({ retries: 0 });
 
-test.describe(
-  'Storage Scaling E2E Tests',
-  {
-    tag: '@release',
-  },
-  () => {
-    let storageClasses = [];
+dbs.forEach((db) => {
+  const clusterName = `${db}-storage-scaling`;
 
-    test.beforeAll(async ({ request }) => {
-      token = await getTokenFromLocalStorage();
+  test.describe(
+    'Storage Scaling E2E Tests',
+    {
+      tag: '@release',
+    },
+    () => {
+      let storageClasses = [];
 
-      const { storageClassNames = [] } = await getClusterDetailedInfo(
-        token,
-        request
-      );
-      storageClasses = storageClassNames;
-    });
+      test.beforeAll(async ({ request }) => {
+        token = await getTokenFromLocalStorage();
 
-    test(`Cluster creation [${db}]`, async ({ page, request }) => {
-      expect(storageClasses.length).toBeGreaterThan(0);
-
-      await page.goto('/databases');
-      await page.getByTestId('add-db-cluster-button').waitFor();
-      await page.getByTestId('add-db-cluster-button').click();
-      await page.getByTestId(`add-db-cluster-button-${db}`).click();
-
-      await test.step('Populate basic information', async () => {
-        await populateBasicInformation(
-          page,
-          namespace,
-          clusterName,
-          db,
-          storageClasses[0],
-          false,
-          null
+        const { storageClassNames = [] } = await getClusterDetailedInfo(
+          token,
+          request
         );
+        storageClasses = storageClassNames;
       });
 
-      await test.step('Populate resources', async () => {
-        await populateResources(page, 1, 1, 1, 3, 1, 1, 1, 1, 1);
-        await moveForward(page);
-      });
+      test(`Cluster creation [${db}]`, async ({ page, request }) => {
+        expect(storageClasses.length).toBeGreaterThan(0);
 
-      await test.step('Populate backups', async () => {
-        await moveForward(page);
-      });
-
-      await test.step('Populate advanced db config', async () => {
-        await populateAdvancedConfig(page, db, '', true, '');
-        await moveForward(page);
-      });
-
-      await test.step('Submit wizard', async () => {
-        await submitWizard(page);
-      });
-
-      // Go to DB list and check status
-      await test.step('Check db list and status', async () => {
         await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Initializing', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await page.getByTestId('add-db-cluster-button').waitFor();
+        await page.getByTestId('add-db-cluster-button').click();
+        await page.getByTestId(`add-db-cluster-button-${db}`).click();
+
+        await test.step('Populate basic information', async () => {
+          await populateBasicInformation(
+            page,
+            namespace,
+            clusterName,
+            db,
+            storageClasses[0],
+            false,
+            null
+          );
+        });
+
+        await test.step('Populate resources', async () => {
+          await populateResources(page, 1, 1, 1, 3, 1, 1, 1, 1, 1);
+          await moveForward(page);
+        });
+
+        await test.step('Populate backups', async () => {
+          await moveForward(page);
+        });
+
+        await test.step('Populate advanced db config', async () => {
+          await populateAdvancedConfig(page, db, '', true, '');
+          await moveForward(page);
+        });
+
+        await test.step('Submit wizard', async () => {
+          await submitWizard(page);
+        });
+
+        // Go to DB list and check status
+        await test.step('Check db list and status', async () => {
+          await page.goto('/databases');
+          await waitForStatus(page, clusterName, 'Initializing', 30000);
+          await waitForStatus(page, clusterName, 'Up', 600000);
+        });
       });
-    });
 
-    test(`Validate storage scaling [${db}]`, async ({ page }) => {
-      await page.goto('/databases');
-      await page.getByTestId(`db-cluster-${clusterName}`).click();
-      await page.getByTestId('edit-resources-button').click();
+      test(`Validate storage scaling [${db}]`, async ({ page }) => {
+        await page.goto('/databases');
+        await page.getByTestId(`db-cluster-${clusterName}`).click();
+        await page.getByTestId('edit-resources-button').click();
 
-      await test.step('Attempt to decrease disk size', async () => {
-        const diskInput = page.getByTestId('text-input-disk');
-        const saveButton = page.getByTestId('form-dialog-save');
+        await test.step('Attempt to decrease disk size', async () => {
+          const diskInput = page.getByTestId('text-input-disk');
+          const saveButton = page.getByTestId('form-dialog-save');
 
-        // Ensure the initial value is correct
-        await expect(diskInput).toHaveValue('1');
+          // Ensure the initial value is correct
+          await expect(diskInput).toHaveValue(/1(\.0)?/);
 
-        // Attempt to decrease the disk size
-        await diskInput.fill('0.5');
+          // Attempt to decrease the disk size
+          await diskInput.fill('0.5');
 
-        // Verify that the save button is disabled
-        await expect(saveButton).toBeDisabled();
+          // Verify that the save button is disabled
+          await expect(saveButton).toBeDisabled();
 
-        // Verify that the error message is displayed
-        await expect(
-          page.locator('text=Descaling is not allowed')
-        ).toBeVisible();
+          // Verify that the error message is displayed
+          await expect(
+            page.locator('text=Descaling is not allowed')
+          ).toBeVisible();
+        });
+
+        await test.step('Increase disk size', async () => {
+          const diskInput = page.getByTestId('text-input-disk');
+          const saveButton = page.getByTestId('form-dialog-save');
+
+          // Increase the disk size
+          await diskInput.fill('2');
+
+          // Verify that the warning message is displayed
+          await expect(
+            page.locator('text=Upscaling disk size is an irreversible action.')
+          ).toBeVisible();
+
+          // Verify that the save button is enabled
+          await expect(saveButton).toBeEnabled();
+
+          // Save the changes
+          await saveButton.click();
+
+          // Verify that the modal is closed
+          await expect(
+            page.locator('[data-testid="resources-edit-modal"]')
+          ).toBeHidden();
+
+          // Check DB status to be Up
+          await waitForStatus(page, clusterName, 'Up', 600000);
+        });
       });
 
-      await test.step('Increase disk size', async () => {
-        const diskInput = page.getByTestId('text-input-disk');
-        const saveButton = page.getByTestId('form-dialog-save');
-
-        // Increase the disk size
-        await diskInput.fill('2');
-
-        // Verify that the warning message is displayed
-        await expect(
-          page.locator('text=Upscaling disk size is an irreversible action.')
-        ).toBeVisible();
-
-        // Verify that the save button is enabled
-        await expect(saveButton).toBeEnabled();
-
-        // Save the changes
-        await saveButton.click();
-
-        // Verify that the modal is closed
-        await expect(
-          page.locator('[data-testid="resources-edit-modal"]')
-        ).toBeHidden();
+      test(`Delete cluster [${db}]`, async ({ page }) => {
+        await deleteDbCluster(page, clusterName);
+        await waitForStatus(page, clusterName, 'Deleting', 15000);
+        await waitForDelete(page, clusterName, 240000);
       });
-    });
-
-    test(`Delete cluster [${db}]`, async ({ page }) => {
-      await deleteDbCluster(page, clusterName);
-      await waitForStatus(page, clusterName, 'Deleting', 15000);
-      await waitForDelete(page, clusterName, 240000);
-    });
-  }
-);
+    }
+  );
+});
