@@ -119,7 +119,9 @@ dbs.forEach((db) => {
 
           // Verify that the warning message is displayed
           await expect(
-            page.locator('text=Upscaling disk size is an irreversible action.')
+            page.locator(
+              'text=Disk upscaling is irreversible and may temporarily block further resize actions until complete.'
+            )
           ).toBeVisible();
 
           // Verify that the save button is enabled
