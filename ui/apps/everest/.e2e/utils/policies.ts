@@ -35,3 +35,18 @@ export const deletePodSchedulingPolicy = async (
 
   expect(response.ok()).toBeTruthy();
 };
+
+export const getDefaultPodSchedulingPolicyNameForDbType = (
+  dbType: string
+): string => {
+  switch (dbType) {
+    case 'psmdb':
+      return 'everest-default-mongodb';
+    case 'pxc':
+      return 'everest-default-mysql';
+    case 'postgresql':
+      return 'everest-default-postgresql';
+    default:
+      throw new Error(`Unknown database type: ${dbType}`);
+  }
+};
