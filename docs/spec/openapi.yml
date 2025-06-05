@@ -3542,6 +3542,14 @@ components:
                 s3:
                   description: S3 contains the S3 information for the data import.
                   properties:
+                    accessKeyId:
+                      description: |-
+                        AccessKeyID allows specifying the S3 access key ID inline.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `credentialsSecretName`
+                        and empties this field.
+                        This field is not stored in the API.
+                      type: string
                     bucket:
                       description: Bucket is the name of the S3 bucket.
                       type: string
@@ -3561,6 +3569,14 @@ components:
                       type: boolean
                     region:
                       description: Region is the region of the S3 bucket.
+                      type: string
+                    secretAccessKey:
+                      description: |-
+                        SecretAccessKey allows specifying the S3 secret access key inline.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `credentialsSecretName`
+                        and empties this field.
+                        This field is not stored in the API.
                       type: string
                     verifyTLS:
                       default: true
@@ -3691,6 +3707,7 @@ components:
         status:
           type: object
       type: object
+
       
     DataImportJobList:
       description: DataImportJobList is an object that contains the list of the existing data import jobs.
