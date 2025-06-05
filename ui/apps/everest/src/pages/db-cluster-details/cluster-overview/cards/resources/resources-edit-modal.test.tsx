@@ -123,7 +123,9 @@ describe('ResourcesEditModal', () => {
     fireEvent.change(input, { target: { value: '3' } });
     await waitFor(() =>
       expect(
-        screen.getByText('Upscaling disk size is an irreversible action.')
+        screen.getByText(
+          'Disk upscaling is irreversible and may temporarily block further resize actions until complete.'
+        )
       ).toBeInTheDocument()
     );
 
