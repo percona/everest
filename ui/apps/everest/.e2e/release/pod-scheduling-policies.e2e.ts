@@ -41,7 +41,7 @@ test.describe.configure({ retries: 0 });
   { db: 'postgresql', size: 2, nProxies: 3 },
 ].forEach(({ db, size, nProxies, nShards }) => {
   test.describe(
-    'Pod scheduling policies',
+    'Default Pod Scheduling Policies',
     {
       tag: '@release',
     },
@@ -161,3 +161,140 @@ test.describe.configure({ retries: 0 });
     }
   );
 });
+
+[
+  { db: 'pxc', size: 3 },
+  { db: 'psmdb', size: 3 },
+  { db: 'postgresql', size: 2 },
+].forEach(
+  ({
+    db,
+    size,
+    nProxies,
+    nShards,
+  }: {
+    db: string;
+    size: number;
+    nProxies?: number;
+    nShards?: number;
+  }) => {
+    test.describe(
+      'Disabled Pod Scheduling Policies',
+      {
+        tag: '@release',
+      },
+      () => {
+        test.skip(!shouldExecuteDBCombination(db, size));
+        test.describe.configure({ timeout: 720000 });
+
+        const clusterName = `${db}-${size}${nProxies ? `-${nProxies}` : ''}${nShards ? `-${nShards}` : ''}`;
+
+        let storageClasses = [];
+        const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
+        const monitoringName = 'e2e-endpoint-0';
+
+        test.beforeAll(async ({ request }) => {
+          token = await getTokenFromLocalStorage();
+
+          const { storageClassNames = [] } = await getClusterDetailedInfo(
+            token,
+            request
+          );
+          storageClasses = storageClassNames;
+        });
+
+        test(`Cluster creation [${db}, size ${size}, nProxies ${nProxies}, nShards ${nShards}]`, async ({
+          page,
+          request,
+        }) => {
+          expect(storageClasses.length).toBeGreaterThan(0);
+
+          await page.goto('/databases');
+          await page.getByTestId('add-db-cluster-button').waitFor();
+          await page.getByTestId('add-db-cluster-button').click();
+          await page.getByTestId(`add-db-cluster-button-${db}`).click();
+
+          await test.step('Populate basic information', async () => {
+            await populateBasicInformation(
+              page,
+              namespace,
+              clusterName,
+              db,
+              storageClasses[0],
+              false,
+              null
+            );
+            await moveForward(page);
+          });
+
+          await test.step('Populate resources', async () => {
+            await page
+              .getByRole('button')
+              .getByText(size + ' node')
+              .click();
+            await expect(page.getByText('Nodes (' + size + ')')).toBeVisible();
+            await populateResources(
+              page,
+              0.6,
+              1,
+              1,
+              size,
+              nProxies,
+              0.6,
+              1,
+              nShards
+            );
+            await moveForward(page);
+          });
+
+          await test.step('Populate backups', async () => {
+            await moveForward(page);
+          });
+
+          await test.step('Populate advanced db config', async () => {
+            await populateAdvancedConfig(page, db, false, '', true, '', false);
+            await moveForward(page);
+          });
+
+          await test.step('Populate monitoring', async () => {
+            await page.getByTestId('switch-input-monitoring').click();
+            await page
+              .getByTestId('text-input-monitoring-instance')
+              .fill(monitoringName);
+            await expect(
+              page.getByTestId('text-input-monitoring-instance')
+            ).toHaveValue(monitoringName);
+          });
+
+          await test.step('Submit wizard', async () => {
+            await submitWizard(page);
+          });
+
+          // go to db list and check status
+          await test.step('Check db list and status', async () => {
+            await page.goto('/databases');
+            await waitForStatus(page, clusterName, 'Initializing', 30000);
+            await waitForStatus(page, clusterName, 'Up', 600000);
+          });
+
+          await test.step('Check db cluster k8s object options', async () => {
+            const addedCluster = await getDbClusterAPI(
+              clusterName,
+              EVEREST_CI_NAMESPACES.EVEREST_UI,
+              request,
+              token
+            );
+
+            expect(addedCluster?.spec.podSchedulingPolicyName).toBeUndefined();
+          });
+        });
+
+        test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
+          await deleteDbCluster(page, clusterName);
+          await waitForStatus(page, clusterName, 'Deleting', 15000);
+          await waitForDelete(page, clusterName, 240000);
+        });
+      }
+    );
+  }
+);

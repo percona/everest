@@ -233,11 +233,17 @@ export const populateAdvancedConfig = async (
   externalAccess: boolean = false,
   externalAccessSourceRange: string,
   addDefaultEngineParameters: boolean,
-  engineParameters: string
+  engineParameters: string,
+  enablePodSchedulingPolicy: boolean = true
 ) => {
   const combobox = page.getByTestId('text-input-storage-class');
   await combobox.waitFor({ state: 'visible', timeout: 5000 });
   await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
+
+  await page
+    .getByTestId('switch-input-pod-scheduling-policy-enabled')
+    .getByRole('checkbox')
+    [enablePodSchedulingPolicy ? 'check' : 'uncheck']();
 
   if (externalAccess) {
     await page
