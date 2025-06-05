@@ -702,7 +702,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   '/namespaces/{namespace}/database-clusters/{dbName}/data-import-jobs':
-    x-everest-resource-name: database-clusters
+    x-everest-resource-name: database-import-jobs
     get:
       tags:
       - Database Cluster
