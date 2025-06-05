@@ -141,7 +141,7 @@ export const AdvancedConfigurationForm = ({
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
-      setValue(fieldName, `${value}/32`);
+      setValue(fieldName, `${value}/32`, { shouldValidate: true });
     }
   };
 
@@ -251,7 +251,7 @@ export const AdvancedConfigurationForm = ({
               {Messages.cards.enableExternalAccess.description}
             </Typography>
             {externalAccess && (
-              <Stack>
+              <Stack sx={{ ml: 6 }} data-testid="external-access-fields">
                 <TextArray
                   placeholder={Messages.sourceRangePlaceholder}
                   fieldName={AdvancedConfigurationFields.sourceRanges}

@@ -249,6 +249,14 @@ func validateProxy(databaseCluster *everestv1alpha1.DatabaseCluster) error {
 		}
 	}
 
+	rangesMap := make(map[everestv1alpha1.IPSourceRange]struct{})
+	for _, sourceRange := range databaseCluster.Spec.Proxy.Expose.IPSourceRanges {
+		if _, ok := rangesMap[sourceRange]; ok {
+			return ErrDuplicateSourceRange(sourceRange)
+		}
+		rangesMap[sourceRange] = struct{}{}
+	}
+
 	return nil
 }
 
