@@ -406,3 +406,15 @@ func valueOrDefault(value *int, defaultValue int) int {
 	}
 	return *value
 }
+
+func (h *k8sHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret) (*corev1.Secret, error) {
+	secretCpy := secret.DeepCopy()
+	secretCpy.SetNamespace(namespace)
+	labels := secretCpy.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[common.DatabaseClusterNameLabel] = dbName
+	secretCpy.SetLabels(labels)
+	return h.kubeConnector.CreateSecret(ctx, secretCpy)
+}
