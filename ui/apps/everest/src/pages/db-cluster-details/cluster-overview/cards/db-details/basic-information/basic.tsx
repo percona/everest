@@ -98,6 +98,7 @@ export const BasicInformationSection = ({
     <OverviewSection
       dataTestId="basic-information"
       title={Messages.titles.basicInformation}
+      editText={Messages.actions.upgrade}
       loading={loading}
       {...(shouldShowUpgrade && canUpdateDb
         ? {
