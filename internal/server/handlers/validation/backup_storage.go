@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -55,11 +56,11 @@ func (h *validateHandler) GetBackupStorage(ctx context.Context, namespace, name 
 }
 
 func (h *validateHandler) CreateBackupStorage(ctx context.Context, namespace string, req *api.CreateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
-	existing, err := h.kubeConnector.ListBackupStorages(ctx, ctrlclient.InNamespace(namespace))
+	bsList, err := h.kubeConnector.ListBackupStorages(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to ListBackupStorages: %w", err)
 	}
-	if err := validateCreateBackupStorageRequest(ctx, h.log, req, existing); err != nil {
+	if err := validateCreateBackupStorageRequest(ctx, h.log, req, bsList); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.CreateBackupStorage(ctx, namespace, req)
@@ -100,12 +101,13 @@ func validateCreateBackupStorageRequest(
 	params *api.CreateBackupStorageParams,
 	existingStorages *everestv1alpha1.BackupStorageList,
 ) error {
-	for _, storage := range existingStorages.Items {
-		if storage.Spec.Region == params.Region &&
+	if slices.ContainsFunc(existingStorages.Items, func(storage everestv1alpha1.BackupStorage) bool {
+		// Check if the storage already exists with the same region, endpoint URL, and bucket name
+		return storage.Spec.Region == params.Region &&
 			storage.Spec.EndpointURL == pointer.GetString(params.Url) &&
-			storage.Spec.Bucket == params.BucketName {
-			return errDuplicatedBackupStorage(existingStorages.Items[0].GetNamespace())
-		}
+			storage.Spec.Bucket == params.BucketName
+	}) {
+		return errDuplicatedBackupStorage(existingStorages.Items[0].GetNamespace())
 	}
 
 	if err := utils.ValidateEverestResourceName(params.Name, "name"); err != nil {

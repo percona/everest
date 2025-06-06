@@ -606,12 +606,12 @@ github.com/operator-framework/api v0.31.0/go.mod h1:57oCiHNeWcxmzu1Se8qlnwEKr/GG
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
-github.com/percona/everest-operator v0.6.0-dev1.0.20250603081450-403bd2764981 h1:kHbDhRp7WnOfRmPsD1QwjB+dpG5LjWM6N5iNBbCu6Uk=
-github.com/percona/everest-operator v0.6.0-dev1.0.20250603081450-403bd2764981/go.mod h1:QH4WVFFPEXJF7zjqPmefqdQ6IHIdVRBmHYAvbyK6dGg=
+github.com/percona/everest-operator v0.6.0-dev1.0.20250606105059-55929b75d265 h1:E09YTXYTHIi5s5x55p9wkVgTXuKmPKWCMFYr0HMPiXM=
+github.com/percona/everest-operator v0.6.0-dev1.0.20250606105059-55929b75d265/go.mod h1:QH4WVFFPEXJF7zjqPmefqdQ6IHIdVRBmHYAvbyK6dGg=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241212160532-0157f87a7eee h1:LtitxWyhBqCNjIZqdvsSEPBd2HPg11lDBlIExTQAbGQ=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241212160532-0157f87a7eee/go.mod h1:zikIUTNTflfcth3ZJRqhvW8+7Jj38aVlg+wSV1jwnxo=
-github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250602155423-62d9ee3de6e4 h1:cekfBX7eOfHsVBoFcvooyGavuOOZP34GqAMxZUvhgMo=
-github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250602155423-62d9ee3de6e4/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
+github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250606112817-7fc3cb509793 h1:HzziGJL0owkokf2pZvsbRlq1QhcVblIJfWL6naC8Icw=
+github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250606112817-7fc3cb509793/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
 github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26 h1:hng2p9QPk/OxHVZEdsv+k0ByyHzTNSB0SWlVuuTxMjs=
 github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26/go.mod h1:3D56UIi6Z0Z2gduNUuBcgjd1RNht3N8RKKmR9Wbfu4o=
 github.com/percona/percona-server-mongodb-operator v1.19.1 h1:lqIC7V80bZPJwjeYLYl/WA+QVQMHo193uEAx5zyIg84=
