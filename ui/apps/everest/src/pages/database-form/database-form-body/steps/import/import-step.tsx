@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FormGroup } from '@mui/material';
+import { ImportForm } from 'components/cluster-form/import/import';
 import { StepHeader } from '../step-header/step-header';
 import { Messages } from './import-step.messages';
 
@@ -24,7 +24,7 @@ export const ImportStep = () => {
         pageTitle={Messages.pageTitle}
         pageDescription={Messages.pageDescription}
       />
-      <FormGroup sx={{ mt: 3 }}></FormGroup>
+      <ImportForm />
     </>
   );
 };

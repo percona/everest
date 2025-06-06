@@ -3,8 +3,9 @@ import { BackupsPreviewSection } from './backups-section.tsx';
 import { AdvancedConfigurationsPreviewSection } from './advanced-configurations-section.tsx';
 import { PreviewSectionOne } from './section-one.tsx';
 import { ResourcesPreviewSection } from './resources-section.tsx';
-import { PreviewImportSection } from './import-section.tsx';
+// import { PreviewImportSection } from './import-section.tsx';
 import { useLocation } from 'react-router-dom';
+import { PreviewContentText } from '../preview-section.tsx';
 
 export const usePreviewSections = () => {
   const location = useLocation();
@@ -13,7 +14,7 @@ export const usePreviewSections = () => {
     ...(showImportStep
       ? [
           {
-            component: PreviewImportSection,
+            component: () => PreviewContentText({ text: '' }),
             title: 'Import information',
           },
         ]
