@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,19 +29,19 @@ type KubernetesConnector interface {
 	// ListBackupStorages returns list of managed backup storages in a given namespace.
 	// This method returns a list of full objects (meta and spec).
 	ListBackupStorages(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.BackupStorageList, error)
-	// GetBackupStorage returns backup storages by provided name and namespace.
+	// GetBackupStorage returns backup storages(full object) by provided name and namespace.
 	GetBackupStorage(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.BackupStorage, error)
+	// GetBackupStorageMeta returns backup storages(metadata only) by provided name and namespace.
+	GetBackupStorageMeta(ctx context.Context, key ctrlclient.ObjectKey) (*metav1.PartialObjectMetadata, error)
 	// CreateBackupStorage creates backup storages by provided object.
 	CreateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
 	// UpdateBackupStorage updates backup storages by provided new object.
 	UpdateBackupStorage(ctx context.Context, storage *everestv1alpha1.BackupStorage) (*everestv1alpha1.BackupStorage, error)
-	// DeleteBackupStorage returns backup storages by provided name and namespace.
+	// DeleteBackupStorage deletes backup storage by provided name and namespace.
 	DeleteBackupStorage(ctx context.Context, obj *everestv1alpha1.BackupStorage) error
 	// DeleteBackupStorages deletes all backup storages in provided namespace.
 	// This function will wait until all storages are deleted.
 	DeleteBackupStorages(ctx context.Context, opts ...ctrlclient.ListOption) error
-	// IsBackupStorageUsed checks if a backup storage that matches the criteria is used by any DB clusters.
-	IsBackupStorageUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error)
 	// GetCatalogSource returns catalog source that matches the criteria.
 	GetCatalogSource(ctx context.Context, key ctrlclient.ObjectKey) (*olmv1alpha1.CatalogSource, error)
 	// DeleteCatalogSource deletes catalog source that matches the criteria.
@@ -149,8 +150,10 @@ type KubernetesConnector interface {
 	// ListMonitoringConfigs returns list of managed monitoring configs that match the criteria.
 	// This method returns a list of full objects (meta and spec).
 	ListMonitoringConfigs(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.MonitoringConfigList, error)
-	// GetMonitoringConfig returns monitoring configs that matches the criteria.
+	// GetMonitoringConfig returns monitoring config(full object) that matches the criteria.
 	GetMonitoringConfig(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.MonitoringConfig, error)
+	// GetMonitoringConfigMeta returns monitoring config(metadata only) that matches the criteria.
+	GetMonitoringConfigMeta(ctx context.Context, key ctrlclient.ObjectKey) (*metav1.PartialObjectMetadata, error)
 	// CreateMonitoringConfig creates monitoring config.
 	CreateMonitoringConfig(ctx context.Context, config *everestv1alpha1.MonitoringConfig) (*everestv1alpha1.MonitoringConfig, error)
 	// UpdateMonitoringConfig updates monitoring config.
@@ -160,8 +163,6 @@ type KubernetesConnector interface {
 	// DeleteMonitoringConfigs deletes monitoring configs that matches the criteria.
 	// This function will wait until all configs are deleted.
 	DeleteMonitoringConfigs(ctx context.Context, opts ...ctrlclient.ListOption) error
-	// IsMonitoringConfigUsed checks if a monitoring config that matches the criteria is used by any database cluster.
-	IsMonitoringConfigUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error)
 	// CreateNamespace creates the given namespace.
 	CreateNamespace(ctx context.Context, namespace *corev1.Namespace) (*corev1.Namespace, error)
 	// GetNamespace returns a namespace that matches the criteria.
@@ -193,16 +194,16 @@ type KubernetesConnector interface {
 	// ListPodSchedulingPolicies returns a list of pod scheduling policy that matches the criteria.
 	// This method returns a list of full objects (meta and spec).
 	ListPodSchedulingPolicies(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.PodSchedulingPolicyList, error)
-	// GetPodSchedulingPolicy returns pod scheduling policy that matches the criteria.
+	// GetPodSchedulingPolicy returns pod scheduling policy(full object) that matches the criteria.
 	GetPodSchedulingPolicy(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.PodSchedulingPolicy, error)
+	// GetPodSchedulingPolicyMeta returns pod scheduling policy(metadata only) that matches the criteria.
+	GetPodSchedulingPolicyMeta(ctx context.Context, key ctrlclient.ObjectKey) (*metav1.PartialObjectMetadata, error)
 	// DeletePodSchedulingPolicy deletes pod scheduling policy that matches the criteria.
 	DeletePodSchedulingPolicy(ctx context.Context, obj *everestv1alpha1.PodSchedulingPolicy) error
 	// CreatePodSchedulingPolicy creates pod scheduling policy.
 	CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error)
 	// UpdatePodSchedulingPolicy updates pod scheduling policy.
 	UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error)
-	// IsPodSchedulingPolicyUsed checks if any database cluster uses a pod scheduling policy that matches the criteria.
-	IsPodSchedulingPolicyUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error)
 	// GetAllClusterResources goes through all cluster nodes and sums their allocatable resources.
 	GetAllClusterResources(ctx context.Context, clusterType ClusterType, volumes *corev1.PersistentVolumeList) (uint64, uint64, uint64, error)
 	// GetConsumedCPUAndMemory returns consumed CPU and Memory in given namespace. If namespace

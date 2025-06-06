@@ -47,13 +47,23 @@ func (k *Kubernetes) listBackupStoragesMeta(ctx context.Context, opts ...ctrlcli
 	return bsListMeta, nil
 }
 
-// GetBackupStorage returns backup storages by provided name and namespace.
+// GetBackupStorage returns backup storages(full object) by provided name and namespace.
 func (k *Kubernetes) GetBackupStorage(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.BackupStorage, error) {
 	result := &everestv1alpha1.BackupStorage{}
 	if err := k.k8sClient.Get(ctx, key, result); err != nil {
 		return nil, err
 	}
 	return result, nil
+}
+
+// GetBackupStorageMeta returns backup storages(metadata only) by provided name and namespace.
+func (k *Kubernetes) GetBackupStorageMeta(ctx context.Context, key ctrlclient.ObjectKey) (*metav1.PartialObjectMetadata, error) {
+	objMeta := &metav1.PartialObjectMetadata{}
+	objMeta.SetGroupVersionKind(everestv1alpha1.GroupVersion.WithKind("BackupStorage"))
+	if err := k.k8sClient.Get(ctx, key, objMeta); err != nil {
+		return nil, err
+	}
+	return objMeta, nil
 }
 
 // CreateBackupStorage creates backup storages by provided object.
@@ -72,7 +82,7 @@ func (k *Kubernetes) UpdateBackupStorage(ctx context.Context, storage *everestv1
 	return storage, nil
 }
 
-// DeleteBackupStorage returns backup storages by provided name and namespace.
+// DeleteBackupStorage deletes backup storage by provided name and namespace.
 func (k *Kubernetes) DeleteBackupStorage(ctx context.Context, obj *everestv1alpha1.BackupStorage) error {
 	return k.k8sClient.Delete(ctx, obj)
 }
@@ -122,54 +132,4 @@ func (k *Kubernetes) DeleteBackupStorages(ctx context.Context, opts ...ctrlclien
 		}
 		return false, nil
 	})
-}
-
-// IsBackupStorageUsed checks if a backup storage that matches the criteria is used by any DB clusters.
-func (k *Kubernetes) IsBackupStorageUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error) {
-	_, err := k.GetBackupStorage(ctx, key)
-	if err != nil {
-		return false, err
-	}
-
-	// Check if it is in use by clusters?
-	clusters, err := k.ListDatabaseClusters(ctx, ctrlclient.InNamespace(key.Namespace))
-	if err != nil {
-		return false, err
-	}
-	for _, cluster := range clusters.Items {
-		for _, sched := range cluster.Spec.Backup.Schedules {
-			if sched.Enabled && sched.BackupStorageName == key.Name {
-				return true, nil
-			}
-		}
-	}
-
-	// Check if it is in use by backups?
-	backups, err := k.ListDatabaseClusterBackups(ctx, ctrlclient.InNamespace(key.Namespace))
-	if err != nil {
-		return false, err
-	}
-	for _, backup := range backups.Items {
-		if backup.Spec.BackupStorageName == key.Name {
-			return true, nil
-		}
-	}
-
-	// Check if it is in use by restores?
-	restores, err := k.ListDatabaseClusterRestores(ctx, ctrlclient.InNamespace(key.Namespace))
-	if err != nil {
-		return false, err
-	}
-	for _, restore := range restores.Items {
-		src := restore.Spec.DataSource.BackupSource
-		if src != nil && src.BackupStorageName == key.Name {
-			return true, nil
-		}
-		for _, db := range clusters.Items {
-			if db.GetName() == restore.Spec.DBClusterName && !restore.IsComplete() {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
 }

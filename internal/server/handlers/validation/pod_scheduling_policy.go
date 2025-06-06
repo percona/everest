@@ -21,8 +21,8 @@ import (
 	"fmt"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -200,7 +200,7 @@ func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *evere
 		return err
 	}
 
-	if h.isDefaultPSP(oldPsp) {
+	if h.isEverestReadOnlyObject(oldPsp) {
 		// default policy update is not allowed
 		return errUpdateDefaultPSP(newPsp.GetName())
 	}
@@ -213,24 +213,20 @@ func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *evere
 }
 
 func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName string) error {
-	var psp *everestv1alpha1.PodSchedulingPolicy
+	var psp *metav1.PartialObjectMetadata
 	var err error
-	if psp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: pspName}); err != nil {
+	if psp, err = h.kubeConnector.GetPodSchedulingPolicyMeta(ctx, types.NamespacedName{Name: pspName}); err != nil {
 		return err
 	}
 
-	if h.isDefaultPSP(psp) {
+	if h.isEverestReadOnlyObject(psp) {
 		// default policy deletion is not allowed
 		return errDeleteDefaultPSP(psp.GetName())
 	}
 
-	if controllerutil.ContainsFinalizer(psp, everestv1alpha1.InUseResourceFinalizer) {
+	if h.isEverestObjectInUse(psp) {
 		// policy is used by some DB cluster
 		return errDeleteInUsePSP(psp.GetName())
 	}
 	return nil
-}
-
-func (h *validateHandler) isDefaultPSP(psp *everestv1alpha1.PodSchedulingPolicy) bool {
-	return controllerutil.ContainsFinalizer(psp, everestv1alpha1.ReadOnlyFinalizer)
 }

@@ -46,7 +46,7 @@ build-debug:                ## Build binaries
 
 gen:                    ## Generate code
 	go generate ./...
-	make format
+	$(MAKE) format
 
 format:                 ## Format source code
 	bin/gofumpt -l -w $(FILES)
@@ -98,10 +98,15 @@ charts: $(HELM)         ## Install Helm charts
 
 CHART_BRANCH ?= main
 update-dev-chart:
-	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@$(CHART_BRANCH)
+	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@${CHART_BRANCH}
 	go mod tidy
 
 EVEREST_OPERATOR_BRANCH ?= main
 update-dev-everest-operator:
-	GOPROXY=direct go get -u -v github.com/percona/everest-operator@$(EVEREST_OPERATOR_BRANCH)
+	GOPROXY=direct go get -u -v github.com/percona/everest-operator@${EVEREST_OPERATOR_BRANCH}
 	go mod tidy
+
+prepare-pr:
+	$(MAKE) gen
+	CHART_BRANCH=${CHART_BRANCH} $(MAKE) update-dev-chart
+	EVEREST_OPERATOR_BRANCH=${EVEREST_OPERATOR_BRANCH} $(MAKE) update-dev-everest-operator

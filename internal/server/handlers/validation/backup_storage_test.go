@@ -1,14 +1,28 @@
 package validation
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	k8sError "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	everestapi "github.com/percona/everest/api"
+	"github.com/percona/everest/internal/server/handlers/k8s"
+	"github.com/percona/everest/pkg/kubernetes"
+)
+
+const (
+	bsNamespace = "test-ns"
 )
 
 func TestValidateDuplicateStorageByUpdate(t *testing.T) {
@@ -259,6 +273,103 @@ func TestValidateBucketName(t *testing.T) {
 			t.Parallel()
 			err := validateBucketName(tc.input)
 			assert.ErrorIs(t, err, tc.err)
+		})
+	}
+}
+
+func TestValidate_DeleteBackupStorage(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name            string
+		objs            []ctrlclient.Object
+		objNameToDelete string
+		wantErr         error
+	}
+	testCases := []testCase{
+		// no backup storages
+		{
+			name:            "no backup storages",
+			objNameToDelete: "test-backup-storage",
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "backupstorages",
+			},
+				"test-backup-storage",
+			),
+		},
+		// delete non-existing backup storage
+		{
+			name: "delete non-existing backup storage",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.BackupStorage{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: bsNamespace,
+						Name:      "test-backup-storage",
+					},
+					Spec: everestv1alpha1.BackupStorageSpec{},
+				},
+			},
+			objNameToDelete: "non-existing-backup-storage",
+			wantErr: k8sError.NewNotFound(schema.GroupResource{
+				Group:    everestv1alpha1.GroupVersion.Group,
+				Resource: "backupstorages",
+			},
+				"non-existing-backup-storage",
+			),
+		},
+		// delete non-used backup storage
+		{
+			name: "delete non-used backup storage",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.BackupStorage{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: bsNamespace,
+						Name:      "test-backup-storage",
+					},
+					Spec: everestv1alpha1.BackupStorageSpec{},
+				},
+			},
+			objNameToDelete: "test-backup-storage",
+		},
+		// delete used backup storage
+		{
+			name: "delete used backup storage",
+			objs: []ctrlclient.Object{
+				&everestv1alpha1.BackupStorage{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace:  bsNamespace,
+						Name:       "test-backup-storage",
+						Finalizers: []string{everestv1alpha1.InUseResourceFinalizer},
+					},
+					Spec: everestv1alpha1.BackupStorageSpec{},
+				},
+			},
+			objNameToDelete: "test-backup-storage",
+			wantErr:         errors.Join(ErrInvalidRequest, errDeleteInUseBackupStorage(bsNamespace, "test-backup-storage")),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				WithObjects(tc.objs...).
+				Build()
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sHandler := k8s.New(zap.NewNop().Sugar(), k, "")
+
+			valHandler := New(zap.NewNop().Sugar(), k)
+			valHandler.SetNext(k8sHandler)
+
+			err := valHandler.DeleteBackupStorage(context.Background(), bsNamespace, tc.objNameToDelete)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr.Error(), err.Error())
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }
