@@ -383,7 +383,7 @@ export const resourcesFormSchema = (
       if (!Number.isInteger(disk)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Disk size must be an integer number.',
+          message: Messages.integerNumber,
 
           path: [DbWizardFormFields.disk],
         });
