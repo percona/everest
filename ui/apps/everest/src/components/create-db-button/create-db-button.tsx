@@ -22,7 +22,11 @@ import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { humanizeDbType } from 'utils/db';
 
-export const CreateDbButton = () => {
+export const CreateDbButton = ({
+  createFromImport = false,
+}: {
+  createFromImport?: boolean;
+}) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showDropdownButton, setShowDropdownButton] = useState(false);
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
@@ -77,7 +81,7 @@ export const CreateDbButton = () => {
         <Button
           data-testid="add-db-cluster-button"
           size="small"
-          variant="contained"
+          variant={createFromImport ? 'text' : 'contained'}
           sx={buttonStyle}
           aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
           aria-haspopup="true"
@@ -85,7 +89,7 @@ export const CreateDbButton = () => {
           onClick={handleClick}
           endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
         >
-          Create database
+          {createFromImport ? 'Import' : 'Create database'}
         </Button>
       ) : (
         <Skeleton variant="rounded" sx={skeletonStyle} />
@@ -118,7 +122,10 @@ export const CreateDbButton = () => {
                     px: 2,
                     py: '10px',
                   }}
-                  state={{ selectedDbEngine: item.type }}
+                  state={{
+                    selectedDbEngine: item.type,
+                    showImport: createFromImport,
+                  }}
                 >
                   {humanizeDbType(dbEngineToDbType(item.type))}
                 </MenuItem>
