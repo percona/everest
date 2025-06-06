@@ -15,7 +15,7 @@ import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 let token: string;
 
 const dbs = ['pxc', 'psmdb', 'postgresql'];
-const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
+const namespaces = EVEREST_CI_NAMESPACES;
 
 test.describe.configure({ retries: 0 });
 
@@ -49,15 +49,17 @@ dbs.forEach((db) => {
         await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
         await test.step('Populate basic information', async () => {
-          await populateBasicInformation(
-            page,
-            namespace,
-            clusterName,
-            db,
-            storageClasses[0],
-            false,
-            null
-          );
+          Object.values(namespaces).forEach(async (namespace) => {
+            await populateBasicInformation(
+              page,
+              namespace,
+              clusterName,
+              db,
+              storageClasses[0],
+              false,
+              null
+            );
+          });
         });
 
         await test.step('Populate resources', async () => {
