@@ -46,6 +46,12 @@ let token: string;
 
 test.describe.configure({ retries: 0 });
 
+const zephyrMap: Record<string, string> = {
+  'restore-pxc': 'T116',
+  'restore-psmdb': 'T117',
+  'restore-postgresql': 'T118',
+};
+
 function getNextScheduleMinute(incrementMinutes: number): string {
   const d: number = new Date().getMinutes();
   const minute: number = (d + incrementMinutes) % 60;
@@ -71,6 +77,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       // Define primary and restored cluster names to use across related tests
       const clusterName = `${db}-${size}-pri`;
       const restoredClusterName = `${db}-${size}-rest`;
+      let zephyrId;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -300,7 +307,8 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Restore to a new database cluster [${db} size ${size}]`, async ({
+      zephyrId = zephyrMap[`restore-${db}`];
+      test(`${zephyrId} - Restore to a new database cluster [${db} size ${size}]`, async ({
         page,
       }) => {
         await gotoDbClusterBackups(page, clusterName);
@@ -350,53 +358,47 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await waitForStatus(page, restoredClusterName, 'Initializing', 15000);
           await waitForStatus(page, restoredClusterName, 'Up', 600000);
         });
-      });
 
-      test(`Delete primary database cluster [${db} size ${size}]`, async ({
-        page,
-      }) => {
-        await deleteDbCluster(page, clusterName);
-        await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 240000);
-      });
-
-      test(`Verify data after restore on the new database [${db} size ${size}]`, async () => {
-        const result = await queryTestDB(restoredClusterName, namespace);
-
-        switch (db) {
-          case 'pxc':
-            expect(result.trim()).toBe('1\n2\n3');
-            break;
-          case 'psmdb':
-            // Normalize JSON format before comparison
-            const parsedResult = JSON.stringify(JSON.parse(result.trim()));
-            const expectedJson = JSON.stringify([{ a: 1 }, { a: 2 }, { a: 3 }]);
-            expect(parsedResult).toBe(expectedJson);
-            break;
-          case 'postgresql':
-            expect(result.trim()).toBe('1\n 2\n 3');
-            break;
-        }
-      });
-
-      test(`Verify and Delete Restore History for the restored database [${db} size ${size}]`, async ({
-        page,
-      }) => {
-        // TODO: Remove the if statement after fix for https://perconadev.atlassian.net/browse/EVEREST-1012
-        if (db === 'postgresql') {
-          //Skip the test for PostgreSQL
-          test.skip();
-          return;
-        }
-        await gotoDbClusterRestores(page, restoredClusterName);
-        await test.step('Verify restore history exists', async () => {
-          await expect(page.getByTestId('status')).toHaveText('Succeeded');
+        await test.step(`Delete primary database cluster`, async () => {
+          await deleteDbCluster(page, clusterName);
+          await waitForStatus(page, clusterName, 'Deleting', 15000);
+          await waitForDelete(page, clusterName, 240000);
         });
-        await test.step('Delete the restore entry', async () => {
-          await findRowAndClickActions(page, restoredClusterName, 'Delete');
-          await expect(page.getByLabel('Delete restore')).toBeVisible();
-          await page.getByTestId('confirm-dialog-delete').click();
-          await waitForDelete(page, restoredClusterName, 15000);
+
+        await test.step(`Verify data after restore on the new database`, async () => {
+          const result = await queryTestDB(restoredClusterName, namespace);
+
+          switch (db) {
+            case 'pxc':
+              expect(result.trim()).toBe('1\n2\n3');
+              break;
+            case 'psmdb':
+              // Normalize JSON format before comparison
+              const parsedResult = JSON.stringify(JSON.parse(result.trim()));
+              const expectedJson = JSON.stringify([{ a: 1 }, { a: 2 }, { a: 3 }]);
+              expect(parsedResult).toBe(expectedJson);
+              break;
+            case 'postgresql':
+              expect(result.trim()).toBe('1\n 2\n 3');
+              break;
+          }
+        });
+
+        await test.step(`Verify and Delete Restore History for the restored database`, async () => {
+          // TODO: Remove the if statement after fix for https://perconadev.atlassian.net/browse/EVEREST-1012
+          if (db === 'postgresql') {
+            return;
+          }
+          await gotoDbClusterRestores(page, restoredClusterName);
+          await test.step('Verify restore history exists', async () => {
+            await expect(page.getByTestId('status')).toHaveText('Succeeded');
+          });
+          await test.step('Delete the restore entry', async () => {
+            await findRowAndClickActions(page, restoredClusterName, 'Delete');
+            await expect(page.getByLabel('Delete restore')).toBeVisible();
+            await page.getByTestId('confirm-dialog-delete').click();
+            await waitForDelete(page, restoredClusterName, 15000);
+          });
         });
       });
 

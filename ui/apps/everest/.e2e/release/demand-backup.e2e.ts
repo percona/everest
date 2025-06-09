@@ -43,6 +43,15 @@ let token: string;
 
 test.describe.configure({ retries: 0 });
 
+const zephyrMap: Record<string, string> = {
+  'backup-pxc': 'T101',
+  'backup-psmdb': 'T102',
+  'backup-postgresql': 'T103',
+  'restore-pxc': 'T104',
+  'restore-psmdb': 'T105',
+  'restore-postgresql': 'T106',
+};
+
 [
   { db: 'psmdb', size: 3 },
   { db: 'pxc', size: 3 },
@@ -58,6 +67,7 @@ test.describe.configure({ retries: 0 });
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-dembkp`;
+      let zephyrId;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -166,7 +176,8 @@ test.describe.configure({ retries: 0 });
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create demand backup [${db} size ${size}]`, async ({ page }) => {
+      zephyrId = zephyrMap[`backup-${db}`];
+      test(`${zephyrId} - Create demand backup [${db} size ${size}]`, async ({ page }) => {
         await gotoDbClusterBackups(page, clusterName);
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName + '-1');
@@ -183,41 +194,44 @@ test.describe.configure({ retries: 0 });
         await dropTestDB(clusterName, namespace);
       });
 
-      test(`Restore cluster [${db} size ${size}]`, async ({ page }) => {
-        await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(
-          page,
-          baseBackupName + '-1',
-          'Restore to this DB'
-        );
-        await expect(
-          page.getByTestId('select-input-backup-name')
-        ).not.toBeEmpty();
-        await page.getByTestId('form-dialog-restore').click();
+      zephyrId = zephyrMap[`restore-${db}`];
+      test(`${zephyrId} - Restore cluster [${db} size ${size}]`, async ({ page }) => {
+        await test.step('Navigate to backups and restore', async () => {
+          await gotoDbClusterBackups(page, clusterName);
+          await findRowAndClickActions(
+            page,
+            baseBackupName + '-1',
+            'Restore to this DB'
+          );
+          await expect(
+            page.getByTestId('select-input-backup-name')
+          ).not.toBeEmpty();
+          await page.getByTestId('form-dialog-restore').click();
 
-        await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+          await page.goto('/databases');
+          await waitForStatus(page, clusterName, 'Restoring', 30000);
+          await waitForStatus(page, clusterName, 'Up', 600000);
 
-        await gotoDbClusterRestores(page, clusterName);
-        // we select based on backup source since restores cannot be named and we don't know
-        // in advance what will be the name
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
-      });
+          await gotoDbClusterRestores(page, clusterName);
+          // we select based on backup source since restores cannot be named and we don't know
+          // in advance what will be the name
+          await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
+        });
 
-      test(`Check data after restore [${db} size ${size}]`, async () => {
-        const result = await queryTestDB(clusterName, namespace);
-        switch (db) {
-          case 'pxc':
-            expect(result.trim()).toBe('1\n2\n3');
-            break;
-          case 'psmdb':
-            expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
-            break;
-          case 'postgresql':
-            expect(result.trim()).toBe('1\n 2\n 3');
-            break;
-        }
+        await test.step(`Check data after restore [${db} size ${size}]`, async () => {
+          const result = await queryTestDB(clusterName, namespace);
+          switch (db) {
+            case 'pxc':
+              expect(result.trim()).toBe('1\n2\n3');
+              break;
+            case 'psmdb':
+              expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
+              break;
+            case 'postgresql':
+              expect(result.trim()).toBe('1\n 2\n 3');
+              break;
+          }
+        });
       });
 
       test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
