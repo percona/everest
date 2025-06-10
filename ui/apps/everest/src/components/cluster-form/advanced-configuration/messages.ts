@@ -13,7 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { INVALID_SOURCE_RANGE_ERROR, SOURCE_RANGE_PLACEHOLDER } from 'consts';
+import {
+  DUPLICATE_SOURCE_RANGE_ERROR,
+  INVALID_SOURCE_RANGE_ERROR,
+  SOURCE_RANGE_PLACEHOLDER,
+} from 'consts';
 
 export const Messages = {
   enable: 'Enable',
@@ -48,6 +52,7 @@ export const Messages = {
   errors: {
     sourceRange: {
       invalid: INVALID_SOURCE_RANGE_ERROR,
+      duplicate: DUPLICATE_SOURCE_RANGE_ERROR,
     },
     storageClass: {
       invalid: 'Invalid storage class',
