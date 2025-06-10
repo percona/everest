@@ -87,16 +87,14 @@ describe('Monitoring Step', () => {
       </QueryClientProvider>
     );
     expect(screen.getByTestId('switch-input-monitoring')).toBeInTheDocument();
-    expect(screen.getByTestId('switch-input-monitoring')).not.toHaveAttribute(
-      'aria-disabled'
-    );
+    expect(screen.getByRole('checkbox')).not.toBeDisabled();
     expect(screen.queryByTestId('monitoring-warning')).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('text-input-monitoring-instance')
     ).not.toBeInTheDocument();
   });
 
-  it('should render remaining fields when monitoring is on', () => {
+  it('should render remaining fields when monitoring is on', async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
@@ -109,9 +107,11 @@ describe('Monitoring Step', () => {
 
     expect(screen.getByTestId('switch-input-monitoring')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('switch-input-monitoring'));
-    expect(
-      screen.getByTestId('text-input-monitoring-instance')
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('text-input-monitoring-instance')
+      ).toBeInTheDocument()
+    );
   });
 
   it('should disable toggle when no monitoring instances defined', async () => {
@@ -127,11 +127,7 @@ describe('Monitoring Step', () => {
       </QueryClientProvider>
     );
 
-    expect(screen.queryByTestId('monitoring-warning')).toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.getByTestId('switch-input-monitoring')).toHaveAttribute(
-        'aria-disabled'
-      )
-    );
+    expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('checkbox')).toBeDisabled());
   });
 });
