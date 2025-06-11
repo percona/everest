@@ -40,11 +40,12 @@ const configSchemaObject = {
 };
 export const configSchema = z.object(configSchemaObject);
 
-export const importStepSchema = () =>
-  z.object({
+export const importStepSchema = z
+  .object({
     ...dataImporterSchemeObject,
     ...s3SchemaObject,
     ...credentialsSchemaObject,
     ...filePathSchemaObject,
     ...configSchemaObject,
-  });
+  })
+  .superRefine(() => {});
