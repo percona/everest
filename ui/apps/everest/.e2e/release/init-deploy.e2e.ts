@@ -222,7 +222,8 @@ test.describe.configure({ retries: 0 });
             result = await queryMySQL(
               clusterName,
               namespace,
-              `SHOW variables LIKE "max_connections";`
+              `SHOW variables LIKE "max_connections";`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('max_connections	250');
             break;
@@ -232,7 +233,8 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               'admin',
-              `db.serverCmdLineOpts().parsed.systemLog;`
+              `db.serverCmdLineOpts().parsed.systemLog;`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
             break;
@@ -242,7 +244,8 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               'postgres',
-              `SHOW shared_buffers;`
+              `SHOW shared_buffers;`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('192MB');
             break;
@@ -478,7 +481,7 @@ test.describe.configure({ retries: 0 });
         await test.step('Check new external access values in UI', async () => {
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
           await expect(
-            page.getByLabel('Enable External Access Enable')
+            page.getByTestId('switch-input-external-access')
           ).toBeChecked();
           const rawValue = await page
             .getByTestId('text-input-source-ranges.0.source-range')
@@ -489,7 +492,7 @@ test.describe.configure({ retries: 0 });
         await test.step(`Check service in K8s [${db} size ${size}]`, async () => {
           let resourceName: string;
 
-          await page.waitForTimeout(5000); // wait for svc to be updated
+          await page.waitForTimeout(15000); // wait for svc to be updated
           switch (db) {
             case 'pxc': {
               resourceName = `${clusterName}-haproxy`;
