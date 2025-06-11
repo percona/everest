@@ -408,7 +408,9 @@ const zephyrMap: Record<string, string> = {
       });
 
       zephyrId = zephyrMap[`suspend-${db}`];
-      test(`${zephyrId} - Suspend cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Suspend cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
@@ -418,7 +420,9 @@ const zephyrMap: Record<string, string> = {
       });
 
       zephyrId = zephyrMap[`resume-${db}`];
-      test(`${zephyrId} - Resume cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Resume cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await resumeDbCluster(page, clusterName);
         // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
         if (size != 1 || db != 'psmdb') {
@@ -428,7 +432,9 @@ const zephyrMap: Record<string, string> = {
       });
 
       zephyrId = zephyrMap[`restart-${db}`];
-      test(`${zephyrId} - Restart cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Restart cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await restartDbCluster(page, clusterName);
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
@@ -441,7 +447,9 @@ const zephyrMap: Record<string, string> = {
       });
 
       zephyrId = zephyrMap[`edit-${db}`];
-      test(`${zephyrId} - Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Edit cluster/scale up [${db} size ${size}]`, async ({
+        page,
+      }) => {
         test.skip(size > 3);
         const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
@@ -561,7 +569,9 @@ const zephyrMap: Record<string, string> = {
       });
 
       zephyrId = zephyrMap[`delete-${db}`];
-      test(`${zephyrId} - Delete cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Delete cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 240000);

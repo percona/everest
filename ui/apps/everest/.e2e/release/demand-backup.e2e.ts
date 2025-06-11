@@ -177,7 +177,9 @@ const zephyrMap: Record<string, string> = {
       });
 
       zephyrId = zephyrMap[`backup-${db}`];
-      test(`${zephyrId} - Create demand backup [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Create demand backup [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await gotoDbClusterBackups(page, clusterName);
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName + '-1');
@@ -195,7 +197,9 @@ const zephyrMap: Record<string, string> = {
       });
 
       zephyrId = zephyrMap[`restore-${db}`];
-      test(`${zephyrId} - Restore cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Restore cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await test.step('Navigate to backups and restore', async () => {
           await gotoDbClusterBackups(page, clusterName);
           await findRowAndClickActions(

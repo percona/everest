@@ -184,7 +184,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       });
 
       zephyrId = zephyrMap[`backup-${db}`];
-      test(`${zephyrId} - Create backup schedules [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Create backup schedules [${db} size ${size}]`, async ({
+        page,
+      }) => {
         test.setTimeout(30 * 1000);
 
         const scheduleMinute1 = getNextScheduleMinute(2);
@@ -290,7 +292,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       });
 
       zephyrId = zephyrMap[`restore-${db}`];
-      test(`${zephyrId} - Restore cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`${zephyrId} - Restore cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await test.step('Restore data', async () => {
           await gotoDbClusterBackups(page, clusterName);
           const firstBackup = await page

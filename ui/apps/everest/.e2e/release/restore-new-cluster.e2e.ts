@@ -375,7 +375,11 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             case 'psmdb':
               // Normalize JSON format before comparison
               const parsedResult = JSON.stringify(JSON.parse(result.trim()));
-              const expectedJson = JSON.stringify([{ a: 1 }, { a: 2 }, { a: 3 }]);
+              const expectedJson = JSON.stringify([
+                { a: 1 },
+                { a: 2 },
+                { a: 3 },
+              ]);
               expect(parsedResult).toBe(expectedJson);
               break;
             case 'postgresql':
