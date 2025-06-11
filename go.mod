@@ -7,6 +7,7 @@ toolchain go1.24.1
 replace (
 	github.com/containerd/containerd v1.7.12 => github.com/containerd/containerd v1.7.13
 	github.com/percona/everest-operator => github.com/percona/everest-operator v0.6.0-dev1.0.20250610190300-1f40df0b2856
+	github.com/percona/percona-helm-charts/charts/everest => github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250611064315-301cf3c025ed
 	k8s.io/api => k8s.io/api v0.33.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.32.0
 	k8s.io/apimachinery => k8s.io/apimachinery v0.33.1
