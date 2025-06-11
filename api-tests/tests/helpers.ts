@@ -214,13 +214,6 @@ export const createDataImporter = async (cli: CliHelper) => {
   out.outContains("test-data-importer")
 }
 
-export const deleteDataImporter = async (cli: CliHelper) => {
-  let dataImporterPath = 'testdata/dataimporter.yaml'
-  await cli.exec(`kubectl delete -f ${dataImporterPath}`)
-  const out = await cli.execSilent(`kubectl get dataimporters`)
-  out.outNotContains(["test-data-importer"])
-}
-
 export const deleteMonitoringConfig = async (request, name, namespace) => {
   const res = await request.delete(`/v1/namespaces/${namespace}/monitoring-instances/${name}`)
 

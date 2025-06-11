@@ -68,7 +68,7 @@ test('import data into fresh cluster', async ({ request, page }) => {
                     region: "us-west-2",
                     endpointURL: "https://s3.us-west-2.amazonaws.com",
                     credentialsSecretName: "test-s3-credentials",
-                    // do not worry, everest-operator uses a mutating webhook to hide this behind a secret
+                    // everest-operator will hide this behind a Secret
                     accessKeyId: "test-access-key-id",
                     secretAccessKey: "test-secret-access-key",
                 },
