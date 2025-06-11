@@ -26,7 +26,7 @@ const credentialsSchemaObject = {
   [ImportFields.operatorAdmin]: z.string().min(1),
   [ImportFields.replication]: z.string().min(1),
 };
-export const credentialsSchema = z.object(credentialsSchemaObject);
+export const dbCredentialsSchema = z.object(credentialsSchemaObject);
 
 const filePathSchemaObject = { [ImportFields.filePath]: z.string() };
 export const filePathSchema = z.object(filePathSchemaObject);

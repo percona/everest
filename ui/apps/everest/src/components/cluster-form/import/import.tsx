@@ -18,10 +18,11 @@ import { Box, MenuItem } from '@mui/material';
 import { FormCardWithCheck, FormCardWithDialog } from 'components/form-card';
 import { Messages } from './messages';
 import { ImportFields } from './import.types';
-import FileDirectory from './button-with-dialog/file-directory';
-import DbCredentials from './button-with-dialog/db-credentials';
-import DbConfig from './button-with-dialog/configuration';
-import S3Details from './button-with-dialog/s3-details';
+import { S3DetailsSection } from './sections/s3-details/s3-details-section';
+import { SectionKeys } from './sections/constants';
+import { FileDirectorySection } from './sections/file-directory/file-directory-section';
+import { DbCredentialsSection } from './sections/db-credentials/db-credentials-section';
+import { ConfigSection } from './sections/config/config-section';
 
 const dataImportersMock = ['1', '2', '3'];
 export const ImportForm = () => {
@@ -49,21 +50,26 @@ export const ImportForm = () => {
 
         <FormCardWithDialog
           title={Messages.s3Details.label}
-          content={<S3Details />}
+          content={<S3DetailsSection />}
+          sectionSavedKey={SectionKeys.s3Details}
         />
+
         <FormCardWithDialog
           title={Messages.fileDir.label}
-          content={<FileDirectory />}
+          content={<FileDirectorySection />}
+          sectionSavedKey={SectionKeys.fileDir}
         />
 
         <FormCardWithDialog
           title={Messages.dbCreds.label}
-          content={<DbCredentials />}
+          content={<DbCredentialsSection />}
+          sectionSavedKey={SectionKeys.dbCreds}
         />
 
         <FormCardWithDialog
           title={Messages.config.label}
-          content={<DbConfig />}
+          content={<ConfigSection />}
+          sectionSavedKey={SectionKeys.config}
           optional
         />
       </>
