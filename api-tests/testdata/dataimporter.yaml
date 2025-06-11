@@ -1,0 +1,14 @@
+apiVersion: everest.percona.com/v1alpha1
+kind: DataImporter
+metadata:
+  name: test-data-importer
+spec:
+  displayName: "Test data importer"
+  description: "Data importer for testing"
+  supportedEngines:
+  - postgresql
+  - pxc
+  - psmdb
+  jobSpec:
+    image: "busybox"
+    command: ["/bin/sh", "-c", "sleep 30 && cat \"$0\""]
