@@ -49,7 +49,8 @@ type DatabaseClusterHandler interface {
 	GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error)
 	GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error)
 	GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error)
-	CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret) (*corev1.Secret, error)
+	CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string,
+		dbEngineType everestv1alpha1.EngineType, secret *corev1.Secret) (*corev1.Secret, error)
 }
 
 // NamespacesHandler provides methods for handling operations on namespaces.

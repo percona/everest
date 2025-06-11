@@ -155,9 +155,9 @@ func (_m *MockHandler) CreateDatabaseClusterRestore(ctx context.Context, req *v1
 	return r0, r1
 }
 
-// CreateDatabaseClusterSecret provides a mock function with given fields: ctx, namespace, dbName, secret
-func (_m *MockHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace string, dbName string, secret *v1.Secret) (*v1.Secret, error) {
-	ret := _m.Called(ctx, namespace, dbName, secret)
+// CreateDatabaseClusterSecret provides a mock function with given fields: ctx, namespace, dbName, dbEngineType, secret
+func (_m *MockHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace string, dbName string, dbEngineType v1alpha1.EngineType, secret *v1.Secret) (*v1.Secret, error) {
+	ret := _m.Called(ctx, namespace, dbName, dbEngineType, secret)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateDatabaseClusterSecret")
@@ -165,19 +165,19 @@ func (_m *MockHandler) CreateDatabaseClusterSecret(ctx context.Context, namespac
 
 	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *v1.Secret) (*v1.Secret, error)); ok {
-		return rf(ctx, namespace, dbName, secret)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, v1alpha1.EngineType, *v1.Secret) (*v1.Secret, error)); ok {
+		return rf(ctx, namespace, dbName, dbEngineType, secret)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *v1.Secret) *v1.Secret); ok {
-		r0 = rf(ctx, namespace, dbName, secret)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, v1alpha1.EngineType, *v1.Secret) *v1.Secret); ok {
+		r0 = rf(ctx, namespace, dbName, dbEngineType, secret)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v1.Secret)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *v1.Secret) error); ok {
-		r1 = rf(ctx, namespace, dbName, secret)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, v1alpha1.EngineType, *v1.Secret) error); ok {
+		r1 = rf(ctx, namespace, dbName, dbEngineType, secret)
 	} else {
 		r1 = ret.Error(1)
 	}

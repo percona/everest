@@ -764,6 +764,16 @@ paths:
           required: false
           schema:
             type: string
+        - name: dbEngineType
+          in: query
+          description: Type of the database engine
+          required: true
+          schema:
+            type: string
+            enum:
+            - pxc
+            - psmdb
+            - postgresql
       responses:
         '200':
           description: Successful operation

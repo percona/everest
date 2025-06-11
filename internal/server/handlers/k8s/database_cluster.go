@@ -407,14 +407,34 @@ func valueOrDefault(value *int, defaultValue int) int {
 	return *value
 }
 
-func (h *k8sHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret) (*corev1.Secret, error) {
+func (h *k8sHandler) CreateDatabaseClusterSecret(ctx context.Context,
+	namespace, dbName string,
+	engineType everestv1alpha1.EngineType,
+	secret *corev1.Secret,
+) (*corev1.Secret, error) {
 	secretCpy := secret.DeepCopy()
 	secretCpy.SetNamespace(namespace)
 	labels := secretCpy.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[common.DatabaseClusterNameLabel] = dbName
-	secretCpy.SetLabels(labels)
+	setDatabaseClusterSecretLabels(namespace, dbName, engineType, secretCpy)
 	return h.kubeConnector.CreateSecret(ctx, secretCpy)
+}
+
+func setDatabaseClusterSecretLabels(
+	namespace, dbName string,
+	engineType everestv1alpha1.EngineType,
+	secret *corev1.Secret,
+) {
+	labels := map[string]string{}
+	labels[common.DatabaseClusterNameLabel] = "database-cluster-name"
+	switch engineType {
+	case everestv1alpha1.DatabaseEnginePostgresql:
+		// we need the following labels otherwise PG operator will overwrite the secret.
+		labels["postgres-operator.crunchydata.com/cluster"] = dbName
+		labels["postgres-operator.crunchydata.com/pguser"] = "postgres"
+		labels["postgres-operator.crunchydata.com/role"] = "pguser"
+	}
+	secret.SetLabels(labels)
 }
