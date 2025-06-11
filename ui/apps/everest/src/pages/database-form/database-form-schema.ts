@@ -105,20 +105,20 @@ export const getDBWizardSchema = (
   defaultValues: DbWizardType,
   dbClusters: DbClusterName[],
   mode: WizardMode,
-  hasImportStep?: boolean
+  hasImportStep: boolean
 ) => {
-  const schema = [
-    [...(hasImportStep ? [importStepSchema()] : [])],
+  const baseSchema = [
     basicInfoSchema(dbClusters),
     stepTwoSchema(defaultValues, mode),
     backupsStepSchema(),
     advancedConfigurationsSchema(),
     stepFiveSchema(),
   ];
+  const schema = hasImportStep ? [importStepSchema, ...baseSchema] : baseSchema;
   return schema[activeStep];
 };
 
-export type ImportStepType = z.infer<ReturnType<typeof importStepSchema>>;
+export type ImportStepType = z.infer<typeof importStepSchema>;
 export type BasicInfoType = z.infer<ReturnType<typeof basicInfoSchema>>;
 export type StepTwoType = z.infer<ReturnType<typeof stepTwoSchema>>;
 export type AdvancedConfigurationType = z.infer<
@@ -127,8 +127,12 @@ export type AdvancedConfigurationType = z.infer<
 export type BackupStepType = z.infer<ReturnType<typeof backupsStepSchema>>;
 export type StepFiveType = z.infer<ReturnType<typeof stepFiveSchema>>;
 
-export type DbWizardType = BasicInfoType &
+export type DbWizardTypeBase = BasicInfoType &
   StepTwoType &
   StepFiveType &
   AdvancedConfigurationType &
   BackupStepType;
+
+export type DbWizardTypeWithPrestep = ImportStepType & DbWizardTypeBase;
+
+export type DbWizardType = DbWizardTypeBase | DbWizardTypeWithPrestep;

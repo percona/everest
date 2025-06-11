@@ -36,6 +36,7 @@ import {
 } from 'hooks';
 import { WizardMode } from 'shared-types/wizard.types';
 import { useSteps } from './database-form-body/steps';
+import { ZodType } from 'zod';
 
 export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -68,21 +69,20 @@ export const DatabasePage = () => {
       namespace: db?.metadata.namespace!,
     }));
 
+  const hasImportStep = location.state?.showImport;
+
   const validationSchema = useDbValidationSchema(
     activeStep,
     defaultValues,
     dbClustersNamesList,
-    mode
-  );
-
+    mode,
+    hasImportStep
+  ) as unknown as ZodType<DbWizardType>;
   const methods = useForm<DbWizardType>({
     mode: 'onChange',
     resolver: async (data, context, options) => {
-      const result = await zodResolver(validationSchema)(
-        data,
-        context,
-        options
-      );
+      const customResolver = zodResolver(validationSchema);
+      const result = await customResolver(data, context, options);
       if (Object.keys(result.errors).length > 0) {
         setStepsWithErrors((prev) => {
           if (!prev.includes(activeStep)) {
