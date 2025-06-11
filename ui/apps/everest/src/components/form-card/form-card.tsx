@@ -1,8 +1,8 @@
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import RoundedBox from 'components/rounded-box';
-import { SuccessIcon } from '@percona/ui-lib';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const Header = ({
   title,
@@ -51,29 +51,41 @@ const FormCard: React.FC<FormCardProps> = ({
 
 type FormCardWithCheckProps = {
   title: string;
-  description?: string | React.ReactNode;
   controlComponent: React.JSX.Element;
 };
 
 const FormCardWithCheck: React.FC<FormCardWithCheckProps> = ({
   title,
-  description = '',
   controlComponent,
 }) => {
   const { getValues } = useFormContext();
 
   const fieldValue = getValues(controlComponent!.props?.name);
   return (
-    <RoundedBox
-      title={<Header title={title} controlComponent={controlComponent} />}
+    <Box
+      className="percona-rounded-box"
+      sx={{
+        p: 2,
+        borderStyle: 'solid',
+        borderWidth: '1px',
+        borderColor: (theme) => theme.palette.divider,
+        borderRadius: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+      }}
     >
-      {fieldValue && <SuccessIcon size="large" />}
-      {typeof description === 'string' ? (
-        <Typography variant="caption">{description}</Typography>
-      ) : (
-        description
-      )}
-    </RoundedBox>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {fieldValue && <CheckCircleIcon color="success" />}
+
+        <Typography
+          sx={{ marginLeft: '5px', marginTop: '5px' }}
+          variant="sectionHeading"
+        >
+          {title}
+        </Typography>
+      </Box>
+      <Box>{controlComponent}</Box>
+    </Box>
   );
 };
 
@@ -81,13 +93,17 @@ type FormCardWithDialogProps = {
   title: string;
   content: React.ReactNode;
   optional?: boolean;
+  sectionSavedKey: string;
 };
 
 const FormCardWithDialog: React.FC<FormCardWithDialogProps> = ({
   title,
   content,
   optional = false,
+  sectionSavedKey,
 }) => {
+  const { control } = useFormContext();
+  const isSectionSaved = useWatch({ control, name: sectionSavedKey });
   return (
     <Box
       className="percona-rounded-box"
@@ -102,10 +118,13 @@ const FormCardWithDialog: React.FC<FormCardWithDialogProps> = ({
         justifyContent: 'space-between',
       }}
     >
-      <Typography variant="sectionHeading" sx={{ padding: '6px 8px' }}>
-        {title}{' '}
-        {optional && <Typography variant="caption">(optional)</Typography>}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {isSectionSaved && <CheckCircleIcon color="success" />}
+        <Typography variant="sectionHeading" sx={{ padding: '6px 8px' }}>
+          {title}{' '}
+          {optional && <Typography variant="caption">(optional)</Typography>}
+        </Typography>
+      </Box>
       {content}
     </Box>
   );
