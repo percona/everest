@@ -14,12 +14,16 @@ import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 
 let token: string;
 
-const dbs = ['pxc', 'psmdb', 'postgresql'];
+const dbs = [
+  { db: 'psmdb', size: 3 },
+  { db: 'pxc', size: 3 },
+  { db: 'postgresql', size: 3 },
+];
 const namespaces = EVEREST_CI_NAMESPACES;
 
 test.describe.configure({ retries: 0 });
 
-dbs.forEach((db) => {
+dbs.forEach(({ db, size }) => {
   const clusterName = `${db}-storage-scaling`;
 
   test.describe(
@@ -49,21 +53,20 @@ dbs.forEach((db) => {
         await page.getByTestId(`add-db-cluster-button-${db}`).click();
 
         await test.step('Populate basic information', async () => {
-          Object.values(namespaces).forEach(async (namespace) => {
-            await populateBasicInformation(
-              page,
-              namespace,
-              clusterName,
-              db,
-              storageClasses[0],
-              false,
-              null
-            );
-          });
+          await populateBasicInformation(
+            page,
+            namespaces[`${db.toUpperCase()}_ONLY`],
+            clusterName,
+            db,
+            storageClasses[0],
+            false,
+            null
+          );
+          await moveForward(page);
         });
 
         await test.step('Populate resources', async () => {
-          await populateResources(page, 1, 1, 1, 3, 1, 1, 1, 1, 1);
+          await populateResources(page, 0.6, 1, 1, size);
           await moveForward(page);
         });
 
