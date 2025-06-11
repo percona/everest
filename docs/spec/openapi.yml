@@ -3655,6 +3655,11 @@ components:
           type: object
         status:
           properties:
+            completedAt:
+              description: CompletedAt is the time when the data import job completed
+                successfully.
+              format: date-time
+              type: string
             jobName:
               description: JobName is the reference to the job that is running the
                 data import.
@@ -3667,16 +3672,15 @@ components:
             message:
               description: Message is the message of the data import job.
               type: string
-            phase:
-              description: Phase is the current phase of the data import job.
-              type: string
             startedAt:
               description: StartedAt is the time when the data import job started.
               format: date-time
               type: string
+            state:
+              description: State is the current state of the data import job.
+              type: string
           type: object
       type: object
-
     
     # -------------------------
     # DataImporter spec is imported from the everest operator,
