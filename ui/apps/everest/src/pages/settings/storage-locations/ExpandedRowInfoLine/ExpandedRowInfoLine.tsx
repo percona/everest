@@ -1,7 +1,7 @@
 import { Box, Theme, SxProps } from '@mui/material';
 import { ReactNode } from 'react';
 
-export const LabelValue = ({
+export const ExpandedRowInfoLine = ({
   label,
   value,
 }: {

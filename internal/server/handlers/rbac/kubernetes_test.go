@@ -58,6 +58,8 @@ func TestRBAC_Kubernetes(t *testing.T) {
 					{"bob", "namespaces", "*", "*"},
 					{"bob", "backup-storages", "*", "*/*"},
 					{"bob", "pod-scheduling-policies", "*", "*"},
+					{"bob", "data-importers", "*", "*"},
+					{"bob", "data-import-jobs", "*", "*/*"},
 				},
 			},
 			{

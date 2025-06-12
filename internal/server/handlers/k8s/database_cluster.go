@@ -406,3 +406,33 @@ func valueOrDefault(value *int, defaultValue int) int {
 	}
 	return *value
 }
+
+func (h *k8sHandler) CreateDatabaseClusterSecret(ctx context.Context,
+	namespace, dbName string,
+	engineType everestv1alpha1.EngineType,
+	secret *corev1.Secret,
+) (*corev1.Secret, error) {
+	secretCpy := secret.DeepCopy()
+	secretCpy.SetNamespace(namespace)
+	setDatabaseClusterSecretLabels(namespace, dbName, engineType, secretCpy)
+	return h.kubeConnector.CreateSecret(ctx, secretCpy)
+}
+
+func setDatabaseClusterSecretLabels(
+	namespace, dbName string,
+	engineType everestv1alpha1.EngineType,
+	secret *corev1.Secret,
+) {
+	labels := map[string]string{}
+	labels[common.DatabaseClusterNameLabel] = dbName
+	switch engineType {
+	case everestv1alpha1.DatabaseEnginePostgresql:
+		// this is a workaround that prevents the PG operator from resetting the Secrets.
+		// TODO: remove it once K8SPG-570 is fixed.
+		// See: https://perconadev.atlassian.net/browse/K8SPG-570
+		labels["postgres-operator.crunchydata.com/cluster"] = dbName
+		labels["postgres-operator.crunchydata.com/pguser"] = "postgres"
+		labels["postgres-operator.crunchydata.com/role"] = "pguser"
+	}
+	secret.SetLabels(labels)
+}

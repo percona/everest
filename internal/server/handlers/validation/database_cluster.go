@@ -9,6 +9,7 @@ import (
 
 	goversion "github.com/hashicorp/go-version"
 	"golang.org/x/mod/semver"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -249,6 +250,14 @@ func validateProxy(databaseCluster *everestv1alpha1.DatabaseCluster) error {
 		}
 	}
 
+	rangesMap := make(map[everestv1alpha1.IPSourceRange]struct{})
+	for _, sourceRange := range databaseCluster.Spec.Proxy.Expose.IPSourceRanges {
+		if _, ok := rangesMap[sourceRange]; ok {
+			return ErrDuplicateSourceRange(sourceRange)
+		}
+		rangesMap[sourceRange] = struct{}{}
+	}
+
 	return nil
 }
 
@@ -367,8 +376,22 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 	if dataSource == nil {
 		return nil
 	}
-	if (dataSource.DBClusterBackupName == "" && dataSource.BackupSource == nil) ||
-		(dataSource.DBClusterBackupName != "" && dataSource.BackupSource != nil) {
+
+	ensureOnlyOneDataSourceSpecified := func() bool {
+		sources := 0
+		if dataSource.DBClusterBackupName != "" {
+			sources++
+		}
+		if dataSource.BackupSource != nil {
+			sources++
+		}
+		if dataSource.DataImport != nil {
+			sources++
+		}
+		// ensure we specify one or nothing
+		return sources <= 1
+	}
+	if !ensureOnlyOneDataSourceSpecified() {
 		return errDataSourceConfig
 	}
 
@@ -729,4 +752,10 @@ func (h *validateHandler) validatePodSchedulingPolicy(ctx context.Context, db *e
 		}
 	}
 	return nil
+}
+
+func (h *validateHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string,
+	engineType everestv1alpha1.EngineType, secret *corev1.Secret,
+) (*corev1.Secret, error) {
+	return h.next.CreateDatabaseClusterSecret(ctx, namespace, dbName, engineType, secret)
 }
