@@ -77,7 +77,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       // Define primary and restored cluster names to use across related tests
       const clusterName = `${db}-${size}-pri`;
       const restoredClusterName = `${db}-${size}-rest`;
-      let zephyrId;
+      let zephyrId: string;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;

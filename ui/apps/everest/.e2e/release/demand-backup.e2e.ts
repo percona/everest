@@ -67,7 +67,7 @@ const zephyrMap: Record<string, string> = {
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-dembkp`;
-      let zephyrId;
+      let zephyrId: string;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
