@@ -14,7 +14,7 @@ func (h *rbacHandler) ListDataImportJobs(ctx context.Context, namespace, dbName 
 	if err != nil {
 		return nil, err
 	}
-	filtered := []everestv1alpha1.DataImportJob{}
+	filtered := make([]everestv1alpha1.DataImportJob, 0, len(list.Items))
 	for _, job := range list.Items {
 		if err := h.enforce(ctx, rbac.ResourceDataImportJobs,
 			rbac.ActionRead, rbac.ObjectName(namespace, job.Spec.TargetClusterName),

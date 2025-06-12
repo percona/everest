@@ -55,13 +55,18 @@ func TestRBAC_DataImportJob(t *testing.T) {
 			}
 		}
 
-		// Create test data
-		allJobs := &everestv1alpha1.DataImportJobList{
-			Items: []everestv1alpha1.DataImportJob{
-				createJob("job1"),
-				createJob("job2"),
-				createJob("job3"),
-			},
+		data := func() *handlers.MockHandler {
+			allJobs := &everestv1alpha1.DataImportJobList{
+				Items: []everestv1alpha1.DataImportJob{
+					createJob("job1"),
+					createJob("job2"),
+					createJob("job3"),
+				},
+			}
+			next := &handlers.MockHandler{}
+			next.On("ListDataImportJobs", mock.Anything, testNamespace, testDBName).
+				Return(allJobs, nil)
+			return next
 		}
 
 		testCases := []struct {
@@ -152,12 +157,10 @@ func TestRBAC_DataImportJob(t *testing.T) {
 				t.Parallel()
 
 				// setup mocks
-				next := &handlers.MockHandler{}
-				next.On("ListDataImportJobs", mock.Anything, testNamespace, testDBName).
-					Return(allJobs, nil)
 				k8sMock := newConfigMapMock(tc.policy)
 				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
 				require.NoError(t, err)
+				next := data()
 
 				h := &rbacHandler{
 					next:       next,
