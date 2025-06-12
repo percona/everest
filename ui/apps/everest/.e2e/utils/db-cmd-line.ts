@@ -47,6 +47,46 @@ export const getK8sResource = async (
   }
 };
 
+export const getK8sNodes = async () => {
+  try {
+    const command = `kubectl get nodes -o jsonpath='{.items[*].metadata.name}'`;
+    const output = execSync(command).toString();
+    return output.split(' ');
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
+};
+
+export const addLabelToK8sNode = async (
+  nodeName: string,
+  labelKey: string,
+  labelValue: string
+) => {
+  try {
+    const command = `kubectl label nodes ${nodeName} ${labelKey}=${labelValue}`;
+    execSync(command);
+    console.log(`Label ${labelKey}=${labelValue} added to node ${nodeName}`);
+  } catch (error) {
+    console.error(`Error adding label to node: ${error}`);
+    throw error;
+  }
+};
+
+export const removeLabelFromK8sNode = async (
+  nodeName: string,
+  labelKey: string
+) => {
+  try {
+    const command = `kubectl label nodes ${nodeName} ${labelKey}-`;
+    execSync(command);
+    console.log(`Label ${labelKey} removed from node ${nodeName}`);
+  } catch (error) {
+    console.error(`Error removing label from node: ${error}`);
+    throw error;
+  }
+};
+
 export const getPGStsName = async (cluster: string, namespace: string) => {
   try {
     const command = `kubectl get sts --namespace ${namespace} --selector=app.kubernetes.io/instance=${cluster},app.kubernetes.io/component=pg -o 'jsonpath={.items[*].metadata.name}'`;
