@@ -226,7 +226,7 @@ const zephyrMap: Record<string, string> = {
 
       zephyrId = zephyrMap[`external-${db}`];
       test(`${zephyrId} - Check service type is LoadBalancer [${db} size ${size}]`, async () => {
-        test.skip(size !== 3);
+        test.skip(size !== 3, 'We only enable external access for size 3');
 
         let resourceName: string;
 
