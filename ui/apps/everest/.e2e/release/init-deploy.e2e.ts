@@ -450,7 +450,7 @@ const zephyrMap: Record<string, string> = {
       test(`${zephyrId} - Edit cluster/scale up [${db} size ${size}]`, async ({
         page,
       }) => {
-        test.skip(size > 3);
+        test.skip(size > 3, 'We dont want to scale up 5 node clusters');
         const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
 
@@ -514,7 +514,7 @@ const zephyrMap: Record<string, string> = {
       test(`${zephyrId} - Change external access options [${db} size ${size}]`, async ({
         page,
       }) => {
-        test.skip(size !== 3);
+        test.skip(size !== 3, 'We only enable external access for size 3');
 
         await test.step('Set ipSourceRange', async () => {
           await page.goto('databases');
