@@ -16,7 +16,7 @@
 import { test } from '@playwright/test';
 import { checkK8sMetrics } from '@e2e/utils/monitoring-instance';
 
-test(`Check PMM K8s metrics`, async () => {
+test(`T31 - Check PMM K8s metrics`, async () => {
   await checkK8sMetrics('kube_node_info', 'admin:admin');
   await checkK8sMetrics('kube_pod_status_phase', 'admin:admin');
 });
