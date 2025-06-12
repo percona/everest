@@ -14,6 +14,7 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 )
 
@@ -397,6 +398,111 @@ func TestConnectionURL(t *testing.T) {
 			h := &k8sHandler{kubeConnector: k}
 			url := h.connectionURL(context.Background(), &tc.db, tc.user, tc.password)
 			require.Equal(t, tc.expected, *url)
+		})
+	}
+}
+
+func TestCreateDatabaseClusterSecret(t *testing.T) {
+	t.Parallel()
+
+	const (
+		testNamespace = "test-namespace"
+		testDBName    = "test-db"
+	)
+
+	testCases := []struct {
+		name       string
+		engineType everestv1alpha1.EngineType
+		secret     *corev1.Secret
+		verifyFunc func(t *testing.T, secret *corev1.Secret)
+	}{
+		{
+			name:       "create secret for PXC engine",
+			engineType: everestv1alpha1.DatabaseEnginePXC,
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pxc-secret",
+				},
+				Data: map[string][]byte{
+					"root": []byte("password"),
+				},
+			},
+			verifyFunc: func(t *testing.T, secret *corev1.Secret) {
+				require.Equal(t, testNamespace, secret.Namespace)
+				require.Equal(t, "pxc-secret", secret.Name)
+				require.Equal(t, testDBName, secret.Labels[common.DatabaseClusterNameLabel])
+				require.Equal(t, []byte("password"), secret.Data["root"])
+			},
+		},
+		{
+			name:       "create secret for PSMDB engine",
+			engineType: everestv1alpha1.DatabaseEnginePSMDB,
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "psmdb-secret",
+				},
+				Data: map[string][]byte{
+					"MONGODB_DATABASE_ADMIN_USER":     []byte("admin"),
+					"MONGODB_DATABASE_ADMIN_PASSWORD": []byte("password"),
+				},
+			},
+			verifyFunc: func(t *testing.T, secret *corev1.Secret) {
+				require.Equal(t, testNamespace, secret.Namespace)
+				require.Equal(t, "psmdb-secret", secret.Name)
+				require.Equal(t, testDBName, secret.Labels[common.DatabaseClusterNameLabel])
+				require.Equal(t, []byte("admin"), secret.Data["MONGODB_DATABASE_ADMIN_USER"])
+				require.Equal(t, []byte("password"), secret.Data["MONGODB_DATABASE_ADMIN_PASSWORD"])
+			},
+		},
+		{
+			name:       "create secret for PostgreSQL engine",
+			engineType: everestv1alpha1.DatabaseEnginePostgresql,
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "pg-secret",
+				},
+				Data: map[string][]byte{
+					"password": []byte("password"),
+				},
+			},
+			verifyFunc: func(t *testing.T, secret *corev1.Secret) {
+				require.Equal(t, testNamespace, secret.Namespace)
+				require.Equal(t, "pg-secret", secret.Name)
+				require.Equal(t, testDBName, secret.Labels[common.DatabaseClusterNameLabel])
+				require.Equal(t, testDBName, secret.Labels["postgres-operator.crunchydata.com/cluster"])
+				require.Equal(t, "postgres", secret.Labels["postgres-operator.crunchydata.com/pguser"])
+				require.Equal(t, "pguser", secret.Labels["postgres-operator.crunchydata.com/role"])
+				require.Equal(t, []byte("password"), secret.Data["password"])
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Create mock client
+			mockClient := fakeclient.NewClientBuilder().
+				WithScheme(kubernetes.CreateScheme()).
+				Build()
+
+			// Create k8s handler with mock client
+			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient)
+			k8sH := New(zap.NewNop().Sugar(), k, "")
+
+			// Call the function under test
+			createdSecret, err := k8sH.CreateDatabaseClusterSecret(
+				context.Background(),
+				testNamespace,
+				testDBName,
+				tc.engineType,
+				tc.secret,
+			)
+
+			// Verify the result
+			require.NoError(t, err)
+			require.NotNil(t, createdSecret)
+			tc.verifyFunc(t, createdSecret)
 		})
 	}
 }
