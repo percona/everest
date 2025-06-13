@@ -14,17 +14,12 @@ func (h *rbacHandler) ListDataImportJobs(ctx context.Context, namespace, dbName 
 	if err != nil {
 		return nil, err
 	}
-	filtered := make([]everestv1alpha1.DataImportJob, 0, len(list.Items))
-	for _, job := range list.Items {
-		if err := h.enforce(ctx, rbac.ResourceDataImportJobs,
-			rbac.ActionRead, rbac.ObjectName(namespace, job.Spec.TargetClusterName),
-		); errors.Is(err, ErrInsufficientPermissions) {
-			continue
-		} else if err != nil {
-			return nil, err
-		}
-		filtered = append(filtered, job)
+	if err := h.enforce(ctx, rbac.ResourceDataImportJobs,
+		rbac.ActionRead, rbac.ObjectName(namespace, dbName),
+	); errors.Is(err, ErrInsufficientPermissions) {
+		list.Items = nil // No permissions, return empty list
+	} else if err != nil {
+		return nil, err
 	}
-	list.Items = filtered
 	return list, nil
 }
