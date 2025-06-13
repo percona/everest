@@ -28,7 +28,7 @@ const ContainerNode = ({
         {ready ? 'Ready' : 'Not Ready'}
       </Typography>
     </Stack>
-    <Typography variant="body1" data-testid="container-name" mt={2}>
+    <Typography variant="body1" data-testid="container-name" mt={1}>
       {name}
     </Typography>
     <DiagramComponentAge date={started} restarts={restarts} />
