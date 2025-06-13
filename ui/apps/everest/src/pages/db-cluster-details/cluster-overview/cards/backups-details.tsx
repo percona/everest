@@ -229,7 +229,7 @@ export const BackupsDetails = ({
             dataTestId="pitr-status"
             labelProps={{ minWidth: '126px' }}
             label={Messages.fields.status}
-            contentString={
+            content={
               pitrEnabled ? Messages.fields.enabled : Messages.fields.disabled
             }
           />
@@ -238,7 +238,7 @@ export const BackupsDetails = ({
               dataTestId="backup-storage"
               labelProps={{ minWidth: '126px' }}
               label={Messages.fields.backupStorages}
-              contentString={pitrStorageName}
+              content={pitrStorageName}
             />
           )}
           {openEditModal && (

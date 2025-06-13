@@ -91,6 +91,18 @@ function getFormattedPITRTime(time: pitrTime): string {
 
 test.describe.configure({ retries: 0 });
 
+const zephyrMap: Record<string, string> = {
+  'backup-pxc': 'T101',
+  'backup-psmdb': 'T102',
+  'backup-postgresql': 'T103',
+  'restore-pxc': 'T104',
+  'restore-psmdb': 'T105',
+  'restore-postgresql': 'T106',
+  'restore-newdb-pxc': 'T125',
+  'restore-newdb-psmdb': 'T126',
+  'restore-newdb-postgresql': 'T127',
+};
+
 [
   { db: 'psmdb', size: 3 },
   { db: 'pxc', size: 3 },
@@ -106,6 +118,7 @@ test.describe.configure({ retries: 0 });
       test.describe.configure({ timeout: 1_200_000 }); // 20 minutes
 
       const clusterName = `${db}-${size}-pitr`;
+      let zephyrId: string;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -449,7 +462,8 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`PITR restore to new cluster [${db} size ${size}]`, async ({
+      zephyrId = zephyrMap[`restore-newdb-${db}`];
+      test(`${zephyrId} - PITR restore to new cluster [${db} size ${size}]`, async ({
         page,
       }) => {
         await test.step('Create a backup to restore from', async () => {

@@ -21,6 +21,8 @@ export const IP_REGEX =
   /^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$/;
 
 export const INVALID_SOURCE_RANGE_ERROR = 'Invalid IP address range';
+export const DUPLICATE_SOURCE_RANGE_ERROR =
+  'Duplicate entry. This IP and netmask combination already exists.';
 export const SOURCE_RANGE_PLACEHOLDER =
   'Enter IP with netmask (e.g. 192.168.1.1/24)';
 export const DATE_FORMAT = "dd'/'MM'/'yyyy 'at' HH':'mm";
@@ -45,6 +47,10 @@ export const MAX_DB_CLUSTER_NAME_LENGTH = 22;
 export const MAX_SCHEDULE_NAME_LENGTH = 57;
 export const EVEREST_JWT_ISSUER = 'everest';
 export const PG_SLOTS_LIMIT = 3;
+export const EVEREST_READ_ONLY_FINALIZER =
+  'everest.percona.com/readonly-protection';
+export const EVEREST_POLICY_IN_USE_FINALIZER =
+  'everest.percona.com/in-use-protection';
 
 export enum DbWizardForm {
   dbName = 'dbName',

@@ -49,6 +49,9 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
     state,
     initialState,
     emptyState,
+    enableRowHoverAction = false,
+    rowHoverAction = () => {},
+    muiTableBodyRowProps,
     ...rest
   } = props;
   const [columnVisibility, setColumnVisibility] =
@@ -281,6 +284,34 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
       initialState={{
         columnVisibility,
         ...initialState,
+      }}
+      muiTableBodyRowProps={(args) => {
+        const { row, isDetailPanel } = args;
+        const ownProps =
+          (typeof muiTableBodyRowProps === 'function'
+            ? muiTableBodyRowProps(args)
+            : muiTableBodyRowProps) || {};
+        const { sx, onClick, ...restOfProps } = ownProps;
+        return {
+          onClick: (e) => {
+            if (
+              !isDetailPanel &&
+              enableRowHoverAction &&
+              e.currentTarget.contains(e.target as Node)
+            ) {
+              rowHoverAction(row);
+              onClick?.(e);
+            }
+          },
+          sx: {
+            ...(!isDetailPanel &&
+              enableRowHoverAction && {
+                cursor: 'pointer', // you might want to change the cursor too when adding an onClick
+              }),
+            ...sx,
+          },
+          ...restOfProps,
+        };
       }}
     />
   );

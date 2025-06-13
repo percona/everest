@@ -44,6 +44,7 @@ export type AdvancedConfigurationOverviewCardProps = {
   externalAccess: boolean;
   parameters: boolean;
   storageClass: string;
+  podSchedulingPolicy?: string;
 } & OverviewCardProps;
 
 export type MonitoringConfigurationOverviewCardProps = {

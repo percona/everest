@@ -43,13 +43,13 @@ import {
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
-import { someErrorInStateFields, getProxyUnitNamesFromDbType } from './utils';
 
 import { ResourcesTogglesProps, ResourceInputProps } from './resources.types';
 import { Messages } from './messages';
 import { z } from 'zod';
 import { memoryParser } from 'utils/k8ResourceParser';
 import { DbWizardType } from 'pages/database-form/database-form-schema';
+import { getProxyUnitNamesFromDbType, someErrorInStateFields } from 'utils/db';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
@@ -109,6 +109,9 @@ const ResourceInput = ({
       <TextInput
         name={name}
         textFieldProps={{
+          sx: {
+            flex: '1 0 0',
+          },
           variant: 'outlined',
           label,
           helperText,
@@ -121,7 +124,7 @@ const ResourceInput = ({
         }}
       />
       {isDesktop && numberOfUnits && (
-        <Box sx={{ ml: 1, pt: 0.5, flexBasis: 'fit-content' }}>
+        <Box sx={{ ml: 1, pt: 0.5, width: '90px', flexShrink: 0, flexGrow: 0 }}>
           <Typography
             variant="caption"
             sx={{ whiteSpace: 'nowrap' }}
@@ -130,7 +133,11 @@ const ResourceInput = ({
           {!!value && numberOfUnits && (
             <Typography
               variant="body1"
-              sx={{ whiteSpace: 'nowrap' }}
+              sx={{
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+              }}
               color={theme.palette.text.secondary}
               data-testid={`${name}-resource-sum`}
             >{` = ${(value * numberOfUnits).toFixed(2)} ${endSuffix}`}</Typography>
@@ -340,12 +347,9 @@ const ResourcesToggles = ({
           flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'center',
           marginTop: 2,
-          gap: isDesktop ? 4 : 2,
+          gap: isDesktop ? 3 : 2,
           '& > *': {
-            width: isMobile ? '100%' : '33%',
-            '&> *': {
-              width: '100%',
-            },
+            flex: '1 0 0 ',
           },
         }}
       >
@@ -406,7 +410,7 @@ const ResourcesToggles = ({
       </Box>
       {warnForUpscaling && (
         <Alert sx={{ mt: 2 }} severity="warning">
-          Upscaling disk size is an irreversible action.
+          {Messages.upscalingDiskWarning}
         </Alert>
       )}
     </FormGroup>
@@ -630,6 +634,14 @@ const ResourcesForm = ({
   useEffect(() => {
     trigger();
   }, [numberOfNodes, customNrOfNodes, trigger, numberOfProxies]);
+
+  useEffect(() => {
+    if (someErrorInNodes && !someErrorInProxies) {
+      setExpanded('nodes');
+    } else if (someErrorInProxies && !someErrorInNodes) {
+      setExpanded('proxies');
+    }
+  }, [expanded, someErrorInNodes, someErrorInProxies]);
 
   // TODO test the following:
   // when in restore mode, the number of shards should be disabled

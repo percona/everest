@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { AlertProps } from '@mui/material';
-import { type MaterialReactTableProps } from 'material-react-table';
+import { MRT_Row, type MaterialReactTableProps } from 'material-react-table';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface TableProps<T extends Record<string, any>>
@@ -24,4 +24,6 @@ export interface TableProps<T extends Record<string, any>>
   tableName: string;
   emptyState?: React.ReactNode;
   noDataAlertProps?: AlertProps;
+  enableRowHoverAction?: boolean;
+  rowHoverAction?: (row: MRT_Row<T>) => void;
 }

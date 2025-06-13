@@ -38,9 +38,9 @@ interface CustomConfirmDialogProps<T extends CustomConfirmDialogType>
   inputLabel?: string;
   inputPlaceholder?: string;
   handleConfirm: (data: CustomConfirmDialogType) => void;
-  selectedId: string;
+  selectedId?: string;
   cancelMessage?: string;
-  submitMessage: string;
+  submitMessage?: string;
   dialogContent?: ReactNode;
   confirmationInput?: boolean;
   alertTitle?: string;
@@ -55,9 +55,9 @@ export const CustomConfirmDialog = ({
   inputPlaceholder,
   handleConfirm,
   cancelMessage = 'Cancel',
-  submitMessage,
+  submitMessage = 'Delete',
   confirmationInput = true,
-  selectedId,
+  selectedId = '',
   dialogContent,
   submitting,
   alertTitle = 'Irreversible action',

@@ -52,6 +52,7 @@ const formValuesToPayloadMapping = (
       : dbPayload.numberOfNodes,
     10
   );
+
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
@@ -133,6 +134,10 @@ const formValuesToPayloadMapping = (
           }),
         },
       }),
+      ...(dbPayload.podSchedulingPolicyEnabled &&
+        dbPayload.podSchedulingPolicy && {
+          podSchedulingPolicyName: dbPayload.podSchedulingPolicy,
+        }),
     },
   };
 

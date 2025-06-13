@@ -47,6 +47,42 @@ let token: string;
 
 test.describe.configure({ retries: 0 });
 
+const zephyrMap: Record<string, string> = {
+  'create-psmdb-1': 'T66',
+  'create-psmdb-3': 'T67',
+  'create-psmdb-5': 'T68',
+  'create-pxc-1': 'T72',
+  'create-pxc-3': 'T73',
+  'create-pxc-5': 'T74',
+  'create-postgresql-1': 'T77',
+  'create-postgresql-2': 'T78',
+  'create-postgresql-3': 'T79',
+  'edit-pxc': 'T85',
+  'edit-psmdb': 'T86',
+  'edit-postgresql': 'T87',
+  'external-pxc': 'T70',
+  'external-psmdb': 'T76',
+  'external-postgresql': 'T82',
+  'custom-pxc': 'T20',
+  'custom-psmdb': 'T46',
+  'custom-postgresql': 'T47',
+  'monitoring-pxc': 'T69',
+  'monitoring-psmdb': 'T75',
+  'monitoring-postgresql': 'T81',
+  'suspend-pxc': 'T90',
+  'suspend-psmdb': 'T91',
+  'suspend-postgresql': 'T92',
+  'resume-pxc': 'T93',
+  'resume-psmdb': 'T94',
+  'resume-postgresql': 'T95',
+  'restart-pxc': 'T87',
+  'restart-psmdb': 'T88',
+  'restart-postgresql': 'T89',
+  'delete-pxc': 'T96',
+  'delete-psmdb': 'T97',
+  'delete-postgresql': 'T98',
+};
+
 [
   { db: 'psmdb', size: 1 },
   { db: 'psmdb', size: 3 },
@@ -68,6 +104,7 @@ test.describe.configure({ retries: 0 });
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-deploy`;
+      let zephyrId: string;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -83,7 +120,8 @@ test.describe.configure({ retries: 0 });
         storageClasses = storageClassNames;
       });
 
-      test(`Cluster creation [${db} size ${size}]`, async ({
+      zephyrId = zephyrMap[`create-${db}-${size}`];
+      test(`${zephyrId} - Cluster creation [${db} size ${size}]`, async ({
         page,
         request,
       }) => {
@@ -186,8 +224,9 @@ test.describe.configure({ retries: 0 });
         });
       });
 
-      test(`Check service type is LoadBalancer [${db} size ${size}]`, async () => {
-        test.skip(size !== 3);
+      zephyrId = zephyrMap[`external-${db}`];
+      test(`${zephyrId} - Check service type is LoadBalancer [${db} size ${size}]`, async () => {
+        test.skip(size !== 3, 'We only enable external access for size 3');
 
         let resourceName: string;
 
@@ -214,7 +253,8 @@ test.describe.configure({ retries: 0 });
         expect(resource?.spec.type).toBe('LoadBalancer');
       });
 
-      test(`Check DB custom option [${db} size ${size}]`, async () => {
+      zephyrId = zephyrMap[`custom-${db}`];
+      test(`${zephyrId} - Check DB custom option [${db} size ${size}]`, async () => {
         let result: string;
 
         switch (db) {
@@ -222,7 +262,8 @@ test.describe.configure({ retries: 0 });
             result = await queryMySQL(
               clusterName,
               namespace,
-              `SHOW variables LIKE "max_connections";`
+              `SHOW variables LIKE "max_connections";`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('max_connections	250');
             break;
@@ -232,7 +273,8 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               'admin',
-              `db.serverCmdLineOpts().parsed.systemLog;`
+              `db.serverCmdLineOpts().parsed.systemLog;`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('{ quiet: true, verbosity: 1 }');
             break;
@@ -242,7 +284,8 @@ test.describe.configure({ retries: 0 });
               clusterName,
               namespace,
               'postgres',
-              `SHOW shared_buffers;`
+              `SHOW shared_buffers;`,
+              40 // we retry here because LoadBalancer needs some time to be visible in DNS
             );
             expect(result.trim()).toBe('192MB');
             break;
@@ -250,118 +293,124 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`Check PMM DB metrics [${db} size ${size}]`, async () => {
-        switch (db) {
-          case 'psmdb': {
-            for (let i = 0; i < size; i++) {
-              await checkDBMetrics(
-                'node_boot_time_seconds',
-                `everest-ui-${clusterName}-rs0-${i}`,
-                'admin:admin'
-              );
-              await checkDBMetrics(
-                'mongodb_connections',
-                `everest-ui-${clusterName}-rs0-${i}`,
-                'admin:admin'
-              );
-            }
-            break;
-          }
-          case 'pxc': {
-            const nodeTypes = ['pxc', 'haproxy'];
-
-            for (const nodeType of nodeTypes) {
+      zephyrId = zephyrMap[`monitoring-${db}`];
+      test(`${zephyrId} - Check PMM db metrics and QAN [${db} size ${size}]`, async () => {
+        test.step('Check DB metrics', async () => {
+          switch (db) {
+            case 'psmdb': {
               for (let i = 0; i < size; i++) {
-                switch (nodeType) {
-                  case 'pxc': {
-                    await checkDBMetrics(
-                      'node_boot_time_seconds',
-                      `everest-ui-${clusterName}-${nodeType}-${i}`,
-                      'admin:admin'
-                    );
-                    await checkDBMetrics(
-                      'mysql_global_status_uptime',
-                      `everest-ui-${clusterName}-${nodeType}-${i}`,
-                      'admin:admin'
-                    );
-                    break;
-                  }
-                  case 'haproxy': {
-                    await checkDBMetrics(
-                      'haproxy_backend_status',
-                      `everest-ui-${clusterName}-${nodeType}-${i}`,
-                      'admin:admin'
-                    );
-                    await checkDBMetrics(
-                      'haproxy_backend_active_servers',
-                      `everest-ui-${clusterName}-${nodeType}-${i}`,
-                      'admin:admin'
-                    );
-                    break;
+                await checkDBMetrics(
+                  'node_boot_time_seconds',
+                  `everest-ui-${clusterName}-rs0-${i}`,
+                  'admin:admin'
+                );
+                await checkDBMetrics(
+                  'mongodb_connections',
+                  `everest-ui-${clusterName}-rs0-${i}`,
+                  'admin:admin'
+                );
+              }
+              break;
+            }
+            case 'pxc': {
+              const nodeTypes = ['pxc', 'haproxy'];
+
+              for (const nodeType of nodeTypes) {
+                for (let i = 0; i < size; i++) {
+                  switch (nodeType) {
+                    case 'pxc': {
+                      await checkDBMetrics(
+                        'node_boot_time_seconds',
+                        `everest-ui-${clusterName}-${nodeType}-${i}`,
+                        'admin:admin'
+                      );
+                      await checkDBMetrics(
+                        'mysql_global_status_uptime',
+                        `everest-ui-${clusterName}-${nodeType}-${i}`,
+                        'admin:admin'
+                      );
+                      break;
+                    }
+                    case 'haproxy': {
+                      await checkDBMetrics(
+                        'haproxy_backend_status',
+                        `everest-ui-${clusterName}-${nodeType}-${i}`,
+                        'admin:admin'
+                      );
+                      await checkDBMetrics(
+                        'haproxy_backend_active_servers',
+                        `everest-ui-${clusterName}-${nodeType}-${i}`,
+                        'admin:admin'
+                      );
+                      break;
+                    }
                   }
                 }
               }
+              break;
             }
-            break;
+            case 'postgresql': {
+              const pgSts = await getPGStsName(clusterName, namespace);
+              for (let i = 0; i < size; i++) {
+                await checkDBMetrics(
+                  'node_boot_time_seconds',
+                  `everest-ui-${pgSts[i]}-0`,
+                  'admin:admin'
+                );
+                await checkDBMetrics(
+                  'pg_postmaster_uptime_seconds',
+                  `everest-ui-${pgSts[i]}-0`,
+                  'admin:admin'
+                );
+              }
+              break;
+            }
           }
-          case 'postgresql': {
-            const pgSts = await getPGStsName(clusterName, namespace);
-            for (let i = 0; i < size; i++) {
-              await checkDBMetrics(
-                'node_boot_time_seconds',
-                `everest-ui-${pgSts[i]}-0`,
+        });
+
+        await test.step(`Check PMM QAN`, async () => {
+          // Wait for 90 seconds for QAN to get data
+          await new Promise((resolve) => setTimeout(resolve, 90000));
+
+          switch (db) {
+            case 'psmdb': {
+              // for PSMDB we see QAN only for the first node (primary)
+              await checkQAN(
+                'mongodb',
+                `everest-ui-${clusterName}-rs0-0`,
                 'admin:admin'
               );
-              await checkDBMetrics(
-                'pg_postmaster_uptime_seconds',
-                `everest-ui-${pgSts[i]}-0`,
-                'admin:admin'
-              );
+              break;
             }
-            break;
+            case 'pxc': {
+              for (let i = 0; i < size; i++) {
+                await checkQAN(
+                  'mysql',
+                  `everest-ui-${clusterName}-pxc-${i}`,
+                  'admin:admin'
+                );
+              }
+              break;
+            }
+            case 'postgresql': {
+              const pgSts = await getPGStsName(clusterName, namespace);
+              for (let i = 0; i < size; i++) {
+                await checkQAN(
+                  'postgresql',
+                  `everest-ui-${pgSts[i]}-0`,
+                  'admin:admin'
+                );
+              }
+              break;
+            }
           }
-        }
+        });
       });
 
-      test(`Check PMM QAN [${db} size ${size}]`, async () => {
-        // Wait for 90 seconds for QAN to get data
-        await new Promise((resolve) => setTimeout(resolve, 90000));
-
-        switch (db) {
-          case 'psmdb': {
-            // for PSMDB we see QAN only for the first node (primary)
-            await checkQAN(
-              'mongodb',
-              `everest-ui-${clusterName}-rs0-0`,
-              'admin:admin'
-            );
-            break;
-          }
-          case 'pxc': {
-            for (let i = 0; i < size; i++) {
-              await checkQAN(
-                'mysql',
-                `everest-ui-${clusterName}-pxc-${i}`,
-                'admin:admin'
-              );
-            }
-            break;
-          }
-          case 'postgresql': {
-            const pgSts = await getPGStsName(clusterName, namespace);
-            for (let i = 0; i < size; i++) {
-              await checkQAN(
-                'postgresql',
-                `everest-ui-${pgSts[i]}-0`,
-                'admin:admin'
-              );
-            }
-            break;
-          }
-        }
-      });
-
-      test(`Suspend cluster [${db} size ${size}]`, async ({ page }) => {
+      zephyrId = zephyrMap[`suspend-${db}`];
+      test(`${zephyrId} - Suspend cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await suspendDbCluster(page, clusterName);
         // One node clusters and Postgresql don't seem to show Stopping state
         if (size != 1 && db != 'postgresql') {
@@ -370,7 +419,10 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Paused', 240000);
       });
 
-      test(`Resume cluster [${db} size ${size}]`, async ({ page }) => {
+      zephyrId = zephyrMap[`resume-${db}`];
+      test(`${zephyrId} - Resume cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await resumeDbCluster(page, clusterName);
         // TODO: try re-enable after fix for: https://perconadev.atlassian.net/browse/EVEREST-1693
         if (size != 1 || db != 'psmdb') {
@@ -379,7 +431,10 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
-      test(`Restart cluster [${db} size ${size}]`, async ({ page }) => {
+      zephyrId = zephyrMap[`restart-${db}`];
+      test(`${zephyrId} - Restart cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await restartDbCluster(page, clusterName);
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
@@ -391,8 +446,11 @@ test.describe.configure({ retries: 0 });
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
-      test(`Edit cluster/scale up [${db} size ${size}]`, async ({ page }) => {
-        test.skip(size > 3);
+      zephyrId = zephyrMap[`edit-${db}`];
+      test(`${zephyrId} - Edit cluster/scale up [${db} size ${size}]`, async ({
+        page,
+      }) => {
+        test.skip(size > 3, 'We dont want to scale up 5 node clusters');
         const newSize = size + 2;
         let customProxyTestId = 'toggle-button-proxies-custom';
 
@@ -452,10 +510,11 @@ test.describe.configure({ retries: 0 });
         });
       });
 
-      test(`Change external access options [${db} size ${size}]`, async ({
+      zephyrId = zephyrMap[`external-${db}`];
+      test(`${zephyrId} - Change external access options [${db} size ${size}]`, async ({
         page,
       }) => {
-        test.skip(size !== 3);
+        test.skip(size !== 3, 'We only enable external access for size 3');
 
         await test.step('Set ipSourceRange', async () => {
           await page.goto('databases');
@@ -470,7 +529,7 @@ test.describe.configure({ retries: 0 });
         await test.step('Check new external access values in UI', async () => {
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
           await expect(
-            page.getByLabel('Enable External Access Enable')
+            page.getByTestId('switch-input-external-access')
           ).toBeChecked();
           const rawValue = await page
             .getByTestId('text-input-source-ranges.0.source-range')
@@ -481,7 +540,7 @@ test.describe.configure({ retries: 0 });
         await test.step(`Check service in K8s [${db} size ${size}]`, async () => {
           let resourceName: string;
 
-          await page.waitForTimeout(5000); // wait for svc to be updated
+          await page.waitForTimeout(15000); // wait for svc to be updated
           switch (db) {
             case 'pxc': {
               resourceName = `${clusterName}-haproxy`;
@@ -509,7 +568,10 @@ test.describe.configure({ retries: 0 });
         });
       });
 
-      test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
+      zephyrId = zephyrMap[`delete-${db}`];
+      test(`${zephyrId} - Delete cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 240000);

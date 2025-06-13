@@ -5,7 +5,7 @@ import { Messages } from './settings.messages';
 import { SettingsTabs } from './settings.types';
 
 export const Settings = () => {
-  const routeMatch = useMatch('/settings/:tabs');
+  const routeMatch = useMatch('/settings/:tabs/:detail?');
   const currentTab = routeMatch?.params?.tabs;
 
   if (!currentTab) {
@@ -21,19 +21,17 @@ export const Settings = () => {
           allowScrollButtonsMobile
           aria-label="nav tabs"
         >
-          {Object.keys(SettingsTabs).map((item) => (
-            <Tab
-              // @ts-ignore
-              label={Messages[item]}
-              // @ts-ignore
-              key={SettingsTabs[item]}
-              // @ts-ignore
-              value={SettingsTabs[item]}
-              // @ts-ignore
-              to={SettingsTabs[item]}
-              component={Link}
-            />
-          ))}
+          {(Object.keys(SettingsTabs) as Array<keyof typeof SettingsTabs>).map(
+            (item) => (
+              <Tab
+                label={Messages.tabs[item]}
+                key={SettingsTabs[item]}
+                value={SettingsTabs[item]}
+                to={SettingsTabs[item]}
+                component={Link}
+              />
+            )
+          )}
         </Tabs>
       </Box>
       <Outlet />

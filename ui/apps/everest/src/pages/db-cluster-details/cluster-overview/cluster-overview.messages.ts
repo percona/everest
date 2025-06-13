@@ -20,9 +20,12 @@ export const Messages = {
       'Point-in-Time Recovery (PITR) is automatically enabled when a backup or backup schedule is created.',
     onDemandBackupExists:
       'PITR is enabled for all on-demand and scheduled backups and is stored in the same location as scheduled backups.',
+    default: 'Default',
+    custom: 'Custom',
   },
   actions: {
     edit: 'Edit',
+    upgrade: 'Upgrade',
     details: 'Details',
   },
   fields: {
@@ -48,5 +51,6 @@ export const Messages = {
     memory: 'Memory',
     backupStorages: 'Backup\u00A0storage',
     storageClass: 'Storage class',
+    podSchedulingPolicy: 'Pod scheduling policy',
   },
 };

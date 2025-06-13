@@ -15,7 +15,7 @@
 
 import { Box, FormGroup, Stack, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { lt, valid } from 'semver';
 import { DbType } from '@percona/types';
 import {
@@ -46,7 +46,8 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const {
     defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
   } = useDatabasePageDefaultValues(mode);
-  const { watch, setValue, getFieldState, resetField } = useFormContext();
+  const { watch, setValue, getFieldState, resetField, getValues } =
+    useFormContext();
 
   const dbType: DbType = watch(DbWizardFormFields.dbType);
   const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
@@ -165,6 +166,22 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     setValue(DbWizardFormFields.pitrEnabled, false);
   };
 
+  const onShardingToggleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const enabled = e.target.checked;
+
+      if (!enabled) {
+        resetField(DbWizardFormFields.shardNr, {
+          keepError: false,
+        });
+        resetField(DbWizardFormFields.shardConfigServers, {
+          keepError: false,
+        });
+      }
+    },
+    [getFieldState, getValues, resetField, setValue]
+  );
+
   return (
     <>
       <StepHeader
@@ -216,16 +233,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
                   name={DbWizardFormFields.sharding}
                   switchFieldProps={{
                     disabled: disableSharding,
-                    onChange: (e) => {
-                      if (!e.target.checked) {
-                        resetField(DbWizardFormFields.shardNr, {
-                          keepError: false,
-                        });
-                        resetField(DbWizardFormFields.shardConfigServers, {
-                          keepError: false,
-                        });
-                      }
-                    },
+                    onChange: onShardingToggleChange,
                   }}
                 />
                 {notSupportedMongoOperatorVersionForSharding && (

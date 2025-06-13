@@ -19,4 +19,6 @@ export enum AdvancedConfigurationFields {
   engineParametersEnabled = 'engineParametersEnabled',
   engineParameters = 'engineParameters',
   storageClass = 'storageClass',
+  podSchedulingPolicyEnabled = 'podSchedulingPolicyEnabled',
+  podSchedulingPolicy = 'podSchedulingPolicy',
 }

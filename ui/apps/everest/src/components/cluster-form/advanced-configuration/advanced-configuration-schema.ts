@@ -38,21 +38,52 @@ export const advancedConfigurationsSchema = () =>
       ),
       [AdvancedConfigurationFields.engineParametersEnabled]: z.boolean(),
       [AdvancedConfigurationFields.engineParameters]: z.string().optional(),
+      [AdvancedConfigurationFields.podSchedulingPolicyEnabled]: z.boolean(),
+      [AdvancedConfigurationFields.podSchedulingPolicy]: z.string().optional(),
     })
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {
+      const nonEmptyRanges = sourceRanges
+        .map(({ sourceRange }) => sourceRange)
+        .filter((range): range is string => !!range);
+
+      const uniqueRanges = new Set(
+        Object.values(nonEmptyRanges).map((item) => item)
+      );
       sourceRanges.forEach(({ sourceRange }, index) => {
-        if (sourceRange && IP_REGEX.exec(sourceRange) === null) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.invalid_string,
-            validation: 'ip',
-            path: [
-              AdvancedConfigurationFields.sourceRanges,
-              index,
-              'sourceRange',
-            ],
-            message: Messages.errors.sourceRange.invalid,
-          });
+        if (sourceRange) {
+          // Validate if it's a valid IP using regex
+          if (IP_REGEX.exec(sourceRange) === null) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.invalid_string,
+              validation: 'ip',
+              path: [
+                AdvancedConfigurationFields.sourceRanges,
+                index,
+                'sourceRange',
+              ],
+              message: Messages.errors.sourceRange.invalid,
+            });
+          }
+
+          const isCurrentOneOfDuplicates =
+            nonEmptyRanges.filter((item) => item === sourceRange).length > 1;
+
+          // Check for duplicates
+          if (
+            nonEmptyRanges.length !== uniqueRanges.size &&
+            isCurrentOneOfDuplicates
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: [
+                AdvancedConfigurationFields.sourceRanges,
+                index,
+                'sourceRange',
+              ],
+              message: Messages.errors.sourceRange.duplicate,
+            });
+          }
         }
       });
     });

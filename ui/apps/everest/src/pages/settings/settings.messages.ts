@@ -12,9 +12,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-export const Messages = {
+
+import { SettingsTabs } from './settings.types';
+
+const tabLabels: Record<keyof typeof SettingsTabs, string> = {
   storageLocations: 'Backups storages',
   monitoringEndpoints: 'Monitoring endpoints',
   namespaces: 'Namespaces',
-  k8sClusters: 'Kubernetes clusters',
+  podSchedulingPolicies: 'Pod scheduling policies',
+};
+export const Messages = {
+  tabs: tabLabels,
 };

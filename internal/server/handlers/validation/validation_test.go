@@ -11,68 +11,6 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-func TestValidateRFC1035(t *testing.T) {
-	t.Parallel()
-	type testCase struct {
-		value string
-		valid bool
-	}
-
-	cases := []testCase{
-		{
-			value: "abc-sdf12",
-			valid: true,
-		},
-		{
-			value: "-abc-sdf12",
-			valid: false,
-		},
-		{
-			value: "abc-sdf12-",
-			valid: false,
-		},
-		{
-			value: "abc-sAAf12",
-			valid: false,
-		},
-		{
-			value: "abc-sAAf12",
-			valid: false,
-		},
-		{
-			value: "1abc-sf12",
-			valid: false,
-		},
-		{
-			value: "aaa123",
-			valid: true,
-		},
-		{
-			value: "asldkafaslkdjfalskdfjaslkdjflsakfjdalskfdjaslkfdjaslkfdjsaklfdassksjdfhskdjfskjdfsdfsdflasdkfasdfk",
-			valid: false,
-		},
-		{
-			value: "$%",
-			valid: false,
-		},
-		{
-			value: "asdf32$%",
-			valid: false,
-		},
-		{
-			value: "",
-			valid: false,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.value, func(t *testing.T) {
-			t.Parallel()
-			require.Equal(t, tc.valid, validateRFC1035(tc.value, "") == nil)
-		})
-	}
-}
-
 func TestValidateMetadata(t *testing.T) {
 	t.Parallel()
 

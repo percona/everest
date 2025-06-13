@@ -16,12 +16,12 @@ export enum SettingsTabs {
   storageLocations = 'storage-locations',
   monitoringEndpoints = 'monitoring-endpoints',
   namespaces = 'namespaces',
-  // k8sClusters = 'k8s-clusters',
+  podSchedulingPolicies = 'pod-scheduling-policies',
 }
 
 export const settingsTabsMui: Record<SettingsTabs, number> = {
   [SettingsTabs.storageLocations]: 1,
   [SettingsTabs.monitoringEndpoints]: 2,
   [SettingsTabs.namespaces]: 3,
-  // [SettingsTabs.k8sClusters]: 3,
+  [SettingsTabs.podSchedulingPolicies]: 4,
 };

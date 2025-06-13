@@ -50,6 +50,14 @@ const everestThemeOptions = (mode: PaletteMode): ThemeOptions => {
           }),
     },
     components: {
+      MuiCssBaseline: {
+        styleOverrides: (theme) => ({
+          a: {
+            color: 'inherit',
+            ...theme.typography.body2,
+          },
+        }),
+      },
       MuiIconButton: {
         defaultProps: {
           disableTouchRipple: true,

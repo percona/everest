@@ -10,6 +10,7 @@ test.describe('Clusters RBAC', () => {
   let namespace = '';
 
   test.beforeAll(async ({ request }) => {
+    await setRBACPermissionsK8S([['namespaces', 'read', '*']]);
     const token = await getTokenFromLocalStorage();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];

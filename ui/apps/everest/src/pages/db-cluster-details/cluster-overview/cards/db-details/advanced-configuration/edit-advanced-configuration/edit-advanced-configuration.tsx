@@ -38,6 +38,8 @@ export const AdvancedConfigurationEditModal = ({
     engineParameters,
     sourceRanges,
     storageClass,
+    podSchedulingPolicyEnabled,
+    podSchedulingPolicy,
   }) => {
     handleSubmitModal({
       externalAccess,
@@ -45,6 +47,8 @@ export const AdvancedConfigurationEditModal = ({
       engineParameters,
       sourceRanges,
       storageClass,
+      podSchedulingPolicyEnabled,
+      podSchedulingPolicy,
     });
   };
 
@@ -63,7 +67,8 @@ export const AdvancedConfigurationEditModal = ({
     >
       <AdvancedConfigurationForm
         dbType={dbEngineToDbType(dbCluster?.spec?.engine?.type)}
-        loadingDefaultsForEdition
+        allowStorageClassChange={false}
+        setDefaultsOnLoad={!dbCluster.spec.podSchedulingPolicyName}
       />
     </FormDialog>
   );

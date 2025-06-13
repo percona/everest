@@ -11,7 +11,7 @@ import {
   useEditBackupStorage,
 } from 'hooks/api/backup-storages/useBackupStorages';
 import { type MRT_ColumnDef } from 'material-react-table';
-import { LabelValue } from 'pages/databases/expandedRow/LabelValue';
+import { ExpandedRowInfoLine } from './ExpandedRowInfoLine/ExpandedRowInfoLine';
 import { useMemo, useState } from 'react';
 import { BackupStorage, StorageType } from 'shared-types/backupStorages.types';
 import {
@@ -222,16 +222,19 @@ export const StorageLocations = () => {
             }}
           >
             <Box>
-              <LabelValue label={Messages.url} value={row.original.url} />
-              <LabelValue
+              <ExpandedRowInfoLine
+                label={Messages.url}
+                value={row.original.url}
+              />
+              <ExpandedRowInfoLine
                 label={Messages.description}
                 value={row.original.description}
               />
             </Box>
             {/* TODO: uncomment when endpoint is ready
             <Box>
-              <LabelValue label="Access key" value={row.original.accessKey} />
-              <LabelValue label="Secret key" value={row.original.secretKey} />
+              <ExpandedRowInfoLine label="Access key" value={row.original.accessKey} />
+              <ExpandedRowInfoLine label="Secret key" value={row.original.secretKey} />
             </Box>  */}
           </Box>
         )}
@@ -247,7 +250,8 @@ export const StorageLocations = () => {
       )}
       {openDeleteDialog && (
         <ConfirmDialog
-          isOpen={openDeleteDialog}
+          open={openDeleteDialog}
+          cancelMessage="Cancel"
           selectedId={selectedStorageName}
           selectedNamespace={selectedStorageNamespace}
           closeModal={handleCloseDeleteDialog}

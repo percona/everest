@@ -190,6 +190,19 @@ type KubernetesConnector interface {
 	UpdateEverestSettings(ctx context.Context, settings common.EverestSettings) error
 	// GetEverestSettings returns Everest settings.
 	GetEverestSettings(ctx context.Context) (common.EverestSettings, error)
+	// ListPodSchedulingPolicies returns a list of pod scheduling policy that matches the criteria.
+	// This method returns a list of full objects (meta and spec).
+	ListPodSchedulingPolicies(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.PodSchedulingPolicyList, error)
+	// GetPodSchedulingPolicy returns pod scheduling policy that matches the criteria.
+	GetPodSchedulingPolicy(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.PodSchedulingPolicy, error)
+	// DeletePodSchedulingPolicy deletes pod scheduling policy that matches the criteria.
+	DeletePodSchedulingPolicy(ctx context.Context, obj *everestv1alpha1.PodSchedulingPolicy) error
+	// CreatePodSchedulingPolicy creates pod scheduling policy.
+	CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error)
+	// UpdatePodSchedulingPolicy updates pod scheduling policy.
+	UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error)
+	// IsPodSchedulingPolicyUsed checks if any database cluster uses a pod scheduling policy that matches the criteria.
+	IsPodSchedulingPolicyUsed(ctx context.Context, key ctrlclient.ObjectKey) (bool, error)
 	// GetAllClusterResources goes through all cluster nodes and sums their allocatable resources.
 	GetAllClusterResources(ctx context.Context, clusterType ClusterType, volumes *corev1.PersistentVolumeList) (uint64, uint64, uint64, error)
 	// GetConsumedCPUAndMemory returns consumed CPU and Memory in given namespace. If namespace

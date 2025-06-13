@@ -1,0 +1,46 @@
+import { Link, Typography } from '@mui/material';
+import CreateDbButton from 'components/create-db-button/create-db-button';
+import EmptyState from 'components/empty-state';
+import { Messages } from './messages';
+
+const EmptyStateDatabases = ({
+  showCreationButton,
+  hasCreatePermission,
+}: {
+  showCreationButton: boolean;
+  hasCreatePermission: boolean;
+}) => {
+  return (
+    <>
+      <EmptyState
+        contentSlot={
+          <>
+            <Typography>{Messages.noDbClusters}</Typography>
+            {hasCreatePermission ? (
+              <Typography> {Messages.createToStart} </Typography>
+            ) : (
+              <>
+                <Typography>{Messages.noPermissions}</Typography>
+                <Typography>
+                  Click{' '}
+                  <Link
+                    target="_blank"
+                    rel="noopener"
+                    href="https://docs.percona.com/everest/administer/rbac.html"
+                  >
+                    here
+                  </Link>{' '}
+                  to learn how to get permissions.
+                </Typography>
+              </>
+            )}
+          </>
+        }
+        showCreationButton={showCreationButton}
+        buttonSlot={<CreateDbButton />}
+      />
+    </>
+  );
+};
+
+export default EmptyStateDatabases;

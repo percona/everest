@@ -15,6 +15,7 @@
 
 import {
   AutoCompleteInput,
+  SelectInput,
   SwitchInput,
   TextArray,
   TextInput,
@@ -24,32 +25,68 @@ import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
-import { Stack } from '@mui/material';
+import {
+  Box,
+  FormGroup,
+  IconButton,
+  MenuItem,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import InfoIcon from '@mui/icons-material/InfoOutlined';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
-import { useEffect } from 'react';
-import { DbWizardFormFields } from 'consts';
-import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode';
+import { useEffect, useRef, useState } from 'react';
+import { DbWizardFormFields, EVEREST_READ_ONLY_FINALIZER } from 'consts';
 import AdvancedCard from 'components/advanced-card';
-import { WizardMode } from 'shared-types/wizard.types';
+import { usePodSchedulingPolicies } from 'hooks';
+import PoliciesDialog from './policies.dialog';
+import { PodSchedulingPolicy } from 'shared-types/affinity.types';
+import { dbTypeToDbEngine } from '@percona/utils';
+import { SELECT_WIDTH } from './constants';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
   loadingDefaultsForEdition?: boolean;
+  setDefaultsOnLoad?: boolean;
+  automaticallyTogglePodSchedulingPolicySwitch?: boolean;
+  allowStorageClassChange?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
   loadingDefaultsForEdition,
+  setDefaultsOnLoad = false,
+  automaticallyTogglePodSchedulingPolicySwitch = false,
+  allowStorageClassChange = false,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, setValue, getFieldState } = useFormContext();
-  const mode = useDatabasePageMode();
-  const [externalAccess, engineParametersEnabled] = watch([
+  const { watch, setValue, getFieldState, getValues } = useFormContext();
+  const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
+  const selectedPolicy = useRef<PodSchedulingPolicy>();
+  const [externalAccess, engineParametersEnabled, policiesEnabled] = watch([
     AdvancedConfigurationFields.externalAccess,
     AdvancedConfigurationFields.engineParametersEnabled,
-    AdvancedConfigurationFields.storageClass,
+    AdvancedConfigurationFields.podSchedulingPolicyEnabled,
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
+  const { data: policies = [], isLoading: fetchingPolicies } =
+    usePodSchedulingPolicies(dbTypeToDbEngine(dbType), true, {
+      refetchInterval: 2000,
+    });
+
+  const handleOnPolicyInfoClick = () => {
+    const policyName = getValues<string>(
+      AdvancedConfigurationFields.podSchedulingPolicy
+    );
+    selectedPolicy.current = policies.find(
+      (p) => policyName === p.metadata.name
+    );
+
+    if (selectedPolicy.current) {
+      setPolicyDialogOpen(true);
+    }
+  };
 
   // setting the storage class default value
   useEffect(() => {
@@ -58,8 +95,9 @@ export const AdvancedConfigurationForm = ({
     );
 
     if (
+      setDefaultsOnLoad &&
+      allowStorageClassChange &&
       !storageClassTouched &&
-      mode === WizardMode.New &&
       clusterInfo?.storageClassNames &&
       clusterInfo.storageClassNames.length > 0
     ) {
@@ -69,15 +107,53 @@ export const AdvancedConfigurationForm = ({
         { shouldValidate: true }
       );
     }
-  }, [clusterInfo]);
+  }, [clusterInfo, setDefaultsOnLoad, allowStorageClassChange]);
+
+  useEffect(() => {
+    if (!policies.length) {
+      return;
+    }
+
+    const { isTouched: policyTouched } = getFieldState(
+      DbWizardFormFields.podSchedulingPolicy
+    );
+
+    const defaultPolicy = policies.find((policy) =>
+      policy.metadata.finalizers.includes(EVEREST_READ_ONLY_FINALIZER)
+    );
+
+    if (setDefaultsOnLoad && !policyTouched) {
+      setValue(
+        AdvancedConfigurationFields.podSchedulingPolicy,
+        defaultPolicy ? defaultPolicy.metadata.name : policies[0].metadata.name
+      );
+    }
+
+    if (defaultPolicy && automaticallyTogglePodSchedulingPolicySwitch) {
+      setValue(AdvancedConfigurationFields.podSchedulingPolicyEnabled, true);
+    }
+  }, [
+    policies,
+    setValue,
+    setDefaultsOnLoad,
+    automaticallyTogglePodSchedulingPolicySwitch,
+  ]);
+
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
-      setValue(fieldName, `${value}/32`);
+      setValue(fieldName, `${value}/32`, { shouldValidate: true });
     }
   };
 
   return (
-    <>
+    <FormGroup
+      sx={{
+        mt: 3,
+        '& > .percona-rounded-box:not(:last-child)': {
+          mb: 2,
+        },
+      }}
+    >
       <AdvancedCard
         title={Messages.cards.storage.title}
         description={
@@ -86,65 +162,148 @@ export const AdvancedConfigurationForm = ({
         controlComponent={
           <AutoCompleteInput
             name={AdvancedConfigurationFields.storageClass}
-            label={Messages.labels.storageClass}
             loading={clusterInfoLoading}
             options={clusterInfo?.storageClassNames || []}
-            disabled={loadingDefaultsForEdition}
+            disabled={!allowStorageClassChange || loadingDefaultsForEdition}
+            textFieldProps={{
+              placeholder: Messages.placeholders.storageClass,
+            }}
             tooltipText={
-              loadingDefaultsForEdition
-                ? Messages.tooltipTexts.storageClass
-                : undefined
+              allowStorageClassChange
+                ? undefined
+                : Messages.tooltipTexts.storageClass
             }
             autoCompleteProps={{
               disableClearable: true,
               sx: {
+                width: SELECT_WIDTH,
                 mt: 0,
-                width: '135px',
               },
             }}
           />
         }
       />
-      <SwitchInput
-        label={Messages.enableExternalAccess.title}
-        labelCaption={Messages.enableExternalAccess.caption}
-        name={AdvancedConfigurationFields.externalAccess}
+      <AdvancedCard
+        title={Messages.cards.policies.title}
+        description={
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="top"
+            minHeight={'50px'}
+          >
+            <Typography variant="caption" maxWidth="60%">
+              {Messages.cards.policies.description}
+            </Typography>
+            {!!policiesEnabled && (
+              <Box display="flex" ml="auto" alignItems="center">
+                <SelectInput
+                  name={AdvancedConfigurationFields.podSchedulingPolicy}
+                  loading={fetchingPolicies || loadingDefaultsForEdition}
+                  formControlProps={{
+                    sx: {
+                      width: SELECT_WIDTH,
+                      mt: 0,
+                    },
+                  }}
+                >
+                  {policies.map((policy) => (
+                    <MenuItem
+                      value={policy.metadata.name}
+                      key={policy.metadata.name}
+                    >
+                      {policy.metadata.name}
+                    </MenuItem>
+                  ))}
+                </SelectInput>
+                {!!policies.length && (
+                  <IconButton onClick={handleOnPolicyInfoClick}>
+                    <InfoIcon sx={{ width: '20px' }} />
+                  </IconButton>
+                )}
+              </Box>
+            )}
+          </Box>
+        }
+        controlComponent={
+          <Tooltip
+            title={!policies?.length ? Messages.tooltipTexts.noPolicies : ''}
+            placement="top"
+            arrow
+          >
+            <span>
+              <SwitchInput
+                label={Messages.enable}
+                name={AdvancedConfigurationFields.podSchedulingPolicyEnabled}
+                switchFieldProps={{
+                  disabled: !policies?.length,
+                }}
+              />
+            </span>
+          </Tooltip>
+        }
       />
-      {externalAccess && (
-        <Stack sx={{ ml: 6 }}>
-          <TextArray
-            placeholder={Messages.sourceRangePlaceholder}
-            fieldName={AdvancedConfigurationFields.sourceRanges}
-            fieldKey="sourceRange"
-            label={Messages.sourceRange}
-            handleBlur={handleBlur}
+      <AdvancedCard
+        title={Messages.cards.enableExternalAccess.title}
+        description={
+          <Stack>
+            <Typography variant="caption">
+              {Messages.cards.enableExternalAccess.description}
+            </Typography>
+            {externalAccess && (
+              <Stack sx={{ ml: 6 }} data-testid="external-access-fields">
+                <TextArray
+                  placeholder={Messages.sourceRangePlaceholder}
+                  fieldName={AdvancedConfigurationFields.sourceRanges}
+                  fieldKey="sourceRange"
+                  label={Messages.sourceRange}
+                  handleBlur={handleBlur}
+                />
+              </Stack>
+            )}
+          </Stack>
+        }
+        controlComponent={
+          <SwitchInput
+            label={Messages.enable}
+            name={AdvancedConfigurationFields.externalAccess}
           />
-        </Stack>
-      )}
-      <SwitchInput
-        label={Messages.engineParameters.title}
-        labelCaption={Messages.engineParameters.caption}
-        name={AdvancedConfigurationFields.engineParametersEnabled}
-        formControlLabelProps={{
-          sx: {
-            mt: 1,
-          },
-        }}
+        }
       />
-      {engineParametersEnabled && (
-        <TextInput
-          name={AdvancedConfigurationFields.engineParameters}
-          textFieldProps={{
-            placeholder: getParamsPlaceholderFromDbType(dbType),
-            multiline: true,
-            minRows: 3,
-            sx: {
-              ml: 6,
-            },
-          }}
+      <AdvancedCard
+        title={Messages.cards.engineParameters.title}
+        description={
+          <Stack>
+            <Typography variant="caption">
+              {Messages.cards.engineParameters.description}
+            </Typography>
+            {engineParametersEnabled && (
+              <TextInput
+                name={AdvancedConfigurationFields.engineParameters}
+                textFieldProps={{
+                  placeholder: getParamsPlaceholderFromDbType(dbType),
+                  multiline: true,
+                  minRows: 3,
+                }}
+              />
+            )}
+          </Stack>
+        }
+        controlComponent={
+          <SwitchInput
+            label={Messages.enable}
+            name={AdvancedConfigurationFields.engineParametersEnabled}
+          />
+        }
+      />
+      {policyDialogOpen && (
+        <PoliciesDialog
+          engineType={selectedPolicy.current!.spec.engineType}
+          policy={selectedPolicy.current!}
+          handleClose={() => setPolicyDialogOpen(false)}
         />
       )}
-    </>
+    </FormGroup>
   );
 };
 
