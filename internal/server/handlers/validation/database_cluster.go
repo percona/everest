@@ -377,7 +377,7 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 		return nil
 	}
 
-	ensureOnlyOneDataSourceSpecified := func() bool {
+	ensureOneDataSourceSpecified := func() bool {
 		sources := 0
 		if dataSource.DBClusterBackupName != "" {
 			sources++
@@ -388,10 +388,10 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 		if dataSource.DataImport != nil {
 			sources++
 		}
-		// ensure we specify one or nothing
-		return sources <= 1
+
+		return sources == 1
 	}
-	if !ensureOnlyOneDataSourceSpecified() {
+	if !ensureOneDataSourceSpecified() {
 		return errDataSourceConfig
 	}
 
