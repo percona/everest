@@ -33,5 +33,8 @@ func (h *k8sHandler) ListDataImporters(ctx context.Context, supportedEngines ...
 			}
 		}
 	}
+	result.Items = slices.CompactFunc(result.Items, func(a, b everestv1alpha1.DataImporter) bool {
+		return a.GetName() == b.GetName()
+	})
 	return result, nil
 }
