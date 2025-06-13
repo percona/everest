@@ -24,11 +24,7 @@ func (h *k8sHandler) ListDataImporters(ctx context.Context, supportedEngines ...
 	result := &everestv1alpha1.DataImporterList{}
 	for _, wantEngine := range supportedEngines {
 		for _, importer := range list.Items {
-			if slices.Contains(importer.Spec.SupportedEngines, everestv1alpha1.EngineType(wantEngine)) &&
-				// ensure we don't add duplicates
-				!slices.ContainsFunc(result.Items, func(i everestv1alpha1.DataImporter) bool {
-					return i.GetName() == importer.GetName()
-				}) {
+			if slices.Contains(importer.Spec.SupportedEngines, everestv1alpha1.EngineType(wantEngine)) {
 				result.Items = append(result.Items, importer)
 			}
 		}
