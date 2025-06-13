@@ -1970,7 +1970,7 @@ paths:
       operationId: listDataImporters
       parameters:
       - in: query
-        name: supportedEngine
+        name: supportedEngines
         description: Filter data importers by supported database engine type. 
         required: false
         schema:
