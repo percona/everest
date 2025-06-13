@@ -229,11 +229,10 @@ func (h *rbacHandler) enforceDBClusterRead(ctx context.Context, db *everestv1alp
 	return nil
 }
 
-func (h *rbacHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string,
-	engineType everestv1alpha1.EngineType, secret *corev1.Secret,
+func (h *rbacHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret,
 ) (*corev1.Secret, error) {
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusters, rbac.ActionCreate, rbac.ObjectName(namespace, dbName)); err != nil {
 		return nil, err
 	}
-	return h.next.CreateDatabaseClusterSecret(ctx, namespace, dbName, engineType, secret)
+	return h.next.CreateDatabaseClusterSecret(ctx, namespace, dbName, secret)
 }

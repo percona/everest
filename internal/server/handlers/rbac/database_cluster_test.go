@@ -1149,9 +1149,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 
 				next := &handlers.MockHandler{}
 				next.On("CreateDatabaseClusterSecret",
-					mock.Anything, "default", "test",
-					mock.Anything,
-					&corev1.Secret{},
+					mock.Anything, "default", "test", &corev1.Secret{},
 				).
 					Return(&corev1.Secret{}, nil)
 
@@ -1161,7 +1159,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					log:        zap.NewNop().Sugar(),
 					userGetter: testUserGetter,
 				}
-				_, err = h.CreateDatabaseClusterSecret(ctx, "default", "test", everestv1alpha1.DatabaseEnginePXC, &corev1.Secret{})
+				_, err = h.CreateDatabaseClusterSecret(ctx, "default", "test", &corev1.Secret{})
 				assert.ErrorIs(t, err, tc.wantErr)
 			})
 		}

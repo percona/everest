@@ -164,8 +164,7 @@ func (e *EverestServer) CreateDatabaseClusterSecret(
 		name = fmt.Sprintf("%s-%d-secret", dbName, randNum)
 		secret.SetName(name)
 	}
-	engineType := everestv1alpha1.EngineType(params.DbEngineType)
-	result, err := e.handler.CreateDatabaseClusterSecret(c.Request().Context(), namespace, dbName, engineType, secret)
+	result, err := e.handler.CreateDatabaseClusterSecret(c.Request().Context(), namespace, dbName, secret)
 	if err != nil {
 		e.l.Errorf("CreateDatabaseClusterSecret failed: %w", err)
 		return err

@@ -412,13 +412,11 @@ func TestCreateDatabaseClusterSecret(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		engineType everestv1alpha1.EngineType
 		secret     *corev1.Secret
 		verifyFunc func(t *testing.T, secret *corev1.Secret)
 	}{
 		{
-			name:       "create secret for PXC engine",
-			engineType: everestv1alpha1.DatabaseEnginePXC,
+			name: "create secret for PXC engine",
 			secret: &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "pxc-secret",
@@ -435,8 +433,7 @@ func TestCreateDatabaseClusterSecret(t *testing.T) {
 			},
 		},
 		{
-			name:       "create secret for PSMDB engine",
-			engineType: everestv1alpha1.DatabaseEnginePSMDB,
+			name: "create secret for PSMDB engine",
 			secret: &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "psmdb-secret",
@@ -455,8 +452,7 @@ func TestCreateDatabaseClusterSecret(t *testing.T) {
 			},
 		},
 		{
-			name:       "create secret for PostgreSQL engine",
-			engineType: everestv1alpha1.DatabaseEnginePostgresql,
+			name: "create secret for PostgreSQL engine",
 			secret: &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "pg-secret",
@@ -469,9 +465,6 @@ func TestCreateDatabaseClusterSecret(t *testing.T) {
 				require.Equal(t, testNamespace, secret.Namespace)
 				require.Equal(t, "pg-secret", secret.Name)
 				require.Equal(t, testDBName, secret.Labels[common.DatabaseClusterNameLabel])
-				require.Equal(t, testDBName, secret.Labels["postgres-operator.crunchydata.com/cluster"])
-				require.Equal(t, "postgres", secret.Labels["postgres-operator.crunchydata.com/pguser"])
-				require.Equal(t, "pguser", secret.Labels["postgres-operator.crunchydata.com/role"])
 				require.Equal(t, []byte("password"), secret.Data["password"])
 			},
 		},
@@ -495,7 +488,6 @@ func TestCreateDatabaseClusterSecret(t *testing.T) {
 				context.Background(),
 				testNamespace,
 				testDBName,
-				tc.engineType,
 				tc.secret,
 			)
 

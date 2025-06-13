@@ -754,8 +754,7 @@ func (h *validateHandler) validatePodSchedulingPolicy(ctx context.Context, db *e
 	return nil
 }
 
-func (h *validateHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string,
-	engineType everestv1alpha1.EngineType, secret *corev1.Secret,
+func (h *validateHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret,
 ) (*corev1.Secret, error) {
-	return h.next.CreateDatabaseClusterSecret(ctx, namespace, dbName, engineType, secret)
+	return h.next.CreateDatabaseClusterSecret(ctx, namespace, dbName, secret)
 }
