@@ -635,6 +635,14 @@ const ResourcesForm = ({
     trigger();
   }, [numberOfNodes, customNrOfNodes, trigger, numberOfProxies]);
 
+  useEffect(() => {
+    if (someErrorInNodes && !someErrorInProxies) {
+      setExpanded('nodes');
+    } else if (someErrorInProxies && !someErrorInNodes) {
+      setExpanded('proxies');
+    }
+  }, [expanded, someErrorInNodes, someErrorInProxies]);
+
   // TODO test the following:
   // when in restore mode, the number of shards should be disabled
   return (
