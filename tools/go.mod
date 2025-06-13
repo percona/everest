@@ -6,7 +6,7 @@ require (
 	github.com/daixiang0/gci v0.13.6
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
-	github.com/quasilyte/go-consistent v0.6.1
+	github.com/quasilyte/go-consistent v0.6.2
 	github.com/reviewdog/reviewdog v0.20.3
 	github.com/vburenin/ifacemaker v1.3.0
 	github.com/vektra/mockery/v2 v2.53.3
