@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -1084,6 +1085,81 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					userGetter: testUserGetter,
 				}
 				_, err = h.GetDatabaseClusterPitr(ctx, "default", "test-cluster")
+				assert.ErrorIs(t, err, tc.wantErr)
+			})
+		}
+	})
+
+	t.Run("CreateDatabaseClusterSecret", func(t *testing.T) {
+		testCases := []struct {
+			desc    string
+			wantErr error
+			policy  string
+		}{
+			{
+				desc: "success",
+				policy: newPolicy(
+					"p, role:test, database-clusters, create, default/test",
+					"g, bob, role:test",
+				),
+			},
+			{
+				desc: "success (wildcards)",
+				policy: newPolicy(
+					"p, role:test, database-clusters, create, default/*",
+					"g, bob, role:test",
+				),
+			},
+			{
+				desc: "success (admin)",
+				policy: newPolicy(
+					"g, bob, role:admin",
+				),
+			},
+			{
+				desc:    "missing create permission for database-cluster",
+				policy:  newPolicy(), // no policy
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing create permission for database-cluster (wrong namespace)",
+				policy: newPolicy(
+					"p, role:test, database-clusters, create, some/*",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing create permission for database-cluster (wrong object)",
+				policy: newPolicy(
+					"p, role:test, database-clusters, create, default/some",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+		}
+
+		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				t.Parallel()
+				k8sMock := newConfigMapMock(tc.policy)
+				enf, err := rbac.NewEnforcer(ctx, k8sMock, zap.NewNop().Sugar())
+				require.NoError(t, err)
+
+				next := &handlers.MockHandler{}
+				next.On("CreateDatabaseClusterSecret",
+					mock.Anything, "default", "test", &corev1.Secret{},
+				).
+					Return(&corev1.Secret{}, nil)
+
+				h := &rbacHandler{
+					next:       next,
+					enforcer:   enf,
+					log:        zap.NewNop().Sugar(),
+					userGetter: testUserGetter,
+				}
+				_, err = h.CreateDatabaseClusterSecret(ctx, "default", "test", &corev1.Secret{})
 				assert.ErrorIs(t, err, tc.wantErr)
 			})
 		}
