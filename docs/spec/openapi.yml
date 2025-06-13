@@ -1971,7 +1971,7 @@ paths:
       parameters:
       - in: query
         name: supportedEngines
-        description: Filter data importers by supported database engine type. 
+        description: Filter data importers by supported database engine type. Accepts a comma-separated list.
         required: false
         schema:
           type: array
