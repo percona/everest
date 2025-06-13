@@ -15,6 +15,7 @@ type Props = {
   schedules: Schedule[];
   autoFillProps?: Partial<AutoCompleteAutoFillProps<BackupStorage>>;
   hideUsedStoragesInSchedules?: boolean;
+  cluster?: string;
 };
 
 const BackupStoragesInput = ({
@@ -24,12 +25,14 @@ const BackupStoragesInput = ({
   schedules,
   autoFillProps,
   hideUsedStoragesInSchedules,
+  cluster = 'in-cluster',
 }: Props) => {
   const { data: backupStorages = [], isFetching: fetchingStorages } =
-    useBackupStoragesByNamespace(namespace);
+    useBackupStoragesByNamespace(namespace, cluster);
   const { data: backups = [], isFetching: fetchingBackups } = useDbBackups(
     dbClusterName!,
     namespace,
+    cluster,
     {
       enabled: !!dbClusterName && dbType === DbType.Postresql,
     }

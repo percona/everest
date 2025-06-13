@@ -6,10 +6,11 @@ import { api } from './api';
 
 export const createDbClusterRestore = async (
   data: CreateRestorePayload,
-  namespace: string
+  namespace: string,
+  cluster: string = 'in-cluster'
 ) => {
   const response = await api.post(
-    `namespaces/${namespace}/database-cluster-restores`,
+    `clusters/${cluster}/namespaces/${namespace}/database-cluster-restores`,
     data
   );
 
@@ -18,18 +19,23 @@ export const createDbClusterRestore = async (
 
 export const getDbClusterRestores = async (
   namespace: string,
-  dbClusterName: string
+  dbClusterName: string,
+  cluster: string = 'in-cluster'
 ) => {
   const response = await api.get<GetRestorePayload>(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}/restores`
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters/${dbClusterName}/restores`
   );
 
   return response.data;
 };
 
-export const deleteRestore = async (namespace: string, restoreName: string) => {
+export const deleteRestore = async (
+  namespace: string,
+  restoreName: string,
+  cluster: string = 'in-cluster'
+) => {
   const response = await api.delete(
-    `namespaces/${namespace}/database-cluster-restores/${restoreName}`
+    `clusters/${cluster}/namespaces/${namespace}/database-cluster-restores/${restoreName}`
   );
 
   return response.data;

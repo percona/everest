@@ -51,6 +51,7 @@ export const ExpandedRow = ({
     hostName = '',
     port,
     raw,
+    cluster,
   } = row.original;
 
   const parsedDiskValues = memoryParser(storage.toString());
@@ -85,6 +86,7 @@ export const ExpandedRow = ({
   const { isPending, isFetching, data } = useDbClusterCredentials(
     databaseName,
     namespace,
+    cluster,
     {
       enabled: !!isExpanded,
       staleTime: 10 * (60 * 1000),

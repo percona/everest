@@ -26,8 +26,8 @@ import (
 )
 
 // ListDatabaseEngines List of the available database engines on the specified namespace.
-func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
-	result, err := e.handler.ListDatabaseEngines(ctx.Request().Context(), namespace)
+func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, cluster, namespace string) error {
+	result, err := e.handler.ListDatabaseEngines(ctx.Request().Context(), cluster, namespace)
 	if err != nil {
 		e.l.Errorf("ListDatabaseEngines failed: %w", err)
 		return err
@@ -36,8 +36,8 @@ func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) 
 }
 
 // GetDatabaseEngine Get the specified database engine on the specified namespace.
-func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name string) error {
-	result, err := e.handler.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
+func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, cluster, namespace, name string) error {
+	result, err := e.handler.GetDatabaseEngine(ctx.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseEngine failed: %w", err)
 		return err
@@ -48,7 +48,7 @@ func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name stri
 // UpdateDatabaseEngine Update the specified database engine on the specified namespace.
 //
 //nolint:dupl
-func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name string) error {
+func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, cluster, namespace, name string) error {
 	dbe := &everestv1alpha1.DatabaseEngine{}
 	if err := e.getBodyFromContext(ctx, dbe); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
@@ -56,7 +56,7 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 	dbe.SetNamespace(namespace)
 	dbe.SetName(name)
 
-	result, err := e.handler.UpdateDatabaseEngine(ctx.Request().Context(), dbe)
+	result, err := e.handler.UpdateDatabaseEngine(ctx.Request().Context(), cluster, dbe)
 	if err != nil {
 		e.l.Errorf("UpdateDatabaseEngine failed: %w", err)
 		return err
@@ -67,9 +67,9 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 // GetUpgradePlan gets the upgrade plan for the given namespace.
 func (e *EverestServer) GetUpgradePlan(
 	ctx echo.Context,
-	namespace string,
+	cluster, namespace string,
 ) error {
-	result, err := e.handler.GetUpgradePlan(ctx.Request().Context(), namespace)
+	result, err := e.handler.GetUpgradePlan(ctx.Request().Context(), cluster, namespace)
 	if err != nil {
 		e.l.Errorf("GetUpgradePlan failed: %w", err)
 		return err
@@ -78,8 +78,8 @@ func (e *EverestServer) GetUpgradePlan(
 }
 
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
-func (e *EverestServer) ApproveUpgradePlan(ctx echo.Context, namespace string) error {
-	if err := e.handler.ApproveUpgradePlan(ctx.Request().Context(), namespace); err != nil {
+func (e *EverestServer) ApproveUpgradePlan(ctx echo.Context, cluster, namespace string) error {
+	if err := e.handler.ApproveUpgradePlan(ctx.Request().Context(), cluster, namespace); err != nil {
 		e.l.Errorf("ApproveUpgradePlan failed: %w", err)
 		return err
 	}

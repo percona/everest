@@ -33,9 +33,7 @@ export const Main = () => {
   const { apiVersion, openReloadDialog, setOpenReloadDialog } = useContext(
     UpgradeEverestContext
   );
-  const { isFetching, isError, refetch } = useKubernetesClusterInfo([
-    'initial-k8-info',
-  ]);
+  const { isFetching, isError, refetch } = useKubernetesClusterInfo(['k8s-info'], 'in-cluster');
 
   const handleCloseWelcomeDialog = () => {
     setOpenWelcomeDialogLS(false);

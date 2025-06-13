@@ -55,14 +55,17 @@ export const BackupsList = () => {
     setMode: setScheduleModalMode,
     setOpenScheduleModal,
     setOpenOnDemandModal,
+    cluster,
   } = useContext(ScheduleModalContext);
 
   const { mutate: deleteBackup, isPending: deletingBackup } = useDeleteBackup(
-    dbCluster?.metadata.namespace
+    dbCluster?.metadata.namespace,
+    cluster
   );
   const { data: backups = [] } = useDbBackups(
     dbCluster.metadata.name,
     dbCluster.metadata.namespace,
+    cluster,
     {
       refetchInterval: 10 * 1000,
     }
@@ -70,12 +73,14 @@ export const BackupsList = () => {
   const { data: pitrData } = useDbClusterPitr(
     dbCluster.metadata.name!,
     dbCluster.metadata.namespace,
+    cluster,
     {
       enabled: !!dbCluster.metadata.name && !!dbCluster.metadata.namespace,
     }
   );
   const { data: backupStorages = [] } = useBackupStoragesByNamespace(
-    dbCluster?.metadata.namespace
+    dbCluster?.metadata.namespace,
+    cluster
   );
   const dbType = dbCluster.spec?.engine.type;
   const { storagesToShow, uniqueStoragesInUse } =

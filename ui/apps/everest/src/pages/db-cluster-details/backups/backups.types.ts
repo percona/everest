@@ -11,4 +11,5 @@ export type ScheduleModalContextType = {
   setOpenScheduleModal: React.Dispatch<React.SetStateAction<boolean>>;
   openOnDemandModal: boolean;
   setOpenOnDemandModal: React.Dispatch<React.SetStateAction<boolean>>;
+  cluster: string;
 };

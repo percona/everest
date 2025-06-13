@@ -36,18 +36,31 @@ const (
 	pgDefaultUploadInterval = 60
 )
 
-func (h *k8sHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	return h.kubeConnector.CreateDatabaseCluster(ctx, db)
+func (h *k8sHandler) CreateDatabaseCluster(ctx context.Context, cluster string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.CreateDatabaseCluster(ctx, db)
 }
 
-func (h *k8sHandler) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
-	return h.kubeConnector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
+func (h *k8sHandler) ListDatabaseClusters(ctx context.Context, cluster string, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+	return connector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
 }
 
-func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
+func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, cluster string, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
 	cleanupStorage := pointer.Get(req.CleanupBackupStorage)
 
-	backups, err := h.kubeConnector.ListDatabaseClusterBackups(ctx, ctrlclient.InNamespace(namespace))
+	backups, err := connector.ListDatabaseClusterBackups(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return err
 	}
@@ -58,7 +71,7 @@ func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name 
 			if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
 				continue
 			}
-			if err := h.ensureBackupStorageProtection(ctx, &backup); err != nil {
+			if err := h.ensureBackupStorageProtection(ctx, cluster, &backup); err != nil {
 				return errors.Join(err, errors.New("could not ensure backup storage protection"))
 			}
 		}
@@ -71,7 +84,7 @@ func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name 
 		if backup.Spec.DBClusterName != name || !backup.GetDeletionTimestamp().IsZero() {
 			continue
 		}
-		if err := h.ensureBackupForegroundDeletion(ctx, &backup); err != nil {
+		if err := h.ensureBackupForegroundDeletion(ctx, cluster, &backup); err != nil {
 			return errors.Join(err, errors.New("could not ensure foreground deletion"))
 		}
 	}
@@ -82,23 +95,38 @@ func (h *k8sHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name 
 			Name:      name,
 		},
 	}
-	return h.kubeConnector.DeleteDatabaseCluster(ctx, delObj)
+	return connector.DeleteDatabaseCluster(ctx, delObj)
 }
 
-func (h *k8sHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	return h.kubeConnector.UpdateDatabaseCluster(ctx, db)
+func (h *k8sHandler) UpdateDatabaseCluster(ctx context.Context, cluster string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.UpdateDatabaseCluster(ctx, db)
 }
 
-func (h *k8sHandler) GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
-	return h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+func (h *k8sHandler) GetDatabaseCluster(ctx context.Context, cluster string, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 }
 
-func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error) {
-	databaseCluster, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, cluster string, namespace, name string) (*api.DatabaseClusterCredential, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	databaseCluster, err := connector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database cluster %s/%s: %w", namespace, name, err)
 	}
-	secret, err := h.kubeConnector.GetSecret(ctx, types.NamespacedName{Namespace: namespace, Name: databaseCluster.Spec.Engine.UserSecretsName})
+	secret, err := connector.GetSecret(ctx, types.NamespacedName{Namespace: namespace, Name: databaseCluster.Spec.Engine.UserSecretsName})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get secret %s/%s: %w", namespace, databaseCluster.Spec.Engine.UserSecretsName, err)
 	}
@@ -110,11 +138,11 @@ func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, namespac
 	case everestv1alpha1.DatabaseEnginePSMDB:
 		response.Username = pointer.ToString(string(secret.Data["MONGODB_DATABASE_ADMIN_USER"]))
 		response.Password = pointer.ToString(string(secret.Data["MONGODB_DATABASE_ADMIN_PASSWORD"]))
-		response.ConnectionUrl = h.connectionURL(ctx, databaseCluster, *response.Username, *response.Password)
+		response.ConnectionUrl = h.connectionURL(ctx, cluster, databaseCluster, *response.Username, *response.Password)
 	case everestv1alpha1.DatabaseEnginePostgresql:
 		response.Username = pointer.ToString("postgres")
 		response.Password = pointer.ToString(string(secret.Data["password"]))
-		response.ConnectionUrl = h.connectionURL(ctx, databaseCluster, *response.Username, *response.Password)
+		response.ConnectionUrl = h.connectionURL(ctx, cluster, databaseCluster, *response.Username, *response.Password)
 	default:
 		return nil, fmt.Errorf("unsupported database engine type: %s", databaseCluster.Spec.Engine.Type)
 	}
@@ -122,8 +150,13 @@ func (h *k8sHandler) GetDatabaseClusterCredentials(ctx context.Context, namespac
 }
 
 //nolint:funlen
-func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error) {
-	pods, err := h.kubeConnector.ListPods(ctx, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels{"app.kubernetes.io/instance": name})
+func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, cluster string, namespace, name string) ([]api.DatabaseClusterComponent, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	pods, err := connector.ListPods(ctx, ctrlclient.InNamespace(namespace), ctrlclient.MatchingLabels{"app.kubernetes.io/instance": name})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods for database cluster %s/%s: %w", namespace, name, err)
 	}
@@ -188,8 +221,13 @@ func (h *k8sHandler) GetDatabaseClusterComponents(ctx context.Context, namespace
 	return res, nil
 }
 
-func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error) {
-	databaseCluster, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, cluster, namespace, name string) (*api.DatabaseClusterPitr, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	databaseCluster, err := connector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database cluster %s/%s: %w", namespace, name, err)
 	}
@@ -200,7 +238,7 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 		return response, nil
 	}
 
-	backups, err := h.kubeConnector.ListDatabaseClusterBackups(ctx,
+	backups, err := connector.ListDatabaseClusterBackups(ctx,
 		ctrlclient.InNamespace(namespace),
 		ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: name},
 	)
@@ -243,38 +281,54 @@ func (h *k8sHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name
 //nolint:gochecknoglobals
 var everestAPIConstantBackoff = backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 10) //nolint:mnd
 
-func (h *k8sHandler) ensureBackupStorageProtection(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
+func (h *k8sHandler) ensureBackupStorageProtection(ctx context.Context, cluster string, backup *everestv1alpha1.DatabaseClusterBackup) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
 	// We wrap this logic in a retry loop to reduce the chances of resource conflicts.
 	return backoff.Retry(func() error {
-		backup, err := h.kubeConnector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: backup.GetNamespace(), Name: backup.GetName()})
+		backup, err := connector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: backup.GetNamespace(), Name: backup.GetName()})
 		if err != nil {
 			return err
 		}
 		controllerutil.AddFinalizer(backup, everestv1alpha1.DBBackupStorageProtectionFinalizer)
 		controllerutil.AddFinalizer(backup, common.ForegroundDeletionFinalizer)
-		_, err = h.kubeConnector.UpdateDatabaseClusterBackup(ctx, backup)
+		_, err = connector.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
 }
 
-func (h *k8sHandler) ensureBackupForegroundDeletion(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
+func (h *k8sHandler) ensureBackupForegroundDeletion(ctx context.Context, cluster string, backup *everestv1alpha1.DatabaseClusterBackup) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
 	// We wrap this logic in a retry loop to reduce the chances of resource conflicts.
 	return backoff.Retry(func() error {
-		backup, err := h.kubeConnector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: backup.GetNamespace(), Name: backup.GetName()})
+		backup, err := connector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: backup.GetNamespace(), Name: backup.GetName()})
 		if err != nil {
 			return err
 		}
 		controllerutil.AddFinalizer(backup, common.ForegroundDeletionFinalizer)
-		_, err = h.kubeConnector.UpdateDatabaseClusterBackup(ctx, backup)
+		_, err = connector.UpdateDatabaseClusterBackup(ctx, backup)
 		return err
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
 }
 
-func (h *k8sHandler) connectionURL(ctx context.Context, db *everestv1alpha1.DatabaseCluster, user, password string) *string {
+func (h *k8sHandler) connectionURL(ctx context.Context, cluster string, db *everestv1alpha1.DatabaseCluster, user, password string) *string {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		h.log.Error(err)
+		return nil
+	}
+
 	if db.Status.Hostname == "" {
 		return nil
 	}
@@ -284,7 +338,7 @@ func (h *k8sHandler) connectionURL(ctx context.Context, db *everestv1alpha1.Data
 	case everestv1alpha1.DatabaseEnginePXC:
 		url = queryEscapedURL("jdbc:mysql", user, password, defaultHost)
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		hosts, err := psmdbHosts(ctx, db, h.kubeConnector.ListPods)
+		hosts, err := psmdbHosts(ctx, db, connector.ListPods)
 		if err != nil {
 			h.log.Error(err)
 			return nil

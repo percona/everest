@@ -10,6 +10,7 @@ export const convertMonitoringInstancesPayloadToTableFormat = (
       ?.queryResult?.isSuccess
       ? item.queryResult?.data.map((monitoring) => ({
           namespace: item.namespace,
+          cluster: item.cluster,
           name: monitoring.name,
           type: monitoring.type,
           url: monitoring.url,

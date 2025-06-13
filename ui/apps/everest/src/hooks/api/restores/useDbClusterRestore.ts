@@ -38,9 +38,11 @@ export const useDbClusterRestoreFromBackup = (
     mutationFn: ({
       backupName,
       namespace,
+      cluster = 'in-cluster',
     }: {
       backupName: string;
       namespace: string;
+      cluster?: string;
     }) =>
       createDbClusterRestore(
         {
@@ -56,7 +58,8 @@ export const useDbClusterRestoreFromBackup = (
             },
           },
         },
-        namespace
+        namespace,
+        cluster
       ),
     ...options,
   });
@@ -70,10 +73,12 @@ export const useDbClusterRestoreFromPointInTime = (
       pointInTimeDate,
       backupName,
       namespace,
+      cluster = 'in-cluster',
     }: {
       pointInTimeDate: string;
       backupName: string;
       namespace: string;
+      cluster?: string;
     }) =>
       createDbClusterRestore(
         {
@@ -92,7 +97,8 @@ export const useDbClusterRestoreFromPointInTime = (
             },
           },
         },
-        namespace
+        namespace,
+        cluster
       ),
     ...options,
   });
@@ -100,6 +106,7 @@ export const useDbClusterRestoreFromPointInTime = (
 export const useDbClusterRestores = (
   namespace: string,
   dbClusterName: string,
+  cluster: string = 'in-cluster',
   options?: PerconaQueryOptions<GetRestorePayload, unknown, Restore[]>
 ) => {
   const { canRead } = useRBACPermissions(
@@ -107,8 +114,8 @@ export const useDbClusterRestores = (
     `${namespace}/${dbClusterName}`
   );
   return useQuery<GetRestorePayload, unknown, Restore[]>({
-    queryKey: [RESTORES_QUERY_KEY, namespace, dbClusterName],
-    queryFn: () => getDbClusterRestores(namespace, dbClusterName),
+    queryKey: [RESTORES_QUERY_KEY, namespace, dbClusterName, cluster],
+    queryFn: () => getDbClusterRestores(namespace, dbClusterName, cluster),
     refetchInterval: 5 * 1000,
     select: canRead
       ? (data) =>
@@ -128,9 +135,10 @@ export const useDbClusterRestores = (
 
 export const useDeleteRestore = (
   namespace: string,
+  cluster: string = 'in-cluster',
   options?: UseMutationOptions<unknown, unknown, string, unknown>
 ) =>
   useMutation({
-    mutationFn: (restoreName: string) => deleteRestore(namespace, restoreName),
+    mutationFn: (restoreName: string) => deleteRestore(namespace, restoreName, cluster),
     ...options,
   });

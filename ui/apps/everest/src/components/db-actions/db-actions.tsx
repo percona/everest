@@ -28,13 +28,18 @@ import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import DbActionsModals from './db-actions-modals';
 import { useDbActions } from 'hooks';
 import { shouldDbActionsBeBlocked } from 'utils/db';
+import { useLocation } from 'react-router-dom';
 
 export const DbActions = ({
   isDetailView = false,
   dbCluster,
+  cluster: clusterProp,
 }: DbActionsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isNewClusterMode, setIsNewClusterMode] = useState(false);
+  const location = useLocation();
+  const cluster = clusterProp || location.state?.cluster || 'in-cluster';
+
   const {
     openRestoreDialog,
     handleCloseRestoreDialog,
@@ -50,7 +55,7 @@ export const DbActions = ({
     handleDbSuspendOrResumed,
     handleRestoreDbCluster,
     deleteMutation,
-  } = useDbActions(dbCluster);
+  } = useDbActions(dbCluster, cluster);
   const open = Boolean(anchorEl);
   const dbClusterName = dbCluster.metadata.name;
   const namespace = dbCluster.metadata.namespace;

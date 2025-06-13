@@ -29,8 +29,9 @@ export const CreateDbButton = () => {
 
   const open = Boolean(anchorEl);
 
-  const [availableDbTypes, availableDbTypesFetching] =
-    useDBEnginesForDbEngineTypes(undefined, {
+  // TODO: Replace 'in-cluster' with actual cluster selection logic
+  const [availableDbTypes, dbEnginesFetching] =
+    useDBEnginesForDbEngineTypes('in-cluster', undefined, {
       refetchInterval: 30 * 1000,
     });
 
@@ -56,14 +57,14 @@ export const CreateDbButton = () => {
   };
 
   useEffect(() => {
-    if (availableDbTypesFetching) {
+    if (dbEnginesFetching) {
       setShowDropdownButton(false);
     } else {
       setTimeout(() => {
         setShowDropdownButton(true);
       }, 300);
     }
-  }, [availableDbTypesFetching]);
+  }, [dbEnginesFetching]);
 
   const buttonStyle = { display: 'flex', minHeight: '34px', width: '165px' };
   const skeletonStyle = {

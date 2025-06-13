@@ -31,7 +31,8 @@ export const useDbVersionsList = ({
   dbType,
   currentVersion,
 }: UseDbVersionProps) => {
-  const { data: dbEngines = [] } = useDbEngines(namespace);
+  // TODO: Replace 'in-cluster' with actual cluster selection logic
+  const { data: dbEngines = [] } = useDbEngines('in-cluster', namespace);
 
   const dbEngine = dbTypeToDbEngine(dbType);
 

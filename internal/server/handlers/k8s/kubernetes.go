@@ -23,9 +23,14 @@ const (
 	annotationStorageClassDefault = "storageclass.kubernetes.io/is-default-class"
 )
 
-func (h *k8sHandler) GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error) {
+func (h *k8sHandler) GetKubernetesClusterResources(ctx context.Context, cluster string) (*api.KubernetesClusterResources, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
 	// Get cluster type
-	clusterType, err := h.kubeConnector.GetClusterType(ctx)
+	clusterType, err := connector.GetClusterType(ctx)
 	if err != nil {
 		// Instead of failing we switch to a generic cluster type.
 		clusterType = kubernetes.ClusterTypeGeneric
@@ -33,25 +38,30 @@ func (h *k8sHandler) GetKubernetesClusterResources(ctx context.Context) (*api.Ku
 
 	var volumes *corev1.PersistentVolumeList
 	if clusterType == kubernetes.ClusterTypeEKS {
-		volumes, err = h.kubeConnector.ListPersistentVolumes(ctx)
+		volumes, err = connector.ListPersistentVolumes(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to ListPersistentVolumes: %w", err)
 		}
 	}
 
-	res, err := h.calculateClusterResources(ctx, h.kubeConnector, clusterType, volumes)
+	res, err := h.calculateClusterResources(ctx, connector, clusterType, volumes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculateClusterResources: %w", err)
 	}
 	return res, nil
 }
 
-func (h *k8sHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error) {
-	clusterType, err := h.kubeConnector.GetClusterType(ctx)
+func (h *k8sHandler) GetKubernetesClusterInfo(ctx context.Context, cluster string) (*api.KubernetesClusterInfo, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	clusterType, err := connector.GetClusterType(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetClusterType: %w", err)
 	}
-	storagesList, err := h.kubeConnector.ListStorageClasses(ctx)
+	storagesList, err := connector.ListStorageClasses(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to ListStorageClasses: %w", err)
 	}

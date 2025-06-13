@@ -56,6 +56,8 @@ type (
 	InstallConfig struct {
 		// KubeconfigPath is the path to the kubeconfig file.
 		KubeconfigPath string
+		// Context is the kubeconfig context to use. If empty, the current context is used.
+		Context string
 		// VersionMetadataURL Version service URL to retrieve version metadata information from.
 		VersionMetadataURL string
 		// Version defines Everest version to be installed. If empty, the latest version is installed.
@@ -108,7 +110,7 @@ func (cfg *InstallConfig) detectKubernetesEnv(ctx context.Context, l *zap.Sugare
 		return nil
 	}
 
-	kubeClient, err := cliutils.NewKubeConnector(l, cfg.KubeconfigPath)
+	kubeClient, err := cliutils.NewKubeConnector(l, cfg.KubeconfigPath, cfg.Context)
 	if err != nil {
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
@@ -146,7 +148,7 @@ func NewInstall(c InstallConfig, l *zap.SugaredLogger) (*Installer, error) {
 	cli.cfg = c
 
 	var err error
-	cli.kubeClient, err = cliutils.NewKubeConnector(cli.l, c.KubeconfigPath)
+	cli.kubeClient, err = cliutils.NewKubeConnector(cli.l, c.KubeconfigPath, c.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -312,6 +314,7 @@ func (o *Installer) setupHelmInstaller(ctx context.Context) error {
 		ReleaseNamespace:       common.SystemNamespace,
 		Values:                 values,
 		CreateReleaseNamespace: !nsExists,
+		Context:                o.cfg.Context,
 	}
 	if err := installer.Init(o.cfg.KubeconfigPath, helm.ChartOptions{
 		Directory: o.cfg.HelmConfig.ChartDir,
@@ -392,7 +395,7 @@ func (o *Installer) namespaceExists(ctx context.Context, namespace string) (bool
 
 // CheckEverestAlreadyinstalled checks if Everest is already installed.
 func CheckEverestAlreadyinstalled(ctx context.Context, l *zap.SugaredLogger, kubeConfig string) error {
-	kubeClient, err := cliutils.NewKubeConnector(l, kubeConfig)
+	kubeClient, err := cliutils.NewKubeConnector(l, kubeConfig, "")
 	if err != nil {
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}

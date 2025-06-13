@@ -18,15 +18,15 @@ import {
   GetKubernetesClusterResourcesInfoPayload,
 } from 'shared-types/kubernetes.types';
 
-export const getKubernetesClusterInfoFn = async () => {
+export const getKubernetesClusterInfoFn = async (cluster: string = 'in-cluster') => {
   const response =
-    await api.get<GetKubernetesClusterInfoPayload>(`cluster-info`);
+    await api.get<GetKubernetesClusterInfoPayload>(`clusters/${cluster}/cluster-info`);
 
   return response.data;
 };
 
-export const getKubernetesClusterResourcesInfo = async () => {
+export const getKubernetesClusterResourcesInfo = async (cluster: string = 'in-cluster') => {
   const response =
-    await api.get<GetKubernetesClusterResourcesInfoPayload>(`resources`);
+    await api.get<GetKubernetesClusterResourcesInfoPayload>(`clusters/${cluster}/resources`);
   return response.data;
 };

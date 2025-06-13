@@ -23,8 +23,8 @@ import (
 )
 
 // GetKubernetesClusterResources returns all and available resources of a Kubernetes cluster.
-func (e *EverestServer) GetKubernetesClusterResources(ctx echo.Context) error {
-	resources, err := e.handler.GetKubernetesClusterResources(ctx.Request().Context())
+func (e *EverestServer) GetKubernetesClusterResources(ctx echo.Context, cluster string) error {
+	resources, err := e.handler.GetKubernetesClusterResources(ctx.Request().Context(), cluster)
 	if err != nil {
 		e.l.Errorf("GetKubernetesClusterResources failed: %w", err)
 		return err

@@ -7,8 +7,8 @@ import (
 )
 
 // GetKubernetesClusterInfo returns the cluster type and storage classes of a kubernetes cluster.
-func (e *EverestServer) GetKubernetesClusterInfo(ctx echo.Context) error {
-	result, err := e.handler.GetKubernetesClusterInfo(ctx.Request().Context())
+func (e *EverestServer) GetKubernetesClusterInfo(ctx echo.Context, cluster string) error {
+	result, err := e.handler.GetKubernetesClusterInfo(ctx.Request().Context(), cluster)
 	if err != nil {
 		e.l.Errorf("GetKubernetesClusterInfo failed: %w", err)
 		return err

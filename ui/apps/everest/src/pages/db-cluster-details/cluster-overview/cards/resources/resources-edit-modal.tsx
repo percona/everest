@@ -24,9 +24,7 @@ const ResourcesEditModal = ({
   storageClass,
   allowDiskDescaling,
 }: Props) => {
-  const { data: clusterInfo } = useKubernetesClusterInfo([
-    'resources-cluster-info',
-  ]);
+  const { data: clusterInfo } = useKubernetesClusterInfo(['cluster-info'], 'in-cluster');
   const allowVolumeExpansion = (clusterInfo?.storageClasses || []).find(
     (item) => item.metadata.name === storageClass
   )?.allowVolumeExpansion;

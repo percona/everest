@@ -67,7 +67,7 @@ func settingsRBACValidateRun(cmd *cobra.Command, _ []string) {
 			l = logger.GetLogger().With("component", "rbac")
 		}
 
-		client, err := kubernetes.New(rbacValidateKubeconfigPath, l)
+		client, err := kubernetes.New(l, cmd.Context(), nil, kubernetes.WithKubeconfig(rbacValidateKubeconfigPath))
 		if err != nil {
 			logger.GetLogger().Error(err)
 			os.Exit(1)

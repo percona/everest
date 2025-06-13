@@ -13,6 +13,7 @@ export enum StorageLocationsFields {
   secretKey = 'secretKey',
   namespaces = 'allowedNamespaces',
   namespace = 'namespace',
+  cluster = 'cluster',
   verifyTLS = 'verifyTLS',
   forcePathStyle = 'forcePathStyle',
 }
@@ -75,6 +76,12 @@ export interface BackupStorageTableElement {
   bucketName: string;
   url: string;
   namespace: string;
+  cluster: string;
   description?: string | undefined;
+  region: string;
+  accessKey: string;
+  secretKey: string;
+  verifyTLS: boolean;
+  forcePathStyle: boolean;
   raw: BackupStorage;
 }

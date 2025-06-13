@@ -25,6 +25,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -83,6 +84,8 @@ type (
 		Values map[string]interface{}
 		// CreateReleaseNamespace indicates whether to create the release namespace.
 		CreateReleaseNamespace bool
+		// Context is the kubeconfig context to use
+		Context string
 		// internal fields, set only after Init() is called.
 		chart *chart.Chart
 		cfg   *action.Configuration
@@ -137,7 +140,7 @@ func (i *Installer) Init(kubeconfigPath string, o ChartOptions) error {
 	}
 	i.allParsedValues = parsedVals
 
-	cfg, err := newActionsCfg(i.ReleaseNamespace, kubeconfigPath)
+	cfg, err := newActionsCfg(i.ReleaseNamespace, kubeconfigPath, i.Context)
 	if err != nil {
 		return fmt.Errorf("failed to create Helm action configuration: %w", err)
 	}
@@ -160,7 +163,7 @@ func (i *Installer) RenderTemplates(ctx context.Context) (RenderedTemplate, erro
 	}
 
 	// create a new actions configuration so that it does not accidentally interfere with the actual installation.
-	cfg, err := newActionsCfg(i.ReleaseNamespace, "")
+	cfg, err := newActionsCfg(i.ReleaseNamespace, "", i.Context)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Helm action configuration: %w", err)
 	}
@@ -235,6 +238,7 @@ func (i *Installer) install(ctx context.Context) error {
 	install.Namespace = i.ReleaseNamespace
 	install.CreateNamespace = i.CreateReleaseNamespace
 	install.TakeOwnership = true
+	install.Timeout = 15 * time.Minute // Set a longer timeout for installation
 
 	rel, err := install.RunWithContext(ctx, i.chart, i.Values)
 	if err != nil {
@@ -263,6 +267,7 @@ func (i *Installer) Upgrade(ctx context.Context, opts UpgradeOptions) error {
 	upgrade.ResetThenReuseValues = opts.ResetThenReuseValues
 	upgrade.DisableHooks = opts.DisableHooks
 	upgrade.Force = opts.Force
+	upgrade.Timeout = 15 * time.Minute // Set a longer timeout for upgrade
 
 	rel, err := upgrade.RunWithContext(ctx, i.ReleaseName, i.chart, i.Values)
 	if err != nil {
@@ -365,7 +370,7 @@ func buildChartDeps(chartDir string) error {
 	return man.Build()
 }
 
-func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) {
+func newActionsCfg(namespace, kubeconfig string, context string) (*action.Configuration, error) {
 	logger := func(_ string, _ ...interface{}) {}
 	cfg := action.Configuration{}
 	restClientGetter := genericclioptions.ConfigFlags{}
@@ -373,6 +378,9 @@ func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) 
 		home := os.Getenv("HOME")
 		kubeconfig = strings.ReplaceAll(kubeconfig, "~", home)
 		restClientGetter.KubeConfig = &kubeconfig
+	}
+	if context != "" {
+		restClientGetter.Context = &context
 	}
 	if err := cfg.Init(&restClientGetter, namespace, "", logger); err != nil {
 		return nil, err
@@ -390,7 +398,7 @@ type Uninstaller struct {
 
 // NewUninstaller creates a new Uninstaller.
 func NewUninstaller(relName, relNamespace, kubeconfigPath string) (*Uninstaller, error) {
-	cfg, err := newActionsCfg(relNamespace, kubeconfigPath)
+	cfg, err := newActionsCfg(relNamespace, kubeconfigPath, "")
 	if err != nil {
 		return nil, err
 	}

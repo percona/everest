@@ -26,8 +26,8 @@ import (
 )
 
 // ListPodSchedulingPolicy lists all pod scheduling policies.
-func (e *EverestServer) ListPodSchedulingPolicy(ctx echo.Context, params api.ListPodSchedulingPolicyParams) error {
-	list, err := e.handler.ListPodSchedulingPolicies(ctx.Request().Context(), &params)
+func (e *EverestServer) ListPodSchedulingPolicy(ctx echo.Context, cluster string, params api.ListPodSchedulingPolicyParams) error {
+	list, err := e.handler.ListPodSchedulingPolicies(ctx.Request().Context(), cluster, &params)
 	if err != nil {
 		e.l.Errorf("ListPodSchedulingPolicies failed: %v", err)
 		return err
@@ -36,13 +36,13 @@ func (e *EverestServer) ListPodSchedulingPolicy(ctx echo.Context, params api.Lis
 }
 
 // CreatePodSchedulingPolicy creates a new pod scheduling policy.
-func (e *EverestServer) CreatePodSchedulingPolicy(c echo.Context) error {
+func (e *EverestServer) CreatePodSchedulingPolicy(c echo.Context, cluster string) error {
 	psp := &everestv1alpha1.PodSchedulingPolicy{}
 	if err := e.getBodyFromContext(c, psp); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
 
-	result, err := e.handler.CreatePodSchedulingPolicy(c.Request().Context(), psp)
+	result, err := e.handler.CreatePodSchedulingPolicy(c.Request().Context(), cluster, psp)
 	if err != nil {
 		e.l.Errorf("CreatePodSchedulingPolicy failed: %v", err)
 		return err
@@ -52,8 +52,8 @@ func (e *EverestServer) CreatePodSchedulingPolicy(c echo.Context) error {
 }
 
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.
-func (e *EverestServer) DeletePodSchedulingPolicy(c echo.Context, policyName string) error {
-	if err := e.handler.DeletePodSchedulingPolicy(c.Request().Context(), policyName); err != nil {
+func (e *EverestServer) DeletePodSchedulingPolicy(c echo.Context, cluster, policyName string) error {
+	if err := e.handler.DeletePodSchedulingPolicy(c.Request().Context(), cluster, policyName); err != nil {
 		e.l.Errorf("DeletePodSchedulingPolicy failed: %v", err)
 		return err
 	}
@@ -61,8 +61,8 @@ func (e *EverestServer) DeletePodSchedulingPolicy(c echo.Context, policyName str
 }
 
 // GetPodSchedulingPolicy retrieves a pod scheduling policy by name.
-func (e *EverestServer) GetPodSchedulingPolicy(c echo.Context, policyName string) error {
-	result, err := e.handler.GetPodSchedulingPolicy(c.Request().Context(), policyName)
+func (e *EverestServer) GetPodSchedulingPolicy(c echo.Context, cluster, policyName string) error {
+	result, err := e.handler.GetPodSchedulingPolicy(c.Request().Context(), cluster, policyName)
 	if err != nil {
 		e.l.Errorf("GetPodSchedulingPolicy failed: %v", err)
 		return err
@@ -71,14 +71,14 @@ func (e *EverestServer) GetPodSchedulingPolicy(c echo.Context, policyName string
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
-func (e *EverestServer) UpdatePodSchedulingPolicy(c echo.Context, policyName string) error {
+func (e *EverestServer) UpdatePodSchedulingPolicy(c echo.Context, cluster, policyName string) error {
 	psp := &everestv1alpha1.PodSchedulingPolicy{}
 	if err := e.getBodyFromContext(c, psp); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	psp.SetName(policyName)
 
-	result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), psp)
+	result, err := e.handler.UpdatePodSchedulingPolicy(c.Request().Context(), cluster, psp)
 	if err != nil {
 		e.l.Errorf("UpdatePodSchedulingPolicy failed: %v", err)
 		return err

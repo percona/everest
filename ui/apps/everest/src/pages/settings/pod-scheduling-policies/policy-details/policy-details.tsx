@@ -2,11 +2,11 @@ import { Alert, Box, Button, Skeleton, Typography } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  usePodSchedulingPolicy,
   useUpdateEntityWithConflictRetry,
+  useClusters,
 } from 'hooks';
 import { NoMatch } from 'pages/404/NoMatch';
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { AffinityFormDialog } from '../affinity/affinity-form-dialog/affinity-form-dialog';
 import {
   dbPayloadToAffinityRules,
@@ -24,7 +24,9 @@ import {
 } from 'consts';
 import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { Messages } from '../pod-scheduling-policies.messages';
-import { updatePodSchedulingPolicy } from 'api/podSchedulingPolicies';
+import { updatePodSchedulingPolicy, getPodSchedulingPolicy } from 'api/podSchedulingPolicies';
+import { QueryObserverResult, useQueries } from '@tanstack/react-query';
+import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 
 const PolicyDetails = () => {
   const navigate = useNavigate();
@@ -45,19 +47,44 @@ const PolicyDetails = () => {
     },
   ]);
 
-  const {
-    isLoading,
-    isError,
-    data: policy,
-    refetch: refetchPolicy,
-  } = usePodSchedulingPolicy(policyName);
+  const { data: clusters = [], isLoading: isLoadingClusters } = useClusters();
+
+  const policiesQueries = useQueries({
+    queries: clusters.map((cluster) => ({
+      queryKey: ['pod-scheduling-policy', cluster.name, policyName],
+      queryFn: () => getPodSchedulingPolicy(cluster.name, policyName),
+      enabled: !!cluster.name && !!policyName,
+    })),
+  });
+
+  const policyData = useMemo(() => {
+    const foundIndex = policiesQueries.findIndex((query) => query.data);
+    if (foundIndex === -1) return undefined;
+
+    const query = policiesQueries[foundIndex];
+    return {
+      cluster: clusters[foundIndex].name,
+      policy: query.data,
+      refetch: query.refetch,
+    };
+  }, [clusters, policiesQueries]);
+
+  const isLoading = isLoadingClusters || policiesQueries.some((query) => query.isLoading);
+  const isError = policiesQueries.every((query) => query.isError);
+
+  // Default empty refetch function if none is provided
+  const defaultRefetch = async () => {
+    return {
+      data: {} as PodSchedulingPolicy,
+    } as QueryObserverResult<PodSchedulingPolicy, unknown>;
+  };
 
   const { mutate: updatePolicy, isPending: updatingPolicy } =
     useUpdateEntityWithConflictRetry(
       ['pod-scheduling-policy', policyName],
-      (newPolicy) => updatePodSchedulingPolicy(newPolicy),
-      policy?.metadata.generation || 0,
-      refetchPolicy,
+      (newPolicy) => updatePodSchedulingPolicy(policyData?.cluster || clusters[0]?.name || '', newPolicy),
+      policyData?.policy?.metadata.generation || 0,
+      policyData?.refetch || defaultRefetch,
       (_, newData) => newData,
       {
         onSuccess: () => {
@@ -81,10 +108,11 @@ const PolicyDetails = () => {
     );
   }
 
-  if (isError || !policy) {
+  if (isError || !policyData?.policy || !clusters.length) {
     return <NoMatch />;
   }
 
+  const policy = policyData.policy;
   const rules = dbPayloadToAffinityRules(policy);
   const readOnlyPolicy = policy.metadata.finalizers?.includes(
     EVEREST_READ_ONLY_FINALIZER
@@ -99,39 +127,33 @@ const PolicyDetails = () => {
     updatePolicy(policy);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedRule.current) {
-      removeRuleInExistingPolicy(policy, selectedRule.current);
-      updatePolicy(policy);
-    }
-  };
-
-  const handleOnAddClick = () => {
-    selectedRule.current = undefined;
-    setOpenAffinityDialog(true);
-  };
-
   return (
     <>
-      <Button
-        sx={{ mt: 2 }}
-        startIcon={<ArrowBack />}
-        onClick={() => navigate(-1)}
-      >
-        Back
-      </Button>
-      <Box display="flex" alignItems="center" gap={1} mt={3} mb={2}>
-        <Typography variant="h6">
-          {policyName}
-          {policy
-            ? ` / ${humanizeDbType(dbEngineToDbType(policy?.spec.engineType))}`
-            : ''}
+      <Box display="flex" alignItems="center" mb={2}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate('/settings/pod-scheduling-policies')}
+          sx={{ mr: 2 }}
+        >
+          Back to policies
+        </Button>
+        <Typography variant="h5" component="h1">
+          {policy.metadata.name}
+        </Typography>
+      </Box>
+      <Box display="flex" alignItems="center" mb={2}>
+        <Typography variant="body2" mr={2}>
+          Technology: {humanizeDbType(dbEngineToDbType(policy.spec.engineType))}
+        </Typography>
+        <Typography variant="body2">
+          Cluster: {policyData.cluster}
         </Typography>
       </Box>
       <PodSchedulingPoliciesTable
         rules={rules}
-        canDoChanges={canUpdate && !readOnlyPolicy}
         engineType={policy.spec.engineType}
+        viewOnly={readOnlyPolicy}
+        canDoChanges={canUpdate}
         onEditClick={(rule) => {
           selectedRule.current = rule;
           setOpenAffinityDialog(true);
@@ -140,30 +162,44 @@ const PolicyDetails = () => {
           selectedRule.current = rule;
           setOpenRemoveRuleDialog(true);
         }}
-        onAddRuleClick={handleOnAddClick}
+        onAddRuleClick={() => {
+          selectedRule.current = undefined;
+          setOpenAffinityDialog(true);
+        }}
       />
       {openAffinityDialog && (
         <AffinityFormDialog
-          isOpen
+          isOpen={openAffinityDialog}
+          dbType={dbEngineToDbType(policy.spec.engineType)}
+          defaultValues={selectedRule.current}
           submitting={updatingPolicy}
           showInUseWarning={policy.metadata.finalizers.includes(
             EVEREST_POLICY_IN_USE_FINALIZER
           )}
-          dbType={dbEngineToDbType(policy.spec.engineType)}
-          handleClose={() => setOpenAffinityDialog(false)}
+          handleClose={() => {
+            setOpenAffinityDialog(false);
+            selectedRule.current = undefined;
+          }}
           handleSubmit={handleFormSubmit}
-          defaultValues={selectedRule.current}
         />
       )}
       {openRemoveRuleDialog && (
         <ConfirmDialog
-          open
-          cancelMessage="Cancel"
-          selectedId={''}
-          closeModal={() => setOpenRemoveRuleDialog(false)}
-          handleConfirm={handleConfirmDelete}
+          open={openRemoveRuleDialog}
+          selectedId="remove-rule"
           headerMessage="Delete Rule"
+          closeModal={() => {
+            setOpenRemoveRuleDialog(false);
+            selectedRule.current = undefined;
+          }}
+          handleConfirm={() => {
+            if (selectedRule.current && policy) {
+              removeRuleInExistingPolicy(policy, selectedRule.current);
+              updatePolicy(policy);
+            }
+          }}
           submitMessage="Delete"
+          cancelMessage="Cancel"
         >
           <Alert severity="warning">{Messages.policyInUse}</Alert>
           <Typography px={1} pt={2}>

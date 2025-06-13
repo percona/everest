@@ -40,7 +40,8 @@ const PoliciesDialog = ({
   onClose,
   onSubmit,
 }: Props) => {
-  const [availableDbTypes] = useDBEnginesForDbEngineTypes();
+  // TODO: Replace 'in-cluster' with actual cluster selection logic
+  const [availableDbTypes] = useDBEnginesForDbEngineTypes('in-cluster');
   const isEditing = !!policy;
 
   return (

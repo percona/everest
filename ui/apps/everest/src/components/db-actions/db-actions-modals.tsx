@@ -20,6 +20,7 @@ import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
 import { useDbBackups } from 'hooks';
 import { DbEngineType } from '@percona/types';
 import { DbActionsModalsProps } from './db-actions-modals.types';
+import { useLocation } from 'react-router-dom';
 
 export const DbActionsModals = ({
   dbCluster,
@@ -33,11 +34,14 @@ export const DbActionsModals = ({
   handleConfirmDelete,
   deleteMutation: { isPending: deletingCluster },
 }: DbActionsModalsProps) => {
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const disableKeepDataCheckbox =
     dbCluster?.spec.engine.type === DbEngineType.POSTGRESQL;
   const { data: backups = [] } = useDbBackups(
     dbCluster?.metadata.name!,
     dbCluster?.metadata.namespace!,
+    cluster,
     {
       enabled: !!dbCluster?.metadata.name,
       refetchInterval: 10 * 1000,

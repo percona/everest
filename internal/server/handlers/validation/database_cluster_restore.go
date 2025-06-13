@@ -11,36 +11,42 @@ import (
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 )
 
-func (h *validateHandler) ListDatabaseClusterRestores(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
-	return h.next.ListDatabaseClusterRestores(ctx, namespace, clusterName)
+func (h *validateHandler) ListDatabaseClusterRestores(ctx context.Context, cluster, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
+	return h.next.ListDatabaseClusterRestores(ctx, cluster, namespace, clusterName)
 }
 
-func (h *validateHandler) CreateDatabaseClusterRestore(ctx context.Context, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
-	if err := h.validateDatabaseClusterRestore(ctx, req); err != nil {
+func (h *validateHandler) CreateDatabaseClusterRestore(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
+	if err := h.validateDatabaseClusterRestore(ctx, cluster, req); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.CreateDatabaseClusterRestore(ctx, req)
+	return h.next.CreateDatabaseClusterRestore(ctx, cluster, req)
 }
 
-func (h *validateHandler) DeleteDatabaseClusterRestore(ctx context.Context, namespace, name string) error {
-	return h.next.DeleteDatabaseClusterRestore(ctx, namespace, name)
+func (h *validateHandler) DeleteDatabaseClusterRestore(ctx context.Context, cluster, namespace, name string) error {
+	return h.next.DeleteDatabaseClusterRestore(ctx, cluster, namespace, name)
 }
 
-func (h *validateHandler) GetDatabaseClusterRestore(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error) {
-	return h.next.GetDatabaseClusterRestore(ctx, namespace, name)
+func (h *validateHandler) GetDatabaseClusterRestore(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error) {
+	return h.next.GetDatabaseClusterRestore(ctx, cluster, namespace, name)
 }
 
-func (h *validateHandler) UpdateDatabaseClusterRestore(ctx context.Context, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
-	if err := h.validateDatabaseClusterRestore(ctx, req); err != nil {
+func (h *validateHandler) UpdateDatabaseClusterRestore(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
+	if err := h.validateDatabaseClusterRestore(ctx, cluster, req); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.UpdateDatabaseClusterRestore(ctx, req)
+	return h.next.UpdateDatabaseClusterRestore(ctx, cluster, req)
 }
 
 func (h *validateHandler) validateDatabaseClusterRestore(
 	ctx context.Context,
+	cluster string,
 	restore *everestv1alpha1.DatabaseClusterRestore,
 ) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get kube connector"))
+	}
+
 	if restore == nil {
 		return errors.New("restore cannot be empty")
 	}
@@ -55,7 +61,7 @@ func (h *validateHandler) validateDatabaseClusterRestore(
 	}
 	namespace := restore.GetNamespace()
 
-	db, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: restore.Spec.DBClusterName})
+	db, err := connector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: restore.Spec.DBClusterName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("database cluster %s does not exist", restore.Spec.DBClusterName)
@@ -68,14 +74,14 @@ func (h *validateHandler) validateDatabaseClusterRestore(
 		return errors.New("cannot restore when database cluster is paused")
 	}
 
-	b, err := h.kubeConnector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: namespace, Name: restore.Spec.DataSource.DBClusterBackupName})
+	b, err := connector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: namespace, Name: restore.Spec.DataSource.DBClusterBackupName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("backup %s does not exist", restore.Spec.DataSource.DBClusterBackupName)
 		}
 		return err
 	}
-	_, err = h.kubeConnector.GetBackupStorage(ctx, types.NamespacedName{Namespace: namespace, Name: b.Spec.BackupStorageName})
+	_, err = connector.GetBackupStorage(ctx, types.NamespacedName{Namespace: namespace, Name: b.Spec.BackupStorageName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("backup storage %s does not exist",

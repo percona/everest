@@ -10,8 +10,8 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
-func (h *rbacHandler) ListDatabaseClusterBackups(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-	list, err := h.next.ListDatabaseClusterBackups(ctx, namespace, clusterName)
+func (h *rbacHandler) ListDatabaseClusterBackups(ctx context.Context, cluster, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
+	list, err := h.next.ListDatabaseClusterBackups(ctx, cluster, namespace, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (h *rbacHandler) ListDatabaseClusterBackups(ctx context.Context, namespace,
 	return list, nil
 }
 
-func (h *rbacHandler) CreateDatabaseClusterBackup(ctx context.Context, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+func (h *rbacHandler) CreateDatabaseClusterBackup(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
 	clusterName := req.Spec.DBClusterName
 	bsName := req.Spec.BackupStorageName
 	namespace := req.GetNamespace()
@@ -38,11 +38,11 @@ func (h *rbacHandler) CreateDatabaseClusterBackup(ctx context.Context, req *ever
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusterBackups, rbac.ActionCreate, rbac.ObjectName(namespace, clusterName)); err != nil {
 		return nil, err
 	}
-	return h.next.CreateDatabaseClusterBackup(ctx, req)
+	return h.next.CreateDatabaseClusterBackup(ctx, cluster, req)
 }
 
-func (h *rbacHandler) DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
-	backup, err := h.next.GetDatabaseClusterBackup(ctx, namespace, name)
+func (h *rbacHandler) DeleteDatabaseClusterBackup(ctx context.Context, cluster, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
+	backup, err := h.next.GetDatabaseClusterBackup(ctx, cluster, namespace, name)
 	if err != nil {
 		return fmt.Errorf("GetDatabaseClusterBackup failed: %w", err)
 	}
@@ -50,18 +50,18 @@ func (h *rbacHandler) DeleteDatabaseClusterBackup(ctx context.Context, namespace
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusterBackups, rbac.ActionDelete, rbac.ObjectName(namespace, clusterName)); err != nil {
 		return err
 	}
-	return h.next.DeleteDatabaseClusterBackup(ctx, namespace, name, req)
+	return h.next.DeleteDatabaseClusterBackup(ctx, cluster, namespace, name, req)
 }
 
-func (h *rbacHandler) GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	dbbackup, err := h.next.GetDatabaseClusterBackup(ctx, namespace, name)
+func (h *rbacHandler) GetDatabaseClusterBackup(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	dbbackup, err := h.next.GetDatabaseClusterBackup(ctx, cluster, namespace, name)
 	if err != nil {
 		return nil, err
 	}
 	if err := h.enforceDBBackupRead(ctx, dbbackup); err != nil {
 		return nil, err
 	}
-	return h.next.GetDatabaseClusterBackup(ctx, namespace, name)
+	return h.next.GetDatabaseClusterBackup(ctx, cluster, namespace, name)
 }
 
 func (h *rbacHandler) enforceDBBackupRead(ctx context.Context, dbbackup *everestv1alpha1.DatabaseClusterBackup) error {

@@ -156,7 +156,8 @@ export const useCreateDbCluster = (
     mutationFn: ({ dbPayload, backupDataSource }: CreateDbClusterArgType) =>
       createDbClusterFn(
         formValuesToPayloadMapping(dbPayload, backupDataSource),
-        dbPayload.k8sNamespace || ''
+        dbPayload.k8sNamespace || '',
+        dbPayload.k8sCluster
       ),
     ...options,
   });
@@ -164,6 +165,7 @@ export const useCreateDbCluster = (
 export const useDbClusterCredentials = (
   dbClusterName: string,
   namespace: string,
+  cluster: string = 'in-cluster',
   options?: PerconaQueryOptions<ClusterCredentials, unknown, ClusterCredentials>
 ) => {
   const { canRead: canReadCredentials } = useRBACPermissions(
@@ -173,7 +175,7 @@ export const useDbClusterCredentials = (
 
   return useQuery<GetDbClusterCredentialsPayload, unknown, ClusterCredentials>({
     queryKey: ['cluster-credentials', dbClusterName],
-    queryFn: () => getDbClusterCredentialsFn(dbClusterName, namespace),
+    queryFn: () => getDbClusterCredentialsFn(dbClusterName, namespace, cluster),
     select: canReadCredentials
       ? (creds) => creds
       : () => ({ username: '', password: '' }),

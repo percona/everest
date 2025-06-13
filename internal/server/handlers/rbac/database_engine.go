@@ -12,8 +12,8 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
-func (h *rbacHandler) ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
-	list, err := h.next.ListDatabaseEngines(ctx, namespace)
+func (h *rbacHandler) ListDatabaseEngines(ctx context.Context, cluster, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
+	list, err := h.next.ListDatabaseEngines(ctx, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -30,26 +30,26 @@ func (h *rbacHandler) ListDatabaseEngines(ctx context.Context, namespace string)
 	return list, nil
 }
 
-func (h *rbacHandler) GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
+func (h *rbacHandler) GetDatabaseEngine(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
 	if err := h.enforce(ctx, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}
-	return h.next.GetDatabaseEngine(ctx, namespace, name)
+	return h.next.GetDatabaseEngine(ctx, cluster, namespace, name)
 }
 
-func (h *rbacHandler) UpdateDatabaseEngine(ctx context.Context, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
+func (h *rbacHandler) UpdateDatabaseEngine(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
 	if err := h.enforce(ctx, rbac.ResourceDatabaseEngines, rbac.ActionUpdate, rbac.ObjectName(req.GetNamespace(), req.GetName())); err != nil {
 		return nil, err
 	}
-	return h.next.UpdateDatabaseEngine(ctx, req)
+	return h.next.UpdateDatabaseEngine(ctx, cluster, req)
 }
 
-func (h *rbacHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api.UpgradePlan, error) {
+func (h *rbacHandler) GetUpgradePlan(ctx context.Context, cluster, namespace string) (*api.UpgradePlan, error) {
 	// Need access to all DatabaseClusters to get the upgrade plan
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, "")); err != nil {
 		return nil, err
 	}
-	result, err := h.next.GetUpgradePlan(ctx, namespace)
+	result, err := h.next.GetUpgradePlan(ctx, cluster, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("GetUpgradePlan failed: %w", err)
 	}
@@ -65,8 +65,8 @@ func (h *rbacHandler) GetUpgradePlan(ctx context.Context, namespace string) (*ap
 	return result, nil
 }
 
-func (h *rbacHandler) ApproveUpgradePlan(ctx context.Context, namespace string) error {
-	plan, err := h.GetUpgradePlan(ctx, namespace)
+func (h *rbacHandler) ApproveUpgradePlan(ctx context.Context, cluster, namespace string) error {
+	plan, err := h.GetUpgradePlan(ctx, cluster, namespace)
 	if err != nil {
 		return err
 	}
@@ -76,5 +76,5 @@ func (h *rbacHandler) ApproveUpgradePlan(ctx context.Context, namespace string) 
 			return err
 		}
 	}
-	return h.next.ApproveUpgradePlan(ctx, namespace)
+	return h.next.ApproveUpgradePlan(ctx, cluster, namespace)
 }

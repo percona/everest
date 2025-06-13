@@ -45,6 +45,7 @@ import {
   isProxy,
   getProxyUnitNamesFromDbType,
 } from 'utils/db';
+import { useLocation } from 'react-router-dom';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -52,9 +53,12 @@ export const ResourcesDetails = ({
   sharding,
   canUpdate,
 }: ResourcesDetailsOverviewProps) => {
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const [openEditModal, setOpenEditModal] = useState(false);
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster,
+    cluster,
     {
       onSuccess: () => setOpenEditModal(false),
     }

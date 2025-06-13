@@ -75,7 +75,7 @@ func (cfg *NamespaceRemoveConfig) ValidateNamespaces(ctx context.Context, nsList
 		return err
 	}
 
-	k, err := cliutils.NewKubeConnector(zap.NewNop().Sugar(), cfg.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(zap.NewNop().Sugar(), cfg.KubeconfigPath, "")
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func NewNamespaceRemove(c NamespaceRemoveConfig, l *zap.SugaredLogger) (*Namespa
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeConnector(n.l, n.cfg.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(n.l, n.cfg.KubeconfigPath, "")
 	if err != nil {
 		return nil, err
 	}

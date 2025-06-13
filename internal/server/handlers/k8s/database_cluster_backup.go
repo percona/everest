@@ -15,35 +15,50 @@ import (
 	"github.com/percona/everest/pkg/common"
 )
 
-func (h *k8sHandler) ListDatabaseClusterBackups(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-	return h.kubeConnector.ListDatabaseClusterBackups(ctx,
+func (h *k8sHandler) ListDatabaseClusterBackups(ctx context.Context, cluster, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not get kube connector"))
+	}
+
+	return connector.ListDatabaseClusterBackups(ctx,
 		ctrlclient.InNamespace(namespace),
 		ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: clusterName},
 	)
 }
 
-func (h *k8sHandler) CreateDatabaseClusterBackup(ctx context.Context, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	if ok, err := h.ensureNoBackupsRunningForCluster(ctx, req.Spec.DBClusterName, req.GetNamespace()); err != nil {
+func (h *k8sHandler) CreateDatabaseClusterBackup(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not get kube connector"))
+	}
+
+	if ok, err := h.ensureNoBackupsRunningForCluster(ctx, req.Spec.DBClusterName, cluster, req.GetNamespace()); err != nil {
 		return nil, errors.Join(err, errors.New("could not check if backups are running"))
 	} else if !ok {
 		return nil, errors.New("backup is already running for the specified cluster")
 	}
-	return h.kubeConnector.CreateDatabaseClusterBackup(ctx, req)
+	return connector.CreateDatabaseClusterBackup(ctx, req)
 }
 
-func (h *k8sHandler) DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
+func (h *k8sHandler) DeleteDatabaseClusterBackup(ctx context.Context, cluster, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get kube connector"))
+	}
+
 	cleanupStorage := pointer.Get(req.CleanupBackupStorage)
-	backup, err := h.kubeConnector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+	backup, err := connector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return errors.Join(err, errors.New("could not get Database Cluster Backup"))
 	}
 
 	if !cleanupStorage {
-		if err := h.ensureBackupStorageProtection(ctx, backup); err != nil {
+		if err := h.ensureBackupStorageProtection(ctx, cluster, backup); err != nil {
 			return errors.Join(err, errors.New("could not ensure backup storage protection"))
 		}
 	}
-	if err := h.ensureBackupForegroundDeletion(ctx, backup); err != nil {
+	if err := h.ensureBackupForegroundDeletion(ctx, cluster, backup); err != nil {
 		return errors.Join(err, errors.New("could not ensure backup foreground deletion"))
 	}
 	delObj := &everestv1alpha1.DatabaseClusterBackup{
@@ -52,16 +67,26 @@ func (h *k8sHandler) DeleteDatabaseClusterBackup(ctx context.Context, namespace,
 			Name:      name,
 		},
 	}
-	return h.kubeConnector.DeleteDatabaseClusterBackup(ctx, delObj)
+	return connector.DeleteDatabaseClusterBackup(ctx, delObj)
 }
 
-func (h *k8sHandler) GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	return h.kubeConnector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+func (h *k8sHandler) GetDatabaseClusterBackup(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not get kube connector"))
+	}
+
+	return connector.GetDatabaseClusterBackup(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 }
 
 // Returns `true` if no backups are running for the specified cluster.
-func (h *k8sHandler) ensureNoBackupsRunningForCluster(ctx context.Context, dbClusterName, namespace string) (bool, error) {
-	backupList, err := h.kubeConnector.ListDatabaseClusterBackups(ctx,
+func (h *k8sHandler) ensureNoBackupsRunningForCluster(ctx context.Context, dbClusterName, cluster, namespace string) (bool, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return false, errors.Join(err, errors.New("could not get kube connector"))
+	}
+
+	backupList, err := connector.ListDatabaseClusterBackups(ctx,
 		ctrlclient.InNamespace(namespace),
 		ctrlclient.MatchingLabels{common.DatabaseClusterNameLabel: dbClusterName},
 	)

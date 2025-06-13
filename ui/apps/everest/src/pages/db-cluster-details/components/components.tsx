@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { useDbClusterComponents } from 'hooks/api/db-cluster/useDbClusterComponents';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { Box, FormControlLabel, Stack, Switch, TextField } from '@mui/material';
 import ComponentsDiagramView from './diagram-view/components-diagram-view';
@@ -24,9 +24,12 @@ import ComponentsTableView from './table-view';
 const Components = () => {
   const [tableView, setTableView] = useState(false);
   const { dbClusterName = '', namespace = '' } = useParams();
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const { data: components = [], isLoading } = useDbClusterComponents(
     namespace,
-    dbClusterName!
+    dbClusterName!,
+    cluster
   );
   const [searchQuery, setSearchQuery] = useState('');
 

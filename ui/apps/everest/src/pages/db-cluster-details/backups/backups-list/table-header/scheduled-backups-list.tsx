@@ -15,6 +15,7 @@ import {
 } from 'utils/db';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { WizardMode } from 'shared-types/wizard.types';
+import { useLocation } from 'react-router-dom';
 
 const ScheduledBackupsList = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -25,10 +26,15 @@ const ScheduledBackupsList = () => {
     setSelectedScheduleName: setSelectedScheduleToModalContext,
     setOpenScheduleModal,
   } = useContext(ScheduleModalContext);
-  const { mutate: updateCluster, isPending: updatingCluster } =
-    useUpdateDbClusterWithConflictRetry(dbCluster, {
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
+  const { mutate: updateCluster, isPending: updatingCluster } = useUpdateDbClusterWithConflictRetry(
+    dbCluster,
+    cluster,
+    {
       onSuccess: () => handleCloseDeleteDialog(),
-    });
+    }
+  );
   const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
 
   const handleDelete = (scheduleName: string) => {

@@ -31,6 +31,7 @@ import {
 } from 'utils/db';
 import { useQueryClient } from '@tanstack/react-query';
 import { DB_CLUSTER_QUERY } from 'hooks/api';
+import { useLocation } from 'react-router-dom';
 
 export const BasicInformationSection = ({
   loading,
@@ -40,16 +41,16 @@ export const BasicInformationSection = ({
   version,
 }: BasicInformationOverviewCardProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
-  const handleCloseModal = () => {
-    setOpenEditModal(false);
-  };
   const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const queryClient = useQueryClient();
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
+    cluster,
     {
-      onSuccess: (data) => {
-        handleCloseModal();
+      onSuccess: (data: DbCluster) => {
+        setOpenEditModal(false);
         queryClient.setQueryData<DbCluster>(
           [DB_CLUSTER_QUERY, dbCluster?.metadata.name],
           (oldData) =>
@@ -119,7 +120,7 @@ export const BasicInformationSection = ({
       {openEditModal && dbVersionsUpgradeList && (
         <UpgradeDbVersionModal
           open={openEditModal}
-          handleCloseModal={handleCloseModal}
+          handleCloseModal={() => setOpenEditModal(false)}
           handleSubmitModal={handleSubmit}
           dbVersionsUpgradeList={dbVersionsUpgradeList}
           version={version}

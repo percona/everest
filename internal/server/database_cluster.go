@@ -34,14 +34,14 @@ var (
 )
 
 // CreateDatabaseCluster creates a new db cluster inside the given k8s cluster.
-func (e *EverestServer) CreateDatabaseCluster(c echo.Context, namespace string) error {
+func (e *EverestServer) CreateDatabaseCluster(c echo.Context, cluster, namespace string) error {
 	dbc := &everestv1alpha1.DatabaseCluster{}
 	if err := e.getBodyFromContext(c, dbc); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	dbc.SetNamespace(namespace)
 
-	result, err := e.handler.CreateDatabaseCluster(c.Request().Context(), dbc)
+	result, err := e.handler.CreateDatabaseCluster(c.Request().Context(), cluster, dbc)
 	if err != nil {
 		e.l.Errorf("CreateDatabaseCluster failed: %w", err)
 		return err
@@ -60,8 +60,8 @@ func (e *EverestServer) CreateDatabaseCluster(c echo.Context, namespace string) 
 }
 
 // ListDatabaseClusters lists the created database clusters on the specified kubernetes cluster.
-func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string) error {
-	list, err := e.handler.ListDatabaseClusters(ctx.Request().Context(), namespace)
+func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, cluster, namespace string) error {
+	list, err := e.handler.ListDatabaseClusters(ctx.Request().Context(), cluster, namespace)
 	if err != nil {
 		e.l.Errorf("ListDatabaseClusters failed: %w", err)
 		return err
@@ -72,10 +72,10 @@ func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string)
 // DeleteDatabaseCluster deletes a database cluster on the specified kubernetes cluster.
 func (e *EverestServer) DeleteDatabaseCluster(
 	c echo.Context,
-	namespace, name string,
+	cluster, namespace, name string,
 	params api.DeleteDatabaseClusterParams,
 ) error {
-	if err := e.handler.DeleteDatabaseCluster(c.Request().Context(), namespace, name, &params); err != nil {
+	if err := e.handler.DeleteDatabaseCluster(c.Request().Context(), cluster, namespace, name, &params); err != nil {
 		e.l.Errorf("DeleteDatabaseCluster failed: %w", err)
 		return err
 	}
@@ -83,8 +83,8 @@ func (e *EverestServer) DeleteDatabaseCluster(
 }
 
 // GetDatabaseCluster retrieves the specified database cluster on the specified kubernetes cluster.
-func (e *EverestServer) GetDatabaseCluster(c echo.Context, namespace, name string) error {
-	result, err := e.handler.GetDatabaseCluster(c.Request().Context(), namespace, name)
+func (e *EverestServer) GetDatabaseCluster(c echo.Context, cluster, namespace, name string) error {
+	result, err := e.handler.GetDatabaseCluster(c.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseCluster failed: %w", err)
 		return err
@@ -93,8 +93,8 @@ func (e *EverestServer) GetDatabaseCluster(c echo.Context, namespace, name strin
 }
 
 // GetDatabaseClusterComponents returns database cluster components.
-func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, namespace, name string) error {
-	result, err := e.handler.GetDatabaseClusterComponents(c.Request().Context(), namespace, name)
+func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, cluster, namespace, name string) error {
+	result, err := e.handler.GetDatabaseClusterComponents(c.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseClusterComponents failed: %w", err)
 		return err
@@ -105,7 +105,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, namespace, 
 // UpdateDatabaseCluster replaces the specified database cluster on the specified kubernetes cluster.
 //
 //nolint:dupl
-func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name string) error {
+func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, cluster, namespace, name string) error {
 	dbc := &everestv1alpha1.DatabaseCluster{}
 	if err := e.getBodyFromContext(ctx, dbc); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
@@ -113,7 +113,7 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 	dbc.SetNamespace(namespace)
 	dbc.SetName(name)
 
-	result, err := e.handler.UpdateDatabaseCluster(ctx.Request().Context(), dbc)
+	result, err := e.handler.UpdateDatabaseCluster(ctx.Request().Context(), cluster, dbc)
 	if err != nil {
 		e.l.Errorf("UpdateDatabaseCluster failed: %w", err)
 		return err
@@ -122,8 +122,8 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 }
 
 // GetDatabaseClusterCredentials returns credentials for the specified database cluster.
-func (e *EverestServer) GetDatabaseClusterCredentials(c echo.Context, namespace, name string) error {
-	result, err := e.handler.GetDatabaseClusterCredentials(c.Request().Context(), namespace, name)
+func (e *EverestServer) GetDatabaseClusterCredentials(c echo.Context, cluster, namespace, name string) error {
+	result, err := e.handler.GetDatabaseClusterCredentials(c.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseClusterCredentials failed: %w", err)
 		return err
@@ -132,8 +132,8 @@ func (e *EverestServer) GetDatabaseClusterCredentials(c echo.Context, namespace,
 }
 
 // GetDatabaseClusterPitr returns the point-in-time recovery related information for the specified database cluster.
-func (e *EverestServer) GetDatabaseClusterPitr(c echo.Context, namespace, name string) error {
-	result, err := e.handler.GetDatabaseClusterPitr(c.Request().Context(), namespace, name)
+func (e *EverestServer) GetDatabaseClusterPitr(c echo.Context, cluster, namespace, name string) error {
+	result, err := e.handler.GetDatabaseClusterPitr(c.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseClusterPitr failed: %w", err)
 		return err

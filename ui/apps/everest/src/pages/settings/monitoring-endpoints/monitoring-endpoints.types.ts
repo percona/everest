@@ -5,5 +5,6 @@ export interface MonitoringInstanceTableElement {
   url: string;
   name: string;
   namespace: string;
+  cluster: string;
   raw: MonitoringInstance;
 }

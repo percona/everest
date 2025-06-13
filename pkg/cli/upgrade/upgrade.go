@@ -109,7 +109,7 @@ func NewUpgrade(cfg *Config, l *zap.SugaredLogger) (*Upgrade, error) {
 		kubeClient = k
 	}
 	if cfg.KubeconfigPath != "" {
-		k, err := cliutils.NewKubeConnector(cli.l, cfg.KubeconfigPath)
+		k, err := cliutils.NewKubeConnector(cli.l, cfg.KubeconfigPath, "")
 		if err != nil {
 			return nil, err
 		}

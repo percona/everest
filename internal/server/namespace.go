@@ -7,8 +7,8 @@ import (
 )
 
 // ListNamespaces returns the current version information.
-func (e *EverestServer) ListNamespaces(ctx echo.Context) error {
-	result, err := e.handler.ListNamespaces(ctx.Request().Context())
+func (e *EverestServer) ListNamespaces(ctx echo.Context, cluster string) error {
+	result, err := e.handler.ListNamespaces(ctx.Request().Context(), cluster)
 	if err != nil {
 		e.l.Errorf("ListNamespaces failed: %w", err)
 		return err

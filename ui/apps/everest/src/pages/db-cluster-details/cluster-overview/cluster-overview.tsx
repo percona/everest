@@ -15,7 +15,7 @@
 
 import { Stack } from '@mui/material';
 import { dbEngineToDbType } from '@percona/utils';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbDetails, ResourcesDetails } from './cards';
 import { useContext } from 'react';
@@ -40,10 +40,13 @@ export const ClusterOverview = () => {
     'database-cluster-credentials',
     `${namespace}/${dbClusterName}`
   );
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
 
   const { data: backups = [] } = useDbBackups(
     dbCluster?.metadata.name!,
     dbCluster?.metadata.namespace!,
+    cluster,
     {
       refetchInterval: 10 * 1000,
     }
@@ -51,7 +54,7 @@ export const ClusterOverview = () => {
   const schedules = dbCluster?.spec.backup?.schedules || [];
 
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
-    useDbClusterCredentials(dbClusterName || '', namespace, {
+    useDbClusterCredentials(dbClusterName || '', namespace, cluster, {
       enabled: !!dbClusterName && canRead,
     });
 

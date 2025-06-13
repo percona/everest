@@ -21,8 +21,11 @@ import { ScheduleFormDialog } from 'components/schedule-form-dialog';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { backupScheduleFormValuesToDbClusterPayload } from 'components/schedule-form-dialog/schedule-form/schedule-form.utils.ts';
 import { WizardMode } from 'shared-types/wizard.types.ts';
+import { useLocation } from 'react-router-dom';
 
 export const ScheduledBackupModal = () => {
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const {
     mode = WizardMode.New,
     setMode,
@@ -40,7 +43,7 @@ export const ScheduledBackupModal = () => {
   } = dbCluster;
 
   const { mutate: updateCluster, isPending: updatingCluster } =
-    useUpdateDbClusterWithConflictRetry(dbCluster, {
+    useUpdateDbClusterWithConflictRetry(dbCluster!, cluster, {
       onSuccess: () => handleClose(),
     });
 

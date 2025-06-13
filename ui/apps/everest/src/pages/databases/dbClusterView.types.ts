@@ -17,7 +17,6 @@ import { DbType } from '@percona/types';
 import {
   DbCluster,
   DbClusterStatus,
-  ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
 
@@ -26,22 +25,23 @@ export interface DbTypeIconProviderProps {
 }
 
 export interface DbClusterTableElement {
+  cluster: string;
   namespace: string;
   status: DbClusterStatus;
   dbType: DbEngineType;
   dbVersion: string;
   backupsEnabled: boolean;
   databaseName: string;
-  cpu: string | number;
-  memory: string | number;
-  storage: string | number;
-  proxyCpu: string | number;
-  proxyMemory: string | number;
+  cpu: string;
+  memory: string;
+  storage: string;
   nodes: number;
   proxies: number;
+  proxyCpu: string;
+  proxyMemory: string;
   hostName: string;
+  exposetype?: string;
   port?: number;
-  exposetype?: ProxyExposeType;
-  monitoringConfigName?: string;
+  monitoringConfigName: string;
   raw: DbCluster;
 }

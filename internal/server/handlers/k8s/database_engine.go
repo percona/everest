@@ -24,32 +24,52 @@ var (
 	errDBEngineInvalidTargetVersion = errors.New("invalid target version provided for upgrade")
 )
 
-func (h *k8sHandler) ListDatabaseEngines(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
-	return h.kubeConnector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
+func (h *k8sHandler) ListDatabaseEngines(ctx context.Context, cluster, namespace string) (*everestv1alpha1.DatabaseEngineList, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
 }
 
-func (h *k8sHandler) GetDatabaseEngine(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
-	return h.kubeConnector.GetDatabaseEngine(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+func (h *k8sHandler) GetDatabaseEngine(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseEngine, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.GetDatabaseEngine(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 }
 
-func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
-	return h.kubeConnector.UpdateDatabaseEngine(ctx, req)
+func (h *k8sHandler) UpdateDatabaseEngine(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseEngine) (*everestv1alpha1.DatabaseEngine, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.UpdateDatabaseEngine(ctx, req)
 }
 
-func (h *k8sHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api.UpgradePlan, error) {
-	result, err := h.getUpgradePlan(ctx, namespace)
+func (h *k8sHandler) GetUpgradePlan(ctx context.Context, cluster, namespace string) (*api.UpgradePlan, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	result, err := h.getUpgradePlan(ctx, cluster, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to getUpgradePlan: %w", err)
 	}
 	// No upgrades available, so we will check if our clusters are ready for current version.
 	if len(pointer.Get(result.Upgrades)) == 0 {
 		result.PendingActions = pointer.To([]api.UpgradeTask{})
-		engines, err := h.kubeConnector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
+		engines, err := connector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
 		if err != nil {
 			return nil, err
 		}
 		for _, engine := range engines.Items {
-			tasks, err := h.getDBPostUpgradeTasks(ctx, &engine)
+			tasks, err := h.getDBPostUpgradeTasks(ctx, cluster, &engine)
 			if err != nil {
 				return nil, err
 			}
@@ -65,13 +85,13 @@ func (h *k8sHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api
 	return result, nil
 }
 
-func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, namespace string) error {
-	up, err := h.getUpgradePlan(ctx, namespace)
+func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, cluster, namespace string) error {
+	up, err := h.getUpgradePlan(ctx, cluster, namespace)
 	if err != nil {
 		return err
 	}
 	// lock all engines that will be upgraded.
-	if err := h.setLockDBEnginesForUpgrade(ctx, namespace, up, true); err != nil {
+	if err := h.setLockDBEnginesForUpgrade(ctx, cluster, namespace, up, true); err != nil {
 		return errors.Join(err, errors.New("failed to lock engines"))
 	}
 	// Check if we're ready to upgrade?
@@ -79,15 +99,15 @@ func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, namespace string) e
 		return pointer.Get(task.PendingTask) != api.Ready
 	}) {
 		// Not ready for upgrade, release the lock and return a failured message.
-		if err := h.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
+		if err := h.setLockDBEnginesForUpgrade(ctx, cluster, namespace, up, false); err != nil {
 			return errors.Join(err, errors.New("failed to release lock"))
 		}
 		return errors.New("one or more database clusters are not ready for upgrade")
 	}
 	// start upgrade process.
-	if err := h.startOperatorUpgradeWithRetry(ctx, namespace); err != nil {
+	if err := h.startOperatorUpgradeWithRetry(ctx, cluster, namespace); err != nil {
 		// Upgrade has failed, so we release the lock.
-		if err := h.setLockDBEnginesForUpgrade(ctx, namespace, up, false); err != nil {
+		if err := h.setLockDBEnginesForUpgrade(ctx, cluster, namespace, up, false); err != nil {
 			return errors.Join(err, errors.New("failed to release lock"))
 		}
 		return err
@@ -97,13 +117,18 @@ func (h *k8sHandler) ApproveUpgradePlan(ctx context.Context, namespace string) e
 
 func (h *k8sHandler) setLockDBEnginesForUpgrade(
 	ctx context.Context,
-	namespace string,
+	cluster, namespace string,
 	up *api.UpgradePlan,
 	lock bool,
 ) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
 	return backoff.Retry(func() error {
 		for _, upgrade := range pointer.Get(up.Upgrades) {
-			if err := h.kubeConnector.SetDatabaseEngineLock(ctx, types.NamespacedName{Namespace: namespace, Name: pointer.Get(upgrade.Name)}, lock); err != nil {
+			if err := connector.SetDatabaseEngineLock(ctx, types.NamespacedName{Namespace: namespace, Name: pointer.Get(upgrade.Name)}, lock); err != nil {
 				return err
 			}
 		}
@@ -114,9 +139,14 @@ func (h *k8sHandler) setLockDBEnginesForUpgrade(
 
 func (h *k8sHandler) getUpgradePlan(
 	ctx context.Context,
-	namespace string,
+	cluster, namespace string,
 ) (*api.UpgradePlan, error) {
-	engines, err := h.kubeConnector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	engines, err := connector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +168,7 @@ func (h *k8sHandler) getUpgradePlan(
 			TargetVersion:  pointer.To(nextVersion),
 		}
 		*result.Upgrades = append(*result.Upgrades, *upgrade)
-		pf, err := h.getOperatorUpgradePreflight(ctx, nextVersion, &engine)
+		pf, err := h.getOperatorUpgradePreflight(ctx, cluster, nextVersion, &engine)
 		if err != nil {
 			return nil, err
 		}
@@ -160,12 +190,18 @@ type upgradePreflightCheckArgs struct {
 
 func (h *k8sHandler) getOperatorUpgradePreflight(
 	ctx context.Context,
+	cluster string,
 	targetVersion string,
 	engine *everestv1alpha1.DatabaseEngine,
 ) (*operatorUpgradePreflight, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
 	namespace := engine.GetNamespace()
 	// Get all database clusters in the namespace.
-	databases, err := h.kubeConnector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
+	databases, err := connector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -330,11 +366,17 @@ func preflightCheckDBEngineVersion(
 
 func (h *k8sHandler) getDBPostUpgradeTasks(
 	ctx context.Context,
+	cluster string,
 	engine *everestv1alpha1.DatabaseEngine,
 ) ([]api.UpgradeTask, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
 	namespace := engine.GetNamespace()
 	// List all clusters in this namespace.
-	clusters, err := h.kubeConnector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
+	clusters, err := connector.ListDatabaseClusters(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -360,16 +402,21 @@ func (h *k8sHandler) getDBPostUpgradeTasks(
 
 // startOperatorUpgradeWithRetry wraps the startOperatorUpgrade function with a retry mechanism.
 // This is done to reduce the chances of failures due to resource conflicts.
-func (h *k8sHandler) startOperatorUpgradeWithRetry(ctx context.Context, namespace string) error {
+func (h *k8sHandler) startOperatorUpgradeWithRetry(ctx context.Context, cluster, namespace string) error {
 	return backoff.Retry(func() error {
-		return h.startOperatorUpgrade(ctx, namespace)
+		return h.startOperatorUpgrade(ctx, cluster, namespace)
 	},
 		backoff.WithContext(everestAPIConstantBackoff, ctx),
 	)
 }
 
-func (h *k8sHandler) startOperatorUpgrade(ctx context.Context, namespace string) error {
-	engines, err := h.kubeConnector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
+func (h *k8sHandler) startOperatorUpgrade(ctx context.Context, cluster, namespace string) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	engines, err := connector.ListDatabaseEngines(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return err
 	}
@@ -395,7 +442,7 @@ func (h *k8sHandler) startOperatorUpgrade(ctx context.Context, namespace string)
 	// approve install plans.
 	for _, plan := range installPlans {
 		if err := backoff.Retry(func() error {
-			_, err := h.kubeConnector.ApproveInstallPlan(ctx, types.NamespacedName{Namespace: namespace, Name: plan})
+			_, err := connector.ApproveInstallPlan(ctx, types.NamespacedName{Namespace: namespace, Name: plan})
 			return err
 		}, backoff.WithContext(everestAPIConstantBackoff, ctx),
 		); err != nil {

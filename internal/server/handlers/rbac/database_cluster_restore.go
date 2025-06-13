@@ -9,8 +9,8 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
-func (h *rbacHandler) ListDatabaseClusterRestores(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
-	list, err := h.next.ListDatabaseClusterRestores(ctx, namespace, clusterName)
+func (h *rbacHandler) ListDatabaseClusterRestores(ctx context.Context, cluster, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterRestoreList, error) {
+	list, err := h.next.ListDatabaseClusterRestores(ctx, cluster, namespace, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (h *rbacHandler) ListDatabaseClusterRestores(ctx context.Context, namespace
 	return list, nil
 }
 
-func (h *rbacHandler) CreateDatabaseClusterRestore(ctx context.Context, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
+func (h *rbacHandler) CreateDatabaseClusterRestore(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	clusterName := req.Spec.DBClusterName
 	namespace := req.GetNamespace()
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusterRestores, rbac.ActionCreate, rbac.ObjectName(namespace, clusterName)); err != nil {
@@ -39,11 +39,11 @@ func (h *rbacHandler) CreateDatabaseClusterRestore(ctx context.Context, req *eve
 	if err := h.enforceDBRestore(ctx, namespace, clusterName); err != nil {
 		return nil, err
 	}
-	return h.next.CreateDatabaseClusterRestore(ctx, req)
+	return h.next.CreateDatabaseClusterRestore(ctx, cluster, req)
 }
 
-func (h *rbacHandler) DeleteDatabaseClusterRestore(ctx context.Context, namespace, name string) error {
-	restore, err := h.next.GetDatabaseClusterRestore(ctx, namespace, name)
+func (h *rbacHandler) DeleteDatabaseClusterRestore(ctx context.Context, cluster, namespace, name string) error {
+	restore, err := h.next.GetDatabaseClusterRestore(ctx, cluster, namespace, name)
 	if err != nil {
 		return fmt.Errorf("GetDatabaseClusterRestore failed: %w", err)
 	}
@@ -51,11 +51,11 @@ func (h *rbacHandler) DeleteDatabaseClusterRestore(ctx context.Context, namespac
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusterRestores, rbac.ActionDelete, rbac.ObjectName(namespace, clusterName)); err != nil {
 		return err
 	}
-	return h.next.DeleteDatabaseClusterRestore(ctx, namespace, name)
+	return h.next.DeleteDatabaseClusterRestore(ctx, cluster, namespace, name)
 }
 
-func (h *rbacHandler) GetDatabaseClusterRestore(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error) {
-	restore, err := h.next.GetDatabaseClusterRestore(ctx, namespace, name)
+func (h *rbacHandler) GetDatabaseClusterRestore(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseClusterRestore, error) {
+	restore, err := h.next.GetDatabaseClusterRestore(ctx, cluster, namespace, name)
 	if err != nil {
 		return nil, fmt.Errorf("GetDatabaseClusterRestore failed: %w", err)
 	}
@@ -66,7 +66,7 @@ func (h *rbacHandler) GetDatabaseClusterRestore(ctx context.Context, namespace, 
 	return restore, nil
 }
 
-func (h *rbacHandler) UpdateDatabaseClusterRestore(ctx context.Context, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
+func (h *rbacHandler) UpdateDatabaseClusterRestore(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseClusterRestore) (*everestv1alpha1.DatabaseClusterRestore, error) {
 	clusterName := req.Spec.DBClusterName
 	namespace := req.GetNamespace()
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusterRestores, rbac.ActionUpdate, rbac.ObjectName(namespace, clusterName)); err != nil {
@@ -75,7 +75,7 @@ func (h *rbacHandler) UpdateDatabaseClusterRestore(ctx context.Context, req *eve
 	if err := h.enforceDBRestore(ctx, namespace, clusterName); err != nil {
 		return nil, err
 	}
-	return h.next.UpdateDatabaseClusterRestore(ctx, req)
+	return h.next.UpdateDatabaseClusterRestore(ctx, cluster, req)
 }
 
 func (h *rbacHandler) enforceDBRestore(ctx context.Context, namespace, clusterName string) error {

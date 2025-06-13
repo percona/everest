@@ -77,50 +77,50 @@ func newPspValidationAffinityError(msg string) *pspValidationAffinityError {
 }
 
 // CreatePodSchedulingPolicy creates a new pod scheduling policy.
-func (h *validateHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+func (h *validateHandler) CreatePodSchedulingPolicy(ctx context.Context, cluster string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	if err := h.validatePSPCR(psp); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
-	return h.next.CreatePodSchedulingPolicy(ctx, psp)
+	return h.next.CreatePodSchedulingPolicy(ctx, cluster, psp)
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
-func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+func (h *validateHandler) UpdatePodSchedulingPolicy(ctx context.Context, cluster string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	if err := h.validatePSPCR(psp); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
 	// validate updated policy params
-	if err := h.validatePSPOnUpdate(ctx, psp); err != nil {
+	if err := h.validatePSPOnUpdate(ctx, cluster, psp); err != nil {
 		if k8serrors.IsNotFound(err) {
 			return nil, err
 		}
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
-	return h.next.UpdatePodSchedulingPolicy(ctx, psp)
+	return h.next.UpdatePodSchedulingPolicy(ctx, cluster, psp)
 }
 
 // ListPodSchedulingPolicies lists all pod scheduling policies.
-func (h *validateHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
-	return h.next.ListPodSchedulingPolicies(ctx, params)
+func (h *validateHandler) ListPodSchedulingPolicies(ctx context.Context, cluster string, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
+	return h.next.ListPodSchedulingPolicies(ctx, cluster, params)
 }
 
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.
-func (h *validateHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {
-	if err := h.validatePSPOnDelete(ctx, name); err != nil {
+func (h *validateHandler) DeletePodSchedulingPolicy(ctx context.Context, cluster, name string) error {
+	if err := h.validatePSPOnDelete(ctx, cluster, name); err != nil {
 		if k8serrors.IsNotFound(err) {
 			return err
 		}
 		return errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.DeletePodSchedulingPolicy(ctx, name)
+	return h.next.DeletePodSchedulingPolicy(ctx, cluster, name)
 }
 
 // GetPodSchedulingPolicy retrieves a pod scheduling policy by name.
-func (h *validateHandler) GetPodSchedulingPolicy(ctx context.Context, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	return h.next.GetPodSchedulingPolicy(ctx, name)
+func (h *validateHandler) GetPodSchedulingPolicy(ctx context.Context, cluster, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	return h.next.GetPodSchedulingPolicy(ctx, cluster, name)
 }
 
 func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy) error {
@@ -193,10 +193,14 @@ func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy
 	return nil
 }
 
-func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *everestv1alpha1.PodSchedulingPolicy) error {
+func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, cluster string, newPsp *everestv1alpha1.PodSchedulingPolicy) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
 	var oldPsp *everestv1alpha1.PodSchedulingPolicy
-	var err error
-	if oldPsp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: newPsp.GetName()}); err != nil {
+	if oldPsp, err = connector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: newPsp.GetName()}); err != nil {
 		return err
 	}
 
@@ -212,10 +216,14 @@ func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *evere
 	return nil
 }
 
-func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName string) error {
+func (h *validateHandler) validatePSPOnDelete(ctx context.Context, cluster, pspName string) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
 	var psp *everestv1alpha1.PodSchedulingPolicy
-	var err error
-	if psp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: pspName}); err != nil {
+	if psp, err = connector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: pspName}); err != nil {
 		return err
 	}
 

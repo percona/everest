@@ -80,6 +80,8 @@ type (
 		Update bool
 		// Helm related options
 		HelmConfig helm.CLIOptions
+		// Context is the context for the Kubernetes client
+		Context string
 	}
 
 	// NamespaceAdder provides the functionality to add namespaces.
@@ -177,16 +179,13 @@ func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
 	return nil
 }
 
-// ValidateNamespaces validates the provided list of namespaces.
-// It validates:
-// - namespace names
-// - namespace ownership
+// ValidateNamespaces validates the provided namespaces.
 func (cfg *NamespaceAddConfig) ValidateNamespaces(ctx context.Context, nsList []string) error {
-	if err := validateNamespaceNames(nsList); err != nil {
-		return err
+	if len(nsList) == 0 {
+		return ErrNamespaceListEmpty
 	}
 
-	k, err := cliutils.NewKubeConnector(zap.NewNop().Sugar(), cfg.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(zap.NewNop().Sugar(), cfg.KubeconfigPath, cfg.Context)
 	if err != nil {
 		return err
 	}
@@ -239,7 +238,7 @@ func (cfg *NamespaceAddConfig) detectKubernetesEnv(ctx context.Context, l *zap.S
 		return nil
 	}
 
-	client, err := cliutils.NewKubeConnector(l, cfg.KubeconfigPath)
+	client, err := cliutils.NewKubeConnector(l, cfg.KubeconfigPath, cfg.Context)
 	if err != nil {
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
@@ -281,7 +280,7 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeConnector(n.l, c.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(n.l, c.KubeconfigPath, c.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -390,6 +389,7 @@ func (n *NamespaceAdder) provisionDBNamespace(
 		ReleaseNamespace:       namespace,
 		Values:                 values,
 		CreateReleaseNamespace: !nsExists,
+		Context:                n.cfg.Context,
 	}
 	if err := installer.Init(n.cfg.KubeconfigPath, helm.ChartOptions{
 		Directory: cliutils.DBNamespaceSubChartPath(n.cfg.HelmConfig.ChartDir),

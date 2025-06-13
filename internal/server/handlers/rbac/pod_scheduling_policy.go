@@ -26,24 +26,24 @@ import (
 )
 
 // CreatePodSchedulingPolicy creates a new pod scheduling policy.
-func (h *rbacHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+func (h *rbacHandler) CreatePodSchedulingPolicy(ctx context.Context, cluster string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionCreate, rbac.ObjectName(psp.GetName())); err != nil {
 		return nil, err
 	}
-	return h.next.CreatePodSchedulingPolicy(ctx, psp)
+	return h.next.CreatePodSchedulingPolicy(ctx, cluster, psp)
 }
 
 // UpdatePodSchedulingPolicy updates an existing pod scheduling policy.
-func (h *rbacHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+func (h *rbacHandler) UpdatePodSchedulingPolicy(ctx context.Context, cluster string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionUpdate, rbac.ObjectName(psp.GetName())); err != nil {
 		return nil, err
 	}
-	return h.next.UpdatePodSchedulingPolicy(ctx, psp)
+	return h.next.UpdatePodSchedulingPolicy(ctx, cluster, psp)
 }
 
 // ListPodSchedulingPolicies lists all pod scheduling policies.
-func (h *rbacHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
-	pspList, err := h.next.ListPodSchedulingPolicies(ctx, params)
+func (h *rbacHandler) ListPodSchedulingPolicies(ctx context.Context, cluster string, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
+	pspList, err := h.next.ListPodSchedulingPolicies(ctx, cluster, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListPodSchedulingPolicies failed: %w", err)
 	}
@@ -55,17 +55,17 @@ func (h *rbacHandler) ListPodSchedulingPolicies(ctx context.Context, params *api
 }
 
 // DeletePodSchedulingPolicy deletes a pod scheduling policy.
-func (h *rbacHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {
+func (h *rbacHandler) DeletePodSchedulingPolicy(ctx context.Context, cluster, name string) error {
 	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionDelete, rbac.ObjectName(name)); err != nil {
 		return err
 	}
-	return h.next.DeletePodSchedulingPolicy(ctx, name)
+	return h.next.DeletePodSchedulingPolicy(ctx, cluster, name)
 }
 
 // GetPodSchedulingPolicy retrieves a pod scheduling policy by name.
-func (h *rbacHandler) GetPodSchedulingPolicy(ctx context.Context, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
+func (h *rbacHandler) GetPodSchedulingPolicy(ctx context.Context, cluster, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
 	if err := h.enforce(ctx, rbac.ResourcePodSchedulingPolicies, rbac.ActionRead, rbac.ObjectName(name)); err != nil {
 		return nil, err
 	}
-	return h.next.GetPodSchedulingPolicy(ctx, name)
+	return h.next.GetPodSchedulingPolicy(ctx, cluster, name)
 }

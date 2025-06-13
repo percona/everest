@@ -18,12 +18,20 @@ import (
 	"github.com/percona/everest/pkg/pmm"
 )
 
-func (h *k8sHandler) ListMonitoringInstances(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
-	return h.kubeConnector.ListMonitoringConfigs(ctx, ctrlclient.InNamespace(namespace))
+func (h *k8sHandler) ListMonitoringInstances(ctx context.Context, cluster, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+	return connector.ListMonitoringConfigs(ctx, ctrlclient.InNamespace(namespace))
 }
 
-func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace string, req *api.CreateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
-	m, err := h.kubeConnector.GetMonitoringConfig(ctx, types.NamespacedName{Namespace: namespace, Name: req.Name})
+func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, cluster, namespace string, req *api.CreateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+	m, err := connector.GetMonitoringConfig(ctx, types.NamespacedName{Namespace: namespace, Name: req.Name})
 	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, err
 	}
@@ -38,11 +46,15 @@ func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace str
 	if err != nil {
 		return nil, err
 	}
-	return h.createMonitoringK8sResources(ctx, namespace, req, apiKey)
+	return h.createMonitoringK8sResources(ctx, cluster, namespace, req, apiKey)
 }
 
-func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, namespace, name string) error {
-	used, err := h.kubeConnector.IsMonitoringConfigUsed(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, cluster, namespace, name string) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+	used, err := connector.IsMonitoringConfigUsed(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return err
 	}
@@ -55,7 +67,7 @@ func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, namespace, na
 			Namespace: namespace,
 		},
 	}
-	if err := h.kubeConnector.DeleteMonitoringConfig(ctx, delMCObj); err != nil {
+	if err := connector.DeleteMonitoringConfig(ctx, delMCObj); err != nil {
 		return err
 	}
 
@@ -65,15 +77,23 @@ func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, namespace, na
 			Namespace: namespace,
 		},
 	}
-	return h.kubeConnector.DeleteSecret(ctx, delSecObj)
+	return connector.DeleteSecret(ctx, delSecObj)
 }
 
-func (h *k8sHandler) GetMonitoringInstance(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
-	return h.kubeConnector.GetMonitoringConfig(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+func (h *k8sHandler) GetMonitoringInstance(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+	return connector.GetMonitoringConfig(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 }
 
-func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
-	m, err := h.kubeConnector.GetMonitoringConfig(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, cluster, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+	m, err := connector.GetMonitoringConfig(ctx, types.NamespacedName{Namespace: namespace, Name: name})
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +113,7 @@ func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, na
 		}
 	}
 	if apiKey != "" {
-		_, err := h.kubeConnector.UpdateSecret(ctx, &corev1.Secret{
+		_, err := connector.UpdateSecret(ctx, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: namespace,
@@ -114,7 +134,7 @@ func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, na
 	if req.VerifyTLS != nil {
 		m.Spec.VerifyTLS = req.VerifyTLS
 	}
-	return h.kubeConnector.UpdateMonitoringConfig(ctx, m)
+	return connector.UpdateMonitoringConfig(ctx, m)
 }
 
 func (h *k8sHandler) getPMMApiKey(ctx context.Context, params *api.CreateMonitoringInstanceJSONRequestBody) (string, error) {
@@ -132,8 +152,12 @@ func (h *k8sHandler) getPMMApiKey(ctx context.Context, params *api.CreateMonitor
 }
 
 func (h *k8sHandler) createMonitoringK8sResources(
-	c context.Context, namespace string, params *api.CreateMonitoringInstanceJSONRequestBody, apiKey string,
+	c context.Context, cluster, namespace string, params *api.CreateMonitoringInstanceJSONRequestBody, apiKey string,
 ) (*everestv1alpha1.MonitoringConfig, error) {
+	connector, err := h.Connector(c, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      params.Name,
@@ -142,9 +166,9 @@ func (h *k8sHandler) createMonitoringK8sResources(
 		Type:       corev1.SecretTypeOpaque,
 		StringData: h.monitoringConfigSecretData(apiKey),
 	}
-	if _, err := h.kubeConnector.CreateSecret(c, secret); err != nil {
+	if _, err := connector.CreateSecret(c, secret); err != nil {
 		if k8serrors.IsAlreadyExists(err) {
-			_, err = h.kubeConnector.UpdateSecret(c, secret)
+			_, err = connector.UpdateSecret(c, secret)
 			if err != nil {
 				return nil, fmt.Errorf("could not update k8s secret %s", params.Name)
 			}
@@ -152,7 +176,7 @@ func (h *k8sHandler) createMonitoringK8sResources(
 			return nil, fmt.Errorf("failed creating secret in the Kubernetes cluster")
 		}
 	}
-	created, err := h.kubeConnector.CreateMonitoringConfig(c, &everestv1alpha1.MonitoringConfig{
+	created, err := connector.CreateMonitoringConfig(c, &everestv1alpha1.MonitoringConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      params.Name,
 			Namespace: namespace,
@@ -173,7 +197,7 @@ func (h *k8sHandler) createMonitoringK8sResources(
 				Namespace: namespace,
 			},
 		}
-		if dErr := h.kubeConnector.DeleteSecret(c, delObj); dErr != nil {
+		if dErr := connector.DeleteSecret(c, delObj); dErr != nil {
 			return nil, fmt.Errorf("failed cleaning up the secret because failed creating monitoring instance")
 		}
 		return nil, fmt.Errorf("failed creating monitoring instance")

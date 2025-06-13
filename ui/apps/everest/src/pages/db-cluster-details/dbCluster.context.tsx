@@ -1,6 +1,6 @@
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import React, { createContext, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { DbCluster, DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbClusterContextProps } from './dbCluster.context.types';
 import { useRBACPermissions } from 'hooks/rbac';
@@ -26,6 +26,8 @@ export const DbClusterContextProvider = ({
   children: React.ReactNode;
 }) => {
   const { dbClusterName = '', namespace = '' } = useParams();
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const defaultInterval = 5 * 1000;
   const [refetchInterval, setRefetchInterval] = useState(defaultInterval);
   const [clusterDeleted, setClusterDeleted] = useState(false);
@@ -34,6 +36,7 @@ export const DbClusterContextProvider = ({
   const queryResult: QueryObserverResult<DbCluster, unknown> = useDbCluster(
     dbClusterName,
     namespace,
+    cluster,
     {
       enabled: !!namespace && !!dbClusterName && !clusterDeleted,
       refetchInterval: refetchInterval,

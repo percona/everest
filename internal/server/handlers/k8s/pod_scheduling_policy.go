@@ -28,16 +28,31 @@ import (
 	"github.com/percona/everest/api"
 )
 
-func (h *k8sHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	return h.kubeConnector.CreatePodSchedulingPolicy(ctx, psp)
+func (h *k8sHandler) CreatePodSchedulingPolicy(ctx context.Context, cluster string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.CreatePodSchedulingPolicy(ctx, psp)
 }
 
-func (h *k8sHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	return h.kubeConnector.UpdatePodSchedulingPolicy(ctx, psp)
+func (h *k8sHandler) UpdatePodSchedulingPolicy(ctx context.Context, cluster string, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.UpdatePodSchedulingPolicy(ctx, psp)
 }
 
-func (h *k8sHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
-	pspList, err := h.kubeConnector.ListPodSchedulingPolicies(ctx)
+func (h *k8sHandler) ListPodSchedulingPolicies(ctx context.Context, cluster string, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	pspList, err := connector.ListPodSchedulingPolicies(ctx)
 	if err != nil {
 		return pspList, err
 	}
@@ -60,8 +75,13 @@ func (h *k8sHandler) ListPodSchedulingPolicies(ctx context.Context, params *api.
 	return pspList, err
 }
 
-func (h *k8sHandler) DeletePodSchedulingPolicy(ctx context.Context, name string) error {
-	used, err := h.kubeConnector.IsPodSchedulingPolicyUsed(ctx, types.NamespacedName{Name: name})
+func (h *k8sHandler) DeletePodSchedulingPolicy(ctx context.Context, cluster, name string) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	used, err := connector.IsPodSchedulingPolicyUsed(ctx, types.NamespacedName{Name: name})
 	if err != nil {
 		return err
 	}
@@ -74,9 +94,14 @@ func (h *k8sHandler) DeletePodSchedulingPolicy(ctx context.Context, name string)
 			Name: name,
 		},
 	}
-	return h.kubeConnector.DeletePodSchedulingPolicy(ctx, delObj)
+	return connector.DeletePodSchedulingPolicy(ctx, delObj)
 }
 
-func (h *k8sHandler) GetPodSchedulingPolicy(ctx context.Context, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
-	return h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: name})
+func (h *k8sHandler) GetPodSchedulingPolicy(ctx context.Context, cluster, name string) (*everestv1alpha1.PodSchedulingPolicy, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubernetes connector: %w", err)
+	}
+
+	return connector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: name})
 }

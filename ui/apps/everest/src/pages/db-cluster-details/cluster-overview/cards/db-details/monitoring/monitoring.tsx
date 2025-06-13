@@ -22,7 +22,7 @@ import { MonitoringEditModal } from './edit-monitoring';
 import { DbClusterContext } from 'pages/db-cluster-details/dbCluster.context';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks/api/db-cluster/useUpdateDbCluster';
 import { changeDbClusterMonitoring, shouldDbActionsBeBlocked } from 'utils/db';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export const MonitoringDetails = ({
   loading,
@@ -30,13 +30,18 @@ export const MonitoringDetails = ({
 }: MonitoringConfigurationOverviewCardProps) => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const { dbCluster, canUpdateDb } = useContext(DbClusterContext);
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const editable =
     canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
+    cluster,
     {
-      onSuccess: () => handleCloseModal(),
+      onSuccess: () => {
+        setOpenEditModal(false);
+      },
     }
   );
 

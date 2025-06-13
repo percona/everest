@@ -26,14 +26,11 @@ const NamespaceDetails = () => {
       enabled: !!namespaceName,
     }
   );
-  const { data: dbEngines = [] } = useDbEngines(
-    namespaceName,
-    {
-      enabled: !!namespace,
-      refetchInterval: 2 * 1000,
-    },
-    true
-  );
+  // TODO: Replace 'in-cluster' with actual cluster selection logic
+  const { data: dbEngines = [] } = useDbEngines('in-cluster', namespaceName, {
+    enabled: !!namespace,
+    refetchInterval: 2 * 1000,
+  }, true);
   const { data: operatorsUpgradePlan, isLoading: loadingOperatorsUpgradePlan } =
     useOperatorsUpgradePlan(namespaceName, dbEngines, {
       initialData: {

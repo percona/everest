@@ -2,65 +2,89 @@ import { useMemo } from 'react';
 import { Table } from '@percona/ui-lib';
 import { Typography } from '@mui/material';
 import { MRT_ColumnDef } from 'material-react-table';
-import { useQueries } from '@tanstack/react-query';
-import { NamespaceInstance } from 'shared-types/namespaces.types';
-import { useDBEnginesForNamespaces } from 'hooks/api/namespaces/useNamespaces';
-import { operatorUpgradePlanQueryFn } from 'hooks/api/db-engines';
+import { useQuery, useQueries } from '@tanstack/react-query';
+import { getClustersFn, Cluster } from 'api/clusters';
+import { getNamespacesForCluster } from 'api/namespaces';
+import { getDbEnginesFn } from 'api/dbEngineApi';
 import { Messages } from './namespaces.messages';
 import { OperatorCell } from './OperatorCell';
-import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import EmptyStateNamespaces from 'components/empty-state-namespaces';
 
 export const Namespaces = () => {
-  const { results: rawDbEngines } = useDBEnginesForNamespaces();
-  const dbEngines = rawDbEngines?.filter(
-    (item) => item.data && item.data.length
-  );
-  const { canRead } = useNamespacePermissionsForResource('database-clusters');
-  const operatorsUpgradePlan = useQueries({
-    queries: dbEngines.map((item) => ({
-      queryKey: ['operatorUpgradePlan', item.namespace],
-      queryFn: () =>
-        operatorUpgradePlanQueryFn(item.namespace, item.data || []),
-      enabled:
-        dbEngines.every((result) => result.isSuccess) &&
-        canRead.includes(item.namespace),
+  // 1. Fetch all clusters
+  const { data: clusters = [], isLoading: isLoadingClusters } = useQuery<Cluster[]>({
+    queryKey: ['clusters'],
+    queryFn: getClustersFn,
+  });
+
+  // 2. Fetch namespaces for each cluster
+  const namespacesQueries = useQueries({
+    queries: clusters.map((cluster) => ({
+      queryKey: ['namespaces', cluster.name],
+      queryFn: () => getNamespacesForCluster(cluster.name),
+      enabled: !!cluster.name,
     })),
   });
 
-  const namespacesData: NamespaceInstance[] = dbEngines.map((item, idx) => ({
-    name: item.namespace,
-    upgradeAvailable: operatorsUpgradePlan[idx].isSuccess
-      ? operatorsUpgradePlan[idx].data.upgrades.length > 0
-      : false,
-    operators: item.data?.map((engine) => engine.name) || [],
-    pendingActions: operatorsUpgradePlan[idx].isSuccess
-      ? operatorsUpgradePlan[idx].data.pendingActions
-      : [],
-    operatorsDescription: item.isSuccess
-      ? item.data?.reduce((prevVal, currVal, idx) => {
-          if (idx === 0 || prevVal === '') {
-            if (currVal?.type && currVal?.operatorVersion) {
-              return `${currVal.type} (${currVal.operatorVersion})`;
-            } else return '';
-          } else {
-            return (
-              prevVal + '; ' + `${currVal.type} (${currVal.operatorVersion})`
-            );
-          }
-        }, '')
-      : '-',
-  }));
+  // Only consider clusters/namespaces that actually exist
+  const nonEmptyClusterNamespacePairs = clusters.flatMap((cluster, idx) => {
+    const namespaces = namespacesQueries[idx]?.data || [];
+    if (!Array.isArray(namespaces) || namespaces.length === 0) return [];
+    return namespaces.map((ns: string) => ({ cluster: cluster.name, namespace: ns }));
+  });
 
+  const dbEnginesQueries = useQueries({
+    queries: nonEmptyClusterNamespacePairs.map(({ cluster, namespace }) => ({
+      queryKey: ['dbEngines', cluster, namespace],
+      queryFn: () => getDbEnginesFn(cluster, namespace),
+      enabled: !!cluster && !!namespace,
+    })),
+  });
+
+  // Flatten and build table data only for non-empty clusters/namespaces
+  const namespacesData = dbEnginesQueries.map((query, idx) => {
+    const { cluster, namespace } = nonEmptyClusterNamespacePairs[idx] || {};
+    const item = query.data;
+    const engines = item?.items || [];
+    return {
+      name: namespace,
+      cluster,
+      upgradeAvailable: false, // TODO: add upgrade logic if needed
+      operators: engines.map((engine: any) => engine.metadata?.name) || [],
+      pendingActions: [], // TODO: add pending actions if needed
+      operatorsDescription: engines.length
+        ? engines.reduce((prevVal: string, currVal: any, idx: number) => {
+            if (idx === 0 || prevVal === '') {
+              if (currVal?.spec?.type && currVal?.status?.operatorVersion) {
+                return `${currVal.spec.type} (${currVal.status.operatorVersion})`;
+              } else return '';
+            } else {
+              return prevVal + '; ' + `${currVal.spec.type} (${currVal.status.operatorVersion})`;
+            }
+          }, '')
+        : '-',
+    };
+  });
+
+  // Only show loading if any visible (non-empty) cluster/namespace is still loading
   const isFetching =
-    dbEngines.some((result) => result.isLoading) ||
-    operatorsUpgradePlan.some((result) => result.isLoading);
+    isLoadingClusters ||
+    namespacesQueries.some((q, idx) => {
+      const namespaces = namespacesQueries[idx]?.data || [];
+      return Array.isArray(namespaces) && namespaces.length > 0 && q.isLoading;
+    }) ||
+    dbEnginesQueries.some((q) => q.isLoading);
 
-  const columns = useMemo<MRT_ColumnDef<NamespaceInstance>[]>(
+  const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
       {
         accessorKey: 'name',
         header: 'Namespace',
+        Cell: ({ cell }) => <Typography>{cell.getValue<string>()}</Typography>,
+      },
+      {
+        accessorKey: 'cluster',
+        header: 'Cluster',
         Cell: ({ cell }) => <Typography>{cell.getValue<string>()}</Typography>,
       },
       {
@@ -80,7 +104,7 @@ export const Namespaces = () => {
   return (
     <>
       <Table
-        getRowId={(row) => row.name}
+        getRowId={(row) => row.name + '-' + row.cluster}
         tableName="namespaces"
         noDataMessage={Messages.noDataMessage}
         emptyState={<EmptyStateNamespaces />}
@@ -90,20 +114,6 @@ export const Namespaces = () => {
         }}
         columns={columns}
         data={namespacesData}
-        // enableRowActions
-        // renderRowActionMenuItems={({ row, closeMenu }) => [
-        //     <MenuItem
-        //         key={1} //TODO EVEREST-677 actions will be in later iterations (now we haven't mockups)
-        //         onClick={() => {
-        //             // handleDe(row.original.name);
-        //             closeMenu();
-        //         }}
-        //         sx={{ m: 0, display: 'flex', gap: 1, px: 2, py: '10px' }}
-        //     >
-        //         <Delete />
-        //         {Messages.delete}
-        //     </MenuItem>,
-        // ]}
       />
     </>
   );

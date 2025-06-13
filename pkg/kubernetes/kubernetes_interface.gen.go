@@ -17,11 +17,13 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/accounts"
+	"github.com/percona/everest/pkg/clusters"
 	"github.com/percona/everest/pkg/common"
 )
 
 // KubernetesConnector ...
 type KubernetesConnector interface {
+	Clusters() clusters.Interface
 	// Accounts returns an implementation of the accounts interface that
 	// manages everest accounts directly via ConfigMaps.
 	Accounts() accounts.Interface

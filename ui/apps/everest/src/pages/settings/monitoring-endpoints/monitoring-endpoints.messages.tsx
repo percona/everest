@@ -1,17 +1,23 @@
 export const Messages = {
-  add: 'Add endpoint',
+  add: 'Add monitoring endpoint',
   edit: 'Edit',
   delete: 'Delete',
   deleteDialogHeader: 'Delete monitoring endpoint',
   addEditDialogHeader: (editMode: boolean) =>
     `${editMode ? 'Edit' : 'Add'} monitoring endpoint`,
-  addEditDialogSubmitButton: (editMode: boolean) =>
-    `${editMode ? 'Edit' : 'Add'}`,
+  addEditDialogSubmitButton: (editMode: boolean) => (editMode ? 'Save' : 'Add'),
   deleteConfirmation: (endpoint: string) => (
     <>
-      Are you sure you want to permanently delete endpoint <b>{endpoint}</b>?
+      Are you sure you want to permanently delete monitoring endpoint{' '}
+      <b>{endpoint}</b>?
     </>
   ),
+  columns: {
+    name: 'Name',
+    url: 'Endpoint',
+    cluster: 'Cluster',
+    namespace: 'Namespace',
+  },
   fieldLabels: {
     name: 'Name',
     namespace: 'Namespace',

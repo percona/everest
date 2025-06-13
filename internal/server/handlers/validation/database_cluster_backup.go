@@ -13,26 +13,31 @@ import (
 	"github.com/percona/everest/api"
 )
 
-func (h *validateHandler) ListDatabaseClusterBackups(ctx context.Context, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-	return h.next.ListDatabaseClusterBackups(ctx, namespace, clusterName)
+func (h *validateHandler) ListDatabaseClusterBackups(ctx context.Context, cluster, namespace, clusterName string) (*everestv1alpha1.DatabaseClusterBackupList, error) {
+	return h.next.ListDatabaseClusterBackups(ctx, cluster, namespace, clusterName)
 }
 
-func (h *validateHandler) CreateDatabaseClusterBackup(ctx context.Context, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	if err := h.validateDatabaseClusterBackup(ctx, req); err != nil {
+func (h *validateHandler) CreateDatabaseClusterBackup(ctx context.Context, cluster string, req *everestv1alpha1.DatabaseClusterBackup) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	if err := h.validateDatabaseClusterBackup(ctx, cluster, req); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.CreateDatabaseClusterBackup(ctx, req)
+	return h.next.CreateDatabaseClusterBackup(ctx, cluster, req)
 }
 
-func (h *validateHandler) DeleteDatabaseClusterBackup(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
-	return h.next.DeleteDatabaseClusterBackup(ctx, namespace, name, req)
+func (h *validateHandler) DeleteDatabaseClusterBackup(ctx context.Context, cluster, namespace, name string, req *api.DeleteDatabaseClusterBackupParams) error {
+	return h.next.DeleteDatabaseClusterBackup(ctx, cluster, namespace, name, req)
 }
 
-func (h *validateHandler) GetDatabaseClusterBackup(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
-	return h.next.GetDatabaseClusterBackup(ctx, namespace, name)
+func (h *validateHandler) GetDatabaseClusterBackup(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseClusterBackup, error) {
+	return h.next.GetDatabaseClusterBackup(ctx, cluster, namespace, name)
 }
 
-func (h *validateHandler) validateDatabaseClusterBackup(ctx context.Context, backup *everestv1alpha1.DatabaseClusterBackup) error {
+func (h *validateHandler) validateDatabaseClusterBackup(ctx context.Context, cluster string, backup *everestv1alpha1.DatabaseClusterBackup) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get kube connector"))
+	}
+
 	if backup == nil {
 		return errors.New("backup cannot be empty")
 	}
@@ -43,7 +48,7 @@ func (h *validateHandler) validateDatabaseClusterBackup(ctx context.Context, bac
 		return errors.New(".spec.dbClusterName cannot be empty")
 	}
 	namespace := backup.GetNamespace()
-	db, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: backup.Spec.DBClusterName})
+	db, err := connector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: namespace, Name: backup.Spec.DBClusterName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return fmt.Errorf("database cluster %s does not exist", backup.Spec.DBClusterName)
@@ -51,7 +56,7 @@ func (h *validateHandler) validateDatabaseClusterBackup(ctx context.Context, bac
 		return err
 	}
 
-	if err = h.validatePGReposForBackup(ctx, db, backup); err != nil {
+	if err = h.validatePGReposForBackup(ctx, cluster, db, backup); err != nil {
 		return err
 	}
 
@@ -65,16 +70,22 @@ func (h *validateHandler) validateDatabaseClusterBackup(ctx context.Context, bac
 
 func (h *validateHandler) validatePGReposForBackup(
 	ctx context.Context,
+	cluster string,
 	db *everestv1alpha1.DatabaseCluster,
 	newBackup *everestv1alpha1.DatabaseClusterBackup,
 ) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get kube connector"))
+	}
+
 	if db.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePostgresql {
 		return nil
 	}
 
 	// put the backup that being validated to the list of all backups to calculate if the limitations are respected
 	getBackupsFunc := func(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DatabaseClusterBackupList, error) {
-		list, err := h.kubeConnector.ListDatabaseClusterBackups(ctx, opts...)
+		list, err := connector.ListDatabaseClusterBackups(ctx, opts...)
 		if err != nil {
 			return nil, err
 		}

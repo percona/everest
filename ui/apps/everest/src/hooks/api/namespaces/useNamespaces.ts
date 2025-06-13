@@ -15,13 +15,14 @@
 
 import { useQueries, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { GetNamespacesPayload } from 'shared-types/namespaces.types';
-import { getNamespacesFn } from 'api/namespaces';
+import { getAllNamespacesFn } from 'api/namespaces';
 import { dbEnginesQuerySelect } from '../db-engines/useDbEngines';
 import { getDbEnginesFn } from 'api/dbEngineApi';
 import { DbEngine } from 'shared-types/dbEngines.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import { DbEngineType } from '@percona/types';
 import { useCallback, useMemo } from 'react';
+import { getNamespacesForCluster } from 'api/namespaces';
 
 export const NAMESPACES_QUERY_KEY = 'namespace';
 
@@ -30,29 +31,25 @@ export const useNamespaces = (
 ) =>
   useQuery<GetNamespacesPayload, unknown, string[]>({
     queryKey: [NAMESPACES_QUERY_KEY],
-    queryFn: getNamespacesFn,
+    queryFn: getAllNamespacesFn,
     select: (namespaces) => namespaces.sort((a, b) => a.localeCompare(b)),
     ...options,
   });
 
 export const useDBEnginesForNamespaces = (
+  cluster: string,
   retrieveUpgradingEngines = false,
   options?: PerconaQueryOptions<DbEngine[], unknown, DbEngine[]>
 ) => {
   const { data: namespaces = [], isFetching: fetchingNamespaces } =
-    useNamespaces({
-      refetchInterval: 5 * 1000,
-    });
+    useNamespacesForCluster(cluster);
 
   const queries = namespaces.map<
     UseQueryOptions<DbEngine[], unknown, DbEngine[]>
   >((namespace) => ({
-    queryKey: ['dbEngines-multi', namespace],
-    // We don't use "select" here so that our cache saves data already formatted
-    // Otherwise, every render from components cause "select" to be called, which means new values on every render
+    queryKey: ['dbEngines-multi', cluster, namespace],
     queryFn: async () => {
-      const data = await getDbEnginesFn(namespace);
-
+      const data = await getDbEnginesFn(cluster, namespace);
       return dbEnginesQuerySelect(data, retrieveUpgradingEngines);
     },
     refetchInterval: 5 * 1000,
@@ -84,6 +81,7 @@ export interface DbEnginesForDbTypeExpanded {
   dbEngines: DbEngineForNamedpaceExpanded[];
 }
 export const useDBEnginesForDbEngineTypes = (
+  cluster: string,
   dbEngineType?: DbEngineType,
   options?: PerconaQueryOptions<DbEngine[], unknown, DbEngine[]>
 ): [
@@ -92,7 +90,7 @@ export const useDBEnginesForDbEngineTypes = (
   refetch: () => void,
 ] => {
   const { results: dbEnginesForNamespaces, refetchAll } =
-    useDBEnginesForNamespaces(false, options);
+    useDBEnginesForNamespaces(cluster, false, options);
   const dbEnginesFetching = dbEnginesForNamespaces.some(
     (result) => result.isLoading
   );
@@ -171,7 +169,17 @@ export const useNamespace = (
 ) =>
   useQuery<GetNamespacesPayload, unknown, string | undefined>({
     queryKey: [NAMESPACES_QUERY_KEY],
-    queryFn: getNamespacesFn,
+    queryFn: getAllNamespacesFn,
     select: (data) => data.find((item) => item === namespace),
     ...options,
   });
+
+// Hook to fetch namespaces for a specific cluster
+export const useNamespacesForCluster = (cluster?: string) => {
+  return useQuery<GetNamespacesPayload, unknown, string[]>({
+    queryKey: [NAMESPACES_QUERY_KEY, cluster],
+    queryFn: () => (cluster ? getNamespacesForCluster(cluster) : Promise.resolve([])),
+    enabled: !!cluster,
+    select: (namespaces) => namespaces.sort((a, b) => a.localeCompare(b)),
+  });
+};

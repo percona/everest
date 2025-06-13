@@ -62,15 +62,19 @@ export const MonitoringEndpoints = () => {
     () => [
       {
         accessorKey: 'name',
-        header: 'Name',
+        header: Messages.columns.name,
       },
       {
         accessorKey: 'url',
-        header: 'Endpoint',
+        header: Messages.columns.url,
+      },
+      {
+        accessorKey: 'cluster',
+        header: Messages.columns.cluster,
       },
       {
         accessorKey: 'namespace',
-        header: Messages.namespaces,
+        header: Messages.columns.namespace,
       },
     ],
     []
@@ -108,6 +112,7 @@ export const MonitoringEndpoints = () => {
       updateMonitoringInstance(
         {
           instanceName: name,
+          cluster: selectedInstance?.cluster || 'in-cluster',
           payload: {
             url,
             type: 'pmm',
@@ -121,7 +126,7 @@ export const MonitoringEndpoints = () => {
           onSuccess: (updatedInstance) => {
             updateDataAfterEdit(
               queryClient,
-              [MONITORING_INSTANCES_QUERY_KEY, updatedInstance.namespace],
+              [MONITORING_INSTANCES_QUERY_KEY, selectedInstance?.cluster || 'in-cluster', namespace],
               'name'
             )(updatedInstance);
             handleCloseModal();
@@ -138,11 +143,13 @@ export const MonitoringEndpoints = () => {
           verifyTLS,
           pmm: { ...pmmData },
           allowedNamespaces: [],
+          cluster: 'in-cluster',
         },
         {
           onSuccess: (newInstance) => {
             updateDataAfterCreate(queryClient, [
               MONITORING_INSTANCES_QUERY_KEY,
+              'in-cluster',
               newInstance.namespace,
             ])(newInstance);
             handleCloseModal();
@@ -154,12 +161,16 @@ export const MonitoringEndpoints = () => {
 
   const handleConfirmDelete = (instanceName: string, namespace: string) => {
     deleteMonitoringInstance(
-      { instanceName, namespace },
+      { 
+        instanceName, 
+        namespace,
+        cluster: selectedInstance?.cluster || 'in-cluster',
+      },
       {
         onSuccess: (_, locationName) => {
           updateDataAfterDelete(
             queryClient,
-            [MONITORING_INSTANCES_QUERY_KEY, namespace],
+            [MONITORING_INSTANCES_QUERY_KEY, selectedInstance?.cluster || 'in-cluster', namespace],
             'name'
           )(_, locationName.instanceName);
           handleCloseDeleteDialog();

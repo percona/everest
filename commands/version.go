@@ -56,7 +56,7 @@ func versionRunE(cmd *cobra.Command, _ []string) error { //nolint:revive
 	cmdLogger := logger.GetLogger().With("component", "version")
 
 	if !clientOnlyFlag {
-		k, err := utils.NewKubeConnector(cmdLogger, rootCmdFlags.KubeconfigPath)
+		k, err := utils.NewKubeConnector(cmdLogger, rootCmdFlags.KubeconfigPath, "")
 		if err != nil {
 			return err
 		}

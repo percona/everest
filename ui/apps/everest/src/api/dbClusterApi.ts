@@ -20,9 +20,9 @@ import {
 import { api } from './api';
 import { DBClusterComponentsList } from 'shared-types/components.types';
 
-export const createDbClusterFn = async (data: DbCluster, namespace: string) => {
+export const createDbClusterFn = async (data: DbCluster, namespace: string, cluster: string) => {
   const response = await api.post<DbCluster>(
-    `namespaces/${namespace}/database-clusters`,
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters`,
     data
   );
 
@@ -32,10 +32,11 @@ export const createDbClusterFn = async (data: DbCluster, namespace: string) => {
 export const updateDbClusterFn = async (
   dbClusterName: string,
   namespace: string,
-  data: DbCluster
+  data: DbCluster,
+  cluster: string = 'in-cluster'
 ) => {
   const response = await api.put(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}`,
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters/${dbClusterName}`,
     data,
     {
       disableNotifications: (e) => e.status === 409,
@@ -45,19 +46,20 @@ export const updateDbClusterFn = async (
   return response.data;
 };
 
-export const getDbClustersFn = async (namespace: string) => {
+export const getDbClustersFn = async (cluster: string, namespace: string) => {
   const response = await api.get<GetDbClusterPayload>(
-    `namespaces/${namespace}/database-clusters`
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters`
   );
   return response.data;
 };
 
 export const getDbClusterCredentialsFn = async (
   dbClusterName: string,
-  namespace: string
+  namespace: string,
+  cluster: string
 ) => {
   const response = await api.get<GetDbClusterCredentialsPayload>(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}/credentials`
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters/${dbClusterName}/credentials`
   );
 
   return response.data;
@@ -65,10 +67,11 @@ export const getDbClusterCredentialsFn = async (
 
 export const getDbClusterFn = async (
   dbClusterName: string,
-  namespace: string
+  namespace: string,
+  cluster: string
 ) => {
   const response = await api.get<DbCluster>(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}`,
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters/${dbClusterName}`,
     {
       disableNotifications: true,
     }
@@ -79,20 +82,22 @@ export const getDbClusterFn = async (
 export const deleteDbClusterFn = async (
   dbClusterName: string,
   namespace: string,
-  cleanupBackupStorage: boolean
+  cleanupBackupStorage: boolean,
+  cluster: string
 ) => {
   const response = await api.delete<DbCluster>(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}?cleanupBackupStorage=${cleanupBackupStorage}`
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters/${dbClusterName}?cleanupBackupStorage=${cleanupBackupStorage}`
   );
   return response.data;
 };
 
 export const getDBClusterComponentsListFn = async (
   namespace: string,
-  dbClusterName: string
+  dbClusterName: string,
+  cluster: string
 ) => {
   const response = await api.get<DBClusterComponentsList>(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}/components`
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters/${dbClusterName}/components`
   );
   return response.data;
 };

@@ -122,6 +122,7 @@ export type PodSchedulingPolicyGetPayload = {
 export type PodSchedulingPolicy = {
   metadata: {
     name: string;
+    cluster?: string;
     finalizers: string[];
     generation: number;
     resourceVersion: string;

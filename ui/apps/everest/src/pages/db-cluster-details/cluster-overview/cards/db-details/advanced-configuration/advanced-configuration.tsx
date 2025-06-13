@@ -26,7 +26,7 @@ import {
   changeDbClusterAdvancedConfig,
   shouldDbActionsBeBlocked,
 } from 'utils/db';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useRBACPermissions } from 'hooks/rbac';
 
 export const AdvancedConfiguration = ({
@@ -36,6 +36,8 @@ export const AdvancedConfiguration = ({
   storageClass,
   podSchedulingPolicy,
 }: AdvancedConfigurationOverviewCardProps) => {
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const {
     canUpdateDb,
     dbCluster,
@@ -50,6 +52,7 @@ export const AdvancedConfiguration = ({
 
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
+    cluster,
     {
       onSuccess: async () => {
         await refetch();

@@ -25,19 +25,19 @@ export const OnDemandBackupModal = () => {
   const queryClient = useQueryClient();
   const { dbClusterName, namespace = '' } = useParams();
 
-  const { data: backups = [] } = useDbBackups(dbClusterName!, namespace);
+  const { openOnDemandModal, setOpenOnDemandModal, cluster } =
+    useContext(ScheduleModalContext);
+
+  const { data: backups = [] } = useDbBackups(dbClusterName!, namespace, cluster);
   const backupNames = backups.map((item) => item.name);
   const { mutate: createBackupOnDemand, isPending: creatingBackup } =
-    useCreateBackupOnDemand(dbClusterName!, namespace);
-
-  const { openOnDemandModal, setOpenOnDemandModal } =
-    useContext(ScheduleModalContext);
+    useCreateBackupOnDemand(dbClusterName!, namespace, cluster);
 
   const handleSubmit = (data: BackupFormData) => {
     createBackupOnDemand(data, {
       onSuccess(newBackup: SingleBackupPayload) {
         queryClient.setQueryData<GetBackupsPayload | undefined>(
-          [BACKUPS_QUERY_KEY, namespace, dbClusterName],
+          [BACKUPS_QUERY_KEY, namespace, dbClusterName, cluster],
           (oldData) => {
             if (!oldData) {
               return undefined;

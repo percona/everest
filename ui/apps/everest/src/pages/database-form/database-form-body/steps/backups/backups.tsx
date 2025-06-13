@@ -36,8 +36,8 @@ export const Backups = () => {
     DbWizardFormFields.dbName,
   ]);
   const { data: backupStorages = [], isLoading } =
-    useBackupStoragesByNamespace(selectedNamespace);
-  const { data: backups = [] } = useDbBackups(dbName, selectedNamespace, {
+    useBackupStoragesByNamespace(selectedNamespace, 'in-cluster');
+  const { data: backups = [] } = useDbBackups(dbName, selectedNamespace, 'in-cluster', {
     enabled: dbType === DbType.Postresql,
   });
   const { storagesToShow, uniqueStoragesInUse } =
@@ -51,24 +51,23 @@ export const Backups = () => {
   const scheduleCreationDisabled =
     dbType === DbType.Postresql && storagesToShow.length === 0;
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <StepHeader
-        pageTitle={Messages.backups}
-        pageDescription={Messages.captionBackups}
-      />
-      {isLoading ? (
+  const renderContent = () => {
+    if (isLoading) {
+      return (
         <>
           <Skeleton height="200px" />
           <Skeleton />
           <Skeleton />
         </>
-      ) : backupStorages.length > 0 ? (
+      );
+    }
+
+    if (backupStorages.length > 0) {
+      return (
         <>
-          {scheduleCreationDisabled &&
-            uniqueStoragesInUse.length < PG_SLOTS_LIMIT && (
-              <BackupsActionableAlert namespace={selectedNamespace} />
-            )}
+          {scheduleCreationDisabled && uniqueStoragesInUse.length < PG_SLOTS_LIMIT && (
+            <BackupsActionableAlert namespace={selectedNamespace} cluster="in-cluster" />
+          )}
           <FormGroup sx={{ mt: 3 }}>
             <Schedules
               storagesToShow={storagesToShow}
@@ -77,9 +76,19 @@ export const Backups = () => {
             <PITR />
           </FormGroup>
         </>
-      ) : (
-        <BackupsActionableAlert namespace={selectedNamespace} />
-      )}
+      );
+    }
+
+    return <BackupsActionableAlert namespace={selectedNamespace} cluster="in-cluster" />;
+  };
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <StepHeader
+        pageTitle={Messages.backups}
+        pageDescription={Messages.captionBackups}
+      />
+      {renderContent()}
     </Box>
   );
 };

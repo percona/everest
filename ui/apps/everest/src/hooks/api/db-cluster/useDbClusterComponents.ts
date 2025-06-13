@@ -25,6 +25,7 @@ export const DB_CLUSTER_COMPONENTS_QUERY_KEY = 'db-cluster-components';
 export const useDbClusterComponents = (
   namespace: string,
   dbClusterName: string,
+  cluster: string = 'in-cluster',
   options?: PerconaQueryOptions<
     DBClusterComponentsList,
     unknown,
@@ -37,8 +38,8 @@ export const useDbClusterComponents = (
   );
 
   return useQuery<DBClusterComponentsList, unknown, DBClusterComponent[]>({
-    queryKey: [DB_CLUSTER_COMPONENTS_QUERY_KEY, namespace, dbClusterName],
-    queryFn: () => getDBClusterComponentsListFn(namespace, dbClusterName),
+    queryKey: [DB_CLUSTER_COMPONENTS_QUERY_KEY, namespace, dbClusterName, cluster],
+    queryFn: () => getDBClusterComponentsListFn(namespace, dbClusterName, cluster),
     refetchInterval: 5 * 1000,
     ...options,
     enabled: (options?.enabled ?? true) && canRead,

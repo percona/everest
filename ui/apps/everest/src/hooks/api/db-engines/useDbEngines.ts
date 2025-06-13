@@ -116,17 +116,18 @@ export const dbEnginesQuerySelect = (
     );
 
 export const useDbEngines = (
+  cluster: string,
   namespace: string,
   options?: PerconaQueryOptions<GetDbEnginesPayload, unknown, DbEngine[]>,
   retrieveUpgradingEngines = false
 ) => {
   return useQuery<GetDbEnginesPayload, unknown, DbEngine[]>({
-    queryKey: ['dbEngines', namespace],
-    queryFn: () => getDbEnginesFn(namespace),
+    queryKey: ['dbEngines', cluster, namespace],
+    queryFn: () => getDbEnginesFn(cluster, namespace),
     select: (data) => dbEnginesQuerySelect(data, retrieveUpgradingEngines),
     retry: 3,
     ...options,
-    enabled: !!namespace && (options?.enabled ?? true),
+    enabled: !!cluster && !!namespace && (options?.enabled ?? true),
   });
 };
 

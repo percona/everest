@@ -18,6 +18,7 @@ export const Messages = {
   labels: {
     dbType: 'Database type',
     dbName: 'Display name',
+    k8sCluster: 'Cluster', // Add label for cluster
     k8sNamespace: 'Namespace',
     dbEnvironment: 'Database environment',
     dbVersion: 'Database version',
@@ -25,6 +26,7 @@ export const Messages = {
   },
   placeholders: {
     dbName: 'E.g. postgresql-123',
+    k8sCluster: 'Select a cluster', // Add placeholder for cluster
   },
   disableShardingTooltip:
     'Sharding cannot be enabled unless the PSMDB operator version is 1.17.0 or higher',

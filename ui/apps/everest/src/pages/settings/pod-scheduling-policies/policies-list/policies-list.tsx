@@ -11,12 +11,12 @@ import { DbEngineType } from '@percona/types';
 import {
   useCreatePodSchedulingPolicy,
   useDeletePodSchedulingPolicy,
-  usePodSchedulingPolicies,
+  useClusters,
 } from 'hooks';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { humanizeDbType } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import EmptyState from 'components/empty-state';
 import { useRBACPermissions } from 'hooks/rbac';
 import PolicyRowActions from './policy-row-actions';
@@ -24,6 +24,7 @@ import {
   EVEREST_POLICY_IN_USE_FINALIZER,
   EVEREST_READ_ONLY_FINALIZER,
 } from 'consts';
+import { getPodSchedulingPolicies } from 'api/podSchedulingPolicies';
 
 const PoliciesList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,13 +35,34 @@ const PoliciesList = () => {
   const queryClient = useQueryClient();
   const { mutate: createPolicy } = useCreatePodSchedulingPolicy();
   const { mutate: deletePolicy } = useDeletePodSchedulingPolicy();
-  const { data: podSchedulingPolicies = [] } = usePodSchedulingPolicies(
-    undefined,
-    false,
-    {
-      refetchInterval: 10000,
-    }
-  );
+  const { data: clusters = [], isLoading: isLoadingClusters } = useClusters();
+
+  const policiesQueries = useQueries({
+    queries: clusters.map((cluster) => ({
+      queryKey: ['pod-scheduling-policies', cluster.name],
+      queryFn: () => getPodSchedulingPolicies(cluster.name),
+      enabled: !!cluster.name,
+    })),
+  });
+
+  const isLoading = isLoadingClusters || policiesQueries.some((query) => query.isLoading);
+
+  const allPolicies = useMemo(() => {
+    if (isLoading) return [];
+
+    return policiesQueries.flatMap((query, index) => {
+      const cluster = clusters[index];
+      const policies = query.data?.items || [];
+
+      return policies.map((policy) => ({
+        ...policy,
+        metadata: {
+          ...policy.metadata,
+          cluster: cluster.name,
+        },
+      }));
+    });
+  }, [clusters, policiesQueries, isLoading]);
 
   const columns = useMemo<MRT_ColumnDef<PodSchedulingPolicy>[]>(
     () => [
@@ -56,13 +78,24 @@ const PoliciesList = () => {
           return humanizeDbType(dbEngineToDbType(engineType));
         },
       },
+      {
+        accessorKey: 'metadata.cluster',
+        header: 'Cluster',
+        Cell: ({ cell }) => cell.getValue<string>(),
+      },
     ],
     []
   );
 
   const handleOnCreatePolicy = (data: { name: string; type: DbEngineType }) => {
+    // Get the first available cluster for creating new policies
+    const defaultCluster = clusters[0]?.name;
+    if (!defaultCluster) {
+      return;
+    }
+
     createPolicy(
-      { policyName: data.name, dbType: data.type },
+      { policyName: data.name, dbType: data.type, cluster: defaultCluster },
       {
         onSuccess: () => {
           setDialogOpen(false);
@@ -79,15 +112,21 @@ const PoliciesList = () => {
 
   const handleOnDeletePolicy = () => {
     if (selectedPolicy.current) {
-      deletePolicy(selectedPolicy.current.metadata.name, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: ['pod-scheduling-policies'],
-          });
-          setDeleteDialogOpen(false);
-          selectedPolicy.current = undefined;
+      deletePolicy(
+        {
+          policyName: selectedPolicy.current.metadata.name,
+          cluster: selectedPolicy.current.metadata.cluster,
         },
-      });
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: ['pod-scheduling-policies'],
+            });
+            setDeleteDialogOpen(false);
+            selectedPolicy.current = undefined;
+          },
+        }
+      );
     }
   };
 
@@ -103,15 +142,19 @@ const PoliciesList = () => {
           <EmptyState
             onButtonClick={() => setDialogOpen(true)}
             buttonText="Create policy"
-            showCreationButton={canCreate}
+            showCreationButton={canCreate && clusters.length > 0}
             contentSlot={
               <Typography variant="body1">
-                You currently do not have any policy
+                {isLoading
+                  ? 'Loading...'
+                  : clusters.length > 0
+                  ? 'You currently do not have any policy'
+                  : 'No clusters available. Add a cluster to create policies.'}
               </Typography>
             }
           />
         }
-        data={podSchedulingPolicies}
+        data={allPolicies}
         columns={columns}
         enableRowActions
         enableRowHoverAction
@@ -121,7 +164,7 @@ const PoliciesList = () => {
           )
         }
         renderTopToolbarCustomActions={() =>
-          canCreate ? (
+          canCreate && clusters.length > 0 ? (
             <Button
               size="small"
               startIcon={<Add />}
@@ -145,11 +188,14 @@ const PoliciesList = () => {
             }
           />
         )}
+        state={{
+          isLoading,
+        }}
       />
       {dialogOpen && (
         <PoliciesDialog
           open
-          existingPolicies={podSchedulingPolicies}
+          existingPolicies={allPolicies}
           onClose={() => setDialogOpen(false)}
           onSubmit={handleOnCreatePolicy}
         />

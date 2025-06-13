@@ -31,11 +31,11 @@ import DatabaseFormCancelDialog from './database-form-cancel-dialog/index';
 import DatabaseFormBody from './database-form-body';
 import DatabaseFormSideDrawer from './database-form-side-drawer';
 import {
-  useDBClustersForNamespaces,
-  useNamespaces,
   DB_CLUSTERS_QUERY_KEY,
 } from 'hooks';
 import { WizardMode } from 'shared-types/wizard.types';
+import { useDbClusters, DbClusterForNamespaceResult } from 'hooks/api/db-clusters/useDbClusters';
+import { DbCluster } from 'shared-types/dbCluster.types';
 
 export const DatabasePage = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -50,20 +50,13 @@ export const DatabasePage = () => {
   const queryClient = useQueryClient();
   const { defaultValues, isFetching: loadingClusterValues } =
     useDatabasePageDefaultValues(mode);
-  const { data: namespaces = [] } = useNamespaces({
-    refetchInterval: 10 * 1000,
-  });
-  const dbClustersResults = useDBClustersForNamespaces(
-    namespaces.map((ns) => ({
-      namespace: ns,
-    }))
-  );
-  const dbClustersNamesList = Object.values(dbClustersResults)
-    .map((item) => item.queryResult.data)
-    .flat()
-    .map((db) => ({
-      name: db?.metadata?.name!,
-      namespace: db?.metadata.namespace!,
+  const { results: dbClustersResults } = useDbClusters();
+  const dbClustersNamesList = dbClustersResults
+    .filter((item): item is DbClusterForNamespaceResult & { queryResult: { isSuccess: true; data: DbCluster[] } } => 
+      item.queryResult.isSuccess && Array.isArray(item.queryResult.data) && item.queryResult.data.length > 0)
+    .map((item) => ({
+      name: item.queryResult.data[0].metadata.name,
+      namespace: item.namespace,
     }));
 
   const validationSchema = useDbValidationSchema(

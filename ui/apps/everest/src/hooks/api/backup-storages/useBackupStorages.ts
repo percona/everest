@@ -31,77 +31,80 @@ import {
 } from 'shared-types/backupStorages.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import { useNamespaces } from '../namespaces';
+import { useClusters } from '../clusters/useClusters';
+import { Cluster } from 'api/clusters';
 
 export const BACKUP_STORAGES_QUERY_KEY = 'backupStorages';
 
-export type BackupStoragesForNamespaceResult =
-  PerconaQueryOptions<GetBackupStoragesPayload>;
+export type DeleteBackupStorageArgType = {
+  backupStorageId: string;
+  namespace: string;
+  cluster: string;
+};
 
 export const useBackupStorages = () => {
-  const { data: namespaces = [] } = useNamespaces({
+  const { data: clusters = [], isLoading: clustersLoading } = useClusters();
+  const { data: namespaces = [], isLoading: namespacesLoading } = useNamespaces({
     refetchInterval: 5 * 1000,
   });
-  const queries = namespaces.map((namespace) => {
-    return {
-      queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
-      queryFn: () => getBackupStoragesFn(namespace),
+
+  const queries = clusters.flatMap((cluster: Cluster) =>
+    namespaces.map((namespace) => ({
+      queryKey: [BACKUP_STORAGES_QUERY_KEY, cluster.name, namespace],
+      queryFn: () => getBackupStoragesFn(cluster.name, namespace),
       refetchInterval: 5 * 1000,
-    };
-  });
+    }))
+  );
 
   const queryResults = useQueries({
     queries,
   });
 
-  return queryResults;
+  return {
+    results: queryResults.map((result, index) => ({
+      cluster: clusters[Math.floor(index / namespaces.length)].name,
+      namespace: namespaces[index % namespaces.length],
+      queryResult: result,
+    })),
+    isLoading: clustersLoading || namespacesLoading,
+  };
 };
 
 export const useBackupStoragesByNamespace = (
   namespace: string,
-  options?: PerconaQueryOptions<
-    GetBackupStoragesPayload,
-    unknown,
-    BackupStorage[]
-  >
+  cluster: string = 'in-cluster',
+  options?: PerconaQueryOptions<GetBackupStoragesPayload, unknown, BackupStorage[]>
 ) => {
   return useQuery<GetBackupStoragesPayload, unknown, BackupStorage[]>({
-    queryKey: [BACKUP_STORAGES_QUERY_KEY, namespace],
-    queryFn: () => getBackupStoragesFn(namespace),
+    queryKey: [BACKUP_STORAGES_QUERY_KEY, cluster, namespace],
+    queryFn: () => getBackupStoragesFn(cluster, namespace),
     ...options,
   });
 };
 
 export const useCreateBackupStorage = (
-  options?: UseMutationOptions<unknown, unknown, BackupStorage, unknown>
+  options?: UseMutationOptions<unknown, unknown, BackupStorage & { cluster: string }, unknown>
 ) =>
   useMutation({
-    mutationFn: createBackupStorageFn,
+    mutationFn: ({ cluster, ...formData }: BackupStorage & { cluster: string }) =>
+      createBackupStorageFn(formData, cluster),
     ...options,
   });
 
 export const useEditBackupStorage = (
-  options?: UseMutationOptions<unknown, unknown, BackupStorage, unknown>
+  options?: UseMutationOptions<unknown, unknown, BackupStorage & { cluster: string }, unknown>
 ) =>
   useMutation({
-    mutationFn: editBackupStorageFn,
+    mutationFn: ({ cluster, ...formData }: BackupStorage & { cluster: string }) =>
+      editBackupStorageFn(formData, cluster),
     ...options,
   });
 
-type DeleteBackupStorageArgType = {
-  backupStorageId: string;
-  namespace: string;
-};
-
 export const useDeleteBackupStorage = (
-  options?: UseMutationOptions<
-    unknown,
-    unknown,
-    DeleteBackupStorageArgType,
-    unknown
-  >
+  options?: UseMutationOptions<unknown, unknown, DeleteBackupStorageArgType, unknown>
 ) =>
   useMutation({
-    mutationFn: ({ backupStorageId, namespace }: DeleteBackupStorageArgType) =>
-      deleteBackupStorageFn(backupStorageId, namespace),
+    mutationFn: ({ backupStorageId, namespace, cluster }: DeleteBackupStorageArgType) =>
+      deleteBackupStorageFn(backupStorageId, namespace, cluster),
     ...options,
   });

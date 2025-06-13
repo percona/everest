@@ -14,10 +14,11 @@ export const convertStoragesType = (value: StorageType) =>
   })[value];
 
 export const convertBackupStoragesPayloadToTableFormat = (
-  data: UseQueryResult<GetBackupStoragesPayload, Error>[]
+  data: UseQueryResult<GetBackupStoragesPayload, Error>[],
+  clusterMap: { [index: number]: string }
 ): BackupStorageTableElement[] => {
   const result: BackupStorageTableElement[] = [];
-  data.forEach((item) => {
+  data.forEach((item, index) => {
     const tableDataForNamespace: BackupStorageTableElement[] = item.isSuccess
       ? item.data.map((storage) => ({
           namespace: storage.namespace,
@@ -26,6 +27,12 @@ export const convertBackupStoragesPayloadToTableFormat = (
           bucketName: storage.bucketName,
           description: storage.description,
           url: storage.url,
+          region: storage.region,
+          accessKey: storage.accessKey,
+          secretKey: storage.secretKey,
+          verifyTLS: storage.verifyTLS,
+          forcePathStyle: storage.forcePathStyle,
+          cluster: clusterMap[index] || 'in-cluster',
           raw: storage,
         }))
       : [];

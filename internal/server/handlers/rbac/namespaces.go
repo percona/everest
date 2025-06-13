@@ -8,8 +8,8 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
-func (h *rbacHandler) ListNamespaces(ctx context.Context) ([]string, error) {
-	list, err := h.next.ListNamespaces(ctx)
+func (h *rbacHandler) ListNamespaces(ctx context.Context, cluster string) ([]string, error) {
+	list, err := h.next.ListNamespaces(ctx, cluster)
 	if err != nil {
 		return nil, fmt.Errorf("failed to ListNamespaces: %w", err)
 	}

@@ -89,6 +89,7 @@ type Kubernetes struct {
 	l          *zap.SugaredLogger
 	restConfig *rest.Config
 	kubeconfig string
+	context    string
 	// it is required for handling plain runtime.Objects (ApplyManifestFile)
 	// WARNING: do not access this field directly, use getDiscoveryClient() instead.
 	// This field is lazy initialized because it is not always needed.
@@ -101,23 +102,25 @@ func (k *Kubernetes) Kubeconfig() string {
 	return k.kubeconfig
 }
 
-// New returns new Kubernetes object based on provided kubeconfig.
-func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, error) {
-	home := os.Getenv("HOME")
-	path := strings.ReplaceAll(kubeconfigPath, "~", home)
-	path = filepath.Clean(path)
-	fileData, err := os.ReadFile(path)
-	if err != nil {
-		return nil, errors.Join(err, errors.New("could not read kubeconfig file"))
-	}
+// Option is a function that configures a Kubernetes client.
+type Option func(*Kubernetes)
 
-	restConfig, err := clientcmd.RESTConfigFromKubeConfig(fileData)
-	if err != nil {
-		return nil, err
+// WithKubeconfig sets the kubeconfig path.
+func WithKubeconfig(path string) Option {
+	return func(k *Kubernetes) {
+		k.kubeconfig = path
 	}
+}
 
-	restConfig.QPS = defaultQPSLimit
-	restConfig.Burst = defaultBurstLimit
+// WithContext sets the kubeconfig context.
+func WithContext(context string) Option {
+	return func(k *Kubernetes) {
+		k.context = context
+	}
+}
+
+// NewFromRestConfig creates a new Kubernetes client from the provided rest.Config.
+func NewFromRestConfig(restConfig *rest.Config, l *zap.SugaredLogger) (KubernetesConnector, error) {
 	k8client, err := ctrlclient.New(restConfig, getKubernetesClientOptions(nil))
 	if err != nil {
 		return nil, err
@@ -125,10 +128,70 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 
 	return &Kubernetes{
 		k8sClient:  k8client,
-		l:          l.With("component", "kubernetes"),
 		restConfig: restConfig,
-		kubeconfig: path,
 	}, nil
+}
+
+// New returns new Kubernetes object based on provided kubeconfig.
+func New(l *zap.SugaredLogger, ctx context.Context, cacheOptions *cache.Options, opts ...Option) (KubernetesConnector, error) {
+	k := &Kubernetes{
+		l: l.With("component", "kubernetes"),
+	}
+
+	for _, opt := range opts {
+		opt(k)
+	}
+
+	if k.kubeconfig == "" {
+		return nil, errors.New("kubeconfig path is required")
+	}
+
+	home := os.Getenv("HOME")
+	path := strings.ReplaceAll(k.kubeconfig, "~", home)
+	path = filepath.Clean(path)
+
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.ExplicitPath = path
+
+	configOverrides := &clientcmd.ConfigOverrides{}
+	if k.context != "" {
+		configOverrides.CurrentContext = k.context
+	}
+
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	restConfig.QPS = defaultQPSLimit
+	restConfig.Burst = defaultBurstLimit
+
+	var k8sCache cache.Cache
+	if cacheOptions != nil {
+		k8sCache, err = cache.New(restConfig, *cacheOptions)
+		if err != nil {
+			panic(err)
+		}
+		go func() {
+			l.Info("starting client cache")
+			if err := k8sCache.Start(ctx); err != nil {
+				l.Errorf("error starting client cache: %s", err)
+				os.Exit(1)
+			}
+		}()
+	}
+
+	k8client, err := ctrlclient.New(restConfig, getKubernetesClientOptions(k8sCache))
+	if err != nil {
+		return nil, err
+	}
+
+	k.k8sClient = k8client
+	k.restConfig = restConfig
+	k.kubeconfig = path
+
+	return k, nil
 }
 
 // NewInCluster creates a new kubernetes client using incluster authentication.

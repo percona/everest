@@ -7,5 +7,6 @@ export * from './monitoring';
 export * from './restores';
 export * from './kubernetesClusters';
 export * from './namespaces';
+export * from './clusters/useClusters';
 export * from './version';
 export * from './pod-scheduling-policies';

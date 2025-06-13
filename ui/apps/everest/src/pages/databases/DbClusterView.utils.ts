@@ -45,6 +45,7 @@ export const convertDbClusterPayloadToTableFormat = (
     const tableDataForNamespace: DbClusterTableElement[] = item?.queryResult
       ?.isSuccess
       ? item.queryResult?.data.map((cluster) => ({
+          cluster: item.cluster,
           namespace: item.namespace,
           status: cluster.status
             ? cluster.status.status
@@ -53,19 +54,19 @@ export const convertDbClusterPayloadToTableFormat = (
           dbVersion: cluster.spec.engine.version || '',
           backupsEnabled: (cluster.spec.backup?.schedules || []).length > 0,
           databaseName: cluster.metadata.name,
-          cpu: cluster.spec.engine.resources?.cpu || '',
-          memory: cluster.spec.engine.resources?.memory || '',
-          storage: cluster.spec.engine.storage.size,
+          cpu: String(cluster.spec.engine.resources?.cpu || ''),
+          memory: String(cluster.spec.engine.resources?.memory || ''),
+          storage: String(cluster.spec.engine.storage.size),
           nodes: cluster.spec.engine.replicas,
           proxies: isProxy(cluster.spec.proxy)
             ? cluster.spec.proxy.replicas || 0
             : 0,
-          proxyCpu: isProxy(cluster.spec.proxy)
+          proxyCpu: String(isProxy(cluster.spec.proxy)
             ? cluster.spec.proxy.resources?.cpu || ''
-            : '',
-          proxyMemory: isProxy(cluster.spec.proxy)
+            : ''),
+          proxyMemory: String(isProxy(cluster.spec.proxy)
             ? cluster.spec.proxy.resources?.memory || ''
-            : '',
+            : ''),
           hostName: cluster.status ? cluster.status.hostname : '',
           exposetype: isProxy(cluster.spec.proxy)
             ? cluster.spec.proxy.expose.type

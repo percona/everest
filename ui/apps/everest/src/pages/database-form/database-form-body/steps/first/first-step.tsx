@@ -32,29 +32,34 @@ import { DbWizardFormFields } from 'consts.ts';
 import { useDatabasePageMode } from '../../../useDatabasePageMode.ts';
 import { StepHeader } from '../step-header/step-header.tsx';
 import { Messages } from './first-step.messages.ts';
-import { filterAvailableDbVersionsForDbEngineEdition } from 'components/cluster-form/db-version/utils.ts';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { DbVersion } from 'components/cluster-form/db-version';
 import { useDBEnginesForDbEngineTypes } from 'hooks/index.ts';
-import { useDatabasePageDefaultValues } from 'pages/database-form/useDatabaseFormDefaultValues.ts';
 import { getDbWizardDefaultValues } from 'pages/database-form/database-form.utils';
 import { WizardMode } from 'shared-types/wizard.types.ts';
+import { useClusters, useNamespacesForCluster } from 'hooks/api';
+import { useClustersWithNamespaces } from 'hooks/api/clusters/useClustersWithNamespaces';
 
 export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
   const mode = useDatabasePageMode();
 
-  const {
-    defaultValues: { [DbWizardFormFields.dbVersion]: defaultDbVersion },
-  } = useDatabasePageDefaultValues(mode);
   const { watch, setValue, getFieldState, resetField, getValues } =
     useFormContext();
 
   const dbType: DbType = watch(DbWizardFormFields.dbType);
-  const dbVersion: DbType = watch(DbWizardFormFields.dbVersion);
+  const dbVersion = watch(DbWizardFormFields.dbVersion); // should be version string
+  const dbCluster = watch(DbWizardFormFields.k8sCluster); // Watch the selected cluster
   const dbNamespace = watch(DbWizardFormFields.k8sNamespace);
 
+  // Fetch clusters for the new selector
+  const { data: clusters = [], isLoading: clustersLoading } = useClusters();
+  // Fetch namespaces for all clusters and filter clusters with at least one namespace
+  const clustersWithNamespaces = useClustersWithNamespaces(clusters);
+  // Fetch namespaces for the selected cluster
+  const { data: namespaces = [], isLoading: namespacesLoading } = useNamespacesForCluster(dbCluster);
+
   const [dbEnginesFoDbEngineTypes, dbEnginesFoDbEngineTypesFetching] =
-    useDBEnginesForDbEngineTypes(dbTypeToDbEngine(dbType));
+    useDBEnginesForDbEngineTypes(dbCluster || 'in-cluster', dbTypeToDbEngine(dbType));
 
   const dbEnginesDataWithNamespaces = useMemo(() => {
     return !dbEnginesFoDbEngineTypesFetching
@@ -62,27 +67,15 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       : [];
   }, [dbEnginesFoDbEngineTypesFetching, dbEnginesFoDbEngineTypes]);
 
+  // Find the correct dbEngineData for the selected dbType and dbNamespace
   const dbEngineData = useMemo(() => {
-    const dbEnginesArray = dbEnginesDataWithNamespaces
-      .filter((item) => item.namespace === dbNamespace)
-      .map((item) => item.dbEngine);
-    const dbEngine = dbEnginesArray ? dbEnginesArray[0] : undefined;
-    if (mode !== WizardMode.New && dbEngine) {
-      const validVersions = filterAvailableDbVersionsForDbEngineEdition(
-        dbEngine,
-        defaultDbVersion,
-        mode
-      );
-      return {
-        ...dbEngine,
-        availableVersions: {
-          ...dbEngine.availableVersions,
-          engine: validVersions,
-        },
-      };
-    }
-    return dbEngine;
-  }, [dbEnginesDataWithNamespaces, dbNamespace, mode, defaultDbVersion]);
+    return dbEnginesDataWithNamespaces.find(
+      (item) =>
+        item.namespace === dbNamespace &&
+        item.dbEngine &&
+        item.dbEngine.type === dbTypeToDbEngine(dbType)
+    )?.dbEngine;
+  }, [dbEnginesDataWithNamespaces, dbNamespace, dbType]);
 
   const notSupportedMongoOperatorVersionForSharding =
     dbType === DbType.Mongo &&
@@ -96,6 +89,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     useNamespacePermissionsForResource('database-clusters');
 
   const filteredNamespaces = canCreate.filter((namespace) =>
+    namespaces.includes(namespace) &&
     dbEnginesDataWithNamespaces?.find(
       (dbEngine) => dbEngine.namespace === namespace
     )
@@ -151,6 +145,16 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
     }
   }, [dbVersion, dbEngineData, getFieldState, mode, setValue]);
 
+  // Pre-select a cluster, prioritizing "in-cluster"
+  useEffect(() => {
+    const { isTouched: k8sClusterTouched } = getFieldState(DbWizardFormFields.k8sCluster);
+    if (!k8sClusterTouched && !dbCluster && clusters.length > 0 && !clustersLoading) {
+      const inCluster = clusters.find((c) => c.name === 'in-cluster');
+      setValue(DbWizardFormFields.k8sCluster, inCluster ? inCluster.name : clusters[0].name, { shouldValidate: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clusters, clustersLoading, dbCluster]);
+
   const onNamespaceChange = () => {
     const defaults = getDbWizardDefaultValues(dbType);
     setValue(
@@ -190,12 +194,24 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
       />
       <FormGroup sx={{ mt: 3 }}>
         <AutoCompleteInput
+          labelProps={{ sx: { mt: 1 } }}
+          name={DbWizardFormFields.k8sCluster}
+          label={Messages.labels.k8sCluster}
+          loading={clustersLoading}
+          options={clustersWithNamespaces.map((c) => c.name)}
+          disabled={loadingDefaultsForEdition}
+          autoCompleteProps={{
+            disableClearable: true,
+            isOptionEqualToValue: (option, value) => option === value,
+          }}
+        />
+        <AutoCompleteInput
           labelProps={{
             sx: { mt: 1 },
           }}
           name={DbWizardFormFields.k8sNamespace}
           label={Messages.labels.k8sNamespace}
-          loading={isLoading}
+          loading={namespacesLoading || isLoading}
           options={filteredNamespaces}
           disabled={mode === WizardMode.Restore || loadingDefaultsForEdition}
           onChange={onNamespaceChange}
@@ -213,6 +229,7 @@ export const FirstStep = ({ loadingDefaultsForEdition }: StepProps) => {
             disabled: loadingDefaultsForEdition,
           }}
         />
+        {/* Pass correct availableVersions to DbVersion */}
         <DbVersion
           selectInputProps={{
             selectFieldProps: { disabled: mode === WizardMode.Restore },

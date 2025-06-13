@@ -3,6 +3,7 @@ import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 import { DbCluster } from 'shared-types/dbCluster.types';
 import { Messages } from './messages';
 import { changeDbClusterEngine } from 'utils/db';
+import { useLocation } from 'react-router-dom';
 
 const UpdateEngineDialog = ({
   dbCluster,
@@ -13,8 +14,11 @@ const UpdateEngineDialog = ({
   onClose: () => void;
   newVersion: string;
 }) => {
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster,
+    cluster,
     {
       onSuccess: () => onClose(),
     }

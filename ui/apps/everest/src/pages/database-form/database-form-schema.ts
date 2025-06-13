@@ -14,6 +14,7 @@ import { WizardMode } from 'shared-types/wizard.types.ts';
 const basicInfoSchema = (dbClusters: DbClusterName[]) =>
   z
     .object({
+      [DbWizardFormFields.k8sCluster]: z.string().nonempty('Cluster is required'), // Add cluster field validation
       [DbWizardFormFields.dbType]: z.nativeEnum(DbType),
       [DbWizardFormFields.dbName]: rfc_123_schema({
         fieldName: 'database name',
@@ -123,8 +124,11 @@ export type AdvancedConfigurationType = z.infer<
 export type BackupStepType = z.infer<ReturnType<typeof backupsStepSchema>>;
 export type StepFiveType = z.infer<ReturnType<typeof stepFiveSchema>>;
 
-export type DbWizardType = BasicInfoType &
-  StepTwoType &
-  StepFiveType &
-  AdvancedConfigurationType &
-  BackupStepType;
+export type DbWizardType = {
+  dbName: string;
+  dbType: DbType;
+  k8sNamespace: string | null;
+  k8sCluster: string;
+  sharding: boolean;
+  dbVersion: string;
+} & BasicInfoType & StepTwoType & StepFiveType & AdvancedConfigurationType & BackupStepType;

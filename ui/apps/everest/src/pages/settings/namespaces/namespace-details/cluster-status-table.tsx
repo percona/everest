@@ -27,13 +27,15 @@ const ClusterStatusTable = ({
   dbEngines,
 }: ClusterStatusTableProps) => {
   const dbNames = pendingActions.map((db) => db.name);
-  const { data: dbClusters = [] } = useDbClusters(namespace, {
-    select: (clusters) =>
-      clusters.items.filter((cluster) =>
-        dbNames.includes(cluster.metadata.name)
-      ),
-    enabled: !!namespace && !!pendingActions.length,
-  });
+  const { results } = useDbClusters();
+  const dbClusters = results
+    .filter((result): result is typeof result & { queryResult: { isSuccess: true; data: DbCluster[] } } => 
+      result.namespace === namespace && 
+      result.queryResult.isSuccess && 
+      Array.isArray(result.queryResult.data))
+    .flatMap((result) => result.queryResult.data)
+    .filter((cluster: DbCluster) => dbNames.includes(cluster.metadata.name));
+
   const [openUpdateCrDialog, setOpenUpdateCrDialog] = useState(false);
   const [openUpdateEngineDialog, setOpenUpdateEngineDialog] = useState(false);
   const selectedDbCluster = useRef<DbCluster>();
@@ -42,7 +44,7 @@ const ClusterStatusTable = ({
     () =>
       pendingActions.map((action) => {
         const db = dbClusters.find(
-          (cluster) => cluster.metadata.name === action.name
+          (cluster: DbCluster) => cluster.metadata.name === action.name
         );
 
         return {

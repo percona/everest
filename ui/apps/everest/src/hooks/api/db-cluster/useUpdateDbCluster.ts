@@ -30,29 +30,35 @@ import { mergeNewDbClusterData } from 'utils/db';
 const UPDATE_RETRY_TIMEOUT_MS = 5000;
 const UPDATE_RETRY_DELAY_MS = 200;
 
-export const updateDbCluster = (dbCluster: DbCluster) =>
-  updateDbClusterFn(dbCluster.metadata.name, dbCluster.metadata.namespace, {
-    ...dbCluster,
-    spec: {
-      ...dbCluster?.spec,
-      ...(dbCluster?.spec?.backup?.schedules && {
-        backup: {
-          ...dbCluster?.spec?.backup,
-          schedules: dbCluster?.spec?.backup?.schedules.map((schedule) => ({
-            ...schedule,
-            schedule: cronConverter(
-              schedule.schedule,
-              Intl.DateTimeFormat().resolvedOptions().timeZone,
-              'UTC'
-            ),
-          })),
-        },
-      }),
+export const updateDbCluster = (dbCluster: DbCluster, cluster: string = 'in-cluster') =>
+  updateDbClusterFn(
+    dbCluster.metadata.name,
+    dbCluster.metadata.namespace,
+    {
+      ...dbCluster,
+      spec: {
+        ...dbCluster?.spec,
+        ...(dbCluster?.spec?.backup?.schedules && {
+          backup: {
+            ...dbCluster?.spec?.backup,
+            schedules: dbCluster?.spec?.backup?.schedules.map((schedule) => ({
+              ...schedule,
+              schedule: cronConverter(
+                schedule.schedule,
+                Intl.DateTimeFormat().resolvedOptions().timeZone,
+                'UTC'
+              ),
+            })),
+          },
+        }),
+      },
     },
-  });
+    cluster
+  );
 
 export const useUpdateDbClusterWithConflictRetry = (
   oldDbClusterData: DbCluster,
+  cluster: string = 'in-cluster',
   mutationOptions?: MutateOptions<
     DbCluster,
     AxiosError<unknown, unknown>,
@@ -74,7 +80,7 @@ export const useUpdateDbClusterWithConflictRetry = (
   const queryClient = useQueryClient();
   const watchStartTime = useRef<number | null>(null);
   const clusterDataToBeSent = useRef<DbCluster | null>(null);
-  const { refetch } = useDbCluster(dbClusterName, namespace, {
+  const { refetch } = useDbCluster(dbClusterName, namespace, cluster, {
     enabled: false,
   });
 
@@ -86,7 +92,7 @@ export const useUpdateDbClusterWithConflictRetry = (
   >({
     mutationFn: (dbCluster: DbCluster) => {
       clusterDataToBeSent.current = dbCluster;
-      return updateDbCluster(dbCluster);
+      return updateDbCluster(dbCluster, cluster);
     },
     onError: async (error, vars, ctx) => {
       const { status } = error;

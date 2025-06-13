@@ -27,8 +27,8 @@ import (
 )
 
 // ListDatabaseClusterBackups returns list of the created database cluster backups on the specified kubernetes cluster.
-func (e *EverestServer) ListDatabaseClusterBackups(c echo.Context, namespace, name string) error {
-	result, err := e.handler.ListDatabaseClusterBackups(c.Request().Context(), namespace, name)
+func (e *EverestServer) ListDatabaseClusterBackups(c echo.Context, cluster, namespace, name string) error {
+	result, err := e.handler.ListDatabaseClusterBackups(c.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("ListDatabaseClusterBackups failed: %w", err)
 		return err
@@ -37,14 +37,14 @@ func (e *EverestServer) ListDatabaseClusterBackups(c echo.Context, namespace, na
 }
 
 // CreateDatabaseClusterBackup creates a database cluster backup on the specified kubernetes cluster.
-func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace string) error {
+func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, cluster, namespace string) error {
 	dbb := &everestv1alpha1.DatabaseClusterBackup{}
 	if err := e.getBodyFromContext(ctx, dbb); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	dbb.SetNamespace(namespace)
 
-	result, err := e.handler.CreateDatabaseClusterBackup(ctx.Request().Context(), dbb)
+	result, err := e.handler.CreateDatabaseClusterBackup(ctx.Request().Context(), cluster, dbb)
 	if err != nil {
 		e.l.Errorf("CreateDatabaseClusterBackup failed: %w", err)
 		return err
@@ -55,10 +55,10 @@ func (e *EverestServer) CreateDatabaseClusterBackup(ctx echo.Context, namespace 
 // DeleteDatabaseClusterBackup deletes the specified cluster backup on the specified kubernetes cluster.
 func (e *EverestServer) DeleteDatabaseClusterBackup(
 	ctx echo.Context,
-	namespace, name string,
+	cluster, namespace, name string,
 	params api.DeleteDatabaseClusterBackupParams,
 ) error {
-	if err := e.handler.DeleteDatabaseClusterBackup(ctx.Request().Context(), namespace, name, &params); err != nil {
+	if err := e.handler.DeleteDatabaseClusterBackup(ctx.Request().Context(), cluster, namespace, name, &params); err != nil {
 		e.l.Errorf("DeleteDatabaseClusterBackup failed: %w", err)
 		return err
 	}
@@ -66,8 +66,8 @@ func (e *EverestServer) DeleteDatabaseClusterBackup(
 }
 
 // GetDatabaseClusterBackup returns the specified cluster backup on the specified kubernetes cluster.
-func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, namespace, name string) error {
-	result, err := e.handler.GetDatabaseClusterBackup(ctx.Request().Context(), namespace, name)
+func (e *EverestServer) GetDatabaseClusterBackup(ctx echo.Context, cluster, namespace, name string) error {
+	result, err := e.handler.GetDatabaseClusterBackup(ctx.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseClusterBackup failed: %w", err)
 		return err

@@ -8,10 +8,11 @@ import { api } from './api';
 
 export const getBackupsFn = async (
   dbClusterName: string,
-  namespace: string
+  namespace: string,
+  cluster: string
 ) => {
   const response = await api.get<GetBackupsPayload>(
-    `namespaces/${namespace}/database-clusters/${dbClusterName}/backups`
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters/${dbClusterName}/backups`
   );
 
   return response.data;
@@ -19,10 +20,11 @@ export const getBackupsFn = async (
 
 export const createBackupOnDemand = async (
   payload: BackupPayload,
-  namespace: string
+  namespace: string,
+  cluster: string
 ) => {
   const response = await api.post<SingleBackupPayload>(
-    `namespaces/${namespace}/database-cluster-backups`,
+    `clusters/${cluster}/namespaces/${namespace}/database-cluster-backups`,
     payload
   );
   return response.data;
@@ -31,17 +33,22 @@ export const createBackupOnDemand = async (
 export const deleteBackupFn = async (
   backupName: string,
   namespace: string,
-  cleanupBackupStorage: boolean
+  cleanupBackupStorage: boolean,
+  cluster: string
 ) => {
   const response = await api.delete(
-    `namespaces/${namespace}/database-cluster-backups/${backupName}?cleanupBackupStorage=${cleanupBackupStorage}`
+    `clusters/${cluster}/namespaces/${namespace}/database-cluster-backups/${backupName}?cleanupBackupStorage=${cleanupBackupStorage}`
   );
   return response.data;
 };
 
-export const getPitrFn = async (dbClusterName: string, namespace: string) => {
+export const getPitrFn = async (
+  dbClusterName: string,
+  namespace: string,
+  cluster: string
+) => {
   const response = await api.get<DatabaseClusterPitrPayload>(
-    `/namespaces/${namespace}/database-clusters/${dbClusterName}/pitr`,
+    `clusters/${cluster}/namespaces/${namespace}/database-clusters/${dbClusterName}/pitr`,
     {
       disableNotifications: true,
     }

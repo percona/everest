@@ -72,7 +72,7 @@ func NewUninstall(c Config, l *zap.SugaredLogger) (*Uninstall, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	kubeClient, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath)
+	kubeClient, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath, "")
 	if err != nil {
 		return nil, err
 	}

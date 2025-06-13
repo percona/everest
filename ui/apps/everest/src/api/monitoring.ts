@@ -18,19 +18,20 @@ const filterPmmDataInPayload = (
   return payload;
 };
 
-export const getMonitoringInstancesFn = async (namespace: string) => {
+export const getMonitoringInstancesFn = async (cluster: string, namespace: string) => {
   const response = await api.get<MonitoringInstanceList>(
-    `namespaces/${namespace}/monitoring-instances`
+    `clusters/${cluster}/namespaces/${namespace}/monitoring-instances`
   );
   return response.data;
 };
 
 export const createMonitoringInstanceFn = async (
   payload: CreateMonitoringInstancePayload,
-  namespace: string
+  namespace: string,
+  cluster: string
 ) => {
   const response = await api.post(
-    `namespaces/${namespace}/monitoring-instances`,
+    `clusters/${cluster}/namespaces/${namespace}/monitoring-instances`,
     filterPmmDataInPayload(payload)
   );
 
@@ -39,10 +40,11 @@ export const createMonitoringInstanceFn = async (
 
 export const deleteMonitoringInstanceFn = async (
   instanceName: string,
-  namespace: string
+  namespace: string,
+  cluster: string
 ) => {
   const response = await api.delete(
-    `namespaces/${namespace}/monitoring-instances/${instanceName}`
+    `clusters/${cluster}/namespaces/${namespace}/monitoring-instances/${instanceName}`
   );
 
   return response.data;
@@ -50,12 +52,13 @@ export const deleteMonitoringInstanceFn = async (
 
 export const updateMonitoringInstanceFn = async (
   instanceName: string,
-  payload: UpdateMonitoringInstancePayload
+  payload: UpdateMonitoringInstancePayload,
+  cluster: string
 ) => {
   const { namespace } = payload;
 
   const response = await api.patch(
-    `namespaces/${namespace}/monitoring-instances/${instanceName}`,
+    `clusters/${cluster}/namespaces/${namespace}/monitoring-instances/${instanceName}`,
     filterPmmDataInPayload(payload)
   );
 

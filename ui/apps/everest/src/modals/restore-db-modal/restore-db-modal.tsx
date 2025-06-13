@@ -13,7 +13,6 @@ import { FormDialogProps } from 'components/form-dialog/form-dialog.types';
 import { DATE_FORMAT, PITR_DATE_FORMAT } from 'consts';
 import { format } from 'date-fns';
 import {
-  BACKUPS_QUERY_KEY,
   useDbBackups,
   useDbClusterPitr,
 } from 'hooks/api/backups/useBackups';
@@ -22,7 +21,7 @@ import {
   useDbClusterRestoreFromPointInTime,
 } from 'hooks/api/restores/useDbClusterRestore';
 import { FieldValues, useFormContext } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Backup,
   BackupStatus,
@@ -216,22 +215,20 @@ const RestoreDbModal = <T extends FieldValues>({
   backupName?: string;
 }) => {
   const navigate = useNavigate();
-  // we use a different query key for the restore modal to avoid re-renders from "useDbBackups" running in the background
-  const { data: backups = [], isLoading } = useDbBackups(
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
+  const { data: backups = [], isFetching: isLoading } = useDbBackups(
     dbCluster.metadata.name,
     namespace,
+    cluster,
     {
-      queryKey: [
-        BACKUPS_QUERY_KEY,
-        namespace,
-        dbCluster.metadata.name,
-        'restore-modal',
-      ],
+      enabled: !!dbCluster.metadata.name,
     }
   );
   const { data: pitrData } = useDbClusterPitr(
     dbCluster.metadata.name,
-    namespace
+    namespace,
+    cluster
   );
 
   const { mutate: restoreBackupFromBackup, isPending: restoringFromBackup } =
@@ -279,6 +276,7 @@ const RestoreDbModal = <T extends FieldValues>({
                 backupName,
                 namespace,
                 backupStorageName: selectedBackup,
+                cluster,
               },
             });
           } else {
@@ -289,13 +287,14 @@ const RestoreDbModal = <T extends FieldValues>({
                 namespace,
                 backupStorageName: selectedBackup,
                 pointInTimeDate: pointInTimeDate,
+                cluster,
               },
             });
           }
         } else {
           if (backupType === BackuptypeValues.fromBackup) {
             restoreBackupFromBackup(
-              { backupName, namespace },
+              { backupName, namespace, cluster },
               {
                 onSuccess() {
                   closeModal();
@@ -309,6 +308,7 @@ const RestoreDbModal = <T extends FieldValues>({
                 backupName: pitrBackupName,
                 namespace,
                 pointInTimeDate: pointInTimeDate,
+                cluster,
               },
               {
                 onSuccess() {

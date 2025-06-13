@@ -26,6 +26,7 @@ export const DB_CLUSTER_QUERY = 'dbCluster';
 export const useDbCluster = (
   dbClusterName: string,
   namespace: string,
+  cluster: string = 'in-cluster', // Default for backward compatibility
   options?: PerconaQueryOptions<DbCluster, unknown, DbCluster>
 ) => {
   const { canRead } = useRBACPermissions(
@@ -33,8 +34,8 @@ export const useDbCluster = (
     `${namespace}/${dbClusterName}`
   );
   return useQuery<DbCluster, unknown, DbCluster>({
-    queryKey: [DB_CLUSTER_QUERY, dbClusterName],
-    queryFn: () => getDbClusterFn(dbClusterName, namespace),
+    queryKey: [DB_CLUSTER_QUERY, dbClusterName, namespace, cluster],
+    queryFn: () => getDbClusterFn(dbClusterName, namespace, cluster),
     ...options,
     select: (cluster: DbCluster) => {
       const transformedCluster: DbCluster = options?.select

@@ -43,12 +43,14 @@ export const MONITORING_INSTANCES_QUERY_KEY = 'monitoringInstances';
 
 export interface MonitoringInstanceForNamespaceResult {
   namespace: string;
-  queryResult: UseQueryResult<MonitoringInstance[], unknown>;
+  cluster: string;
+  queryResult: UseQueryResult<MonitoringInstanceList, unknown>;
 }
 
 export const useMonitoringInstancesList = (
   queryParams: Array<{
     namespace: string;
+    cluster?: string;
     options?: PerconaQueryOptions<
       MonitoringInstanceList,
       unknown,
@@ -58,10 +60,10 @@ export const useMonitoringInstancesList = (
 ) => {
   const queries = queryParams.map<
     UseQueryOptions<MonitoringInstanceList, unknown, MonitoringInstance[]>
-  >(({ namespace, options }) => {
+  >(({ namespace, cluster = 'in-cluster', options }) => {
     return {
-      queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-      queryFn: () => getMonitoringInstancesFn(namespace),
+      queryKey: [MONITORING_INSTANCES_QUERY_KEY, cluster, namespace],
+      queryFn: () => getMonitoringInstancesFn(cluster, namespace),
       refetchInterval: 5 * 1000,
       ...options,
     };
@@ -71,6 +73,7 @@ export const useMonitoringInstancesList = (
   const results: MonitoringInstanceForNamespaceResult[] = queryResults.map(
     (item, i) => ({
       namespace: queryParams[i].namespace,
+      cluster: queryParams[i].cluster || 'in-cluster',
       queryResult: item,
     })
   );
@@ -78,10 +81,13 @@ export const useMonitoringInstancesList = (
   return results;
 };
 
-export const useMonitoringInstancesForNamespace = (namespace: string) => {
+export const useMonitoringInstancesForNamespace = (
+  namespace: string,
+  cluster: string = 'in-cluster'
+) => {
   return useQuery({
-    queryKey: [MONITORING_INSTANCES_QUERY_KEY, namespace],
-    queryFn: () => getMonitoringInstancesFn(namespace),
+    queryKey: [MONITORING_INSTANCES_QUERY_KEY, cluster, namespace],
+    queryFn: () => getMonitoringInstancesFn(cluster, namespace),
     refetchInterval: 5 * 1000,
   });
 };
@@ -90,19 +96,20 @@ export const useCreateMonitoringInstance = (
   options?: UseMutationOptions<
     MonitoringInstance,
     unknown,
-    CreateMonitoringInstancePayload,
+    CreateMonitoringInstancePayload & { cluster?: string },
     unknown
   >
 ) =>
   useMutation({
-    mutationFn: (payload: CreateMonitoringInstancePayload) =>
-      createMonitoringInstanceFn(payload, payload.namespace),
+    mutationFn: (payload: CreateMonitoringInstancePayload & { cluster?: string }) =>
+      createMonitoringInstanceFn(payload, payload.namespace, payload.cluster || 'in-cluster'),
     ...options,
   });
 
 type DeleteMonitoringInstanceArgType = {
   instanceName: string;
   namespace: string;
+  cluster?: string;
 };
 
 export const useDeleteMonitoringInstance = () =>
@@ -110,20 +117,21 @@ export const useDeleteMonitoringInstance = () =>
     mutationFn: ({
       instanceName,
       namespace,
+      cluster = 'in-cluster',
     }: DeleteMonitoringInstanceArgType) =>
-      deleteMonitoringInstanceFn(instanceName, namespace),
+      deleteMonitoringInstanceFn(instanceName, namespace, cluster),
   });
 
 export const useUpdateMonitoringInstance = (
   options?: UseMutationOptions<
     MonitoringInstance,
     unknown,
-    HookUpdateParam,
+    HookUpdateParam & { cluster?: string },
     unknown
   >
 ) =>
   useMutation({
-    mutationFn: ({ instanceName, payload }: HookUpdateParam) =>
-      updateMonitoringInstanceFn(instanceName, payload),
+    mutationFn: ({ instanceName, payload, cluster = 'in-cluster' }: HookUpdateParam & { cluster?: string }) =>
+      updateMonitoringInstanceFn(instanceName, payload, cluster),
     ...options,
   });

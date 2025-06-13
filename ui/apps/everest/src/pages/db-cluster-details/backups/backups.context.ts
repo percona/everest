@@ -13,4 +13,5 @@ export const ScheduleModalContext = createContext<ScheduleModalContextType>({
   setMode: () => {},
   selectedScheduleName: '',
   setSelectedScheduleName: () => {},
+  cluster: 'in-cluster',
 });

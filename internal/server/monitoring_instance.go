@@ -24,13 +24,13 @@ import (
 )
 
 // CreateMonitoringInstance creates a new monitoring instance.
-func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context, namespace string) error {
+func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context, cluster, namespace string) error {
 	var params api.CreateMonitoringInstanceJSONRequestBody
 	if err := ctx.Bind(&params); err != nil {
 		return err
 	}
 
-	created, err := e.handler.CreateMonitoringInstance(ctx.Request().Context(), namespace, &params)
+	created, err := e.handler.CreateMonitoringInstance(ctx.Request().Context(), cluster, namespace, &params)
 	if err != nil {
 		return err
 	}
@@ -41,8 +41,8 @@ func (e *EverestServer) CreateMonitoringInstance(ctx echo.Context, namespace str
 }
 
 // ListMonitoringInstances lists all monitoring instances.
-func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace string) error {
-	mcList, err := e.handler.ListMonitoringInstances(ctx.Request().Context(), namespace)
+func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, cluster, namespace string) error {
+	mcList, err := e.handler.ListMonitoringInstances(ctx.Request().Context(), cluster, namespace)
 	if err != nil {
 		return err
 	}
@@ -57,8 +57,8 @@ func (e *EverestServer) ListMonitoringInstances(ctx echo.Context, namespace stri
 }
 
 // GetMonitoringInstance retrieves a monitoring instance.
-func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, namespace, name string) error {
-	m, err := e.handler.GetMonitoringInstance(ctx.Request().Context(), namespace, name)
+func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, cluster, namespace, name string) error {
+	m, err := e.handler.GetMonitoringInstance(ctx.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		return err
 	}
@@ -69,13 +69,13 @@ func (e *EverestServer) GetMonitoringInstance(ctx echo.Context, namespace, name 
 }
 
 // UpdateMonitoringInstance updates a monitoring instance based on the provided fields.
-func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, name string) error {
+func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, cluster, namespace, name string) error {
 	var params api.UpdateMonitoringInstanceJSONRequestBody
 	if err := ctx.Bind(&params); err != nil {
 		return err
 	}
 
-	updated, err := e.handler.UpdateMonitoringInstance(ctx.Request().Context(), namespace, name, &params)
+	updated, err := e.handler.UpdateMonitoringInstance(ctx.Request().Context(), cluster, namespace, name, &params)
 	if err != nil {
 		return err
 	}
@@ -86,8 +86,8 @@ func (e *EverestServer) UpdateMonitoringInstance(ctx echo.Context, namespace, na
 }
 
 // DeleteMonitoringInstance deletes a monitoring instance.
-func (e *EverestServer) DeleteMonitoringInstance(ctx echo.Context, namespace, name string) error {
-	if err := e.handler.DeleteMonitoringInstance(ctx.Request().Context(), namespace, name); err != nil {
+func (e *EverestServer) DeleteMonitoringInstance(ctx echo.Context, cluster, namespace, name string) error {
+	if err := e.handler.DeleteMonitoringInstance(ctx.Request().Context(), cluster, namespace, name); err != nil {
 		return err
 	}
 

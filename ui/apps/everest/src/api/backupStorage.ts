@@ -18,28 +18,28 @@ import {
 } from 'shared-types/backupStorages.types';
 import { api } from './api';
 
-export const getBackupStoragesFn = async (namespace: string) => {
+export const getBackupStoragesFn = async (cluster: string, namespace: string) => {
   const response = await api.get<GetBackupStoragesPayload>(
-    `namespaces/${namespace}/backup-storages`
+    `clusters/${cluster}/namespaces/${namespace}/backup-storages`
   );
   return response.data;
 };
 
-export const createBackupStorageFn = async (formData: BackupStorage) => {
+export const createBackupStorageFn = async (formData: BackupStorage, cluster: string) => {
   const { namespace, ...createFormData } = formData;
   const response = await api.post(
-    `namespaces/${namespace}/backup-storages`,
+    `clusters/${cluster}/namespaces/${namespace}/backup-storages`,
     createFormData
   );
 
   return response.data;
 };
 
-export const editBackupStorageFn = async (formData: BackupStorage) => {
+export const editBackupStorageFn = async (formData: BackupStorage, cluster: string) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { name, namespace, type, ...editableFormData } = formData;
   const response = await api.patch(
-    `namespaces/${namespace}/backup-storages/${name}`,
+    `clusters/${cluster}/namespaces/${namespace}/backup-storages/${name}`,
     editableFormData
   );
 
@@ -48,10 +48,11 @@ export const editBackupStorageFn = async (formData: BackupStorage) => {
 
 export const deleteBackupStorageFn = async (
   backupStorageId: string,
-  namespace: string
+  namespace: string,
+  cluster: string
 ) => {
   const response = await api.delete(
-    `namespaces/${namespace}/backup-storages/${backupStorageId}`
+    `clusters/${cluster}/namespaces/${namespace}/backup-storages/${backupStorageId}`
   );
 
   return response.data;

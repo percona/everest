@@ -5,8 +5,8 @@ import {
 } from 'shared-types/kubernetes.types';
 import { getKubernetesClusterInfoFn } from 'api/kubernetesClusterApi';
 
-export const useKubernetesClusterInfo = (queryKey: QueryKey) =>
+export const useKubernetesClusterInfo = (queryKey: QueryKey, cluster: string = 'in-cluster') =>
   useQuery<GetKubernetesClusterInfoPayload, unknown, KubernetesClusterInfo>({
-    queryKey,
-    queryFn: getKubernetesClusterInfoFn,
+    queryKey: [...queryKey, cluster],
+    queryFn: () => getKubernetesClusterInfoFn(cluster),
   });

@@ -25,6 +25,13 @@ export const Messages = {
       </>
     ),
   },
+  columns: {
+    name: 'Name',
+    type: 'Type',
+    namespace: 'Namespace',
+    cluster: 'Cluster',
+    allowedNamespaces: 'Allowed Namespaces',
+  },
   s3: 'S3 Compatible',
   gcs: 'Google Cloud Storage',
   azure: 'Azure Cloud Storage',
@@ -43,4 +50,5 @@ export const Messages = {
   delete: 'Delete',
   addStorageLocationButton: 'Add backup storage',
   noData: "No backup storage set up yet. Let's get started!",
+  noNamespaces: 'No namespaces available',
 };

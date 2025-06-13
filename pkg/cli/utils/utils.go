@@ -50,9 +50,16 @@ func CheckHelmInstallation(ctx context.Context, kubeConnector kubernetes.Kuberne
 	return ver, nil
 }
 
-// NewKubeConnector creates a new Kubernetes client.
-func NewKubeConnector(l *zap.SugaredLogger, kubeconfigPath string) (kubernetes.KubernetesConnector, error) {
-	k, err := kubernetes.New(kubeconfigPath, l)
+// NewKubeConnector returns a new kubernetes connector.
+func NewKubeConnector(l *zap.SugaredLogger, kubeconfigPath string, context string) (kubernetes.KubernetesConnector, error) {
+	var opts []kubernetes.Option
+	if kubeconfigPath != "" {
+		opts = append(opts, kubernetes.WithKubeconfig(kubeconfigPath))
+	}
+	if context != "" {
+		opts = append(opts, kubernetes.WithContext(context))
+	}
+	k, err := kubernetes.New(l, nil, nil, opts...)
 	if err != nil {
 		var u *url.Error
 		if errors.As(err, &u) {

@@ -6,6 +6,7 @@ import {
   useMatch,
   useNavigate,
   useParams,
+  useLocation,
 } from 'react-router-dom';
 import { NoMatch } from '../404/NoMatch';
 import BackNavigationText from 'components/back-navigation-text';
@@ -16,7 +17,7 @@ import { useContext } from 'react';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from '../databases/DbClusterView.constants';
 import { beautifyDbClusterStatus } from '../databases/DbClusterView.utils';
 import StatusField from 'components/status-field';
-import DbActions from 'components/db-actions/db-actions';
+import { DbActions } from 'components/db-actions/db-actions';
 import { Messages } from './db-cluster-details.messages';
 import { useRBACPermissionRoute } from 'hooks/rbac';
 import DeletedDbDialog from './deleted-db-dialog';
@@ -32,6 +33,8 @@ const WithPermissionDetails = ({
 }) => {
   const { dbCluster, clusterDeleted } = useContext(DbClusterContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
 
   useRBACPermissionRoute([
     {
@@ -102,6 +105,7 @@ const WithPermissionDetails = ({
                 // @ts-ignore
                 to={DBClusterDetailsTabs[item]}
                 component={Link}
+                state={{ cluster }}
                 data-testid={`${
                   DBClusterDetailsTabs[item as DBClusterDetailsTabs]
                 }`}

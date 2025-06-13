@@ -68,10 +68,11 @@ export const AdvancedConfigurationForm = ({
     AdvancedConfigurationFields.engineParametersEnabled,
     AdvancedConfigurationFields.podSchedulingPolicyEnabled,
   ]);
+  const selectedCluster = watch(DbWizardFormFields.k8sCluster);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
-    useKubernetesClusterInfo(['wizard-k8-info']);
+    useKubernetesClusterInfo(['wizard-k8-info'], selectedCluster || 'in-cluster');
   const { data: policies = [], isLoading: fetchingPolicies } =
-    usePodSchedulingPolicies(dbTypeToDbEngine(dbType), true, {
+    usePodSchedulingPolicies(selectedCluster || 'in-cluster', dbTypeToDbEngine(dbType), undefined, {
       refetchInterval: 2000,
     });
 

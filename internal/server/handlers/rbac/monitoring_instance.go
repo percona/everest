@@ -10,8 +10,8 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
-func (h *rbacHandler) ListMonitoringInstances(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
-	list, err := h.next.ListMonitoringInstances(ctx, namespace)
+func (h *rbacHandler) ListMonitoringInstances(ctx context.Context, cluster, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
+	list, err := h.next.ListMonitoringInstances(ctx, cluster, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("ListMonitoringInstances failed: %w", err)
 	}
@@ -28,30 +28,30 @@ func (h *rbacHandler) ListMonitoringInstances(ctx context.Context, namespace str
 	return list, nil
 }
 
-func (h *rbacHandler) CreateMonitoringInstance(ctx context.Context, namespace string, req *api.CreateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+func (h *rbacHandler) CreateMonitoringInstance(ctx context.Context, cluster, namespace string, req *api.CreateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
 	if err := h.enforce(ctx, rbac.ResourceMonitoringInstances, rbac.ActionCreate, rbac.ObjectName(namespace, req.Name)); err != nil {
 		return nil, err
 	}
-	return h.next.CreateMonitoringInstance(ctx, namespace, req)
+	return h.next.CreateMonitoringInstance(ctx, cluster, namespace, req)
 }
 
-func (h *rbacHandler) DeleteMonitoringInstance(ctx context.Context, namespace, name string) error {
+func (h *rbacHandler) DeleteMonitoringInstance(ctx context.Context, cluster, namespace, name string) error {
 	if err := h.enforce(ctx, rbac.ResourceMonitoringInstances, rbac.ActionDelete, rbac.ObjectName(namespace, name)); err != nil {
 		return err
 	}
-	return h.next.DeleteMonitoringInstance(ctx, namespace, name)
+	return h.next.DeleteMonitoringInstance(ctx, cluster, namespace, name)
 }
 
-func (h *rbacHandler) GetMonitoringInstance(ctx context.Context, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
+func (h *rbacHandler) GetMonitoringInstance(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.MonitoringConfig, error) {
 	if err := h.enforce(ctx, rbac.ResourceMonitoringInstances, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}
-	return h.next.GetMonitoringInstance(ctx, namespace, name)
+	return h.next.GetMonitoringInstance(ctx, cluster, namespace, name)
 }
 
-func (h *rbacHandler) UpdateMonitoringInstance(ctx context.Context, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
+func (h *rbacHandler) UpdateMonitoringInstance(ctx context.Context, cluster, namespace, name string, req *api.UpdateMonitoringInstanceJSONRequestBody) (*everestv1alpha1.MonitoringConfig, error) {
 	if err := h.enforce(ctx, rbac.ResourceMonitoringInstances, rbac.ActionUpdate, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}
-	return h.next.UpdateMonitoringInstance(ctx, namespace, name, req)
+	return h.next.UpdateMonitoringInstance(ctx, cluster, namespace, name, req)
 }

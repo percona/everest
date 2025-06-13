@@ -22,3 +22,13 @@ export type DbClusterName = {
   name: string;
   namespace: string;
 };
+
+export type DbWizardType = {
+  dbName: string;
+  dbType: string;
+  k8sNamespace: string | null;
+  k8sCluster: string;
+  sharding: boolean;
+  dbVersion: string;
+  // ...other fields from the wizard...
+};

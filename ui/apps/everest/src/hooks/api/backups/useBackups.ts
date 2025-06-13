@@ -32,6 +32,7 @@ type DeleteBackupArgType = {
 export const useDbBackups = (
   dbClusterName: string,
   namespace: string,
+  cluster: string = 'in-cluster',
   options?: PerconaQueryOptions<GetBackupsPayload, unknown, Backup[]>
 ) => {
   const { canRead } = useRBACPermissions(
@@ -39,8 +40,8 @@ export const useDbBackups = (
     `${namespace}/${dbClusterName}`
   );
   return useQuery<GetBackupsPayload, unknown, Backup[]>({
-    queryKey: [BACKUPS_QUERY_KEY, namespace, dbClusterName],
-    queryFn: () => getBackupsFn(dbClusterName, namespace),
+    queryKey: [BACKUPS_QUERY_KEY, namespace, dbClusterName, cluster],
+    queryFn: () => getBackupsFn(dbClusterName, namespace, cluster),
     select: canRead
       ? ({ items = [] }) =>
           items.map(
@@ -64,6 +65,7 @@ export const useDbBackups = (
 export const useCreateBackupOnDemand = (
   dbClusterName: string,
   namespace: string,
+  cluster: string = 'in-cluster',
   options?: UseMutationOptions<
     SingleBackupPayload,
     unknown,
@@ -88,24 +90,27 @@ export const useCreateBackupOnDemand = (
                 : formData.storageLocation!.name,
           },
         },
-        namespace
+        namespace,
+        cluster
       ),
     ...options,
   });
 
 export const useDeleteBackup = (
   namespace: string,
+  cluster: string = 'in-cluster',
   options?: UseMutationOptions<unknown, unknown, DeleteBackupArgType, unknown>
 ) =>
   useMutation({
     mutationFn: ({ backupName, cleanupBackupStorage }: DeleteBackupArgType) =>
-      deleteBackupFn(backupName, namespace, cleanupBackupStorage),
+      deleteBackupFn(backupName, namespace, cleanupBackupStorage, cluster),
     ...options,
   });
 
 export const useDbClusterPitr = (
   dbClusterName: string,
   namespace: string,
+  cluster: string = 'in-cluster',
   options?: PerconaQueryOptions<
     DatabaseClusterPitrPayload,
     unknown,
@@ -122,8 +127,8 @@ export const useDbClusterPitr = (
     unknown,
     DatabaseClusterPitr | undefined
   >({
-    queryKey: [dbClusterName, 'pitr'],
-    queryFn: () => getPitrFn(dbClusterName, namespace),
+    queryKey: [dbClusterName, 'pitr', cluster],
+    queryFn: () => getPitrFn(dbClusterName, namespace, cluster),
     select: (pitrData) => {
       const { earliestDate, latestDate, latestBackupName, gaps } = pitrData;
       if (

@@ -19,12 +19,12 @@ import {
   KubernetesClusterResourcesInfo,
 } from 'shared-types/kubernetes.types';
 
-export const useKubernetesClusterResourcesInfo = () =>
+export const useKubernetesClusterResourcesInfo = (cluster: string = 'in-cluster') =>
   useQuery<
     GetKubernetesClusterResourcesInfoPayload,
     unknown,
     KubernetesClusterResourcesInfo
   >({
-    queryKey: ['cluster-resources-info'],
-    queryFn: getKubernetesClusterResourcesInfo,
+    queryKey: ['cluster-resources-info', cluster],
+    queryFn: () => getKubernetesClusterResourcesInfo(cluster),
   });

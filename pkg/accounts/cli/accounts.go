@@ -61,7 +61,7 @@ func NewAccounts(c Config, l *zap.SugaredLogger) (*Accounts, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath, "")
 	if err != nil {
 		return nil, err
 	}

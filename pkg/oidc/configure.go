@@ -103,7 +103,7 @@ func NewOIDC(c Config, l *zap.SugaredLogger) (*OIDC, error) {
 		cli.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(cli.l, c.KubeconfigPath, "")
 	if err != nil {
 		return nil, err
 	}

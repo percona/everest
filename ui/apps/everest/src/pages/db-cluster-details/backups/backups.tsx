@@ -16,7 +16,7 @@
 import { useBackupStoragesByNamespace } from 'hooks/api/backup-storages/useBackupStorages.ts';
 import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster.ts';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { BackupsList } from './backups-list/backups-list';
 import { ScheduleModalContext } from './backups.context.ts';
 import { NoStoragesMessage } from './no-storages-message/no-storages-message';
@@ -26,10 +26,12 @@ import { ScheduleWizardMode, WizardMode } from 'shared-types/wizard.types.ts';
 
 export const Backups = () => {
   const { dbClusterName = '', namespace = '' } = useParams();
-  const { data: dbCluster } = useDbCluster(dbClusterName, namespace);
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
+  const { data: dbCluster } = useDbCluster(dbClusterName, namespace, cluster);
 
   const { data: backupStorages = [], isLoading } =
-    useBackupStoragesByNamespace(namespace);
+    useBackupStoragesByNamespace(namespace, cluster);
 
   const [mode, setMode] = useState<ScheduleWizardMode>(WizardMode.New);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
@@ -54,6 +56,7 @@ export const Backups = () => {
         setSelectedScheduleName,
         openOnDemandModal,
         setOpenOnDemandModal,
+        cluster,
       }}
     >
       {noStorages ? (

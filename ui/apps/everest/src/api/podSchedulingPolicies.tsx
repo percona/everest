@@ -6,11 +6,12 @@ import {
 } from 'shared-types/affinity.types';
 
 export const getPodSchedulingPolicies = async (
+  cluster: string,
   dbType?: DbEngineType,
   hasRules = false
 ) => {
   const response = await api.get<PodSchedulingPolicyGetPayload>(
-    'pod-scheduling-policies',
+    `clusters/${cluster}/pod-scheduling-policies`,
     {
       params: {
         ...(dbType && { engineType: dbType }),
@@ -21,18 +22,19 @@ export const getPodSchedulingPolicies = async (
   return response.data;
 };
 
-export const getPodSchedulingPolicy = async (name: string) => {
+export const getPodSchedulingPolicy = async (cluster: string, name: string) => {
   const response = await api.get<PodSchedulingPolicy>(
-    `pod-scheduling-policies/${name}`
+    `clusters/${cluster}/pod-scheduling-policies/${name}`
   );
   return response.data;
 };
 
 export const createPodSchedulingPolicy = async (
+  cluster: string,
   name: string,
   dbType: DbEngineType
 ) => {
-  const response = await api.post('pod-scheduling-policies', {
+  const response = await api.post(`clusters/${cluster}/pod-scheduling-policies`, {
     metadata: {
       name,
     },
@@ -44,10 +46,11 @@ export const createPodSchedulingPolicy = async (
 };
 
 export const updatePodSchedulingPolicy = async (
+  cluster: string,
   policy: PodSchedulingPolicy
 ) => {
   const response = await api.put<PodSchedulingPolicy>(
-    `pod-scheduling-policies/${policy.metadata.name}`,
+    `clusters/${cluster}/pod-scheduling-policies/${policy.metadata.name}`,
     policy,
     {
       disableNotifications: (e) => e.status === 409,
@@ -56,7 +59,7 @@ export const updatePodSchedulingPolicy = async (
   return response.data;
 };
 
-export const deletePodSchedulingPolicy = async (name: string) => {
-  const response = await api.delete(`pod-scheduling-policies/${name}`);
+export const deletePodSchedulingPolicy = async (cluster: string, name: string) => {
+  const response = await api.delete(`clusters/${cluster}/pod-scheduling-policies/${name}`);
   return response;
 };

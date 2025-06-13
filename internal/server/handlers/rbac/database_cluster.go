@@ -15,7 +15,7 @@ import (
 	"github.com/percona/everest/pkg/rbac"
 )
 
-func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, cluster string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	name := db.GetName()
 	namespace := db.GetNamespace()
 	object := rbac.ObjectName(namespace, name)
@@ -55,7 +55,7 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1al
 			return nil, err
 		}
 		// Get the name of the source database cluster.
-		bkp, err := h.next.GetDatabaseClusterBackup(ctx, namespace, sourceBackup)
+		bkp, err := h.next.GetDatabaseClusterBackup(ctx, cluster, namespace, sourceBackup)
 		if err != nil {
 			return nil, errors.Join(err, errors.New("failed to get database cluster backup"))
 		}
@@ -65,11 +65,11 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1al
 			return nil, err
 		}
 	}
-	return h.next.CreateDatabaseCluster(ctx, db)
+	return h.next.CreateDatabaseCluster(ctx, cluster, db)
 }
 
-func (h *rbacHandler) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
-	clusterList, err := h.next.ListDatabaseClusters(ctx, namespace)
+func (h *rbacHandler) ListDatabaseClusters(ctx context.Context, cluster, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
+	clusterList, err := h.next.ListDatabaseClusters(ctx, cluster, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("ListDatabaseClusters failed: %w", err)
 	}
@@ -87,8 +87,8 @@ func (h *rbacHandler) ListDatabaseClusters(ctx context.Context, namespace string
 	return clusterList, nil
 }
 
-func (h *rbacHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
-	db, err := h.next.GetDatabaseCluster(ctx, namespace, name)
+func (h *rbacHandler) DeleteDatabaseCluster(ctx context.Context, cluster, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
+	db, err := h.next.GetDatabaseCluster(ctx, cluster, namespace, name)
 	if err != nil {
 		return fmt.Errorf("GetDatabaseCluster failed: %w", err)
 	}
@@ -99,10 +99,10 @@ func (h *rbacHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name
 	if err := h.enforce(ctx, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
 		return err
 	}
-	return h.next.DeleteDatabaseCluster(ctx, namespace, name, req)
+	return h.next.DeleteDatabaseCluster(ctx, cluster, namespace, name, req)
 }
 
-func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, cluster string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
 	name := db.GetName()
 	namespace := db.GetNamespace()
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusters, rbac.ActionUpdate, rbac.ObjectName(namespace, name)); err != nil {
@@ -113,7 +113,7 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1al
 		return nil, err
 	}
 
-	oldDB, err := h.next.GetDatabaseCluster(ctx, namespace, name)
+	oldDB, err := h.next.GetDatabaseCluster(ctx, cluster, namespace, name)
 	if err != nil {
 		return nil, err
 	}
@@ -155,11 +155,11 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1al
 			return nil, err
 		}
 	}
-	return h.next.UpdateDatabaseCluster(ctx, db)
+	return h.next.UpdateDatabaseCluster(ctx, cluster, db)
 }
 
-func (h *rbacHandler) GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
-	result, err := h.next.GetDatabaseCluster(ctx, namespace, name)
+func (h *rbacHandler) GetDatabaseCluster(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
+	result, err := h.next.GetDatabaseCluster(ctx, cluster, namespace, name)
 	if err != nil {
 		return nil, err
 	}
@@ -170,28 +170,28 @@ func (h *rbacHandler) GetDatabaseCluster(ctx context.Context, namespace, name st
 	return result, nil
 }
 
-func (h *rbacHandler) GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error) {
+func (h *rbacHandler) GetDatabaseClusterCredentials(ctx context.Context, cluster, namespace, name string) (*api.DatabaseClusterCredential, error) {
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusterCredentials, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}
-	return h.next.GetDatabaseClusterCredentials(ctx, namespace, name)
+	return h.next.GetDatabaseClusterCredentials(ctx, cluster, namespace, name)
 }
 
-func (h *rbacHandler) GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error) {
+func (h *rbacHandler) GetDatabaseClusterComponents(ctx context.Context, cluster, namespace, name string) ([]api.DatabaseClusterComponent, error) {
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}
-	return h.next.GetDatabaseClusterComponents(ctx, namespace, name)
+	return h.next.GetDatabaseClusterComponents(ctx, cluster, namespace, name)
 }
 
-func (h *rbacHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error) {
+func (h *rbacHandler) GetDatabaseClusterPitr(ctx context.Context, cluster, namespace, name string) (*api.DatabaseClusterPitr, error) {
 	if err := h.enforce(ctx, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}
-	return h.next.GetDatabaseClusterPitr(ctx, namespace, name)
+	return h.next.GetDatabaseClusterPitr(ctx, cluster, namespace, name)
 }
 
 func (h *rbacHandler) enforceDBClusterRead(ctx context.Context, db *everestv1alpha1.DatabaseCluster) error {

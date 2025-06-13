@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { Alert, capitalize } from '@mui/material';
 import { MRT_ColumnDef } from 'material-react-table';
 import { format } from 'date-fns';
@@ -30,16 +30,18 @@ const Restores = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedRestore, setSelectedRestore] = useState('');
   const { dbClusterName, namespace = '' } = useParams();
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
   const queryClient = useQueryClient();
-  const { data: pitrData } = useDbClusterPitr(dbClusterName!, namespace, {
+  const { data: pitrData } = useDbClusterPitr(dbClusterName!, namespace, cluster, {
     enabled: !!dbClusterName && !!namespace,
   });
   const { data: restores = [], isLoading: loadingRestores } =
-    useDbClusterRestores(namespace, dbClusterName!, {
+    useDbClusterRestores(namespace, dbClusterName!, cluster, {
       enabled: !!dbClusterName && !!namespace,
     });
   const { mutate: deleteRestore, isPending: deletingRestore } =
-    useDeleteRestore(namespace);
+    useDeleteRestore(namespace, cluster);
 
   const columns = useMemo<MRT_ColumnDef<Restore>[]>(() => {
     return [

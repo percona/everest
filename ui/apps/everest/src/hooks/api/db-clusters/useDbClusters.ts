@@ -15,7 +15,6 @@
 
 import {
   useQueries,
-  useQuery,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
@@ -23,8 +22,12 @@ import { getDbClustersFn } from 'api/dbClusterApi';
 import { DbCluster, GetDbClusterPayload } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
+import { useClusters } from '../clusters/useClusters';
+import { getNamespacesForCluster } from 'api/namespaces';
+import { Cluster } from 'api/clusters';
 
 export interface DbClusterForNamespaceResult {
+  cluster: string;
   namespace: string;
   queryResult: UseQueryResult<DbCluster[], unknown>;
 }
@@ -57,53 +60,67 @@ export const dbClustersQuerySelect = ({
     .sort((a, b) => a.metadata.name.localeCompare(b.metadata.name));
 
 export const useDbClusters = (
-  namespace: string,
   options?: PerconaQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
 ) => {
-  return useQuery({
-    queryKey: [DB_CLUSTERS_QUERY_KEY],
-    queryFn: () => getDbClustersFn(namespace),
-    refetchInterval: 5 * 1000,
-    ...options,
-    select: (clusters) => {
-      const transformedClusters: DbCluster[] = options?.select
-        ? options.select(clusters)
-        : clusters.items;
+  // First, get all clusters
+  const { data: clusters = [], isLoading: clustersLoading } = useClusters();
 
-      const querySelectedClusters = dbClustersQuerySelect({
-        items: transformedClusters,
+  // For each cluster, get its namespaces
+  const namespacesQueries = clusters.map((cluster: Cluster) => ({
+    queryKey: ['namespaces', cluster.name],
+    queryFn: () => getNamespacesForCluster(cluster.name),
+  }));
+
+  const namespacesResults = useQueries({ queries: namespacesQueries });
+  const namespacesLoading = namespacesResults.some((result) => result.isLoading);
+
+  // For each cluster and its namespaces, get the DB clusters
+  const dbClusterQueries: UseQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>[] = [];
+  clusters.forEach((cluster: Cluster, clusterIndex: number) => {
+    const namespaceResult = namespacesResults[clusterIndex];
+    const namespaces = namespaceResult.data || [];
+    namespaces.forEach((namespace: string) => {
+      dbClusterQueries.push({
+        queryKey: [DB_CLUSTERS_QUERY_KEY, cluster.name, namespace],
+        queryFn: () => getDbClustersFn(cluster.name, namespace),
+        refetchInterval: 5 * 1000,
+        ...options,
+        select: (clusters) => {
+          const transformedClusters: DbCluster[] = options?.select
+            ? options.select(clusters)
+            : clusters.items;
+
+          return dbClustersQuerySelect({
+            items: transformedClusters,
+          });
+        },
       });
-
-      return querySelectedClusters;
-    },
-  });
-};
-
-export const useDBClustersForNamespaces = (
-  queryParams: Array<{
-    namespace: string;
-    options?: PerconaQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>;
-  }>
-) => {
-  const queries = queryParams.map<
-    UseQueryOptions<GetDbClusterPayload, unknown, DbCluster[]>
-  >(({ namespace, options }) => {
-    return {
-      queryKey: [DB_CLUSTERS_QUERY_KEY, namespace],
-      queryFn: () => getDbClustersFn(namespace),
-      refetchInterval: 5 * 1000,
-      select: dbClustersQuerySelect,
-      ...options,
-    };
+    });
   });
 
-  const queryResults = useQueries({ queries });
-  const results: DbClusterForNamespaceResult[] = queryResults.map(
-    (item, i) => ({
-      namespace: queryParams[i].namespace,
-      queryResult: item,
-    })
-  );
+  const dbClusterResults = useQueries({ queries: dbClusterQueries });
+  const dbClustersLoading = dbClusterResults.some((result) => result.isLoading);
 
-  return results;
+  // Combine all results
+  const results: DbClusterForNamespaceResult[] = [];
+  let queryIndex = 0;
+  clusters.forEach((cluster: Cluster, clusterIndex: number) => {
+    const namespaceResult = namespacesResults[clusterIndex];
+    const namespaces = namespaceResult.data || [];
+    namespaces.forEach((namespace: string) => {
+      if (queryIndex < dbClusterResults.length) {
+        results.push({
+          cluster: cluster.name,
+          namespace,
+          queryResult: dbClusterResults[queryIndex],
+        });
+        queryIndex++;
+      }
+    });
+  });
+
+  return {
+    results,
+    isLoading: clustersLoading || namespacesLoading || dbClustersLoading,
+  };
 };

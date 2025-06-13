@@ -160,8 +160,8 @@ const ResourcesToggles = ({
   warnForUpscaling = false,
 }: ResourcesTogglesProps) => {
   const { isMobile, isDesktop } = useActiveBreakpoint();
-  const { data: resourcesInfo, isFetching: resourcesInfoLoading } =
-    useKubernetesClusterResourcesInfo();
+  const { data: clusterResourcesInfo, isLoading: fetchingClusterResourcesInfo } =
+    useKubernetesClusterResourcesInfo('in-cluster');
   const { watch, setValue, setError, clearErrors, getFieldState, resetField } =
     useFormContext();
 
@@ -182,14 +182,14 @@ const ResourcesToggles = ({
     numberOfUnitsInputName
   );
 
-  const cpuCapacityExceeded = resourcesInfo
-    ? cpu * 1000 > resourcesInfo?.available.cpuMillis
-    : !resourcesInfoLoading;
-  const memoryCapacityExceeded = resourcesInfo
-    ? memory * 1000 ** 3 > resourcesInfo?.available.memoryBytes
-    : !resourcesInfoLoading;
-  const diskCapacityExceeded = resourcesInfo?.available?.diskSize
-    ? disk * 1000 ** 3 > resourcesInfo?.available.diskSize
+  const cpuCapacityExceeded = clusterResourcesInfo
+    ? cpu * 1000 > clusterResourcesInfo?.available.cpuMillis
+    : !fetchingClusterResourcesInfo;
+  const memoryCapacityExceeded = clusterResourcesInfo
+    ? memory * 1000 ** 3 > clusterResourcesInfo?.available.memoryBytes
+    : !fetchingClusterResourcesInfo;
+  const diskCapacityExceeded = clusterResourcesInfo?.available?.diskSize
+    ? disk * 1000 ** 3 > clusterResourcesInfo?.available.diskSize
     : false;
 
   useEffect(() => {
@@ -355,7 +355,7 @@ const ResourcesToggles = ({
           name={cpuInputName}
           label="CPU"
           helperText={checkResourceText(
-            resourcesInfo?.available?.cpuMillis,
+            clusterResourcesInfo?.available?.cpuMillis,
             'CPU',
             'cpu',
             cpuCapacityExceeded
@@ -369,7 +369,7 @@ const ResourcesToggles = ({
           name={memoryInputName}
           label="MEMORY"
           helperText={checkResourceText(
-            resourcesInfo?.available?.memoryBytes,
+            clusterResourcesInfo?.available?.memoryBytes,
             'GB',
             'memory',
             memoryCapacityExceeded
@@ -392,7 +392,7 @@ const ResourcesToggles = ({
                 disabled={disableDiskInput}
                 label="DISK"
                 helperText={checkResourceText(
-                  resourcesInfo?.available?.diskSize,
+                  clusterResourcesInfo?.available?.diskSize,
                   diskUnit,
                   'disk',
                   diskCapacityExceeded

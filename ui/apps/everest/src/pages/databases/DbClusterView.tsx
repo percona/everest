@@ -25,7 +25,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DbClusterStatus } from 'shared-types/dbCluster.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
-import { useDBClustersForNamespaces } from 'hooks/api/db-clusters/useDbClusters';
+import { useDbClusters } from 'hooks/api/db-clusters/useDbClusters';
 import { DB_CLUSTER_STATUS_TO_BASE_STATUS } from './DbClusterView.constants';
 import {
   beautifyDbClusterStatus,
@@ -36,7 +36,7 @@ import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { LastBackup } from './lastBackup/LastBackup';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
-import DbActions from 'components/db-actions/db-actions';
+import { DbActions } from 'components/db-actions/db-actions';
 import CreateDbButton from '../../components/create-db-button/create-db-button';
 import { PendingIcon } from '@percona/ui-lib';
 import EmptyStateDatabases from 'components/empty-state-databases';
@@ -50,7 +50,9 @@ export const DbClusterView = () => {
   );
 
   const navigate = useNavigate();
-  const { results: dbEngines } = useDBEnginesForNamespaces();
+  // TODO: Pass the correct cluster name here. For now, use a placeholder or get from context.
+  const CLUSTER_PLACEHOLDER = 'in-cluster'; // Replace with actual cluster selection logic
+  const { results: dbEngines } = useDBEnginesForNamespaces(CLUSTER_PLACEHOLDER);
   const hasAvailableDbEngines = dbEngines.some(
     (obj) => (obj?.data || []).length > 0
   );
@@ -58,14 +60,7 @@ export const DbClusterView = () => {
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
   const canAddCluster = canCreate.length > 0 && hasAvailableDbEngines;
-  const dbClustersResults = useDBClustersForNamespaces(
-    namespaces.map((ns) => ({
-      namespace: ns,
-    }))
-  );
-  const dbClustersLoading = dbClustersResults.some(
-    (result) => result.queryResult.isLoading
-  );
+  const { results: dbClustersResults, isLoading: dbClustersLoading } = useDbClusters();
 
   const tableData = useMemo(
     () => convertDbClusterPayloadToTableFormat(dbClustersResults),
@@ -132,6 +127,11 @@ export const DbClusterView = () => {
         header: 'Nº nodes',
       },
       {
+        accessorKey: 'cluster',
+        id: 'cluster',
+        header: 'Cluster',
+      },
+      {
         accessorKey: 'namespace',
         id: 'namespace',
         header: 'Namespace',
@@ -177,13 +177,14 @@ export const DbClusterView = () => {
           data={tableData}
           enableRowActions
           renderRowActions={({ row }) => {
-            return <DbActions dbCluster={row.original.raw} />;
+            return <DbActions dbCluster={row.original.raw} cluster={row.original.cluster} />;
           }}
           renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
           enableRowHoverAction
           rowHoverAction={(row) =>
             navigate(
-              `/databases/${row.original.namespace}/${row.original.databaseName}/overview`
+              `/databases/${row.original.namespace}/${row.original.databaseName}/overview`,
+              { state: { cluster: row.original.cluster } }
             )
           }
           renderTopToolbarCustomActions={() =>

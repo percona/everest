@@ -30,12 +30,17 @@ const (
 	pgReposLimit                    = 3
 )
 
-func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
+func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, cluster string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not get kube connector"))
+	}
+
+	if err := h.validateDatabaseClusterCR(ctx, cluster, db.GetNamespace(), db); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
-	if currentDB, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: db.GetNamespace(), Name: db.GetName()}); err != nil {
+	if currentDB, err := connector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: db.GetNamespace(), Name: db.GetName()}); err != nil {
 		if !k8serrors.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to check if DB cluster with name already exists in namespace: %w", err)
 		}
@@ -43,54 +48,64 @@ func (h *validateHandler) CreateDatabaseCluster(ctx context.Context, db *everest
 		return nil, fmt.Errorf("db cluster with name '%s' already exists in namespace '%s'", db.GetName(), db.GetNamespace())
 	}
 
-	return h.next.CreateDatabaseCluster(ctx, db)
+	return h.next.CreateDatabaseCluster(ctx, cluster, db)
 }
 
-func (h *validateHandler) ListDatabaseClusters(ctx context.Context, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
-	return h.next.ListDatabaseClusters(ctx, namespace)
+func (h *validateHandler) ListDatabaseClusters(ctx context.Context, cluster, namespace string) (*everestv1alpha1.DatabaseClusterList, error) {
+	return h.next.ListDatabaseClusters(ctx, cluster, namespace)
 }
 
-func (h *validateHandler) DeleteDatabaseCluster(ctx context.Context, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
-	return h.next.DeleteDatabaseCluster(ctx, namespace, name, req)
+func (h *validateHandler) DeleteDatabaseCluster(ctx context.Context, cluster, namespace, name string, req *api.DeleteDatabaseClusterParams) error {
+	return h.next.DeleteDatabaseCluster(ctx, cluster, namespace, name, req)
 }
 
-func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
-	if err := h.validateDatabaseClusterCR(ctx, db.GetNamespace(), db); err != nil {
+func (h *validateHandler) UpdateDatabaseCluster(ctx context.Context, cluster string, db *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error) {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("could not get kube connector"))
+	}
+
+	if err := h.validateDatabaseClusterCR(ctx, cluster, db.GetNamespace(), db); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 
-	current, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: db.GetNamespace(), Name: db.GetName()})
+	current, err := connector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: db.GetNamespace(), Name: db.GetName()})
 	if err != nil {
 		return nil, fmt.Errorf("failed to GetDatabaseCluster: %w", err)
 	}
 	if err := h.validateDatabaseClusterOnUpdate(db, current); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
-	return h.next.UpdateDatabaseCluster(ctx, db)
+	return h.next.UpdateDatabaseCluster(ctx, cluster, db)
 }
 
-func (h *validateHandler) GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
-	return h.next.GetDatabaseCluster(ctx, namespace, name)
+func (h *validateHandler) GetDatabaseCluster(ctx context.Context, cluster, namespace, name string) (*everestv1alpha1.DatabaseCluster, error) {
+	return h.next.GetDatabaseCluster(ctx, cluster, namespace, name)
 }
 
-func (h *validateHandler) GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error) {
-	return h.next.GetDatabaseClusterCredentials(ctx, namespace, name)
+func (h *validateHandler) GetDatabaseClusterCredentials(ctx context.Context, cluster, namespace, name string) (*api.DatabaseClusterCredential, error) {
+	return h.next.GetDatabaseClusterCredentials(ctx, cluster, namespace, name)
 }
 
-func (h *validateHandler) GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error) {
-	return h.next.GetDatabaseClusterComponents(ctx, namespace, name)
+func (h *validateHandler) GetDatabaseClusterComponents(ctx context.Context, cluster, namespace, name string) ([]api.DatabaseClusterComponent, error) {
+	return h.next.GetDatabaseClusterComponents(ctx, cluster, namespace, name)
 }
 
-func (h *validateHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error) {
-	return h.next.GetDatabaseClusterPitr(ctx, namespace, name)
+func (h *validateHandler) GetDatabaseClusterPitr(ctx context.Context, cluster, namespace, name string) (*api.DatabaseClusterPitr, error) {
+	return h.next.GetDatabaseClusterPitr(ctx, cluster, namespace, name)
 }
 
 //nolint:cyclop
 func (h *validateHandler) validateDatabaseClusterCR(
 	ctx context.Context,
-	namespace string,
+	cluster, namespace string,
 	databaseCluster *everestv1alpha1.DatabaseCluster,
 ) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get kube connector"))
+	}
+
 	if err := validateMetadata(databaseCluster); err != nil {
 		return err
 	}
@@ -102,7 +117,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 	if !ok {
 		return errors.New("unsupported database engine")
 	}
-	engine, err := h.kubeConnector.GetDatabaseEngine(ctx, types.NamespacedName{Namespace: namespace, Name: engineName})
+	engine, err := connector.GetDatabaseEngine(ctx, types.NamespacedName{Namespace: namespace, Name: engineName})
 	if err != nil {
 		return err
 	}
@@ -118,7 +133,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 		return err
 	}
 
-	if err = h.validateBackupStoragesFor(ctx, namespace, databaseCluster); err != nil {
+	if err = h.validateBackupStoragesFor(ctx, cluster, namespace, databaseCluster); err != nil {
 		return err
 	}
 
@@ -129,10 +144,10 @@ func (h *validateHandler) validateDatabaseClusterCR(
 	}
 
 	if databaseCluster.Spec.Engine.Type == everestv1alpha1.DatabaseEnginePostgresql {
-		if err = h.validatePGSchedulesRestrictions(ctx, databaseCluster); err != nil {
+		if err = h.validatePGSchedulesRestrictions(ctx, cluster, databaseCluster); err != nil {
 			return err
 		}
-		if err = validatePGReposForAPIDB(ctx, databaseCluster, h.kubeConnector.ListDatabaseClusterBackups); err != nil {
+		if err = validatePGReposForAPIDB(ctx, databaseCluster, connector.ListDatabaseClusterBackups); err != nil {
 			return err
 		}
 	}
@@ -140,7 +155,7 @@ func (h *validateHandler) validateDatabaseClusterCR(
 		return err
 	}
 
-	if err = h.validatePodSchedulingPolicy(ctx, databaseCluster); err != nil {
+	if err = h.validatePodSchedulingPolicy(ctx, cluster, databaseCluster); err != nil {
 		h.log.Errorf("failed to validate .spec.podSchedulingPolicyName='%s': %v", databaseCluster.Spec.PodSchedulingPolicyName, err)
 		return err
 	}
@@ -315,9 +330,13 @@ func checkDuplicateSchedules(schedules []everestv1alpha1.BackupSchedule) error {
 
 func (h *validateHandler) validateBackupStoragesFor(
 	ctx context.Context,
-	namespace string,
+	cluster, namespace string,
 	databaseCluster *everestv1alpha1.DatabaseCluster,
 ) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get kube connector"))
+	}
 	storages := make(map[string]bool)
 	for _, schedule := range databaseCluster.Spec.Backup.Schedules {
 		storages[schedule.BackupStorageName] = true
@@ -345,7 +364,7 @@ func (h *validateHandler) validateBackupStoragesFor(
 		if databaseCluster.Spec.Backup.PITR.BackupStorageName == nil || *databaseCluster.Spec.Backup.PITR.BackupStorageName == "" {
 			return errPitrNoBackupStorageName
 		}
-		storage, err := h.kubeConnector.GetBackupStorage(ctx,
+		storage, err := connector.GetBackupStorage(ctx,
 			types.NamespacedName{
 				Namespace: namespace,
 				Name:      *databaseCluster.Spec.Backup.PITR.BackupStorageName,
@@ -398,10 +417,15 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 	return nil
 }
 
-func (h *validateHandler) validatePGSchedulesRestrictions(ctx context.Context, newDbc *everestv1alpha1.DatabaseCluster) error {
+func (h *validateHandler) validatePGSchedulesRestrictions(ctx context.Context, cluster string, newDbc *everestv1alpha1.DatabaseCluster) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return err
+	}
+
 	dbcName := newDbc.GetName()
 	dbcNamespace := newDbc.GetNamespace()
-	existingDbc, err := h.kubeConnector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: dbcNamespace, Name: dbcName})
+	existingDbc, err := connector.GetDatabaseCluster(ctx, types.NamespacedName{Namespace: dbcNamespace, Name: dbcName})
 	if err != nil {
 		// if there was no such cluster before (creating cluster) - check only the duplicates for storages
 		if k8serrors.IsNotFound(err) {
@@ -679,16 +703,20 @@ var (
 	}
 )
 
-func (h *validateHandler) validatePodSchedulingPolicy(ctx context.Context, db *everestv1alpha1.DatabaseCluster) error {
+func (h *validateHandler) validatePodSchedulingPolicy(ctx context.Context, cluster string, db *everestv1alpha1.DatabaseCluster) error {
+	connector, err := h.Connector(ctx, cluster)
+	if err != nil {
+		return errors.Join(err, errors.New("could not get kube connector"))
+	}
+
 	var psp *everestv1alpha1.PodSchedulingPolicy
-	var err error
 	pspName := db.Spec.PodSchedulingPolicyName
 
 	if pspName == "" {
 		return nil
 	}
 
-	if psp, err = h.kubeConnector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: pspName}); err != nil {
+	if psp, err = connector.GetPodSchedulingPolicy(ctx, types.NamespacedName{Name: pspName}); err != nil {
 		if k8serrors.IsNotFound(err) {
 			return err
 		}

@@ -12,7 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { BackupStorage } from 'shared-types/backupStorages.types';
 import { useRBACPermissions } from 'hooks/rbac';
 
-const BackupsActionableAlert = ({ namespace }: BackupsActionableAlertProps) => {
+const BackupsActionableAlert = ({ namespace, cluster = 'in-cluster' }: BackupsActionableAlertProps) => {
   const [openCreateEditModal, setOpenCreateEditModal] = useState(false);
   const { mutate: createBackupStorage, isPending: creatingBackupStorage } =
     useCreateBackupStorage();
@@ -23,10 +23,11 @@ const BackupsActionableAlert = ({ namespace }: BackupsActionableAlertProps) => {
   };
 
   const handleSubmit = (_: boolean, data: BackupStorage) => {
-    createBackupStorage(data, {
+    createBackupStorage({ ...data, cluster }, {
       onSuccess: (newLocation) => {
         updateDataAfterCreate(queryClient, [
           BACKUP_STORAGES_QUERY_KEY,
+          cluster,
           namespace,
         ])(newLocation as BackupStorage);
         handleCloseModal();

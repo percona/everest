@@ -54,6 +54,7 @@ export enum DbWizardForm {
   dbName = 'dbName',
   dbType = 'dbType',
   k8sNamespace = 'k8sNamespace',
+  k8sCluster = 'k8sCluster',
   dbEnvironment = 'dbEnvironment',
   storageClass = 'storageClass',
   cpu = 'cpu',

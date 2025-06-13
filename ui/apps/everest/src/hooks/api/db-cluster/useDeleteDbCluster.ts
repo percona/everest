@@ -13,26 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useMutation, UseMutationOptions } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteDbClusterFn } from 'api/dbClusterApi';
 
-export type DeleteDbClusterArgType = {
+interface DeleteDbClusterPayload {
   dbClusterName: string;
   namespace: string;
   cleanupBackupStorage: boolean;
-};
-export const useDeleteDbCluster = (
-  dbClusterName: string,
-  options?: UseMutationOptions<
-    unknown,
-    unknown,
-    DeleteDbClusterArgType,
-    unknown
-  >
-) =>
-  useMutation({
-    mutationKey: ['deleteDbCluster', dbClusterName],
-    mutationFn: ({ namespace, cleanupBackupStorage }: DeleteDbClusterArgType) =>
-      deleteDbClusterFn(dbClusterName, namespace, cleanupBackupStorage),
-    ...options,
+}
+
+export const useDeleteDbCluster = (cluster: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      dbClusterName,
+      namespace,
+      cleanupBackupStorage,
+    }: DeleteDbClusterPayload) => {
+      return deleteDbClusterFn(dbClusterName, namespace, cleanupBackupStorage, cluster);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['dbClusters']
+      });
+    },
   });
+};

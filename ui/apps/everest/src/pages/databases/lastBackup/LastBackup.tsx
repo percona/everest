@@ -13,13 +13,13 @@ import { useDbCluster } from 'hooks/api/db-cluster/useDbCluster';
 import { useNavigate } from 'react-router-dom';
 
 export const LastBackup = ({ dbName, namespace }: LastBackupProps) => {
-  const { data: backups = [] } = useDbBackups(dbName!, namespace, {
+  const { data: backups = [] } = useDbBackups(dbName!, namespace, 'in-cluster', {
     enabled: !!dbName,
     refetchInterval: 10 * 1000,
   });
 
-  const { data: pitrData } = useDbClusterPitr(dbName, namespace);
-  const { data: dbCluster } = useDbCluster(dbName, namespace);
+  const { data: pitrData } = useDbClusterPitr(dbName, namespace, 'in-cluster');
+  const { data: dbCluster } = useDbCluster(dbName, namespace, 'in-cluster');
 
   const schedules = dbCluster?.spec.backup?.schedules || [];
 

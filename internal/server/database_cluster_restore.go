@@ -26,8 +26,8 @@ import (
 )
 
 // ListDatabaseClusterRestores List of the created database cluster restores on the specified kubernetes cluster.
-func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace, name string) error {
-	result, err := e.handler.ListDatabaseClusterRestores(ctx.Request().Context(), namespace, name)
+func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, cluster, namespace, name string) error {
+	result, err := e.handler.ListDatabaseClusterRestores(ctx.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("ListDatabaseClusterRestores failed: %w", err)
 		return err
@@ -36,14 +36,14 @@ func (e *EverestServer) ListDatabaseClusterRestores(ctx echo.Context, namespace,
 }
 
 // CreateDatabaseClusterRestore Create a database cluster restore on the specified kubernetes cluster.
-func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace string) error {
+func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, cluster, namespace string) error {
 	restore := &everestv1alpha1.DatabaseClusterRestore{}
 	if err := e.getBodyFromContext(ctx, restore); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
 	restore.SetNamespace(namespace)
 
-	result, err := e.handler.CreateDatabaseClusterRestore(ctx.Request().Context(), restore)
+	result, err := e.handler.CreateDatabaseClusterRestore(ctx.Request().Context(), cluster, restore)
 	if err != nil {
 		e.l.Errorf("CreateDatabaseClusterRestore failed: %w", err)
 		return err
@@ -52,8 +52,8 @@ func (e *EverestServer) CreateDatabaseClusterRestore(ctx echo.Context, namespace
 }
 
 // DeleteDatabaseClusterRestore Delete the specified cluster restore on the specified kubernetes cluster.
-func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
-	if err := e.handler.DeleteDatabaseClusterRestore(ctx.Request().Context(), namespace, name); err != nil {
+func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, cluster, namespace, name string) error {
+	if err := e.handler.DeleteDatabaseClusterRestore(ctx.Request().Context(), cluster, namespace, name); err != nil {
 		e.l.Errorf("DeleteDatabaseClusterRestore failed: %w", err)
 		return err
 	}
@@ -61,8 +61,8 @@ func (e *EverestServer) DeleteDatabaseClusterRestore(ctx echo.Context, namespace
 }
 
 // GetDatabaseClusterRestore Returns the specified cluster restore on the specified kubernetes cluster.
-func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
-	rs, err := e.handler.GetDatabaseClusterRestore(ctx.Request().Context(), namespace, name)
+func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, cluster, namespace, name string) error {
+	rs, err := e.handler.GetDatabaseClusterRestore(ctx.Request().Context(), cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("GetDatabaseClusterRestore failed: %w", err)
 		return err
@@ -71,7 +71,7 @@ func (e *EverestServer) GetDatabaseClusterRestore(ctx echo.Context, namespace, n
 }
 
 // UpdateDatabaseClusterRestore Replace the specified cluster restore on the specified kubernetes cluster.
-func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace, name string) error {
+func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, cluster, namespace, name string) error {
 	restore := &everestv1alpha1.DatabaseClusterRestore{}
 	if err := e.getBodyFromContext(ctx, restore); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
@@ -79,7 +79,7 @@ func (e *EverestServer) UpdateDatabaseClusterRestore(ctx echo.Context, namespace
 	restore.SetNamespace(namespace)
 	restore.SetName(name)
 
-	result, err := e.handler.UpdateDatabaseClusterRestore(ctx.Request().Context(), restore)
+	result, err := e.handler.UpdateDatabaseClusterRestore(ctx.Request().Context(), cluster, restore)
 	if err != nil {
 		e.l.Errorf("UpdateDatabaseClusterRestore failed: %w", err)
 		return err

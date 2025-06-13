@@ -96,7 +96,7 @@ func NewNamespaceLister(c NamespaceListConfig, l *zap.SugaredLogger) (*Namespace
 		n.l = zap.NewNop().Sugar()
 	}
 
-	k, err := cliutils.NewKubeConnector(n.l, n.cfg.KubeconfigPath)
+	k, err := cliutils.NewKubeConnector(n.l, n.cfg.KubeconfigPath, "")
 	if err != nil {
 		return nil, err
 	}

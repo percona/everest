@@ -25,9 +25,9 @@ import (
 )
 
 // ListBackupStorages lists backup storages.
-func (e *EverestServer) ListBackupStorages(c echo.Context, namespace string) error {
+func (e *EverestServer) ListBackupStorages(c echo.Context, cluster, namespace string) error {
 	ctx := c.Request().Context()
-	list, err := e.handler.ListBackupStorages(ctx, namespace)
+	list, err := e.handler.ListBackupStorages(ctx, cluster, namespace)
 	if err != nil {
 		e.l.Errorf("ListBackupStorages failed: %w", err)
 		return err
@@ -43,13 +43,13 @@ func (e *EverestServer) ListBackupStorages(c echo.Context, namespace string) err
 }
 
 // CreateBackupStorage creates a new backup storage object.
-func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) error {
+func (e *EverestServer) CreateBackupStorage(c echo.Context, cluster, namespace string) error {
 	ctx := c.Request().Context()
 	req := api.CreateBackupStorageParams{}
 	if err := c.Bind(&req); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
-	result, err := e.handler.CreateBackupStorage(ctx, namespace, &req)
+	result, err := e.handler.CreateBackupStorage(ctx, cluster, namespace, &req)
 	if err != nil {
 		e.l.Errorf("CreateBackupStorage failed: %w", err)
 		return err
@@ -60,9 +60,9 @@ func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) er
 }
 
 // DeleteBackupStorage deletes the specified backup storage.
-func (e *EverestServer) DeleteBackupStorage(c echo.Context, namespace, name string) error {
+func (e *EverestServer) DeleteBackupStorage(c echo.Context, cluster, namespace, name string) error {
 	ctx := c.Request().Context()
-	if err := e.handler.DeleteBackupStorage(ctx, namespace, name); err != nil {
+	if err := e.handler.DeleteBackupStorage(ctx, cluster, namespace, name); err != nil {
 		e.l.Errorf("DeleteBackupStorage failed: %w", err)
 		return err
 	}
@@ -70,9 +70,9 @@ func (e *EverestServer) DeleteBackupStorage(c echo.Context, namespace, name stri
 }
 
 // GetBackupStorage retrieves the specified backup storage.
-func (e *EverestServer) GetBackupStorage(c echo.Context, namespace, name string) error {
+func (e *EverestServer) GetBackupStorage(c echo.Context, cluster, namespace, name string) error {
 	ctx := c.Request().Context()
-	result, err := e.handler.GetBackupStorage(ctx, namespace, name)
+	result, err := e.handler.GetBackupStorage(ctx, cluster, namespace, name)
 	if err != nil {
 		e.l.Errorf("GetBackupStorage failed: %w", err)
 		return err
@@ -84,13 +84,13 @@ func (e *EverestServer) GetBackupStorage(c echo.Context, namespace, name string)
 }
 
 // UpdateBackupStorage updates of the specified backup storage.
-func (e *EverestServer) UpdateBackupStorage(c echo.Context, namespace, name string) error {
+func (e *EverestServer) UpdateBackupStorage(c echo.Context, cluster, namespace, name string) error {
 	ctx := c.Request().Context()
 	req := api.UpdateBackupStorageParams{}
 	if err := c.Bind(&req); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
-	result, err := e.handler.UpdateBackupStorage(ctx, namespace, name, &req)
+	result, err := e.handler.UpdateBackupStorage(ctx, cluster, namespace, name, &req)
 	if err != nil {
 		e.l.Errorf("UpdateBackupStorage failed: %w", err)
 		return err

@@ -98,7 +98,7 @@ func settingsRBACCanRun(cmd *cobra.Command, args []string) {
 			l = logger.GetLogger().With("component", "rbac")
 		}
 
-		client, err := kubernetes.New(rbacCanKubeconfigPath, l)
+		client, err := kubernetes.New(l, cmd.Context(), nil, kubernetes.WithKubeconfig(rbacCanKubeconfigPath))
 		if err != nil {
 			output.PrintError(err, logger.GetLogger(), rbacCanPretty)
 			os.Exit(1)

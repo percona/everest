@@ -47,6 +47,7 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   [DbWizardFormFields.dbVersion]: '',
   [DbWizardFormFields.storageClass]: '',
   [DbWizardFormFields.k8sNamespace]: null,
+  [DbWizardFormFields.k8sCluster]: '', // Add default value for cluster
   [DbWizardFormFields.externalAccess]: false,
   [DbWizardFormFields.sourceRanges]: [{ sourceRange: '' }],
   [DbWizardFormFields.podSchedulingPolicyEnabled]: false,
@@ -124,6 +125,7 @@ export const DbClusterPayloadToFormValues = (
           )
         : dbCluster?.metadata?.name,
     [DbWizardFormFields.dbVersion]: dbCluster?.spec?.engine?.version || '',
+    [DbWizardFormFields.k8sCluster]: defaults[DbWizardFormFields.k8sCluster],
 
     //resources
     [DbWizardFormFields.numberOfNodes]: numberOfNodes,

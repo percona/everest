@@ -10,12 +10,12 @@ import (
 	"github.com/percona/everest/api"
 )
 
-func (h *rbacHandler) GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error) {
-	return h.next.GetKubernetesClusterResources(ctx)
+func (h *rbacHandler) GetKubernetesClusterResources(ctx context.Context, cluster string) (*api.KubernetesClusterResources, error) {
+	return h.next.GetKubernetesClusterResources(ctx, cluster)
 }
 
-func (h *rbacHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error) {
-	return h.next.GetKubernetesClusterInfo(ctx)
+func (h *rbacHandler) GetKubernetesClusterInfo(ctx context.Context, cluster string) (*api.KubernetesClusterInfo, error) {
+	return h.next.GetKubernetesClusterInfo(ctx, cluster)
 }
 
 func (h *rbacHandler) GetSettings(ctx context.Context) (*api.Settings, error) {

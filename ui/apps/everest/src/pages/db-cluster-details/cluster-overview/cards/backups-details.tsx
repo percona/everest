@@ -19,7 +19,7 @@ import { BackupsDetailsOverviewCardProps } from './card.types';
 import OverviewSectionRow from '../overview-section-row';
 import { Messages } from '../cluster-overview.messages';
 import { Box, Button, Stack, Typography } from '@mui/material';
-import { Link, useMatch } from 'react-router-dom';
+import { Link, useMatch, useLocation } from 'react-router-dom';
 import { DBClusterDetailsTabs } from '../../db-cluster-details.types';
 import OverviewSectionText from '../overview-section-text/overview-section-text';
 import { getTimeSelectionPreviewMessage } from '../../../database-form/database-preview/database.preview.messages';
@@ -58,11 +58,14 @@ export const BackupsDetails = ({
 
   const [openEditModal, setOpenEditModal] = useState(false);
   const routeMatch = useMatch('/databases/:namespace/:dbClusterName/:tabs');
-  const { data: backups = [] } = useDbBackups(dbClusterName!, namespace!, {
+  const location = useLocation();
+  const cluster = location.state?.cluster || 'in-cluster';
+  const { data: backups = [] } = useDbBackups(dbClusterName!, namespace!, cluster, {
     refetchInterval: 10 * 1000,
   });
   const { mutate: updateCluster } = useUpdateDbClusterWithConflictRetry(
     dbCluster!,
+    cluster,
     {
       onSuccess: () => handleCloseModal(),
     }

@@ -7,12 +7,12 @@ import (
 	"github.com/percona/everest/api"
 )
 
-func (h *validateHandler) GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error) {
-	return h.next.GetKubernetesClusterResources(ctx)
+func (h *validateHandler) GetKubernetesClusterResources(ctx context.Context, cluster string) (*api.KubernetesClusterResources, error) {
+	return h.next.GetKubernetesClusterResources(ctx, cluster)
 }
 
-func (h *validateHandler) GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error) {
-	return h.next.GetKubernetesClusterInfo(ctx)
+func (h *validateHandler) GetKubernetesClusterInfo(ctx context.Context, cluster string) (*api.KubernetesClusterInfo, error) {
+	return h.next.GetKubernetesClusterInfo(ctx, cluster)
 }
 
 func (h *validateHandler) GetUserPermissions(ctx context.Context) (*api.UserPermissions, error) {
