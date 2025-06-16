@@ -38,7 +38,7 @@ async function expectUnauthorized(request, token: string) {
 }
 // ——————————————————————————————————————————————————
 
-test('Everest-191 - Verify token invalidity after user logout from Everest UI - Everest user', async ({
+test('T191 - Verify token invalidity after user logout from Everest UI - Everest user', async ({
   page,
   request,
 }) => {
