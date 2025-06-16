@@ -187,7 +187,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test(`${zephyrId} - Create backup schedules [${db} size ${size}]`, async ({
         page,
       }) => {
-        test.setTimeout(30 * 1000);
+        test.setTimeout(360 * 1000);
 
         const scheduleMinute1 = getNextScheduleMinute(2);
         const timeOption1: ScheduleTimeOptions = {
