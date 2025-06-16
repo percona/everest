@@ -110,16 +110,16 @@ export const BackupsDetails = ({
         header: '',
         maxSize: 150,
         Cell: ({ cell }) =>
-          cell.getValue<Date>()
-            ? format(cell.getValue<Date>(), DATE_FORMAT)
+          cell.getValue<string>()
+            ? format(cell.getValue<string>(), DATE_FORMAT)
             : '',
       },
       {
         accessorKey: 'completed',
         header: '',
         Cell: ({ cell }) =>
-          cell.getValue<Date>()
-            ? format(cell.getValue<Date>(), DATE_FORMAT)
+          cell.getValue<string>()
+            ? format(cell.getValue<string>(), DATE_FORMAT)
             : '',
       },
     ],
