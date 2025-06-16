@@ -84,6 +84,6 @@ setup.describe.serial('Teardown', () => {
   // });
 
   setup('Logout', async ({ page }) => {
-  await logout(page);
+    await logout(page);
   });
 });

@@ -2,7 +2,6 @@ import { STORAGE_STATE_FILE, TIMEOUTS } from '@e2e/constants';
 import { Page, expect } from '@playwright/test';
 const { CI_USER, CI_PASSWORD } = process.env;
 
-
 export const switchUser = async (
   page: Page,
   user: string,
@@ -46,8 +45,12 @@ export const login = async (page: Page) => {
 
 export const logout = async (page: Page) => {
   await page.goto('/');
-  await expect(page.getByTestId('user-appbar-button')).toBeVisible({timeout: TIMEOUTS.ThirtySeconds,});
+  await expect(page.getByTestId('user-appbar-button')).toBeVisible({
+    timeout: TIMEOUTS.ThirtySeconds,
+  });
   await page.getByTestId('user-appbar-button').click();
   await page.getByRole('menuitem').filter({ hasText: 'Log out' }).click();
-  await expect(page.getByTestId('login-button')).toBeVisible({timeout: TIMEOUTS.ThirtySeconds });
+  await expect(page.getByTestId('login-button')).toBeVisible({
+    timeout: TIMEOUTS.ThirtySeconds,
+  });
 };
