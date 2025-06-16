@@ -167,7 +167,7 @@ test.describe.configure({ retries: 0 });
         });
       });
 
-      test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
+      test(`Delete cluster ${clusterName}`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
         await waitForStatus(page, clusterName, 'Deleting', 15000);
         await waitForDelete(page, clusterName, 240000);
