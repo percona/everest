@@ -36,7 +36,7 @@ import {
   schema,
 } from './restore-db-modal-schema';
 import { Messages } from './restore-db-modal.messages';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const ModalContent = ({
   backupName,
@@ -55,14 +55,17 @@ const ModalContent = ({
   backups: Backup[];
   backupStorageName?: string;
 }) => {
-  const { watch, resetField, setValue } = useFormContext();
+  const { watch, resetField, setValue, getValues } = useFormContext();
   const backupType: BackuptypeValues = watch(RestoreDbFields.backupType);
 
   useEffect(() => {
-    if (pitrData) {
+    if (!pitrData) {
+      return;
+    }
+    if (!getValues(RestoreDbFields.pitrBackup)) {
       setValue(RestoreDbFields.pitrBackup, pitrData.latestDate);
     }
-  }, [pitrData, setValue]);
+  }, [getValues, pitrData, setValue]);
 
   return (
     <LoadableChildren loading={isLoading}>
@@ -93,6 +96,7 @@ const ModalContent = ({
               onClick: () => {
                 resetField(RestoreDbFields.pitrBackup, {
                   keepError: false,
+                  defaultValue: getValues(RestoreDbFields.pitrBackup),
                 });
               },
             },
@@ -126,7 +130,9 @@ const ModalContent = ({
             .filter((value) => value.state === BackupStatus.OK)
             .sort((a, b) => {
               if (a.created && b.created) {
-                return b.created.valueOf() - a.created.valueOf();
+                return (
+                  new Date(b.created).valueOf() - new Date(a.created).valueOf()
+                );
               }
               return -1;
             })
@@ -216,30 +222,43 @@ const RestoreDbModal = <T extends FieldValues>({
   backupName?: string;
 }) => {
   const navigate = useNavigate();
+  // We use a memo to prevent changes in dbCluster from causing changes in PITR data
+  // Even though gcTime is now set to 0 to prevent old data from populating the input, we avoid that situation
+  const cluster = useMemo(() => dbCluster, []);
   // we use a different query key for the restore modal to avoid re-renders from "useDbBackups" running in the background
   const { data: backups = [], isLoading } = useDbBackups(
-    dbCluster.metadata.name,
+    cluster.metadata.name,
     namespace,
     {
       queryKey: [
         BACKUPS_QUERY_KEY,
         namespace,
-        dbCluster.metadata.name,
+        cluster.metadata.name,
         'restore-modal',
       ],
     }
   );
   const { data: pitrData } = useDbClusterPitr(
-    dbCluster.metadata.name,
-    namespace
+    cluster.metadata.name,
+    namespace,
+    {
+      queryKey: [cluster.metadata.name, namespace, 'pitr', 'restore-modal'],
+      gcTime: 0,
+    }
   );
 
   const { mutate: restoreBackupFromBackup, isPending: restoringFromBackup } =
-    useDbClusterRestoreFromBackup(dbCluster.metadata.name);
+    useDbClusterRestoreFromBackup(cluster.metadata.name);
   const {
     mutate: restoreBackupFromPointInTime,
     isPending: restoringFromPointInTime,
-  } = useDbClusterRestoreFromPointInTime(dbCluster.metadata.name);
+  } = useDbClusterRestoreFromPointInTime(cluster.metadata.name);
+
+  const pitrSchema = useMemo(
+    () =>
+      schema(!!pitrData?.gaps, pitrData?.earliestDate, pitrData?.latestDate),
+    [pitrData]
+  );
 
   return (
     <FormDialog
@@ -250,11 +269,7 @@ const RestoreDbModal = <T extends FieldValues>({
       headerMessage={
         isNewClusterMode ? Messages.headerMessageCreate : Messages.headerMessage
       }
-      schema={schema(
-        !!pitrData?.gaps,
-        pitrData?.earliestDate,
-        pitrData?.latestDate
-      )}
+      schema={pitrSchema}
       submitting={restoringFromBackup || restoringFromPointInTime}
       defaultValues={{ ...defaultValues, backupName: backupName || '' }}
       onSubmit={({ backupName, backupType, pitrBackup }) => {
@@ -264,8 +279,9 @@ const RestoreDbModal = <T extends FieldValues>({
           pitrBackupName = pitrData.latestBackupName;
         }
 
-        if (pitrBackup && pitrBackup instanceof Date) {
-          pointInTimeDate = pitrBackup.toISOString().split('.')[0] + 'Z';
+        if (pitrBackup) {
+          const pitrDateObj = new Date(pitrBackup);
+          pointInTimeDate = pitrDateObj.toISOString().split('.')[0] + 'Z';
         }
         if (isNewClusterMode) {
           closeModal();
@@ -275,7 +291,7 @@ const RestoreDbModal = <T extends FieldValues>({
           if (backupType === BackuptypeValues.fromBackup) {
             navigate('/databases/new', {
               state: {
-                selectedDbCluster: dbCluster.metadata.name,
+                selectedDbCluster: cluster.metadata.name,
                 backupName,
                 namespace,
                 backupStorageName: selectedBackup,
@@ -284,7 +300,7 @@ const RestoreDbModal = <T extends FieldValues>({
           } else {
             navigate('/databases/new', {
               state: {
-                selectedDbCluster: dbCluster.metadata.name,
+                selectedDbCluster: cluster.metadata.name,
                 backupName: pitrBackupName,
                 namespace,
                 backupStorageName: selectedBackup,
@@ -325,10 +341,10 @@ const RestoreDbModal = <T extends FieldValues>({
       <ModalContent
         isLoading={isLoading}
         header={isNewClusterMode ? Messages.subHeadCreate : Messages.subHead}
-        dbType={dbEngineToDbType(dbCluster.spec.engine.type)}
+        dbType={dbEngineToDbType(cluster.spec.engine.type)}
         pitrData={pitrData}
         backups={backups}
-        backupStorageName={dbCluster.spec.backup?.pitr?.backupStorageName}
+        backupStorageName={cluster.spec.backup?.pitr?.backupStorageName}
       />
     </FormDialog>
   );
