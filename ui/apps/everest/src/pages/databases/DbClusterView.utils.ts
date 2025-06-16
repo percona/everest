@@ -146,8 +146,8 @@ export const getLastBackupStatus = (
 
 export const sortBackupsByTime = (backups: Backup[]) => {
   return backups.sort((b1, b2) => {
-    const date1 = b1?.completed || new Date();
-    const date2 = b2?.completed || new Date();
+    const date1 = b1?.completed ? new Date(b1.completed) : new Date();
+    const date2 = b2?.completed ? new Date(b2.completed) : new Date();
     return date1.getTime() - date2.getTime();
   });
 };
