@@ -42,3 +42,15 @@ export const login = async (page: Page) => {
   ).not.toBeUndefined();
   await page.context().storageState({ path: STORAGE_STATE_FILE });
 };
+
+export const logout = async (page: Page) => {
+  await page.goto('/');
+  await expect(page.getByTestId('user-appbar-button')).toBeVisible({
+    timeout: TIMEOUTS.ThirtySeconds,
+  });
+  await page.getByTestId('user-appbar-button').click();
+  await page.getByRole('menuitem').filter({ hasText: 'Log out' }).click();
+  await expect(page.getByTestId('login-button')).toBeVisible({
+    timeout: TIMEOUTS.ThirtySeconds,
+  });
+};
