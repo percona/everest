@@ -36,15 +36,6 @@ let token: string;
 
 test.describe.configure({ retries: 0 });
 
-const zephyrMap: Record<string, string> = {
-  'backup-pxc': 'T101',
-  'backup-psmdb': 'T102',
-  'backup-postgresql': 'T103',
-  'restore-pxc': 'T104',
-  'restore-psmdb': 'T105',
-  'restore-postgresql': 'T106',
-};
-
 [
   { db: 'psmdb', size: 3 },
   { db: 'pxc', size: 3 },
@@ -60,7 +51,6 @@ const zephyrMap: Record<string, string> = {
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-scale`;
-      let zephyrId: string;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -191,6 +181,44 @@ const zephyrMap: Record<string, string> = {
           ).toBeVisible();
         });
 
+        await test.step('Test invalid values', async () => {
+          const diskInput = page.getByTestId('text-input-disk');
+          const saveButton = page.getByTestId('form-dialog-save');
+
+          // Attempt to enter empty disk size
+          await diskInput.fill('');
+
+          // Verify that the save button is disabled
+          await expect(saveButton).toBeDisabled();
+
+          // Verify that the error message is displayed
+          await expect(
+            page.locator('text=String must contain at least 1 character(s)')
+          ).toBeVisible();
+
+          // Attempt to enter empty disk size
+          await diskInput.fill('5.5');
+
+          // Verify that the save button is disabled
+          await expect(saveButton).toBeDisabled();
+
+          // Verify that the error message is displayed
+          await expect(
+            page.locator('text=Disk size must be an integer number')
+          ).toBeVisible();
+
+          // Attempt to enter letter as disk size
+          await diskInput.fill('a');
+
+          // Verify that the save button is disabled
+          await expect(saveButton).toBeDisabled();
+
+          // Verify that the error message is displayed
+          await expect(
+            page.locator('text=Please enter a valid number')
+          ).toBeVisible();
+        });
+
         await test.step('Increase disk size', async () => {
           const diskInput = page.getByTestId('text-input-disk');
           const saveButton = page.getByTestId('form-dialog-save');
@@ -215,6 +243,9 @@ const zephyrMap: Record<string, string> = {
           await expect(
             page.locator('[data-testid="resources-edit-modal"]')
           ).toBeHidden();
+
+          // Verify that the edit resources button is disabled while resizing
+          await expect(page.getByTestId('edit-resources-button')).toBeDisabled({timeout: 30000});
 
           // Check DB status to be Up
           await page.goto('/databases');
