@@ -114,6 +114,10 @@ type KubernetesConnector interface {
 	// SetDatabaseEngineLock sets the lock on the database engine that matches the criteria.
 	// The lock is automatically set to false once everest-operator completes its upgrade.
 	SetDatabaseEngineLock(ctx context.Context, key ctrlclient.ObjectKey, locked bool) error
+	// ListDataImporters lists all DataImporters in the cluster.
+	ListDataImporters(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.DataImporterList, error)
+	// ListDataImportJobs lists all DataImportJobs for the specified database cluster.
+	ListDataImportJobs(ctx context.Context, namespace, dbName string, opts ...ctrlclient.ListOption) (*everestv1alpha1.DataImportJobList, error)
 	// GetDeployment returns k8s deployment that matches the criteria.
 	GetDeployment(ctx context.Context, key ctrlclient.ObjectKey) (*appsv1.Deployment, error)
 	// UpdateDeployment updates a deployment and returns the updated object.

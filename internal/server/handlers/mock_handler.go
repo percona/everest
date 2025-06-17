@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
+	v1 "k8s.io/api/core/v1"
 
 	v1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	api "github.com/percona/everest/api"
@@ -147,6 +148,36 @@ func (_m *MockHandler) CreateDatabaseClusterRestore(ctx context.Context, req *v1
 
 	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.DatabaseClusterRestore) error); ok {
 		r1 = rf(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// CreateDatabaseClusterSecret provides a mock function with given fields: ctx, namespace, dbName, secret
+func (_m *MockHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace string, dbName string, secret *v1.Secret) (*v1.Secret, error) {
+	ret := _m.Called(ctx, namespace, dbName, secret)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateDatabaseClusterSecret")
+	}
+
+	var r0 *v1.Secret
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *v1.Secret) (*v1.Secret, error)); ok {
+		return rf(ctx, namespace, dbName, secret)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *v1.Secret) *v1.Secret); ok {
+		r0 = rf(ctx, namespace, dbName, secret)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Secret)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, *v1.Secret) error); ok {
+		r1 = rf(ctx, namespace, dbName, secret)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -795,6 +826,73 @@ func (_m *MockHandler) ListBackupStorages(ctx context.Context, namespace string)
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListDataImportJobs provides a mock function with given fields: ctx, namespace, dbName
+func (_m *MockHandler) ListDataImportJobs(ctx context.Context, namespace string, dbName string) (*v1alpha1.DataImportJobList, error) {
+	ret := _m.Called(ctx, namespace, dbName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDataImportJobs")
+	}
+
+	var r0 *v1alpha1.DataImportJobList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1alpha1.DataImportJobList, error)); ok {
+		return rf(ctx, namespace, dbName)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1alpha1.DataImportJobList); ok {
+		r0 = rf(ctx, namespace, dbName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DataImportJobList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, dbName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListDataImporters provides a mock function with given fields: ctx, supportedEngines
+func (_m *MockHandler) ListDataImporters(ctx context.Context, supportedEngines ...string) (*v1alpha1.DataImporterList, error) {
+	_va := make([]interface{}, len(supportedEngines))
+	for _i := range supportedEngines {
+		_va[_i] = supportedEngines[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDataImporters")
+	}
+
+	var r0 *v1alpha1.DataImporterList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) (*v1alpha1.DataImporterList, error)); ok {
+		return rf(ctx, supportedEngines...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) *v1alpha1.DataImporterList); ok {
+		r0 = rf(ctx, supportedEngines...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.DataImporterList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ...string) error); ok {
+		r1 = rf(ctx, supportedEngines...)
 	} else {
 		r1 = ret.Error(1)
 	}
