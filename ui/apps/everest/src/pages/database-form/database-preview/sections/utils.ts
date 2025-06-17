@@ -11,6 +11,7 @@ export const usePreviewSections = () => {
   const location = useLocation();
   const showImportStep = location.state?.showImport;
   return [
+    { component: PreviewSectionOne, title: 'Basic Information' },
     ...(showImportStep
       ? [
           {
@@ -19,7 +20,6 @@ export const usePreviewSections = () => {
           },
         ]
       : []),
-    { component: PreviewSectionOne, title: 'Basic Information' },
     { component: ResourcesPreviewSection, title: 'Resources' },
     { component: BackupsPreviewSection, title: 'Backups' },
     {

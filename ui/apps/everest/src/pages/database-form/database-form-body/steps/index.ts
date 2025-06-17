@@ -25,8 +25,8 @@ export const useSteps = () => {
   const location = useLocation();
   const showImportStep = location.state?.showImport;
   return [
-    ...(showImportStep ? [ImportStep] : []),
     FirstStep,
+    ...(showImportStep ? [ImportStep] : []),
     ResourcesStep,
     Backups,
     AdvancedConfigurations,
