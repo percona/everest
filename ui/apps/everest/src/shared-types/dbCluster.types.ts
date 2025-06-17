@@ -33,6 +33,7 @@ export enum DbClusterStatus {
   resizingVolumes = 'resizingVolumes',
   creating = 'creating',
   upgrading = 'upgrading',
+  importing = 'importing',
 }
 
 export interface Schedule {
