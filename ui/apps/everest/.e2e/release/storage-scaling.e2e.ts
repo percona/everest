@@ -245,7 +245,9 @@ test.describe.configure({ retries: 0 });
           ).toBeHidden();
 
           // Verify that the edit resources button is disabled while resizing
-          await expect(page.getByTestId('edit-resources-button')).toBeDisabled({timeout: 30000});
+          await expect(page.getByTestId('edit-resources-button')).toBeDisabled({
+            timeout: 30000,
+          });
 
           // Check DB status to be Up
           await page.goto('/databases');
