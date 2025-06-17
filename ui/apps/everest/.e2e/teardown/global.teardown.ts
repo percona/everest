@@ -15,6 +15,7 @@
 
 import { test as setup, expect } from '@playwright/test';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { logout } from '../utils/user';
 import { getBucketNamespacesMap } from '../constants';
 import {
   deleteMonitoringInstance,
@@ -83,11 +84,6 @@ setup.describe.serial('Teardown', () => {
   // });
 
   setup('Logout', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('user-appbar-button')).toBeVisible();
-    await page.getByTestId('user-appbar-button').click();
-    await page.getByRole('menuitem').filter({ hasText: 'Log out' }).click();
-
-    await expect(page.getByTestId('login-button')).toBeVisible();
+    await logout(page);
   });
 });
