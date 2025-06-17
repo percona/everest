@@ -23,4 +23,5 @@ export const Messages = {
   descaling: 'Descaling is not allowed',
   upscalingDiskWarning:
     'Disk upscaling is irreversible and may temporarily block further resize actions until complete.',
+  integerNumber: 'Disk size must be an integer number.',
 };
