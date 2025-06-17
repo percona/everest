@@ -39,7 +39,7 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.31.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250609181704-b3774c6ab692
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250617134022-3aa8d6e0ab13
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250606142431-b8ed7639c04d
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
@@ -109,7 +109,7 @@ require (
 	github.com/go-errors/errors v1.5.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
@@ -177,7 +177,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20250327100109-3ca299246bfe // indirect
 	github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26 // indirect
-	github.com/percona/percona-server-mongodb-operator v1.20.0 // indirect
+	github.com/percona/percona-server-mongodb-operator v1.20.1 // indirect
 	github.com/percona/percona-xtradb-cluster-operator v1.17.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
@@ -227,8 +227,8 @@ require (
 	google.golang.org/grpc v1.71.1 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/apiserver v0.33.0 // indirect
-	k8s.io/component-base v0.33.0 // indirect
+	k8s.io/apiserver v0.33.1 // indirect
+	k8s.io/component-base v0.33.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	oras.land/oras-go/v2 v2.5.0 // indirect

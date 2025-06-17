@@ -72,7 +72,7 @@ Copy file dev/config.yaml.example to dev/config.yaml and set the needed DB names
 3. (Optional) If you want to test a specific version of a given DB operator you can set the following environment variables in .env file or in the terminal:
 ```sh
 export PXC_OPERATOR_VERSION=1.16.1
-export PSMDB_OPERATOR_VERSION=1.19.1
+export PSMDB_OPERATOR_VERSION=1.20.1
 export PG_OPERATOR_VERSION=2.6.0
 ```
 
