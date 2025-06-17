@@ -28,10 +28,7 @@ import {
   populateAdvancedConfig,
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import {
-  waitForStatus,
-  waitForDelete,
-} from '@e2e/utils/table';
+import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
@@ -167,7 +164,10 @@ const zephyrMap: Record<string, string> = {
         });
       });
 
-      test(`Validate storage scaling [${db} size ${size}]`, async ({ page, request }) => {
+      test(`Validate storage scaling [${db} size ${size}]`, async ({
+        page,
+        request,
+      }) => {
         await page.goto('/databases');
         await findDbAndClickRow(page, clusterName);
         await page.getByTestId('edit-resources-button').click();
