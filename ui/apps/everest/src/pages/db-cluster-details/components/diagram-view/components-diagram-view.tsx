@@ -117,6 +117,9 @@ const ComponentsDiagramView = ({
         onNodeClick={handleNodeClick}
         onNodesChange={onNodesChange}
         minZoom={0.1}
+        proOptions={{
+          hideAttribution: true,
+        }}
       >
         <Controls showZoom showFitView={false} showInteractive={false} />
       </ReactFlowStyled>
