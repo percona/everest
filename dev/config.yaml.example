@@ -1,4 +1,5 @@
 # Copy this file to config.yaml in dev/ directory and set the values as needed.
+enableFrontendBuild: true
 namespaces:
   # List of DB namespaces that will be created automatically
   - name: my-special-place
