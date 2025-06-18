@@ -237,6 +237,7 @@ jobs:
       - name: Helm - build
         run: |
           cd percona-helm-charts/charts/everest
+          CRD_VERSION=${{ env.VERSION_TAG }} VERSION=${{ env.VERSION }} make crds-gen link-crds
           make release-dev
 
       - name: Helm - copy chart
