@@ -47,6 +47,15 @@ let token: string;
 
 test.describe.configure({ retries: 0 });
 
+const zephyrMap: Record<string, string> = {
+  'backup-pxc': 'T110',
+  'backup-psmdb': 'T111',
+  'backup-postgresql': 'T112',
+  'restore-pxc': 'T113',
+  'restore-psmdb': 'T114',
+  'restore-postgresql': 'T115',
+};
+
 function getNextScheduleMinute(incrementMinutes: number): string {
   const d: number = new Date().getMinutes();
   const minute: number = (d + incrementMinutes) % 60;
@@ -69,6 +78,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       test.describe.configure({ timeout: 720000 });
 
       const clusterName = `${db}-${size}-schbkp`;
+      let zephyrId: string;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -173,8 +183,11 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await prepareTestDB(clusterName, namespace);
       });
 
-      test(`Create backup schedules [${db} size ${size}]`, async ({ page }) => {
-        test.setTimeout(30 * 1000);
+      zephyrId = zephyrMap[`backup-${db}`];
+      test(`${zephyrId} - Create backup schedules [${db} size ${size}]`, async ({
+        page,
+      }) => {
+        test.setTimeout(360 * 1000);
 
         const scheduleMinute1 = getNextScheduleMinute(2);
         const timeOption1: ScheduleTimeOptions = {
@@ -230,17 +243,15 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           ).toBeVisible();
           expect(page.getByText('2 active schedules')).toBeVisible();
         });
-      });
 
-      test(`Wait for two backups to succeeded [${db} size ${size}]`, async ({
-        page,
-      }) => {
-        await gotoDbClusterBackups(page, clusterName);
-        await expect(page.getByText(`${db}-${size}-schbkp-`)).toHaveCount(2, {
-          timeout: 360000,
-        });
-        await expect(page.getByText('Succeeded')).toHaveCount(2, {
-          timeout: 360000,
+        await test.step(`Wait for two backups to succeeded [${db} size ${size}]`, async () => {
+          await gotoDbClusterBackups(page, clusterName);
+          await expect(page.getByText(`${db}-${size}-schbkp-`)).toHaveCount(2, {
+            timeout: 360000,
+          });
+          await expect(page.getByText('Succeeded')).toHaveCount(2, {
+            timeout: 360000,
+          });
         });
       });
 
@@ -280,42 +291,47 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await dropTestDB(clusterName, namespace);
       });
 
-      test(`Restore cluster [${db} size ${size}]`, async ({ page }) => {
-        await gotoDbClusterBackups(page, clusterName);
-        const firstBackup = await page
-          .getByText(`${db}-${size}-schbkp-`)
-          .first()
-          .textContent();
+      zephyrId = zephyrMap[`restore-${db}`];
+      test(`${zephyrId} - Restore cluster [${db} size ${size}]`, async ({
+        page,
+      }) => {
+        await test.step('Restore data', async () => {
+          await gotoDbClusterBackups(page, clusterName);
+          const firstBackup = await page
+            .getByText(`${db}-${size}-schbkp-`)
+            .first()
+            .textContent();
 
-        await findRowAndClickActions(page, firstBackup, 'Restore to this DB');
-        await expect(
-          page.getByTestId('select-input-backup-name')
-        ).not.toBeEmpty();
-        await page.getByTestId('form-dialog-restore').click();
+          await findRowAndClickActions(page, firstBackup, 'Restore to this DB');
+          await expect(
+            page.getByTestId('select-input-backup-name')
+          ).not.toBeEmpty();
+          await page.getByTestId('form-dialog-restore').click();
 
-        await page.goto('/databases');
-        await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+          await page.goto('/databases');
+          await waitForStatus(page, clusterName, 'Restoring', 30000);
+          await waitForStatus(page, clusterName, 'Up', 600000);
 
-        await gotoDbClusterRestores(page, clusterName);
-        // we select based on backup source since restores cannot be named and we don't know
-        // in advance what will be the name
-        await waitForStatus(page, firstBackup, 'Succeeded', 120000);
-      });
+          await gotoDbClusterRestores(page, clusterName);
+          // we select based on backup source since restores cannot be named and we don't know
+          // in advance what will be the name
+          await waitForStatus(page, firstBackup, 'Succeeded', 120000);
+        });
 
-      test(`Check data after restore [${db} size ${size}]`, async () => {
-        const result = await queryTestDB(clusterName, namespace);
-        switch (db) {
-          case 'pxc':
-            expect(result.trim()).toBe('1\n2\n3');
-            break;
-          case 'psmdb':
-            expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
-            break;
-          case 'postgresql':
-            expect(result.trim()).toBe('1\n 2\n 3');
-            break;
-        }
+        await test.step(`Check data after restore`, async () => {
+          const result = await queryTestDB(clusterName, namespace);
+          switch (db) {
+            case 'pxc':
+              expect(result.trim()).toBe('1\n2\n3');
+              break;
+            case 'psmdb':
+              expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
+              break;
+            case 'postgresql':
+              expect(result.trim()).toBe('1\n 2\n 3');
+              break;
+          }
+        });
       });
 
       test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
