@@ -22,10 +22,18 @@ import { S3DetailsSection } from './sections/s3-details/s3-details-section';
 import { SectionKeys } from './sections/constants';
 import { FileDirectorySection } from './sections/file-directory/file-directory-section';
 import { DbCredentialsSection } from './sections/db-credentials/db-credentials-section';
-import { ConfigSection } from './sections/config/config-section';
+import { useState } from 'react';
+import { DbWizardFormFields } from 'consts';
+import { useFormContext } from 'react-hook-form';
+import { dbTypeToDbEngine } from '@percona/utils';
+import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
 
-const dataImportersMock = ['1', '2', '3'];
 export const ImportForm = () => {
+  const [showCreds, setShowCreds] = useState(false);
+  const { getValues } = useFormContext();
+  const selectedEngine = dbTypeToDbEngine(getValues(DbWizardFormFields.dbType));
+  const { data: dataImporters } = useDataImporters(selectedEngine);
+
   return (
     <Box>
       <>
@@ -33,15 +41,29 @@ export const ImportForm = () => {
           title={Messages.dataImporter.label}
           controlComponent={
             <SelectInput
+              controllerProps={{
+                name: ImportFields.dataImporter,
+                defaultValue: '',
+              }}
               name={ImportFields.dataImporter}
               label={Messages.dataImporter.placeholder}
               selectFieldProps={{
                 sx: { minWidth: '170px' },
               }}
             >
-              {dataImportersMock.map((policy) => (
-                <MenuItem value={policy} key={policy}>
-                  {policy}
+              {dataImporters?.items.map((dataImporter) => (
+                <MenuItem
+                  value={dataImporter.metadata.name}
+                  key={dataImporter.metadata.name}
+                  onClick={() =>
+                    setShowCreds(
+                      dataImporter.spec.databaseClusterConstraints.requiredFields.includes(
+                        'userSecretName'
+                      )
+                    )
+                  }
+                >
+                  {dataImporter.metadata.name}
                 </MenuItem>
               ))}
             </SelectInput>
@@ -59,19 +81,13 @@ export const ImportForm = () => {
           content={<FileDirectorySection />}
           sectionSavedKey={SectionKeys.fileDir}
         />
-
-        <FormCardWithDialog
-          title={Messages.dbCreds.label}
-          content={<DbCredentialsSection />}
-          sectionSavedKey={SectionKeys.dbCreds}
-        />
-
-        <FormCardWithDialog
-          title={Messages.config.label}
-          content={<ConfigSection />}
-          sectionSavedKey={SectionKeys.config}
-          optional
-        />
+        {showCreds && (
+          <FormCardWithDialog
+            title={Messages.dbCreds.label}
+            content={<DbCredentialsSection />}
+            sectionSavedKey={SectionKeys.dbCreds}
+          />
+        )}
       </>
     </Box>
   );

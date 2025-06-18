@@ -52,9 +52,9 @@ export const S3DetailsForm = () => {
       <FormControlLabel
         label={
           <Box display="flex" mt={0}>
-            {Messages.s3Details.labelCheckbox}
+            {Messages.s3Details.verifyTLS}
             <Tooltip
-              title={'label tooltip'}
+              title={Messages.s3Details.verifyTLSTooltip}
               arrow
               placement="right"
               sx={{ ml: 1 }}
@@ -63,7 +63,7 @@ export const S3DetailsForm = () => {
             </Tooltip>
           </Box>
         }
-        control={<CheckboxInput name={ImportFields.label} />}
+        control={<CheckboxInput name={ImportFields.verifyTlS} />}
       />
     </>
   );

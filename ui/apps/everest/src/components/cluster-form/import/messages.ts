@@ -21,7 +21,9 @@ export const Messages = {
     secretKey: 'Secret Key',
     secretKeyPlaceholder: 'Enter Secret key',
 
-    labelCheckbox: 'Label',
+    verifyTLS: 'Verify TLS',
+    verifyTLSTooltip:
+      "TLS verifies the server's certificate chain and host name, ensuring its authenticity.",
   },
   fileDir: {
     label: 'File Directory',

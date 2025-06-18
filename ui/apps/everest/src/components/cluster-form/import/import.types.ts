@@ -6,8 +6,7 @@ export enum ImportFields {
   endpoint = 'endpoint',
   accessKey = 'accessKey',
   secretKey = 'secretKey',
-
-  label = 'label',
+  verifyTlS = 'verifyTlS',
 
   filePath = 'filePath',
 

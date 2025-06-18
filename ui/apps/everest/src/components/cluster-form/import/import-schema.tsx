@@ -1,51 +1,51 @@
 import { z } from 'zod';
 import { ImportFields } from './import.types';
 
+const MAX_IMPORT_FIELD_LENGTH = 250;
+
+const basicStringValidation = () =>
+  z.string().min(1).max(MAX_IMPORT_FIELD_LENGTH);
+
 const dataImporterSchemeObject = {
-  [ImportFields.dataImporter]: z.string(),
+  [ImportFields.dataImporter]: z.string().max(MAX_IMPORT_FIELD_LENGTH),
 };
 
 export const dataImporterSchema = z.object(dataImporterSchemeObject);
 
 const s3SchemaObject = {
-  [ImportFields.bucketName]: z.string().min(1),
-  [ImportFields.region]: z.string().min(1),
-  [ImportFields.endpoint]: z.string().min(1),
-  [ImportFields.accessKey]: z.string().min(1),
-  [ImportFields.secretKey]: z.string().min(1),
-  [ImportFields.label]: z.boolean(),
+  [ImportFields.bucketName]: basicStringValidation(),
+  [ImportFields.region]: basicStringValidation(),
+  [ImportFields.endpoint]: basicStringValidation(),
+  [ImportFields.accessKey]: basicStringValidation(),
+  [ImportFields.secretKey]: basicStringValidation(),
+  [ImportFields.verifyTlS]: z.boolean(),
 };
 export const s3Schema = z.object(s3SchemaObject);
 
 const credentialsSchemaObject = {
-  [ImportFields.root]: z.string().min(1),
-  [ImportFields.proxyadmin]: z.string().min(1),
-  [ImportFields.xtrabackup]: z.string().min(1),
-  [ImportFields.monitor]: z.string().min(1),
-  [ImportFields.pmmServerPassword]: z.string().min(1),
-  [ImportFields.operatorAdmin]: z.string().min(1),
-  [ImportFields.replication]: z.string().min(1),
+  [ImportFields.root]: basicStringValidation(),
+  [ImportFields.proxyadmin]: basicStringValidation(),
+  [ImportFields.xtrabackup]: basicStringValidation(),
+  [ImportFields.monitor]: basicStringValidation(),
+  [ImportFields.pmmServerPassword]: basicStringValidation(),
+  [ImportFields.operatorAdmin]: basicStringValidation(),
+  [ImportFields.replication]: basicStringValidation(),
 };
 export const dbCredentialsSchema = z.object(credentialsSchemaObject);
 
-const filePathSchemaObject = { [ImportFields.filePath]: z.string() };
-export const filePathSchema = z.object(filePathSchemaObject);
-
-const configSchemaObject = {
-  [ImportFields.recoveryTarget]: z.string().min(1),
-  [ImportFields.recoveryTargetLSN]: z.string().min(1),
-  [ImportFields.recoveryTargetXID]: z.string().min(1),
-  [ImportFields.recoveryTargetTime]: z.string().min(1),
-  [ImportFields.recoveryTargetName]: z.string().min(1),
+const filePathSchemaObject = {
+  [ImportFields.filePath]: z
+    .string()
+    .max(MAX_IMPORT_FIELD_LENGTH)
+    .regex(/^\/[\S]*$/),
 };
-export const configSchema = z.object(configSchemaObject);
+export const filePathSchema = z.object(filePathSchemaObject);
 
 export const importStepSchema = z
   .object({
     ...dataImporterSchemeObject,
     ...s3SchemaObject,
-    ...credentialsSchemaObject,
+    // ...credentialsSchemaObject,
     ...filePathSchemaObject,
-    ...configSchemaObject,
   })
   .superRefine(() => {});

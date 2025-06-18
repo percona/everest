@@ -20,13 +20,9 @@ const SectionFormWithStatus = ({
   schema,
 }: SectionFormWithStatusProps) => {
   const [openDialog, setOpenDialog] = useState(false);
-  const { setValue, control } = useFormContext();
-
+  const { setValue, control, getValues } = useFormContext();
   const isSectionSaved = useWatch({ control, name: sectionSavedKey });
-  const handleSave = () => {
-    setValue(sectionSavedKey, true);
-    setOpenDialog(false);
-  };
+
   return (
     <>
       <Button onClick={() => setOpenDialog(true)}>
@@ -37,10 +33,17 @@ const SectionFormWithStatus = ({
         )}
       </Button>
       <FormDialog
+        defaultValues={getValues()}
         isOpen={openDialog}
         closeModal={() => setOpenDialog(false)}
         headerMessage={dialogTitle}
-        onSubmit={handleSave}
+        onSubmit={(data) => {
+          setValue(sectionSavedKey, true);
+          Object.entries(data).forEach(([key, value]) => {
+            setValue(key, value);
+          });
+          setOpenDialog(false);
+        }}
         schema={schema}
         submitMessage="Save"
       >
