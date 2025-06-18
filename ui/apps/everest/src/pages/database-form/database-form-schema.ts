@@ -109,13 +109,13 @@ export const getDBWizardSchema = (
 ) => {
   const baseSchema = [
     basicInfoSchema(dbClusters),
+    ...(hasImportStep ? [importStepSchema] : []),
     stepTwoSchema(defaultValues, mode),
     backupsStepSchema(),
     advancedConfigurationsSchema(),
     stepFiveSchema(),
   ];
-  const schema = hasImportStep ? [importStepSchema, ...baseSchema] : baseSchema;
-  return schema[activeStep];
+  return baseSchema[activeStep];
 };
 
 export type ImportStepType = z.infer<typeof importStepSchema>;
