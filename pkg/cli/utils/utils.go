@@ -19,14 +19,24 @@ import (
 
 const (
 	dbNamespaceSubChartPath = "/charts/everest-db-namespace"
+	crdSubChartPath         = "/charts/everest-crds"
 )
 
 // DBNamespaceSubChartPath returns the path to the everest-db-namespace sub-chart.
 func DBNamespaceSubChartPath(dir string) string {
+	return getSubChartPath(dir, dbNamespaceSubChartPath)
+}
+
+// CRDSubChartPath returns the path to the everest-crds sub-chart.
+func CRDSubChartPath(dir string) string {
+	return getSubChartPath(dir, crdSubChartPath)
+}
+
+func getSubChartPath(dir, subChart string) string {
 	if dir == "" {
 		return ""
 	}
-	return path.Join(dir, dbNamespaceSubChartPath)
+	return path.Join(dir, subChart)
 }
 
 // CheckHelmInstallation ensures that the current installation was done using Helm chart.

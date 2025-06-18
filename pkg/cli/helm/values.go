@@ -22,6 +22,7 @@ func NewValues(v Values) map[string]string {
 
 	if v.ClusterType == kubernetes.ClusterTypeOpenShift {
 		values["compatibility.openshift"] = "true"
+		values["olm.install"] = "false"
 		values["kube-state-metrics.rbac.create"] = "false"
 		values["kube-state-metrics.securityContext.enabled"] = "false"
 	}
