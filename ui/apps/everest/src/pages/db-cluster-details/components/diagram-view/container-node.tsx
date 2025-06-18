@@ -28,7 +28,16 @@ const ContainerNode = ({
         {ready ? 'Ready' : 'Not Ready'}
       </Typography>
     </Stack>
-    <Typography variant="body1" data-testid="container-name" mt={1}>
+    <Typography
+      variant="body1"
+      data-testid="container-name"
+      sx={{
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        mt: 2,
+      }}
+    >
       {name}
     </Typography>
     <DiagramComponentAge date={started} restarts={restarts} />
