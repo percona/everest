@@ -256,6 +256,52 @@ func TestValidateProxy(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			name: "duplicated sourceRange",
+			cluster: everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type:     everestv1alpha1.DatabaseEnginePXC,
+						Replicas: 1,
+					},
+					Proxy: everestv1alpha1.Proxy{
+						Type:     everestv1alpha1.ProxyTypeHAProxy,
+						Replicas: pointer.ToInt32(1),
+						Expose: everestv1alpha1.Expose{
+							IPSourceRanges: []everestv1alpha1.IPSourceRange{
+								"192.168.0.1/32",
+								"192.168.0.2/32",
+								"192.168.0.1/32",
+							},
+						},
+					},
+				},
+			},
+			err: ErrDuplicateSourceRange("192.168.0.1/32"),
+		},
+		{
+			name: "no duplicated sourceRange",
+			cluster: everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type:     everestv1alpha1.DatabaseEnginePXC,
+						Replicas: 1,
+					},
+					Proxy: everestv1alpha1.Proxy{
+						Type:     everestv1alpha1.ProxyTypeHAProxy,
+						Replicas: pointer.ToInt32(1),
+						Expose: everestv1alpha1.Expose{
+							IPSourceRanges: []everestv1alpha1.IPSourceRange{
+								"192.168.0.1/32",
+								"192.168.0.2/32",
+								"192.168.0.3/32",
+							},
+						},
+					},
+				},
+			},
+			err: nil,
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
