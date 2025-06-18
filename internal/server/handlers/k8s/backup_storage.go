@@ -136,14 +136,6 @@ func (h *k8sHandler) UpdateBackupStorage(ctx context.Context, namespace, name st
 }
 
 func (h *k8sHandler) DeleteBackupStorage(ctx context.Context, namespace, name string) error {
-	used, err := h.kubeConnector.IsBackupStorageUsed(ctx, types.NamespacedName{Namespace: namespace, Name: name})
-	if err != nil {
-		return fmt.Errorf("failed to check if backup storage='%s' in namespace='%s' is used: %w", name, namespace, err)
-	}
-	if used {
-		return fmt.Errorf("backup storage='%s' in namespace='%s' is in use", name, namespace)
-	}
-
 	delBSObj := &everestv1alpha1.BackupStorage{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
