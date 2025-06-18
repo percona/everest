@@ -42,13 +42,6 @@ func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace str
 }
 
 func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, namespace, name string) error {
-	used, err := h.kubeConnector.IsMonitoringConfigUsed(ctx, types.NamespacedName{Namespace: namespace, Name: name})
-	if err != nil {
-		return err
-	}
-	if used {
-		return fmt.Errorf("monitoring instance '%s' in namespace '%s' is in use", name, namespace)
-	}
 	delMCObj := &everestv1alpha1.MonitoringConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
