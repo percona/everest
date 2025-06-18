@@ -15,6 +15,7 @@ const BackupListTableHeader = ({
   onNowClick,
   onScheduleClick,
   noStoragesAvailable,
+  currentBackups,
 }: BackupListTableHeaderProps) => {
   const [showSchedules, setShowSchedules] = useState(false);
   const { dbCluster } = useContext(ScheduleModalContext);
@@ -142,7 +143,9 @@ const BackupListTableHeader = ({
           </MenuButton>
         )}
       </Box>
-      {schedulesNumber > 0 && showSchedules && <ScheduledBackupsList />}
+      {schedulesNumber > 0 && showSchedules && (
+        <ScheduledBackupsList currentBackups={currentBackups} />
+      )}
     </>
   );
 };

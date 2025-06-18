@@ -43,6 +43,7 @@ import TableActionsMenu from 'components/table-actions-menu';
 import { BackupActionButtons } from './backups-list-menu-actions';
 import { shouldDbActionsBeBlocked } from 'utils/db.tsx';
 import { WizardMode } from 'shared-types/wizard.types.ts';
+import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 
 export const BackupsList = () => {
   const queryClient = useQueryClient();
@@ -60,6 +61,8 @@ export const BackupsList = () => {
   const { mutate: deleteBackup, isPending: deletingBackup } = useDeleteBackup(
     dbCluster?.metadata.namespace
   );
+  const { mutate: updateCluster } =
+    useUpdateDbClusterWithConflictRetry(dbCluster);
   const { data: backups = [] } = useDbBackups(
     dbCluster.metadata.name,
     dbCluster.metadata.namespace,
@@ -164,6 +167,7 @@ export const BackupsList = () => {
     backupName: string,
     cleanupBackupStorage: boolean
   ) => {
+    const newBackupNr = backups.length - 1;
     deleteBackup(
       { backupName: backupName, cleanupBackupStorage: cleanupBackupStorage },
       {
@@ -175,6 +179,28 @@ export const BackupsList = () => {
               dbCluster.metadata.name,
             ],
           });
+
+          if (
+            dbCluster.spec.engine.type === DbEngineType.POSTGRESQL &&
+            newBackupNr === 0 &&
+            !dbCluster.spec.backup?.schedules?.length
+          ) {
+            updateCluster({
+              ...dbCluster,
+              spec: {
+                ...dbCluster.spec,
+                backup: {
+                  ...dbCluster.spec.backup,
+                  pitr: {
+                    ...(dbCluster.spec.backup?.pitr || {}),
+                    backupStorageName:
+                      dbCluster.spec.backup?.pitr?.backupStorageName || '',
+                    enabled: false,
+                  },
+                },
+              },
+            });
+          }
           handleCloseDeleteDialog();
         },
       }
@@ -222,6 +248,7 @@ export const BackupsList = () => {
             onNowClick={handleManualBackup}
             onScheduleClick={handleScheduledBackup}
             noStoragesAvailable={noStoragesAvailable}
+            currentBackups={backups}
           />
         )}
         enableRowActions

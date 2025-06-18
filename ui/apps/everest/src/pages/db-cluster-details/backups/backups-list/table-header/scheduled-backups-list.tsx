@@ -15,8 +15,14 @@ import {
 } from 'utils/db';
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { WizardMode } from 'shared-types/wizard.types';
+import { DbEngineType } from 'shared-types/dbEngines.types';
+import { Backup } from 'shared-types/backups.types';
 
-const ScheduledBackupsList = () => {
+const ScheduledBackupsList = ({
+  currentBackups,
+}: {
+  currentBackups: Backup[];
+}) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
   const {
@@ -41,7 +47,24 @@ const ScheduledBackupsList = () => {
   };
 
   const handleConfirmDelete = (scheduleName: string) => {
-    updateCluster(deleteScheduleFromDbCluster(scheduleName, dbCluster));
+    const newClusterData = deleteScheduleFromDbCluster(scheduleName, dbCluster);
+
+    if (dbCluster.spec.engine.type === DbEngineType.POSTGRESQL) {
+      if (
+        currentBackups.length === 0 &&
+        !newClusterData.spec.backup?.schedules?.length &&
+        newClusterData.spec.backup?.pitr
+      ) {
+        newClusterData.spec.backup = {
+          ...newClusterData.spec.backup,
+          pitr: {
+            ...newClusterData.spec.backup?.pitr,
+            enabled: false,
+          },
+        };
+      }
+    }
+    updateCluster(newClusterData);
   };
 
   const handleEdit = (scheduleName: string) => {
