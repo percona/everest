@@ -16,12 +16,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { DbCluster } from 'shared-types/dbCluster.types';
 
-import { getDbClusterFn } from 'api/dbClusterApi';
+import { getDbClusterFn, getDbClusterImports } from 'api/dbClusterApi';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import { useRBACPermissions } from 'hooks/rbac';
 import { mergeNewDbClusterData } from 'utils/db';
+import { DataImportJobs } from 'shared-types/dataImporters.types';
 
 export const DB_CLUSTER_QUERY = 'dbCluster';
+export const DB_CLUSTER_IMPORTS_QUERY = 'dbClusterImports';
 
 export const useDbCluster = (
   dbClusterName: string,
@@ -44,5 +46,15 @@ export const useDbCluster = (
       return mergeNewDbClusterData(undefined, transformedCluster, true);
     },
     enabled: (options?.enabled ?? true) && canRead,
+  });
+};
+
+export const useDbClusterImportJobs = (
+  namespace: string,
+  dbClusterName: string
+) => {
+  return useQuery<DataImportJobs, unknown, DataImportJobs>({
+    queryKey: [DB_CLUSTER_IMPORTS_QUERY, dbClusterName],
+    queryFn: () => getDbClusterImports(dbClusterName, namespace),
   });
 };

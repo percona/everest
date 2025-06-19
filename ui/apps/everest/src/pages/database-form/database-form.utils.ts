@@ -73,6 +73,7 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
     getDefaultNumberOfconfigServersByNumberOfNodes(
       parseInt(DEFAULT_NODES[DbType.Mongo], 10)
     ),
+  [DbWizardFormFields.verifyTlS]: false,
 });
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {

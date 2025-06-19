@@ -1,7 +1,9 @@
 import { DbType } from '@percona/types';
 import { dbTypeToProxyType } from '@percona/utils';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
+import { DbWizardType } from 'pages/database-form/database-form-schema';
 import {
+  DataSource,
   Proxy,
   ProxyExposeConfig,
   ProxyExposeType,
@@ -53,4 +55,46 @@ export const getProxySpec = (
     },
     expose: getExposteConfig(externalAccess, sourceRanges),
   };
+};
+
+export const getDataSource = ({
+  backupDataSource,
+  dbPayload,
+}: {
+  backupDataSource?: DataSource;
+  dbPayload: DbWizardType;
+}) => {
+  let dataSource = {};
+  if (backupDataSource?.dbClusterBackupName) {
+    dataSource = {
+      dbClusterBackupName: backupDataSource.dbClusterBackupName,
+      ...(backupDataSource?.pitr && {
+        pitr: {
+          date: backupDataSource.pitr.date,
+          type: 'date',
+        },
+      }),
+    };
+  }
+  if (dbPayload.dataImporter) {
+    dataSource = {
+      ...dataSource,
+      dataImport: {
+        dataImpoterName: dbPayload.dataImporter,
+        source: {
+          path: dbPayload.filePath,
+          s3: {
+            accessKeyId: dbPayload.accessKey,
+            bucket: dbPayload.bucketName,
+            credentialsSecretName: `${dbPayload.dataImporter}-secret`,
+            endpointURL: dbPayload.endpoint,
+            region: dbPayload.region,
+            secretAccessKey: dbPayload.secretKey,
+            verifyTLS: dbPayload.verifyTlS,
+          },
+        },
+      },
+    };
+  }
+  return dataSource;
 };

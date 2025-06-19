@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import {
+  GetDbEnginePayload,
   GetDbEnginesPayload,
   OperatorsUpgradePlan,
 } from 'shared-types/dbEngines.types';
@@ -21,6 +22,14 @@ import { api } from './api';
 export const getDbEnginesFn = async (namespace: string) => {
   const response = await api.get<GetDbEnginesPayload>(
     `/namespaces/${namespace}/database-engines`
+  );
+
+  return response.data;
+};
+
+export const getDbEngineFn = async (namespace: string, name: string) => {
+  const response = await api.get<GetDbEnginePayload>(
+    `/namespaces/${namespace}/database-engines/${name}`
   );
 
   return response.data;

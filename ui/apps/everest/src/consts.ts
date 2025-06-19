@@ -14,6 +14,7 @@
 
 import { AdvancedConfigurationFields } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 import { DBVersionFields } from 'components/cluster-form/db-version/db-version.types';
+import { ImportFields } from 'components/cluster-form/import/import.types';
 import { BackupStatus } from 'shared-types/backups.types';
 
 // limitations under the License.
@@ -84,6 +85,7 @@ export enum DbWizardForm {
 }
 
 export const DbWizardFormFields = {
+  ...ImportFields,
   ...DbWizardForm,
   ...DBVersionFields,
   ...AdvancedConfigurationFields,
