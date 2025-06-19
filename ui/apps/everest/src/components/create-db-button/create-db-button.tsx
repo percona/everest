@@ -21,6 +21,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { humanizeDbType } from 'utils/db';
+import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
 
 export const CreateDbButton = ({
   createFromImport = false,
@@ -31,12 +32,27 @@ export const CreateDbButton = ({
   const [showDropdownButton, setShowDropdownButton] = useState(false);
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
+  const { data: availableDbImporters } = useDataImporters();
+  const supportedEngineTypesForImport = new Set(
+    availableDbImporters?.items
+      .map((importer) => importer.spec.supportedEngines)
+      .flat()
+  );
+
   const open = Boolean(anchorEl);
 
-  const [availableDbTypes, availableDbTypesFetching] =
+  const [allAvailableDbTypes, availableDbTypesFetching] =
     useDBEnginesForDbEngineTypes(undefined, {
       refetchInterval: 30 * 1000,
     });
+
+  const availableDbTypes = allAvailableDbTypes.filter((item) =>
+    item.dbEngines.some((engine) =>
+      createFromImport
+        ? supportedEngineTypesForImport.has(engine.dbEngine!.type)
+        : true
+    )
+  );
 
   const availableEngines = availableDbTypes.filter(
     (item) =>

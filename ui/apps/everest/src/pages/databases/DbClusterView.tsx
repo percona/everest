@@ -40,6 +40,7 @@ import { PendingIcon } from '@percona/ui-lib';
 import CreateDbButton from 'components/create-db-button/create-db-button';
 import EmptyStateDatabases from 'components/empty-state-databases/empty-state-databases';
 import EmptyStateNamespaces from 'components/empty-state-namespaces/empty-state-namespaces';
+import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
 
 export const DbClusterView = () => {
   const { data: namespaces = [], isLoading: loadingNamespaces } = useNamespaces(
@@ -57,6 +58,9 @@ export const DbClusterView = () => {
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
   const canAddCluster = canCreate.length > 0 && hasAvailableDbEngines;
+
+  const { data: availableEnginesForImport } = useDataImporters();
+
   const dbClustersResults = useDBClustersForNamespaces(
     namespaces.map((ns) => ({
       namespace: ns,
@@ -205,7 +209,9 @@ export const DbClusterView = () => {
             canAddCluster &&
             tableData.length > 0 && (
               <Box display="flex" mb={1}>
-                <CreateDbButton createFromImport />
+                {(availableEnginesForImport?.items || []).length > 0 && (
+                  <CreateDbButton createFromImport />
+                )}
                 <CreateDbButton />
               </Box>
             )
