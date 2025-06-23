@@ -55,6 +55,6 @@ export const useDbClusterImportJobs = (
 ) => {
   return useQuery<DataImportJobs, unknown, DataImportJobs>({
     queryKey: [DB_CLUSTER_IMPORTS_QUERY, dbClusterName],
-    queryFn: () => getDbClusterImports(dbClusterName, namespace),
+    queryFn: () => getDbClusterImports(namespace, dbClusterName),
   });
 };
