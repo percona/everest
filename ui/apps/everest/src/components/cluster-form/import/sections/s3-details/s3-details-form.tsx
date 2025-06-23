@@ -2,6 +2,7 @@ import { TextInput } from '@percona/ui-lib';
 import { ImportFields } from '../../import.types';
 import { Messages } from '../../messages';
 import { S3Checkbox } from './s3-checkbox';
+import { HiddenInput } from 'components/hidden-input';
 
 export const S3DetailsForm = () => {
   return (
@@ -31,7 +32,7 @@ export const S3DetailsForm = () => {
         }}
         isRequired
       />
-      <TextInput
+      <HiddenInput
         name={ImportFields.accessKey}
         label={Messages.s3Details.accessKey}
         textFieldProps={{
@@ -39,7 +40,7 @@ export const S3DetailsForm = () => {
         }}
         isRequired
       />
-      <TextInput
+      <HiddenInput
         name={ImportFields.secretKey}
         label={Messages.s3Details.secretKey}
         textFieldProps={{

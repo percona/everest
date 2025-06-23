@@ -86,7 +86,7 @@ export const getDataSource = ({
           s3: {
             accessKeyId: dbPayload.accessKey,
             bucket: dbPayload.bucketName,
-            credentialsSecretName: `${dbPayload.dataImporter}-secret`,
+            credentialsSecretName: `${dbPayload.dataImporter}-${dbPayload.dbName}-secret`,
             endpointURL: dbPayload.endpoint,
             region: dbPayload.region,
             secretAccessKey: dbPayload.secretKey,
