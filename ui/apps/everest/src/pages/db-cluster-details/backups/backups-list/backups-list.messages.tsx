@@ -4,7 +4,11 @@ import { PG_SLOTS_LIMIT } from 'consts';
 export const Messages = {
   deleteDialog: {
     header: 'Delete backup',
-    content: (backupName: string, dbType: DbEngineType) => (
+    content: (
+      backupName: string,
+      dbType: DbEngineType,
+      willDisablePITR: boolean
+    ) => (
       <>
         {dbType === DbEngineType.POSTGRESQL ? (
           <>
@@ -17,6 +21,8 @@ export const Messages = {
             backup?
           </>
         )}
+        {willDisablePITR &&
+          ' This will disable point-in-time recovery, as it requires a full backup.'}
       </>
     ),
     alertMessage:
@@ -45,4 +51,6 @@ export const Messages = {
   restoreToNewDb: 'Create new DB',
   pgMaximum: (slotsInUse: number) =>
     `Note: There is a maximum of 3 backup schedules for PostgreSQL. You are using ${slotsInUse} out of ${PG_SLOTS_LIMIT} available storages.`,
+  pitrToBeDisabled:
+    'This will disable point-in-time recovery, as it requires a full backup.',
 };
