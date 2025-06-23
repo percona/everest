@@ -27,6 +27,7 @@ const DatabaseFormBody = ({
   longestAchievedStep,
   isSubmitting,
   hasErrors,
+  disableNext,
   onCancel,
   onSubmit,
   handleNextStep,
@@ -56,6 +57,7 @@ const DatabaseFormBody = ({
         disableBack={isFirstStep}
         disableSubmit={isSubmitting || hasErrors}
         disableCancel={isSubmitting}
+        disableNext={disableNext}
         showSubmit={activeStep === steps.length - 1}
         onPreviousClick={handlePreviousStep}
         onNextClick={handleNextStep}

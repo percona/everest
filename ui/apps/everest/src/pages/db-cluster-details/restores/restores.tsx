@@ -25,6 +25,30 @@ import { RESTORE_STATUS_TO_BASE_STATUS } from './restores.constants';
 import { useQueryClient } from '@tanstack/react-query';
 import TableActionsMenu from 'components/table-actions-menu';
 import { RestoreActionButtons } from './restores-menu-actions';
+import { useDbClusterImportJobs } from 'hooks';
+import {
+  DataImportJob,
+  DataImportJobs,
+} from 'shared-types/dataImporters.types';
+
+const getImportJobsData = (imports?: DataImportJobs): Restore[] => {
+  if (!imports?.items.length) return [];
+
+  return imports.items.map((importItem: DataImportJob) => ({
+    backupSource: importItem.spec.dataImporterName,
+    endTime: importItem.status?.completedAt || '',
+    name: importItem.metadata.name,
+    startTime: importItem.status?.startedAt || '',
+    state: importItem.status?.state || '',
+    type: 'import',
+  }));
+};
+
+function getTypeCellValue(type: string) {
+  if (type === 'import') return 'Import';
+  if (type === 'pitr') return 'PITR';
+  return 'Full';
+}
 
 const Restores = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -38,6 +62,11 @@ const Restores = () => {
     useDbClusterRestores(namespace, dbClusterName!, {
       enabled: !!dbClusterName && !!namespace,
     });
+
+  const { data: imports } = useDbClusterImportJobs(namespace, dbClusterName!);
+
+  const tableData = [...restores, ...getImportJobsData(imports)];
+
   const { mutate: deleteRestore, isPending: deletingRestore } =
     useDeleteRestore(namespace);
 
@@ -78,7 +107,7 @@ const Restores = () => {
       {
         header: 'Type',
         accessorKey: 'type',
-        Cell: ({ cell }) => (cell.getValue() === 'pitr' ? 'PITR' : 'Full'),
+        Cell: ({ cell }) => getTypeCellValue(cell.getValue<string>() || ''),
       },
       {
         header: 'Backup Source',
@@ -113,7 +142,7 @@ const Restores = () => {
         state={{ isLoading: loadingRestores }}
         tableName={`${dbClusterName}-restore`}
         columns={columns}
-        data={restores}
+        data={tableData}
         initialState={{
           sorting: [
             {

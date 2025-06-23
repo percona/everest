@@ -38,6 +38,7 @@ export type DataImportJob = {
   status: {
     state: string;
     startedAt: string;
+    completedAt: string;
     lastObservedGeneration: number;
     jobName: string;
   };

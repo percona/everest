@@ -47,6 +47,7 @@ export const ImportForm = () => {
               }}
               name={ImportFields.dataImporter}
               label={Messages.dataImporter.placeholder}
+              formControlProps={{ sx: { marginTop: 0 } }}
               selectFieldProps={{
                 sx: { minWidth: '170px' },
               }}
