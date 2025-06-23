@@ -80,7 +80,7 @@ export const getDataSource = ({
     dataSource = {
       ...dataSource,
       dataImport: {
-        dataImpoterName: dbPayload.dataImporter,
+        dataImporterName: dbPayload.dataImporter,
         source: {
           path: dbPayload.filePath,
           s3: {
@@ -91,6 +91,7 @@ export const getDataSource = ({
             region: dbPayload.region,
             secretAccessKey: dbPayload.secretKey,
             verifyTLS: dbPayload.verifyTlS,
+            forcePathStyle: dbPayload.forcePathStyle,
           },
         },
       },

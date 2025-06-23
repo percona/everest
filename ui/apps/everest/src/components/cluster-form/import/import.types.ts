@@ -7,20 +7,18 @@ export enum ImportFields {
   accessKey = 'accessKey',
   secretKey = 'secretKey',
   verifyTlS = 'verifyTlS',
+  forcePathStyle = 'forcePathStyle',
 
   filePath = 'filePath',
 
-  root = 'root',
-  proxyadmin = 'proxyadmin',
-  xtrabackup = 'xtrabackup',
-  monitor = 'monitor',
-  pmmServerPassword = 'pmmServerPassword',
-  operatorAdmin = 'operatorAdmin',
-  replication = 'replication',
-
-  recoveryTarget = 'recoveryTarget',
-  recoveryTargetLSN = 'recoveryTargetLSN',
-  recoveryTargetXID = 'recoveryTargetXID',
-  recoveryTargetTime = 'recoveryTargetTime',
-  recoveryTargetName = 'recoveryTargetName',
+  credentials = 'credentials',
 }
+
+export type SecretKey = {
+  name: string;
+  description: string;
+};
+
+export type DbCredentialsSectionProps = {
+  secretKeys?: SecretKey[];
+};

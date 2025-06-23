@@ -19,7 +19,11 @@ import {
   useMutation,
   useQuery,
 } from '@tanstack/react-query';
-import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import {
+  createDbClusterFn,
+  createDbClusterSecretFn,
+  getDbClusterCredentialsFn,
+} from 'api/dbClusterApi';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   MIN_NUMBER_OF_SHARDS,
@@ -98,6 +102,9 @@ const formValuesToPayloadMapping = (
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
           : '',
+        ...(dbPayload.dataImporter
+          ? { userSecretsName: `${dbPayload.dataImporter}-secret` }
+          : {}),
       },
       monitoring: {
         ...(!!dbPayload.monitoring && {
@@ -176,3 +183,19 @@ export const useDbClusterCredentials = (
     enabled: (options?.enabled ?? true) && canReadCredentials,
   });
 };
+
+type CreateDbClusterSecretProps = {
+  dbClusterName: string;
+  namespace: string;
+  credentials: Record<string, string>;
+};
+
+export const useCreateDbClusterSecret = () =>
+  useMutation({
+    mutationFn: ({
+      dbClusterName,
+      namespace,
+      credentials,
+    }: CreateDbClusterSecretProps) =>
+      createDbClusterSecretFn(dbClusterName, namespace, credentials),
+  });

@@ -27,12 +27,23 @@ import { DbWizardFormFields } from 'consts';
 import { useFormContext } from 'react-hook-form';
 import { dbTypeToDbEngine } from '@percona/utils';
 import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
+import { useDbEngine, useDbEngines } from 'hooks';
 
 export const ImportForm = () => {
   const [showCreds, setShowCreds] = useState(false);
   const { getValues } = useFormContext();
-  const selectedEngine = dbTypeToDbEngine(getValues(DbWizardFormFields.dbType));
-  const { data: dataImporters } = useDataImporters(selectedEngine);
+
+  const dbType = dbTypeToDbEngine(getValues(DbWizardFormFields.dbType));
+  const namespace = getValues(DbWizardFormFields.k8sNamespace);
+
+  const { data: dataImporters } = useDataImporters(dbType);
+
+  const { data: engines = [] } = useDbEngines(namespace);
+  const selectedEngineName = engines.find(
+    (engine) => engine.type === dbType
+  )?.name;
+  const { data: engine } = useDbEngine(namespace, selectedEngineName || '');
+  const secretKeys = engine?.spec?.secretKeys;
 
   return (
     <Box>
@@ -58,9 +69,10 @@ export const ImportForm = () => {
                   key={dataImporter.metadata.name}
                   onClick={() =>
                     setShowCreds(
-                      dataImporter.spec.databaseClusterConstraints.requiredFields.includes(
-                        'userSecretName'
-                      )
+                      (
+                        dataImporter.spec.databaseClusterConstraints
+                          .requiredFields || []
+                      ).includes('.spec.engine.userSecretsName')
                     )
                   }
                 >
@@ -85,7 +97,7 @@ export const ImportForm = () => {
         {showCreds && (
           <FormCardWithDialog
             title={Messages.dbCreds.label}
-            content={<DbCredentialsSection />}
+            content={<DbCredentialsSection secretKeys={secretKeys?.user} />}
             sectionSavedKey={SectionKeys.dbCreds}
           />
         )}

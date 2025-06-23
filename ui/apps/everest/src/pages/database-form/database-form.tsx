@@ -13,14 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useBlocker, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Stack, Step, StepLabel } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import { Stepper } from '@percona/ui-lib';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
+import {
+  useCreateDbCluster,
+  useCreateDbClusterSecret,
+} from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import { DbWizardType } from './database-form-schema';
 import { useDatabasePageDefaultValues } from './useDatabaseFormDefaultValues';
@@ -39,11 +42,13 @@ import { useSteps } from './database-form-body/steps';
 import { ZodType } from 'zod';
 
 export const DatabasePage = () => {
+  const latestDataRef = useRef<DbWizardType | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [longestAchievedStep, setLongestAchievedStep] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [stepsWithErrors, setStepsWithErrors] = useState<number[]>([]);
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
+  const { mutate: addDbClusterSecret } = useCreateDbClusterSecret();
   const location = useLocation();
   const steps = useSteps();
 
@@ -117,6 +122,7 @@ export const DatabasePage = () => {
   );
 
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
+    latestDataRef.current = data;
     if (mode === WizardMode.New || mode === WizardMode.Restore) {
       addDbCluster(
         {
@@ -135,6 +141,18 @@ export const DatabasePage = () => {
         },
         {
           onSuccess: (cluster) => {
+            const credentials = latestDataRef.current?.credentials;
+            if (
+              hasImportStep &&
+              credentials &&
+              Object.keys(credentials).length > 0
+            ) {
+              addDbClusterSecret({
+                dbClusterName: cluster.metadata.name,
+                namespace: cluster.metadata.namespace,
+                credentials: credentials as Record<string, string>,
+              });
+            }
             // We clear the query for the namespace to make sure the new cluster is fetched
             queryClient.removeQueries({
               queryKey: [DB_CLUSTERS_QUERY_KEY, cluster.metadata.namespace],

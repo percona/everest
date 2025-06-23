@@ -30,6 +30,18 @@ export const createDbClusterFn = async (data: DbCluster, namespace: string) => {
   return response.data;
 };
 
+export const createDbClusterSecretFn = async (
+  dbClusterName: string,
+  namespace: string,
+  data: Record<string, string>
+) => {
+  const response = await api.post(
+    `namespaces/${namespace}/database-clusters/${dbClusterName}/secret`,
+    data
+  );
+  return response.data;
+};
+
 export const updateDbClusterFn = async (
   dbClusterName: string,
   namespace: string,

@@ -20,7 +20,7 @@ const SectionFormWithStatus = ({
   schema,
 }: SectionFormWithStatusProps) => {
   const [openDialog, setOpenDialog] = useState(false);
-  const { setValue, control, getValues } = useFormContext();
+  const { setValue, control, getValues, trigger } = useFormContext();
   const isSectionSaved = useWatch({ control, name: sectionSavedKey });
 
   return (
@@ -43,6 +43,7 @@ const SectionFormWithStatus = ({
             setValue(key, value);
           });
           setOpenDialog(false);
+          trigger();
         }}
         schema={schema}
         submitMessage="Save"

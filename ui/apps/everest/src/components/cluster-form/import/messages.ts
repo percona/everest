@@ -21,9 +21,13 @@ export const Messages = {
     secretKey: 'Secret Key',
     secretKeyPlaceholder: 'Enter Secret key',
 
-    verifyTLS: 'Verify TLS',
+    verifyTLS: 'Verify TLS certificate',
     verifyTLSTooltip:
       "TLS verifies the server's certificate chain and host name, ensuring its authenticity.",
+
+    forcePathStyle: 'Force path-style URL access',
+    forcePathStyleTooltip:
+      "Some storage providers require path-style URLs to access the bucket. Read the provider's documentation to determine if this is required.",
   },
   fileDir: {
     label: 'File Directory',

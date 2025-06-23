@@ -1,72 +1,30 @@
 import { TextInput } from '@percona/ui-lib';
-import { ImportFields } from '../../import.types';
-import { Messages } from '../../messages';
+import { DbCredentialsSectionProps } from '../../import.types';
+import { useFormContext } from 'react-hook-form';
 
-export const DbCredentialsForm = () => {
+export const DbCredentialsForm = ({
+  secretKeys = [],
+}: DbCredentialsSectionProps) => {
+  const { register } = useFormContext();
   return (
     <>
-      <TextInput
-        name={ImportFields.root}
-        label={Messages.dbCreds.root}
-        textFieldProps={{
-          placeholder: Messages.enterPassword,
-        }}
-        isRequired
-      />
-
-      <TextInput
-        name={ImportFields.proxyadmin}
-        label={Messages.dbCreds.proxyAdmin}
-        textFieldProps={{
-          placeholder: Messages.enterPassword,
-        }}
-        isRequired
-      />
-
-      <TextInput
-        name={ImportFields.xtrabackup}
-        label={Messages.dbCreds.xtraBackup}
-        textFieldProps={{
-          placeholder: Messages.enterPassword,
-        }}
-        isRequired
-      />
-
-      <TextInput
-        name={ImportFields.monitor}
-        label={Messages.dbCreds.monitor}
-        textFieldProps={{
-          placeholder: Messages.enterPassword,
-        }}
-        isRequired
-      />
-
-      <TextInput
-        name={ImportFields.pmmServerPassword}
-        label={Messages.dbCreds.pmmServerPassword}
-        textFieldProps={{
-          placeholder: Messages.enterPassword,
-        }}
-        isRequired
-      />
-
-      <TextInput
-        name={ImportFields.operatorAdmin}
-        label={Messages.dbCreds.operatorAdmin}
-        textFieldProps={{
-          placeholder: Messages.enterPassword,
-        }}
-        isRequired
-      />
-
-      <TextInput
-        name={ImportFields.replication}
-        label={Messages.dbCreds.replication}
-        textFieldProps={{
-          placeholder: Messages.enterPassword,
-        }}
-        isRequired
-      />
+      {secretKeys.map((field) => (
+        <TextInput
+          key={field.name}
+          label={field.name}
+          {...register(`credentials.${field.name}`, {
+            required: 'This field is required',
+            minLength: {
+              value: 1,
+              message: 'Must be at least 1 character',
+            },
+            maxLength: {
+              value: 250,
+              message: 'Must be at most 250 characters',
+            },
+          })}
+        />
+      ))}
     </>
   );
 };

@@ -19,19 +19,9 @@ const s3SchemaObject = {
   [ImportFields.accessKey]: basicStringValidation(),
   [ImportFields.secretKey]: basicStringValidation(),
   [ImportFields.verifyTlS]: z.boolean(),
+  [ImportFields.forcePathStyle]: z.boolean(),
 };
 export const s3Schema = z.object(s3SchemaObject);
-
-const credentialsSchemaObject = {
-  [ImportFields.root]: basicStringValidation(),
-  [ImportFields.proxyadmin]: basicStringValidation(),
-  [ImportFields.xtrabackup]: basicStringValidation(),
-  [ImportFields.monitor]: basicStringValidation(),
-  [ImportFields.pmmServerPassword]: basicStringValidation(),
-  [ImportFields.operatorAdmin]: basicStringValidation(),
-  [ImportFields.replication]: basicStringValidation(),
-};
-export const dbCredentialsSchema = z.object(credentialsSchemaObject);
 
 const filePathSchemaObject = {
   [ImportFields.filePath]: z
@@ -45,7 +35,7 @@ export const importStepSchema = z
   .object({
     ...dataImporterSchemeObject,
     ...s3SchemaObject,
-    // ...credentialsSchemaObject,
     ...filePathSchemaObject,
+    credentials: z.record(z.string()).optional(),
   })
   .superRefine(() => {});

@@ -1,8 +1,7 @@
-import { CheckboxInput, TextInput } from '@percona/ui-lib';
+import { TextInput } from '@percona/ui-lib';
 import { ImportFields } from '../../import.types';
 import { Messages } from '../../messages';
-import { Box, FormControlLabel, Tooltip } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { S3Checkbox } from './s3-checkbox';
 
 export const S3DetailsForm = () => {
   return (
@@ -49,21 +48,15 @@ export const S3DetailsForm = () => {
         isRequired
       />
 
-      <FormControlLabel
-        label={
-          <Box display="flex" mt={0}>
-            {Messages.s3Details.verifyTLS}
-            <Tooltip
-              title={Messages.s3Details.verifyTLSTooltip}
-              arrow
-              placement="right"
-              sx={{ ml: 1 }}
-            >
-              <InfoOutlinedIcon />
-            </Tooltip>
-          </Box>
-        }
-        control={<CheckboxInput name={ImportFields.verifyTlS} />}
+      <S3Checkbox
+        name={ImportFields.verifyTlS}
+        text={Messages.s3Details.verifyTLS}
+        tooltip={Messages.s3Details.verifyTLSTooltip}
+      />
+      <S3Checkbox
+        name={ImportFields.forcePathStyle}
+        text={Messages.s3Details.forcePathStyle}
+        tooltip={Messages.s3Details.forcePathStyleTooltip}
       />
     </>
   );
