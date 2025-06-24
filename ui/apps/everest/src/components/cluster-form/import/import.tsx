@@ -82,6 +82,12 @@ export const ImportForm = () => {
               formControlProps={{ sx: { marginTop: 0 } }}
               selectFieldProps={{
                 sx: { minWidth: '240px' },
+                MenuProps: {
+                  anchorOrigin: {
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  },
+                },
               }}
             >
               {dataImporters?.items.map((dataImporter) => (

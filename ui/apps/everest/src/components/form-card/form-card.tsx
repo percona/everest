@@ -40,11 +40,12 @@ const FormCard: React.FC<FormCardProps> = ({
     <RoundedBox
       title={<Header title={title} controlComponent={controlComponent} />}
     >
-      {typeof description === 'string' ? (
-        <Typography variant="caption">{description}</Typography>
-      ) : (
-        description
-      )}
+      {description &&
+        (typeof description === 'string' ? (
+          <Typography variant="caption">{description}</Typography>
+        ) : (
+          description
+        ))}
     </RoundedBox>
   );
 };
