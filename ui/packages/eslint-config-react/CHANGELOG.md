@@ -1,5 +1,11 @@
 # @percona/eslint-config-react
 
+## 1.1.0
+
+### Minor Changes
+
+- Version 1.1.0
+
 ## 1.0.0
 
 ### Major Changes
