@@ -112,6 +112,10 @@ const Restores = () => {
       {
         header: 'Backup Source',
         accessorKey: 'backupSource',
+        Cell: ({ cell }) =>
+          cell.row.original.type === 'import'
+            ? 'External'
+            : cell.getValue<string>(),
       },
     ];
   }, []);
@@ -161,7 +165,9 @@ const Restores = () => {
             namespace,
             dbClusterName!
           );
-          return <TableActionsMenu menuItems={menuItems} />;
+          return row.original.type == 'import' ? (
+            <TableActionsMenu menuItems={menuItems} />
+          ) : null;
         }}
       />
       {openDeleteDialog && (

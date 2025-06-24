@@ -22,7 +22,7 @@ import { S3DetailsSection } from './sections/s3-details/s3-details-section';
 import { SectionKeys } from './sections/constants';
 import { FileDirectorySection } from './sections/file-directory/file-directory-section';
 import { DbCredentialsSection } from './sections/db-credentials/db-credentials-section';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { DbWizardFormFields } from 'consts';
 import { useFormContext } from 'react-hook-form';
 import { dbTypeToDbEngine } from '@percona/utils';
@@ -30,7 +30,7 @@ import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
 import { useDbEngine, useDbEngines } from 'hooks';
 
 export const ImportForm = () => {
-  const { getValues, watch } = useFormContext();
+  const { getValues, watch, setValue } = useFormContext();
 
   const dbType = dbTypeToDbEngine(getValues(DbWizardFormFields.dbType));
   const namespace = getValues(DbWizardFormFields.k8sNamespace);
@@ -54,6 +54,19 @@ export const ImportForm = () => {
   const { data: engine } = useDbEngine(namespace, selectedEngineName || '');
   const secretKeys = engine?.spec?.secretKeys;
 
+  const defaultDataImporter =
+    dataImporters?.items?.length === 1
+      ? dataImporters.items[0].metadata.name
+      : '';
+
+  useEffect(() => {
+    if (defaultDataImporter) {
+      setValue(ImportFields.dataImporter, defaultDataImporter);
+    } else {
+      setValue(ImportFields.dataImporter, '');
+    }
+  }, [defaultDataImporter, setValue]);
+
   return (
     <Box>
       <>
@@ -63,13 +76,12 @@ export const ImportForm = () => {
             <SelectInput
               controllerProps={{
                 name: ImportFields.dataImporter,
-                defaultValue: '',
               }}
               name={ImportFields.dataImporter}
               label={Messages.dataImporter.placeholder}
               formControlProps={{ sx: { marginTop: 0 } }}
               selectFieldProps={{
-                sx: { minWidth: '170px' },
+                sx: { minWidth: '240px' },
               }}
             >
               {dataImporters?.items.map((dataImporter) => (

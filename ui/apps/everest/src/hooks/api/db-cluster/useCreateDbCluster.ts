@@ -134,12 +134,16 @@ const formValuesToPayloadMapping = (
           },
         },
       }),
-      dataSource: {
-        ...getDataSource({
-          backupDataSource: backupDataSource,
-          dbPayload: dbPayload,
-        }),
-      },
+      ...(backupDataSource?.dbClusterBackupName || dbPayload.dataImporter
+        ? {
+            dataSource: {
+              ...getDataSource({
+                backupDataSource: backupDataSource,
+                dbPayload: dbPayload,
+              }),
+            },
+          }
+        : {}),
       ...(dbPayload.podSchedulingPolicyEnabled &&
         dbPayload.podSchedulingPolicy && {
           podSchedulingPolicyName: dbPayload.podSchedulingPolicy,
