@@ -102,8 +102,12 @@ const formValuesToPayloadMapping = (
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
           : '',
-        ...(dbPayload.dataImporter
-          ? { userSecretsName: `${dbPayload.dataImporter}-secret` }
+        ...(dbPayload.dataImporter &&
+        dbPayload.credentials &&
+        Object.keys(dbPayload.credentials).length > 0
+          ? {
+              userSecretsName: `user-secret-${dbPayload.dbName}`,
+            }
           : {}),
       },
       monitoring: {

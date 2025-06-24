@@ -1,6 +1,6 @@
-import { TextInput } from '@percona/ui-lib';
 import { DbCredentialsSectionProps } from '../../import.types';
 import { useFormContext } from 'react-hook-form';
+import { HiddenInput } from 'components/hidden-input';
 
 export const DbCredentialsForm = ({
   secretKeys = [],
@@ -9,7 +9,7 @@ export const DbCredentialsForm = ({
   return (
     <>
       {secretKeys.map((field) => (
-        <TextInput
+        <HiddenInput
           key={field.name}
           label={field.name}
           {...register(`credentials.${field.name}`, {

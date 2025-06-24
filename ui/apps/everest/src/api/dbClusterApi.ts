@@ -35,9 +35,15 @@ export const createDbClusterSecretFn = async (
   namespace: string,
   data: Record<string, string>
 ) => {
+  const payload = {
+    apiVersion: 'everest.percona.com/v1alpha1',
+    kind: 'Secret',
+    metadata: { name: `user-secret-${dbClusterName}` },
+    stringData: { ...data },
+  };
   const response = await api.post(
     `namespaces/${namespace}/database-clusters/${dbClusterName}/secret`,
-    data
+    payload
   );
   return response.data;
 };

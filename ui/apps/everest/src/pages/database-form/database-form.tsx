@@ -124,43 +124,48 @@ export const DatabasePage = () => {
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
     latestDataRef.current = data;
     if (mode === WizardMode.New || mode === WizardMode.Restore) {
-      addDbCluster(
-        {
-          dbPayload: data,
-          ...(mode === WizardMode.Restore && {
-            backupDataSource: {
-              dbClusterBackupName: location.state?.backupName,
-              ...(location.state?.pointInTimeDate && {
-                pitr: {
-                  date: location.state?.pointInTimeDate,
-                  type: 'date',
-                },
-              }),
-            },
-          }),
-        },
-        {
-          onSuccess: (cluster) => {
-            const credentials = latestDataRef.current?.credentials;
-            if (
-              hasImportStep &&
-              credentials &&
-              Object.keys(credentials).length > 0
-            ) {
-              addDbClusterSecret({
-                dbClusterName: cluster.metadata.name,
-                namespace: cluster.metadata.namespace,
-                credentials: credentials as Record<string, string>,
-              });
-            }
-            // We clear the query for the namespace to make sure the new cluster is fetched
-            queryClient.removeQueries({
-              queryKey: [DB_CLUSTERS_QUERY_KEY, cluster.metadata.namespace],
-            });
-            setFormSubmitted(true);
+      const addCluster = () =>
+        addDbCluster(
+          {
+            dbPayload: data,
+            ...(mode === WizardMode.Restore && {
+              backupDataSource: {
+                dbClusterBackupName: location.state?.backupName,
+                ...(location.state?.pointInTimeDate && {
+                  pitr: {
+                    date: location.state?.pointInTimeDate,
+                    type: 'date',
+                  },
+                }),
+              },
+            }),
           },
-        }
-      );
+          {
+            onSuccess: (cluster) => {
+              // We clear the query for the namespace to make sure the new cluster is fetched
+              queryClient.removeQueries({
+                queryKey: [DB_CLUSTERS_QUERY_KEY, cluster.metadata.namespace],
+              });
+              setFormSubmitted(true);
+            },
+          }
+        );
+
+      const credentials = latestDataRef.current?.credentials;
+      if (hasImportStep && credentials && Object.keys(credentials).length > 0) {
+        addDbClusterSecret(
+          {
+            dbClusterName: data.dbName,
+            namespace: data.k8sNamespace || '',
+            credentials: credentials as Record<string, string>,
+          },
+          {
+            onSuccess: addCluster,
+          }
+        );
+      } else {
+        addCluster();
+      }
     }
   };
 

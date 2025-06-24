@@ -22,7 +22,7 @@ import { S3DetailsSection } from './sections/s3-details/s3-details-section';
 import { SectionKeys } from './sections/constants';
 import { FileDirectorySection } from './sections/file-directory/file-directory-section';
 import { DbCredentialsSection } from './sections/db-credentials/db-credentials-section';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { DbWizardFormFields } from 'consts';
 import { useFormContext } from 'react-hook-form';
 import { dbTypeToDbEngine } from '@percona/utils';
@@ -30,13 +30,22 @@ import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
 import { useDbEngine, useDbEngines } from 'hooks';
 
 export const ImportForm = () => {
-  const [showCreds, setShowCreds] = useState(false);
-  const { getValues } = useFormContext();
+  const { getValues, watch } = useFormContext();
 
   const dbType = dbTypeToDbEngine(getValues(DbWizardFormFields.dbType));
   const namespace = getValues(DbWizardFormFields.k8sNamespace);
+  const selectedImporter = watch(DbWizardFormFields.dataImporter);
 
   const { data: dataImporters } = useDataImporters(dbType);
+
+  const showCreds = useMemo(() => {
+    const selectedImporterInfo = (dataImporters?.items || []).find(
+      (i) => i.metadata.name === selectedImporter
+    );
+    return (
+      selectedImporterInfo?.spec.databaseClusterConstraints.requiredFields || []
+    ).includes('.spec.engine.userSecretsName');
+  }, [dataImporters, selectedImporter]);
 
   const { data: engines = [] } = useDbEngines(namespace);
   const selectedEngineName = engines.find(
@@ -67,14 +76,6 @@ export const ImportForm = () => {
                 <MenuItem
                   value={dataImporter.metadata.name}
                   key={dataImporter.metadata.name}
-                  onClick={() =>
-                    setShowCreds(
-                      (
-                        dataImporter.spec.databaseClusterConstraints
-                          .requiredFields || []
-                      ).includes('.spec.engine.userSecretsName')
-                    )
-                  }
                 >
                   {dataImporter.metadata.name}
                 </MenuItem>
