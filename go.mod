@@ -4,17 +4,6 @@ go 1.24.0
 
 toolchain go1.24.1
 
-replace (
-	github.com/containerd/containerd v1.7.12 => github.com/containerd/containerd v1.7.13
-	github.com/percona/everest-operator => github.com/percona/everest-operator v0.6.0-dev1.0.20250610190300-1f40df0b2856
-	github.com/percona/percona-helm-charts/charts/everest => github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250611064315-301cf3c025ed
-	k8s.io/api => k8s.io/api v0.33.1
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.32.0
-	k8s.io/apimachinery => k8s.io/apimachinery v0.33.1
-	k8s.io/client-go => k8s.io/client-go v0.33.1
-	k8s.io/component-base => k8s.io/component-base v0.32.0
-)
-
 require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.0
@@ -41,8 +30,8 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.31.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250520105149-6e84ff3ec7de
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250606142431-b8ed7639c04d
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250618071633-c147d08fe726
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250618073308-d1e4995ea217
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -60,7 +49,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.33.0
 	k8s.io/apimachinery v0.33.1
 	k8s.io/cli-runtime v0.33.1
-	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/client-go v0.33.1
 	k8s.io/kubectl v0.33.0
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/controller-runtime v0.21.0
@@ -111,7 +100,7 @@ require (
 	github.com/go-errors/errors v1.5.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect

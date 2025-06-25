@@ -30,7 +30,7 @@ export const createDBCluster = async (request, name) => {
     },
     spec: {
       engine: {
-        type: 'pxc',
+        type: 'postgresql',
         replicas: 1,
         storage: {
           size: '4G',
@@ -41,7 +41,7 @@ export const createDBCluster = async (request, name) => {
         },
       },
       proxy: {
-        type: 'haproxy',
+        type: 'pgbouncer',
         replicas: 1,
         expose: {
           type: 'internal',
