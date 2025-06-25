@@ -1,0 +1,41 @@
+import { z } from 'zod';
+import { ImportFields } from './import.types';
+
+const MAX_IMPORT_FIELD_LENGTH = 250;
+
+const basicStringValidation = () =>
+  z.string().min(1).max(MAX_IMPORT_FIELD_LENGTH);
+
+const dataImporterSchemeObject = {
+  [ImportFields.dataImporter]: z.string().max(MAX_IMPORT_FIELD_LENGTH),
+};
+
+export const dataImporterSchema = z.object(dataImporterSchemeObject);
+
+const s3SchemaObject = {
+  [ImportFields.bucketName]: basicStringValidation(),
+  [ImportFields.region]: basicStringValidation(),
+  [ImportFields.endpoint]: basicStringValidation(),
+  [ImportFields.accessKey]: basicStringValidation(),
+  [ImportFields.secretKey]: basicStringValidation(),
+  [ImportFields.verifyTlS]: z.boolean(),
+  [ImportFields.forcePathStyle]: z.boolean(),
+};
+export const s3Schema = z.object(s3SchemaObject);
+
+const filePathSchemaObject = {
+  [ImportFields.filePath]: z
+    .string()
+    .max(MAX_IMPORT_FIELD_LENGTH)
+    .regex(/^((\/){1}[^/]+)+$/),
+};
+export const filePathSchema = z.object(filePathSchemaObject);
+
+export const importStepSchema = z
+  .object({
+    ...dataImporterSchemeObject,
+    ...s3SchemaObject,
+    ...filePathSchemaObject,
+    credentials: z.record(z.string()).optional(),
+  })
+  .superRefine(() => {});

@@ -21,18 +21,38 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { humanizeDbType } from 'utils/db';
+import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
 
-export const CreateDbButton = () => {
+export const CreateDbButton = ({
+  createFromImport = false,
+}: {
+  createFromImport?: boolean;
+}) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showDropdownButton, setShowDropdownButton] = useState(false);
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
+  const { data: availableDbImporters } = useDataImporters();
+  const supportedEngineTypesForImport = new Set(
+    availableDbImporters?.items
+      .map((importer) => importer.spec.supportedEngines)
+      .flat()
+  );
+
   const open = Boolean(anchorEl);
 
-  const [availableDbTypes, availableDbTypesFetching] =
+  const [allAvailableDbTypes, availableDbTypesFetching] =
     useDBEnginesForDbEngineTypes(undefined, {
       refetchInterval: 30 * 1000,
     });
+
+  const availableDbTypes = allAvailableDbTypes.filter((item) =>
+    item.dbEngines.some((engine) =>
+      createFromImport
+        ? supportedEngineTypesForImport.has(engine.dbEngine!.type)
+        : true
+    )
+  );
 
   const availableEngines = availableDbTypes.filter(
     (item) =>
@@ -77,7 +97,7 @@ export const CreateDbButton = () => {
         <Button
           data-testid="add-db-cluster-button"
           size="small"
-          variant="contained"
+          variant={createFromImport ? 'text' : 'contained'}
           sx={buttonStyle}
           aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
           aria-haspopup="true"
@@ -85,7 +105,7 @@ export const CreateDbButton = () => {
           onClick={handleClick}
           endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
         >
-          Create database
+          {createFromImport ? 'Import' : 'Create database'}
         </Button>
       ) : (
         <Skeleton variant="rounded" sx={skeletonStyle} />
@@ -118,7 +138,10 @@ export const CreateDbButton = () => {
                     px: 2,
                     py: '10px',
                   }}
-                  state={{ selectedDbEngine: item.type }}
+                  state={{
+                    selectedDbEngine: item.type,
+                    showImport: createFromImport,
+                  }}
                 >
                   {humanizeDbType(dbEngineToDbType(item.type))}
                 </MenuItem>

@@ -32,6 +32,7 @@ const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.resizingVolumes]: Messages.statusProvider.resizingVolumes,
   [DbClusterStatus.creating]: Messages.statusProvider.creating,
   [DbClusterStatus.upgrading]: Messages.statusProvider.upgrading,
+  [DbClusterStatus.importing]: Messages.statusProvider.importing,
 };
 
 export const beautifyDbClusterStatus = (status: DbClusterStatus): string =>
