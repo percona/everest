@@ -55,7 +55,10 @@ test('T191 - Verify token invalidity after user logout from Everest UI - Everest
     expectUnauthorized(request, token));
 });
 
-test('T189 - Verify user is logged out and token is invalidated after user deletion', async ({ page, request }) => {
+test('T189 - Verify user is logged out and token is invalidated after user deletion', async ({
+  page,
+  request,
+}) => {
   let token: string;
 
   await test.step('Login as session user', async () => {
@@ -67,7 +70,7 @@ test('T189 - Verify user is logged out and token is invalidated after user delet
   await test.step('Token works before logout', () =>
     expectAuthorized(request, token));
 
-   await test.step('Delete user and verify UI logout', async () => {
+  await test.step('Delete user and verify UI logout', async () => {
     // Confirm user is logged in
     await expect(page.getByTestId('user-appbar-button')).toBeVisible();
 

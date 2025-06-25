@@ -66,7 +66,7 @@ export const loginSessionUser = async (page: Page, saveSession = false) => {
   await expect(page.getByTestId('user-appbar-button')).toBeVisible({
     timeout: TIMEOUTS.ThirtySeconds,
   });
-  
+
   try {
     const letsGoButton = page.getByTestId('lets-go-button');
     if (await letsGoButton.isVisible({ timeout: 3000 })) {
@@ -75,10 +75,10 @@ export const loginSessionUser = async (page: Page, saveSession = false) => {
   } catch {
     // Modal not visible, skip
   }
-  
+
   if (saveSession) {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const stateFilePath = path.join(__dirname, '..', 'sessionUser.json');
     await page.context().storageState({ path: stateFilePath });
   }
-};  
+};

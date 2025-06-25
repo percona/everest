@@ -4,7 +4,6 @@ import { execSync } from 'child_process';
 const USER = process.env.SESSION_USER!;
 
 test('Teardown session user', async () => {
-
   if (!USER) {
     throw new Error('SESSION_USER is not set');
   }
@@ -12,7 +11,9 @@ test('Teardown session user', async () => {
   console.log(`Checking if user '${USER}' exists before deleting...`);
 
   // List users
-  const output = execSync(`go run ../../../cmd/cli/main.go accounts list`).toString();
+  const output = execSync(
+    `go run ../../../cmd/cli/main.go accounts list`
+  ).toString();
 
   // Check if USER exists
   if (output.includes(USER)) {

@@ -24,7 +24,6 @@ export const getSessionToken = async () => {
   const origins = (await context.storageState()).origins;
   await context.close();
 
-  return origins[0].localStorage.find(
-    (item) => item.name === 'everestToken'
-  )?.value;
+  return origins[0].localStorage.find((item) => item.name === 'everestToken')
+    ?.value;
 };

@@ -11,9 +11,12 @@ test('Setup session user and generate sessionUser.json', async () => {
   if (!USER || !PASS) {
     throw new Error('SESSION_USER or SESSION_PASS is not set');
   }
-  execSync(`go run ../../../cmd/cli/main.go accounts create -u ${USER} -p ${PASS}`, {
-    stdio: 'inherit',
-  });
+  execSync(
+    `go run ../../../cmd/cli/main.go accounts create -u ${USER} -p ${PASS}`,
+    {
+      stdio: 'inherit',
+    }
+  );
 });
 
 test('Login Everest and generate sessionUser.json', async ({ page }) => {
