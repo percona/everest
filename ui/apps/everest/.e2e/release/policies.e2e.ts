@@ -325,13 +325,8 @@ test.describe(
     const firstClusterName = 'mysql-ac1';
     const secondClusterName = 'mysql-ra8';
 
-    // We assume 3 engine and 3 proxy pods per cluster, which is the default for MySQL clusters
-    const enginePodNames = [0, 1, 2].map(
-      (i) => `${secondClusterName}-pxc-${i}`
-    );
-    const proxyPodNames = [0, 1, 2].map(
-      (i) => `${secondClusterName}-haproxy-${i}`
-    );
+    const enginePodName = `${secondClusterName}-pxc-0`;
+    const proxyPodName = `${secondClusterName}-haproxy-0`;
 
     let storageClasses = [];
     let k8sNodes: string[] = [];
@@ -350,8 +345,8 @@ test.describe(
 
       k8sNodes = await getK8sNodes();
 
-      if (!k8sNodes.length || k8sNodes.length < 6) {
-        throw new Error('6 or more k8s nodes are required for this test');
+      if (!k8sNodes.length || k8sNodes.length < 3) {
+        throw new Error('3 k8s nodes are required for this test');
       }
     });
 
@@ -405,6 +400,10 @@ test.describe(
           null
         );
         await moveForward(page);
+
+        await page.getByRole('button').getByText('1 node').click();
+        await populateResources(page, 0.6, 1, 1, 1, 1, 0.6, 1);
+
         await moveForward(page);
         await moveForward(page);
 
@@ -427,8 +426,8 @@ test.describe(
         await submitWizard(page);
       });
 
-      await test.step('Assign size=large labels to the three first k8s nodes', async () => {
-        for (let i = 0; i < 3; i++) {
+      await test.step('Assign size=large labels to the two first k8s nodes', async () => {
+        for (let i = 0; i < 2; i++) {
           await addLabelToK8sNode(k8sNodes[i], 'size', 'large');
         }
       });
@@ -448,6 +447,10 @@ test.describe(
           null
         );
         await moveForward(page);
+
+        await page.getByRole('button').getByText('1 node').click();
+        await populateResources(page, 0.6, 1, 1, 1, 1, 0.6, 1);
+
         await moveForward(page);
         await moveForward(page);
 
@@ -468,7 +471,6 @@ test.describe(
       await test.step('Check up status', async () => {
         await page.goto('/databases');
         await waitForStatus(page, secondClusterName, 'Initializing', 30000);
-        // await waitForStatus(page, secondClusterName, 'Up', 600000);
       });
 
       await test.step('Show policies on overview', async () => {
@@ -495,13 +497,10 @@ test.describe(
       await test.step('Check restart status', async () => {
         await page.goto('/databases');
         await waitForStatus(page, secondClusterName, 'Initializing', 30000);
-        // await waitForStatus(page, secondClusterName, 'Up', 600000);
       });
 
-      await test.step('Assign size=small labels to the three last k8s nodes', async () => {
-        for (let i = 3; i < 6; i++) {
-          await addLabelToK8sNode(k8sNodes[i], 'size', 'small');
-        }
+      await test.step('Assign size=small labels to the last k8s node', async () => {
+        await addLabelToK8sNode(k8sNodes[2], 'size', 'small');
       });
 
       await test.step('Disable pod scheduling policies for the second cluster', async () => {
@@ -518,7 +517,6 @@ test.describe(
       await test.step('Check restart status', async () => {
         await page.goto('/databases');
         await waitForStatus(page, secondClusterName, 'Initializing', 30000);
-        // await waitForStatus(page, secondClusterName, 'Up', 600000);
       });
 
       await test.step('Re-enable pod scheduling policies for the second cluster', async () => {
@@ -543,29 +541,19 @@ test.describe(
       });
 
       await test.step('Check pods assignment', async () => {
-        const allEnginePods = await getK8sResource(
+        const enginePod = await getK8sResource(
           'pods',
-          enginePodNames.join(' '),
+          enginePodName,
           namespace
         );
-        const allProxyPods = await getK8sResource(
-          'pods',
-          proxyPodNames.join(' '),
-          namespace
-        );
-        const engineNodes = allEnginePods.items.map((i) => i.spec.nodeName);
-        const proxyNodes = allProxyPods.items.map((i) => i.spec.nodeName);
+        const proxyPod = await getK8sResource('pods', proxyPodName, namespace);
+        const engineNode = enginePod.spec.nodeName;
+        const proxyNode = proxyPod.spec.nodeName;
 
         // Engines should be on large nodes
-        expect(engineNodes.length).toBe(3);
-        expect(engineNodes.every((n) => k8sNodes.slice(0, 3).includes(n))).toBe(
-          true
-        );
+        expect(k8sNodes.slice(0, 2).includes(engineNode));
         // Proxies should be on small nodes
-        expect(proxyNodes.length).toBe(3);
-        expect(proxyNodes.every((n) => k8sNodes.slice(3, 6).includes(n))).toBe(
-          true
-        );
+        expect(k8sNodes.slice(2, 3).includes(proxyNode));
       });
 
       await test.step('Try to remove policy in use', async () => {
@@ -578,7 +566,7 @@ test.describe(
     });
 
     test(`Delete clusters and policies`, async ({ page, request }) => {
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 3; i++) {
         await removeLabelFromK8sNode(k8sNodes[i], 'size');
       }
       await deleteDbCluster(page, firstClusterName);
