@@ -1,35 +1,54 @@
 ### This directory holds scripts that help to run Everest Feature Builds (FB)
 
 The scripts:
-- `vs.sh` - deploys VS and returns its internal IP. In common case, this script should not be run manually, it's being run by other two scripts.
-- `helm.sh` - runs `vs.sh` under the hood and then runs Everest helm installation.
-- `cli.sh` - runs `vs.sh` under the hood, exposes VS with port-forwarding and then runs Everest cli installation.
+- `vs.sh` - deploys Percona Version Service. In common case, this script should not be run manually, it's being run by other scripts.
+- `install-helm.sh` - runs `vs.sh` under the hood, exposes VS with port-forwarding and then runs Everest helm installation.
+- `upgrade-helm.sh` - runs `vs.sh` under the hood, exposes VS with port-forwarding and then runs Everest helm upgrade.
+- `install-cli.sh` - runs `vs.sh` under the hood, exposes VS with port-forwarding and then runs Everest CLI installation.
+- `upgrade-cli.sh` - runs `vs.sh` under the hood, exposes VS with port-forwarding and then runs Everest deployment upgrade using CLI.
 
 #### Prerequisites:
-1. Download the artifacts you need (helm, cli) from the FB pipeline
-2. Navigate to `the everest/dev/fb` directory
-3. Install the Feature build:
+1. Download and unzip archive with FB.
+2. Navigate to `1.10000.0-rc<...>` directory
+
+## Install the Feature Build
 
 #### a. Using Helm:
 ```sh
-VS_IMAGE=<VS_TAG> HELM_PATH=<path_to_your_helmchart> sh helm.sh
+./install-helm.sh
 ```
-
-for example
-
+NOTE: it is possible to pass an additional flags to the script that will be bypassed directly to `helm install` command , for example:
 ```sh
-VS_IMAGE=everest-test20241217095910 HELM_PATH=/Users/oxana/Downloads/percona-helm-charts sh helm.sh
+./install-helm.sh --set server.initialAdminPassword=admin
 ```
-
 
 #### b. Using CLI:
-
 ```sh
-VS_IMAGE=<VS_TAG> HELM_PATH=<path_to_your_helmchart> VERSION=<FB_VERSION_NAME> EVEREST_CTL_PATH=<PATH_TO_EVERESTCTL_BUILD> sh cli.sh
+./install-cli.sh
+```
+NOTE: it is possible to pass an additional flags to the script that will be bypassed directly to `everestctl install` command , for example:
+```sh
+./install-cli.sh --helm.set server.initialAdminPassword=admin
 ```
 
-for example
+## Upgrade Everest deployment to the Feature Build
+NOTE: Before running upgrade scripts, make sure that Everest is already installed in the cluster.
+You should use the same tool for upgrading Everest deployment that have been used for installation (Helm or CLI).
 
+#### a. Using Helm:
 ```sh
-VS_IMAGE=everest-test20241217095910 VERSION=1.10000.0-rc20241217095910 HELM_PATH=/Users/oxana/Downloads/percona-helm-charts  EVEREST_CTL_PATH=/Users/oxana/Downloads/everestctl-everestctl-darwin-arm64 sh cli.sh
+./upgrade-helm.sh
+```
+NOTE: it is possible to pass an additional flags to the script that will be bypassed directly to `helm upgrade` command , for example:
+```sh
+./upgrade-helm.sh --set server.initialAdminPassword=admin
+```
+
+#### b. Using CLI:
+```sh
+./upgrade-cli.sh
+```
+NOTE: it is possible to pass an additional flags to the script that will be bypassed directly to `everestctl upgrade` command , for example:
+```sh
+./upgrade-cli.sh --helm.set server.initialAdminPassword=admin
 ```
