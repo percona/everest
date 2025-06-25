@@ -14,8 +14,10 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { login, logout } from '../utils/user';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { loginSessionUser, logout } from '../utils/user';
+import { getSessionToken } from '../utils/localStorage';
+import { execSync } from 'child_process';
+const USER = process.env.SESSION_USER!;
 
 // ——————————————————————————————————————————————————
 // check API response for valid and invalid tokens
@@ -42,7 +44,7 @@ test('T191 - Verify token invalidity after user logout from Everest UI - Everest
   page,
   request,
 }) => {
-  const token = await getTokenFromLocalStorage();
+  const token = await getSessionToken();
 
   await test.step('Token works before logout', () =>
     expectAuthorized(request, token));
@@ -51,7 +53,34 @@ test('T191 - Verify token invalidity after user logout from Everest UI - Everest
 
   await test.step('Token invalid after logout', () =>
     expectUnauthorized(request, token));
-  await test.step('Re-log in to refresh storageState for teardown', async () => {
-    await login(page);
+});
+
+test('T189 - Verify user is logged out and token is invalidated after user deletion', async ({ page, request }) => {
+  let token: string;
+
+  await test.step('Login as session user', async () => {
+    await loginSessionUser(page, true);
+    token = await getSessionToken();
+    expect(token).toBeTruthy();
   });
+
+  await test.step('Token works before logout', () =>
+    expectAuthorized(request, token));
+
+   await test.step('Delete user and verify UI logout', async () => {
+    // Confirm user is logged in
+    await expect(page.getByTestId('user-appbar-button')).toBeVisible();
+
+    // Delete user via CLI
+    execSync(`go run ../../../cmd/cli/main.go accounts delete -u ${USER}`, {
+      stdio: 'inherit',
+    });
+
+    // After delete, UI should auto-logout
+    await page.waitForURL('**/login', { timeout: 10000 });
+    await expect(page.getByTestId('login-button')).toBeVisible();
+  });
+
+  await test.step('Token invalid after logout', () =>
+    expectUnauthorized(request, token));
 });
