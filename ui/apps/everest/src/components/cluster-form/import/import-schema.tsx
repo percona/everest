@@ -27,7 +27,7 @@ const filePathSchemaObject = {
   [ImportFields.filePath]: z
     .string()
     .max(MAX_IMPORT_FIELD_LENGTH)
-    .regex(/^\/?([^/]+\/)*[^/]*$/),
+    .regex(/^\/?([^/]+\/)*[^/]*$/, 'Invalid file path'),
 };
 export const filePathSchema = z.object(filePathSchemaObject);
 
