@@ -22,6 +22,7 @@ const DatabaseFormStepControllers = ({
   disableBack,
   disableSubmit,
   disableCancel,
+  disableNext,
   showSubmit,
   onPreviousClick,
   onNextClick,
@@ -63,6 +64,7 @@ const DatabaseFormStepControllers = ({
       <Button
         onClick={onNextClick}
         variant="contained"
+        disabled={disableNext}
         data-testid="db-wizard-continue-button"
       >
         {Messages.continue}

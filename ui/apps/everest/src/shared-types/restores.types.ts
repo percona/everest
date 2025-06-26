@@ -53,7 +53,7 @@ export type Restore = {
   name: string;
   startTime: string;
   endTime?: string;
-  type: 'full' | 'pitr';
+  type: 'full' | 'pitr' | 'import';
   state: string;
   backupSource: string;
 };

@@ -73,6 +73,16 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
     getDefaultNumberOfconfigServersByNumberOfNodes(
       parseInt(DEFAULT_NODES[DbType.Mongo], 10)
     ),
+  [DbWizardFormFields.dataImporter]: '',
+  [DbWizardFormFields.bucketName]: '',
+  [DbWizardFormFields.region]: '',
+  [DbWizardFormFields.endpoint]: '',
+  [DbWizardFormFields.accessKey]: '',
+  [DbWizardFormFields.secretKey]: '',
+  [DbWizardFormFields.filePath]: '',
+  [DbWizardFormFields.verifyTlS]: false,
+  [DbWizardFormFields.forcePathStyle]: false,
+  [DbWizardFormFields.credentials]: {},
 });
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {

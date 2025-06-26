@@ -23,10 +23,12 @@ import {
   DbEngineStatus,
   DbEngineType,
   EngineToolPayload,
+  GetDbEnginePayload,
   GetDbEnginesPayload,
   OperatorsUpgradePlan,
 } from 'shared-types/dbEngines.types';
 import {
+  getDbEngineFn,
   getDbEnginesFn,
   getOperatorsUpgradePlan,
   upgradeOperator,
@@ -127,6 +129,13 @@ export const useDbEngines = (
     retry: 3,
     ...options,
     enabled: !!namespace && (options?.enabled ?? true),
+  });
+};
+
+export const useDbEngine = (namespace: string, name: string) => {
+  return useQuery<GetDbEnginePayload, unknown, GetDbEnginePayload>({
+    queryKey: ['dbEngine', namespace, name],
+    queryFn: () => getDbEngineFn(namespace, name),
   });
 };
 
