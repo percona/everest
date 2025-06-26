@@ -27,7 +27,7 @@ const filePathSchemaObject = {
   [ImportFields.filePath]: z
     .string()
     .max(MAX_IMPORT_FIELD_LENGTH)
-    .regex(/^\/([^/]+\/)*[^/]*$/),
+    .regex(/^\/?([^/]+\/)*[^/]*$/),
 };
 export const filePathSchema = z.object(filePathSchemaObject);
 
