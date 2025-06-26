@@ -165,7 +165,7 @@ const Restores = () => {
             namespace,
             dbClusterName!
           );
-          return row.original.type == 'import' ? (
+          return row.original.type !== 'import' ? (
             <TableActionsMenu menuItems={menuItems} />
           ) : null;
         }}
