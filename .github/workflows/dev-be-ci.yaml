@@ -69,6 +69,9 @@ jobs:
       - name: Download Go modules
         run: go mod download
 
+      - name: Create index.html file
+        run: mkdir public/dist && touch public/dist/index.html
+
       - name: Install development tools
         run: make init
 
@@ -162,6 +165,9 @@ jobs:
 
       - name: Download Go modules
         run: go mod download
+
+      - name: Create index.html file
+        run: mkdir public/dist && touch public/dist/index.html
 
       - name: Install tools
         run: make init
@@ -266,6 +272,9 @@ jobs:
       - name: Expose local registry
         run: |
           kubectl port-forward --namespace kube-system service/registry 5000:80 &
+
+      - name: Create index.html file
+        run: mkdir public/dist && touch public/dist/index.html
 
       - name: Build Everest API Server
         run: |
