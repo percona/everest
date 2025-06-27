@@ -61,8 +61,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
 [
   { db: 'psmdb', size: 3 },
-  // TODO: Re-enable after fix for https://perconadev.atlassian.net/browse/EVEREST-2017
-  //  { db: 'pxc', size: 3 },
+  { db: 'pxc', size: 3 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
