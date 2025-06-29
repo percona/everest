@@ -577,8 +577,8 @@ github.com/operator-framework/api v0.31.0/go.mod h1:57oCiHNeWcxmzu1Se8qlnwEKr/GG
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
-github.com/percona/everest-operator v0.6.0-dev1.0.20250620072747-863c6e930fe5 h1:vEROkmzXQ0VC3knw0k/IQMGNra4ndkTI4T0SojiyJvc=
-github.com/percona/everest-operator v0.6.0-dev1.0.20250620072747-863c6e930fe5/go.mod h1:ob6jTjQl1ub3xtT5hbqOFwsh69sBULGJ3EAhsWN1Hvk=
+github.com/percona/everest-operator v0.6.0-dev1.0.20250628081256-6ffe137231f0 h1:/+/whU4ooe/V0qCZ9y9qrcEt8lwOklxzJX6kKmjml6E=
+github.com/percona/everest-operator v0.6.0-dev1.0.20250628081256-6ffe137231f0/go.mod h1:ob6jTjQl1ub3xtT5hbqOFwsh69sBULGJ3EAhsWN1Hvk=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241212160532-0157f87a7eee h1:LtitxWyhBqCNjIZqdvsSEPBd2HPg11lDBlIExTQAbGQ=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20241212160532-0157f87a7eee/go.mod h1:zikIUTNTflfcth3ZJRqhvW8+7Jj38aVlg+wSV1jwnxo=
 github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250618073308-d1e4995ea217 h1:31DAZ+23OTMeVi5MHrtpWxsw0N4bTLIbxrYRms6HIEw=
