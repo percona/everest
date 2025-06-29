@@ -371,8 +371,10 @@ jobs:
 
       - name: Everest - copy feature build helper scripts
         run: |
-          cp dev/fb/cli.sh /tmp/${VERSION}/cli.sh
-          cp dev/fb/helm.sh /tmp/${VERSION}/helm.sh
+          cp dev/fb/install-cli.sh /tmp/${VERSION}/install-cli.sh
+          cp dev/fb/upgrade-cli.sh /tmp/${VERSION}/upgrade-cli.sh
+          cp dev/fb/install-helm.sh /tmp/${VERSION}/install-helm.sh
+          cp dev/fb/upgrade-helm.sh /tmp/${VERSION}/upgrade-helm.sh
           cp dev/fb/vs.sh /tmp/${VERSION}/vs.sh
 
       - name: Everest - push Everest image
@@ -389,9 +391,9 @@ jobs:
 
       - name: Version Service - create deployment manifest
         run: |
-          curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
+          curl -fsSL https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" /tmp/${VERSION}/vs_deploy.yaml
-
+          sed -i "s/replicas: [0-9]/replicas: 1/g" /tmp/${VERSION}/vs_deploy.yaml
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -404,13 +406,13 @@ jobs:
         run: |
           printf "To install FB using helm:\n\
           1. Download and unzip the \`$VERSION\` artifact below.\n\
-          2. Run the command:\n\`\`\`./helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          2. Run the command:\n\`\`\`./install-helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "To install FB using CLI:\n\
           1. Download and unzip the \`$VERSION\` artifact below.\n\
-          2. Run the command:\n\`\`\`./cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          2. Run the command:\n\`\`\`./install-cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
 
           printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
           
