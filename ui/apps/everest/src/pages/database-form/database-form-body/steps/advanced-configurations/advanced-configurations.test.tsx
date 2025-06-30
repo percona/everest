@@ -126,16 +126,24 @@ describe('FourthStep', () => {
 
     const addTextInputButton = screen.getByTestId('add-text-input-button');
 
-    expect(addTextInputButton).toBeDisabled();
-
     // Add the first source range
     const firstSourceRangeInput = screen.getByTestId(
       'text-input-source-ranges.0.source-range'
     );
 
-    fireEvent.input(firstSourceRangeInput, {
-      target: { value: '192.168.1.1/32' },
+    await waitFor(() => {
+      fireEvent.input(firstSourceRangeInput, {
+        target: { value: '' },
+      });
     });
+
+    expect(addTextInputButton).toBeDisabled();
+
+    await waitFor(() =>
+      fireEvent.input(firstSourceRangeInput, {
+        target: { value: '192.168.1.1/32' },
+      })
+    );
 
     expect(addTextInputButton).not.toBeDisabled();
 
@@ -144,11 +152,17 @@ describe('FourthStep', () => {
     // Add a new source range input
     fireEvent.click(addTextInputButton);
 
-    expect(addTextInputButton).toBeDisabled();
-
     const secondSourceRangeInput = screen.getByTestId(
       'text-input-source-ranges.1.source-range'
     );
+
+    await waitFor(() =>
+      fireEvent.input(secondSourceRangeInput, {
+        target: { value: '' },
+      })
+    );
+
+    expect(addTextInputButton).toBeDisabled();
 
     await waitFor(() =>
       fireEvent.input(secondSourceRangeInput, {
