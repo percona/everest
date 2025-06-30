@@ -129,11 +129,7 @@ describe('FourthStep', () => {
 
     const addTextInputButton = screen.getByTestId('add-text-input-button');
 
-    await waitFor(() =>
-      expect(
-        screen.getByTestId('text-input-source-ranges.0.source-range')
-      ).toBeInTheDocument()
-    );
+    fireEvent.click(addTextInputButton);
 
     const firstSourceRangeInput = screen.getByTestId(
       'text-input-source-ranges.0.source-range'
