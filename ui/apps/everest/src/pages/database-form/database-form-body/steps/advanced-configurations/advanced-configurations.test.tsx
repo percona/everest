@@ -116,7 +116,10 @@ describe('FourthStep', () => {
     const checkbox = screen
       .getByTestId('switch-input-external-access')
       .querySelector('input');
-    fireEvent.click(checkbox!);
+
+    await waitFor(() => {
+      fireEvent.click(checkbox!);
+    });
 
     expect(checkbox).toBeChecked();
 
