@@ -67,7 +67,10 @@ export const CreateDbButton = ({
       setAnchorEl(event.currentTarget);
     } else {
       navigate('/databases/new', {
-        state: { selectedDbEngine: availableEngines[0].type },
+        state: {
+          selectedDbEngine: availableEngines[0].type,
+          showImport: createFromImport,
+        },
       });
     }
   };

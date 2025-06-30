@@ -51,10 +51,13 @@ export const useDbCluster = (
 
 export const useDbClusterImportJobs = (
   namespace: string,
-  dbClusterName: string
+  dbClusterName: string,
+  options?: PerconaQueryOptions<DataImportJobs, unknown, DataImportJobs>
 ) => {
   return useQuery<DataImportJobs, unknown, DataImportJobs>({
     queryKey: [DB_CLUSTER_IMPORTS_QUERY, dbClusterName],
+    refetchInterval: 5 * 1000,
     queryFn: () => getDbClusterImports(namespace, dbClusterName),
+    ...options,
   });
 };
