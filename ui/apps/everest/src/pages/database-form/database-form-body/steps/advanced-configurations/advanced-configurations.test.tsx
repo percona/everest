@@ -117,9 +117,9 @@ describe('FourthStep', () => {
       .getByTestId('switch-input-external-access')
       .querySelector('input');
 
-    await waitFor(() => {
-      fireEvent.click(checkbox!);
-    });
+    // await waitFor(() => {
+    fireEvent.click(checkbox!);
+    // });
 
     expect(checkbox).toBeChecked();
 
@@ -129,7 +129,12 @@ describe('FourthStep', () => {
 
     const addTextInputButton = screen.getByTestId('add-text-input-button');
 
-    // Add the first source range
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('text-input-source-ranges.0.source-range')
+      ).toBeInTheDocument()
+    );
+
     const firstSourceRangeInput = screen.getByTestId(
       'text-input-source-ranges.0.source-range'
     );
