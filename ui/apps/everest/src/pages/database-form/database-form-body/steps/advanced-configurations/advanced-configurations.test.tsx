@@ -124,7 +124,9 @@ describe('FourthStep', () => {
       expect(screen.getByTestId('external-access-fields')).toBeInTheDocument()
     );
 
-    fireEvent.click(screen.getByTestId('add-text-input-button'));
+    const addTextInputButton = screen.getByTestId('add-text-input-button');
+
+    expect(addTextInputButton).toBeDisabled();
 
     // Add the first source range
     const firstSourceRangeInput = screen.getByTestId(
@@ -134,10 +136,15 @@ describe('FourthStep', () => {
     fireEvent.input(firstSourceRangeInput, {
       target: { value: '192.168.1.1/32' },
     });
+
+    expect(addTextInputButton).not.toBeDisabled();
+
     fireEvent.blur(firstSourceRangeInput);
 
     // Add a new source range input
-    fireEvent.click(screen.getByTestId('add-text-input-button'));
+    fireEvent.click(addTextInputButton);
+
+    expect(addTextInputButton).toBeDisabled();
 
     const secondSourceRangeInput = screen.getByTestId(
       'text-input-source-ranges.1.source-range'
@@ -148,9 +155,9 @@ describe('FourthStep', () => {
         target: { value: '192.168.1.1/32' },
       })
     );
-    fireEvent.input(secondSourceRangeInput, {
-      target: { value: '192.168.1.1/32' },
-    });
+
+    expect(addTextInputButton).not.toBeDisabled();
+
     fireEvent.blur(secondSourceRangeInput);
 
     await waitFor(() => expect(secondSourceRangeInput).toBeInvalid());
