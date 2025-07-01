@@ -10,11 +10,13 @@ import ScheduledBackupsList from './scheduled-backups-list';
 import { BackupListTableHeaderProps } from './backups-list-table-header.types';
 import { Messages } from './backups-list-table-header.messages';
 import { useRBACPermissions } from 'hooks/rbac';
+import { BackupStatus } from 'shared-types/backups.types';
 
 const BackupListTableHeader = ({
   onNowClick,
   onScheduleClick,
   noStoragesAvailable,
+  backups,
 }: BackupListTableHeaderProps) => {
   const [showSchedules, setShowSchedules] = useState(false);
   const { dbCluster } = useContext(ScheduleModalContext);
@@ -142,7 +144,14 @@ const BackupListTableHeader = ({
           </MenuButton>
         )}
       </Box>
-      {schedulesNumber > 0 && showSchedules && <ScheduledBackupsList />}
+      {schedulesNumber > 0 && showSchedules && (
+        <ScheduledBackupsList
+          emptyBackups={
+            backups.length === 0 ||
+            backups.every((b) => b.state === BackupStatus.DELETING)
+          }
+        />
+      )}
     </>
   );
 };
