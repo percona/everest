@@ -13,6 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 export const Messages = {
-  pageTitle: 'Import info',
+  pageTitle: 'Import information',
   pageDescription: 'Provide the details of the file you want to import.',
 };
