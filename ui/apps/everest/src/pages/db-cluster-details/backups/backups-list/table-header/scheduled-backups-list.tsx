@@ -16,13 +16,13 @@ import {
 import { useUpdateDbClusterWithConflictRetry } from 'hooks';
 import { WizardMode } from 'shared-types/wizard.types';
 import { DbEngineType } from 'shared-types/dbEngines.types';
-import { Backup } from 'shared-types/backups.types';
+import { Backup, BackupStatus } from 'shared-types/backups.types';
 
-const ScheduledBackupsList = ({
-  currentBackups,
-}: {
+type Props = {
   currentBackups: Backup[];
-}) => {
+};
+
+const ScheduledBackupsList = ({ currentBackups }: Props) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<string>('');
   const {
@@ -36,7 +36,11 @@ const ScheduledBackupsList = ({
       onSuccess: () => handleCloseDeleteDialog(),
     });
   const [schedules, setSchedules] = useState<ManageableSchedules[]>([]);
-
+  const pitrEnabled = !!dbCluster.spec?.backup?.pitr?.enabled;
+  const emptyBackups =
+    currentBackups.length === 0 ||
+    currentBackups.every((b) => b.state === BackupStatus.DELETING);
+  const willDisablePITR = emptyBackups && schedules.length === 1 && pitrEnabled;
   const handleDelete = (scheduleName: string) => {
     setSelectedSchedule(scheduleName);
     setOpenDeleteDialog(true);
@@ -47,7 +51,11 @@ const ScheduledBackupsList = ({
   };
 
   const handleConfirmDelete = (scheduleName: string) => {
-    const newClusterData = deleteScheduleFromDbCluster(scheduleName, dbCluster);
+    const newClusterData = deleteScheduleFromDbCluster(
+      scheduleName,
+      dbCluster,
+      willDisablePITR
+    );
 
     if (dbCluster.spec.engine.type === DbEngineType.POSTGRESQL) {
       if (
@@ -181,7 +189,7 @@ const ScheduledBackupsList = ({
           handleConfirm={handleConfirmDelete}
           disabledButtons={updatingCluster}
         >
-          {Messages.deleteModal.content(selectedSchedule)}
+          {Messages.deleteModal.content(selectedSchedule, willDisablePITR)}
         </ConfirmDialog>
       )}
     </Stack>
