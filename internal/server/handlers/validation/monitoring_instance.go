@@ -5,10 +5,18 @@ import (
 	"errors"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/utils"
 )
+
+// Used monitoring config error
+var errDeleteInUseMonitoringConfig = func(namespace, name string) error {
+	return fmt.Errorf("monitoring instance='%s' in namespace='%s' is used by some DB cluster and cannot be deleted", name, namespace)
+}
 
 func (h *validateHandler) ListMonitoringInstances(ctx context.Context, namespace string) (*everestv1alpha1.MonitoringConfigList, error) {
 	return h.next.ListMonitoringInstances(ctx, namespace)
@@ -37,6 +45,16 @@ func (h *validateHandler) CreateMonitoringInstance(ctx context.Context, namespac
 }
 
 func (h *validateHandler) DeleteMonitoringInstance(ctx context.Context, namespace, name string) error {
+	var mc *metav1.PartialObjectMetadata
+	var err error
+	if mc, err = h.kubeConnector.GetMonitoringConfigMeta(ctx, types.NamespacedName{Namespace: namespace, Name: name}); err != nil {
+		return err
+	}
+
+	if h.isEverestObjectInUse(mc) {
+		// monitoringConfig is used by some DB cluster
+		return errors.Join(ErrInvalidRequest, errDeleteInUseMonitoringConfig(namespace, name))
+	}
 	return h.next.DeleteMonitoringInstance(ctx, namespace, name)
 }
 
