@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 replace (
 	github.com/percona/everest-operator => github.com/percona/everest-operator v0.6.0-dev1.0.20250625122302-ffb0d3df1d21
-	github.com/percona/percona-helm-charts/charts/everest => github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250630140020-576740e01e14
+	github.com/percona/percona-helm-charts/charts/everest => github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250702035249-95e1f2a3fda7
 )
 
 require (
