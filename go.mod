@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/go-version v1.7.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo-jwt/v4 v4.3.1
-	github.com/labstack/echo/v4 v4.13.3
+	github.com/labstack/echo/v4 v4.13.4
 	github.com/lestrrat-go/jwx/v2 v2.1.6
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oapi-codegen/echo-middleware v1.0.2
@@ -207,7 +207,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
