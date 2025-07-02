@@ -67,7 +67,10 @@ export EVEREST_CHART_DIR=<path to github.com/percona/percona-helm-charts>/charts
 
 2. Set namespaces for the Everest components:
 
-Copy file dev/config.yaml.example to dev/config.yaml and set the needed DB namespaces that will be created automatically.
+Copy file dev/config.yaml.example to dev/config.yaml and:
+
+- Set the needed DB namespaces that will be created automatically.
+- (Mostly for FE devs) If you want to disable the Tilt frontend build, save time and avoid FE rebuilds (and, therefore, BE rebuilds), keeping the dev flow of using Vite, set `enableFrontend: false`
 
 3. (Optional) If you want to test a specific version of a given DB operator you can set the following environment variables in .env file or in the terminal:
 ```sh
