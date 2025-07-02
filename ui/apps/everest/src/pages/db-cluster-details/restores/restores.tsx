@@ -32,7 +32,7 @@ import {
 } from 'shared-types/dataImporters.types';
 
 const getImportJobsData = (imports?: DataImportJobs): Restore[] => {
-  if (!imports?.items.length) return [];
+  if (!imports?.items || !imports.items.length) return [];
 
   return imports.items.map((importItem: DataImportJob) => ({
     backupSource: importItem.spec.dataImporterName,
