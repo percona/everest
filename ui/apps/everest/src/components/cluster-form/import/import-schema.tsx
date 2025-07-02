@@ -4,7 +4,7 @@ import { ImportFields } from './import.types';
 const MAX_IMPORT_FIELD_LENGTH = 250;
 
 const basicStringValidation = () =>
-  z.string().min(1).max(MAX_IMPORT_FIELD_LENGTH);
+  z.string().trim().min(1).max(MAX_IMPORT_FIELD_LENGTH);
 
 const dataImporterSchemeObject = {
   [ImportFields.dataImporter]: z.string().max(MAX_IMPORT_FIELD_LENGTH),
@@ -15,7 +15,7 @@ export const dataImporterSchema = z.object(dataImporterSchemeObject);
 const s3SchemaObject = {
   [ImportFields.bucketName]: basicStringValidation(),
   [ImportFields.region]: basicStringValidation(),
-  [ImportFields.endpoint]: basicStringValidation(),
+  [ImportFields.endpoint]: basicStringValidation().url(),
   [ImportFields.accessKey]: basicStringValidation(),
   [ImportFields.secretKey]: basicStringValidation(),
   [ImportFields.verifyTlS]: z.boolean(),
