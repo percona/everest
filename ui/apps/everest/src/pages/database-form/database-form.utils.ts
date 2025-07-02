@@ -80,7 +80,7 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   [DbWizardFormFields.accessKey]: '',
   [DbWizardFormFields.secretKey]: '',
   [DbWizardFormFields.filePath]: '',
-  [DbWizardFormFields.verifyTlS]: false,
+  [DbWizardFormFields.verifyTlS]: true,
   [DbWizardFormFields.forcePathStyle]: false,
   [DbWizardFormFields.credentials]: {},
 });

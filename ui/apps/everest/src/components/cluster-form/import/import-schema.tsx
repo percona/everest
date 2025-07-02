@@ -24,10 +24,10 @@ const s3SchemaObject = {
 export const s3Schema = z.object(s3SchemaObject);
 
 const filePathSchemaObject = {
-  [ImportFields.filePath]: z
-    .string()
-    .max(MAX_IMPORT_FIELD_LENGTH)
-    .regex(/^\/?([^/]+\/)*[^/]*$/, 'Invalid file path'),
+  [ImportFields.filePath]: basicStringValidation().regex(
+    /^\/?([^/]+\/)*[^/]*$/,
+    'Invalid file path'
+  ),
 };
 export const filePathSchema = z.object(filePathSchemaObject);
 
@@ -36,6 +36,17 @@ export const importStepSchema = z
     ...dataImporterSchemeObject,
     ...s3SchemaObject,
     ...filePathSchemaObject,
-    credentials: z.record(z.string()).optional(),
+    showCreds: z.boolean().optional(),
+    credentials: z.record(basicStringValidation()).optional(),
   })
-  .superRefine(() => {});
+  .superRefine((data, ctx) => {
+    if (data.showCreds) {
+      if (!data.credentials || Object.keys(data.credentials).length === 0) {
+        ctx.addIssue({
+          path: ['credentials'],
+          code: z.ZodIssueCode.custom,
+          message: 'Credentials are required',
+        });
+      }
+    }
+  });

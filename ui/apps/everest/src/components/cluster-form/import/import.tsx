@@ -67,8 +67,12 @@ export const ImportForm = () => {
     }
   }, [defaultDataImporter, setValue]);
 
+  useEffect(() => {
+    setValue('showCreds', showCreds);
+  }, [showCreds, setValue]);
+
   return (
-    <Box>
+    <Box data-testid="import-form">
       <>
         <FormCardWithCheck
           title={Messages.dataImporter.label}
