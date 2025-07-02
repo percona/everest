@@ -129,7 +129,10 @@ const ClusterStatusTable = ({
             status={cell.getValue<DbClusterStatus>()}
             statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
           >
-            {beautifyDbClusterStatus(cell.getValue<DbClusterStatus>())}
+            {beautifyDbClusterStatus(
+              cell.getValue<DbClusterStatus>(),
+              cell.row?.original.db?.status?.conditions || []
+            )}
           </StatusField>
         ),
       },

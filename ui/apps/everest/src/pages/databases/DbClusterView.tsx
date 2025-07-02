@@ -93,7 +93,10 @@ export const DbClusterView = () => {
             statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
             defaultIcon={PendingIcon}
           >
-            {beautifyDbClusterStatus(cell.getValue<DbClusterStatus>())}
+            {beautifyDbClusterStatus(
+              cell.getValue<DbClusterStatus>(),
+              cell.row.original?.raw.status?.conditions || []
+            )}
           </StatusField>
         ),
       },
