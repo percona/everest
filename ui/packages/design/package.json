@@ -34,7 +34,7 @@
     "@percona/prettier-config": "workspace:*",
     "@percona/tsconfig": "workspace:*",
     "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/react": "^18.2.15",
