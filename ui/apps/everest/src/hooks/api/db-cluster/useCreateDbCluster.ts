@@ -106,7 +106,7 @@ const formValuesToPayloadMapping = (
         dbPayload.credentials &&
         Object.keys(dbPayload.credentials).length > 0
           ? {
-              userSecretsName: `user-secret-${dbPayload.dbName}`,
+              userSecretsName: `everest-secrets-${dbPayload.dbName}`,
             }
           : {}),
       },
