@@ -16,7 +16,7 @@
     "build-storybook": "turbo run build-storybook"
   },
   "dependencies": {
-    "@changesets/cli": "^2.27.9"
+    "@changesets/cli": "^2.29.5"
   },
   "pnpm": {
     "overrides": {
