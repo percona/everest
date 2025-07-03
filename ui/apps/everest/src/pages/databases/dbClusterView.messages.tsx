@@ -28,6 +28,7 @@ export const Messages = {
     creating: 'Creating',
     upgrading: 'Upgrading',
     importing: 'Importing',
+    importFailed: 'Import Failed',
   },
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',

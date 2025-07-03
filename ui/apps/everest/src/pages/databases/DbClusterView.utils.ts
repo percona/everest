@@ -19,6 +19,7 @@ import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
 import { isProxy } from 'utils/db';
+import { DbErrorType } from 'shared-types/dbErrors.types';
 
 const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.ready]: Messages.statusProvider.up,
@@ -35,8 +36,20 @@ const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.importing]: Messages.statusProvider.importing,
 };
 
-export const beautifyDbClusterStatus = (status: DbClusterStatus): string =>
-  DB_CLUSTER_STATUS_HUMANIFIED[status] || Messages.statusProvider.creating;
+export const beautifyDbClusterStatus = (
+  status: DbClusterStatus,
+  conditions?: { type: string }[]
+): string => {
+  if (
+    status === DbClusterStatus.error &&
+    conditions?.some((c) => c.type === DbErrorType.ImportFailed)
+  ) {
+    return Messages.statusProvider.importFailed;
+  }
+  return (
+    DB_CLUSTER_STATUS_HUMANIFIED[status] || Messages.statusProvider.creating
+  );
+};
 
 export const convertDbClusterPayloadToTableFormat = (
   data: DbClusterForNamespaceResult[]
