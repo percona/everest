@@ -19,9 +19,15 @@ export const advancedConfigurationStepCheck = async (page: Page) => {
   await expect(
     page.getByRole('heading', { name: 'Advanced Configurations' })
   ).toBeVisible();
-  await page.getByLabel('Enable External Access').check();
+  await page
+    .getByTestId('switch-input-external-access-label')
+    .getByRole('checkbox')
+    .check();
   expect(
-    await page.getByLabel('Enable External Access').isChecked()
+    await page
+      .getByTestId('switch-input-external-access-label')
+      .getByRole('checkbox')
+      .isChecked()
   ).toBeTruthy();
 
   const sourceRangeFirstField = page.getByTestId(

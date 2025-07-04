@@ -66,9 +66,6 @@ test.describe('DB Cluster creation', () => {
     await page
       .getByTestId('text-input-source-ranges.0.source-range')
       .fill('invalid-ip');
-    await page
-      .getByTestId('text-input-source-ranges.1.source-range')
-      .fill('another-invalid-ip');
     await expect(
       page.getByTestId('preview-error-advanced-configurations')
     ).not.toBeVisible();
