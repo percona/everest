@@ -116,7 +116,10 @@ describe('FourthStep', () => {
     const checkbox = screen
       .getByTestId('switch-input-external-access')
       .querySelector('input');
+
+    // await waitFor(() => {
     fireEvent.click(checkbox!);
+    // });
 
     expect(checkbox).toBeChecked();
 
@@ -124,20 +127,34 @@ describe('FourthStep', () => {
       expect(screen.getByTestId('external-access-fields')).toBeInTheDocument()
     );
 
-    fireEvent.click(screen.getByTestId('add-text-input-button'));
+    const addTextInputButton = screen.getByTestId('add-text-input-button');
 
-    // Add the first source range
+    fireEvent.click(addTextInputButton);
+
     const firstSourceRangeInput = screen.getByTestId(
       'text-input-source-ranges.0.source-range'
     );
 
-    fireEvent.input(firstSourceRangeInput, {
-      target: { value: '192.168.1.1/32' },
+    await waitFor(() => {
+      fireEvent.input(firstSourceRangeInput, {
+        target: { value: '' },
+      });
     });
+
+    expect(addTextInputButton).toBeDisabled();
+
+    await waitFor(() =>
+      fireEvent.input(firstSourceRangeInput, {
+        target: { value: '192.168.1.1/32' },
+      })
+    );
+
+    expect(addTextInputButton).not.toBeDisabled();
+
     fireEvent.blur(firstSourceRangeInput);
 
     // Add a new source range input
-    fireEvent.click(screen.getByTestId('add-text-input-button'));
+    fireEvent.click(addTextInputButton);
 
     const secondSourceRangeInput = screen.getByTestId(
       'text-input-source-ranges.1.source-range'
@@ -145,12 +162,20 @@ describe('FourthStep', () => {
 
     await waitFor(() =>
       fireEvent.input(secondSourceRangeInput, {
+        target: { value: '' },
+      })
+    );
+
+    expect(addTextInputButton).toBeDisabled();
+
+    await waitFor(() =>
+      fireEvent.input(secondSourceRangeInput, {
         target: { value: '192.168.1.1/32' },
       })
     );
-    fireEvent.input(secondSourceRangeInput, {
-      target: { value: '192.168.1.1/32' },
-    });
+
+    expect(addTextInputButton).not.toBeDisabled();
+
     fireEvent.blur(secondSourceRangeInput);
 
     await waitFor(() => expect(secondSourceRangeInput).toBeInvalid());

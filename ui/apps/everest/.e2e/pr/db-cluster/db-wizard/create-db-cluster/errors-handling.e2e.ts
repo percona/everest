@@ -62,14 +62,10 @@ test.describe('DB Cluster creation', () => {
       .getByTestId('switch-input-external-access')
       .getByRole('checkbox')
       .check();
-    await page.getByTestId('add-text-input-button').click();
     // Introduce an error on advanced configs step: two invalid IPs
     await page
       .getByTestId('text-input-source-ranges.0.source-range')
       .fill('invalid-ip');
-    await page
-      .getByTestId('text-input-source-ranges.1.source-range')
-      .fill('another-invalid-ip');
     await expect(
       page.getByTestId('preview-error-advanced-configurations')
     ).not.toBeVisible();
