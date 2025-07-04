@@ -12,6 +12,7 @@ export const useDataImporters = (
   return useQuery<DataImporters, unknown, DataImporters>({
     queryKey: [DATA_IMPORTERS_KEY],
     queryFn: () => getImportersFn(supportedEngine || ''),
+    refetchInterval: 5 * 1000,
     ...options,
   });
 };
