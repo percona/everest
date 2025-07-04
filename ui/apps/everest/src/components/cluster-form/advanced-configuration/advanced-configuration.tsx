@@ -38,7 +38,7 @@ import InfoIcon from '@mui/icons-material/InfoOutlined';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useEffect, useRef, useState } from 'react';
 import { DbWizardFormFields, EVEREST_READ_ONLY_FINALIZER } from 'consts';
-import AdvancedCard from 'components/advanced-card';
+import { FormCard } from 'components/form-card';
 import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
@@ -154,7 +154,7 @@ export const AdvancedConfigurationForm = ({
         },
       }}
     >
-      <AdvancedCard
+      <FormCard
         title={Messages.cards.storage.title}
         description={
           !loadingDefaultsForEdition ? Messages.cards.storage.description : ''
@@ -183,7 +183,7 @@ export const AdvancedConfigurationForm = ({
           />
         }
       />
-      <AdvancedCard
+      <FormCard
         title={Messages.cards.policies.title}
         description={
           <Box
@@ -243,7 +243,7 @@ export const AdvancedConfigurationForm = ({
           </Tooltip>
         }
       />
-      <AdvancedCard
+      <FormCard
         title={Messages.cards.enableExternalAccess.title}
         description={
           <Stack>
@@ -270,7 +270,7 @@ export const AdvancedConfigurationForm = ({
           />
         }
       />
-      <AdvancedCard
+      <FormCard
         title={Messages.cards.engineParameters.title}
         description={
           <Stack>

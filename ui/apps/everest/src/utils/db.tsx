@@ -975,6 +975,7 @@ export const shouldDbActionsBeBlocked = (status?: DbClusterStatus) => {
     DbClusterStatus.deleting,
     DbClusterStatus.resizingVolumes,
     DbClusterStatus.upgrading,
+    DbClusterStatus.importing,
   ].includes(status || ('' as DbClusterStatus));
 };
 

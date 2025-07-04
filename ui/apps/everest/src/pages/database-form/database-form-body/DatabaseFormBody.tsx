@@ -18,20 +18,22 @@ import { Box } from '@mui/material';
 import { useDatabasePageMode } from '../useDatabasePageMode';
 import { useDatabasePageDefaultValues } from '../useDatabaseFormDefaultValues';
 import { DatabaseFormBodyProps } from './types';
-import { steps } from './steps';
 import DatabaseFormStepControllers from './DatabaseFormStepControllers';
 import { WizardMode } from 'shared-types/wizard.types';
+import { useSteps } from './steps';
 
 const DatabaseFormBody = ({
   activeStep,
   longestAchievedStep,
   isSubmitting,
   hasErrors,
+  disableNext,
   onCancel,
   onSubmit,
   handleNextStep,
   handlePreviousStep,
 }: DatabaseFormBodyProps) => {
+  const steps = useSteps();
   const mode = useDatabasePageMode();
   const { dbClusterRequestStatus, isFetching: loadingDefaultsForEdition } =
     useDatabasePageDefaultValues(mode);
@@ -55,6 +57,7 @@ const DatabaseFormBody = ({
         disableBack={isFirstStep}
         disableSubmit={isSubmitting || hasErrors}
         disableCancel={isSubmitting}
+        disableNext={disableNext}
         showSubmit={activeStep === steps.length - 1}
         onPreviousClick={handlePreviousStep}
         onNextClick={handleNextStep}

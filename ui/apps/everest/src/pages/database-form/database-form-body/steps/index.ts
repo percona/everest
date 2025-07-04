@@ -18,11 +18,18 @@ import { ResourcesStep } from './resources/resources-step.tsx';
 import { Backups } from './backups/backups.tsx';
 import { AdvancedConfigurations } from './advanced-configurations/advanced-configurations.tsx';
 import { Monitoring } from './monitoring/monitoring.tsx';
+import { useLocation } from 'react-router-dom';
+import { ImportStep } from './import/import-step.tsx';
 
-export const steps = [
-  FirstStep,
-  ResourcesStep,
-  Backups,
-  AdvancedConfigurations,
-  Monitoring,
-];
+export const useSteps = () => {
+  const location = useLocation();
+  const showImportStep = location.state?.showImport;
+  return [
+    FirstStep,
+    ...(showImportStep ? [ImportStep] : []),
+    ResourcesStep,
+    Backups,
+    AdvancedConfigurations,
+    Monitoring,
+  ];
+};

@@ -27,6 +27,8 @@ export const Messages = {
     resizingVolumes: 'Resizing volumes',
     creating: 'Creating',
     upgrading: 'Upgrading',
+    importing: 'Importing',
+    importFailed: 'Import Failed',
   },
   lastBackup: {
     warningTooltip: 'Check your backups page for more info',
