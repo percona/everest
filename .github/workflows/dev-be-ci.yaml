@@ -105,9 +105,9 @@ jobs:
 
       - name: Get API keys
         run: |
-          echo "$(curl https://admin:admin@${{ env.PMM1_IP }}/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8'  --insecure)"
-          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@${{ env.PMM1_IP }}/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
-          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@${{ env.PMM2_IP }}/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
+          echo "$(curl https://admin:admin@$PMM1_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8'  --insecure)"
+          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@$PMM1_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
+          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@$PMM1_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
 
       - name: Uninstall PMM
         run: |
