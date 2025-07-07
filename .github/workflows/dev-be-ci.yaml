@@ -108,7 +108,7 @@ jobs:
         if: always()
         run: |
           helm uninstall pmm1
-          helm uninstall pmm2 -n monitoring
+          helm uninstall pmm2 -n everest-monitoring
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
