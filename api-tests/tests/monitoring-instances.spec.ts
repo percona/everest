@@ -23,7 +23,7 @@ test('create monitoring instance with api key', async ({ request }) => {
     name: `${prefix}-key`,
     url: `http://${process.env.PMM_IP}`,
     pmm: {
-      login: 'admin',
+      user: 'admin',
       password: 'admin',
     },
   },
