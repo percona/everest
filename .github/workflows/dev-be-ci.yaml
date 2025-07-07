@@ -81,13 +81,21 @@ jobs:
         run: |
           kubectl port-forward --namespace kube-system service/registry 5000:80 &
 
+      # We need to have Everest CRDs available before running provisioning and everest API Server
+      # to have an ability to create monitoring configs and use them during the provisioning as
+      # a mock pmm server without running a real PMM.
+      - name: Install everest operator without Everest
+        run: |
+          kubectl create ns everest-system
+          kubectl create ns everest-monitoring
+          curl https://raw.githubusercontent.com/percona/everest-operator/main/deploy/bundle.yaml -o bundle.yaml
+          sed -i  "s/namespace: everest-operator-system/namespace: everest-system/g" bundle.yaml
+          kubectl -n everest-system apply -f bundle.yaml
 
       - name: Create a monitoring instance
         run: |
           helm install pmm1 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m
           echo "PMM1_IP=http://$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
-          # create another PMM instance in another namespace 
-          kubectl create ns monitoring
           helm install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m -n monitoring
           echo "PMM2_IP=http://$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n monitoring | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
           sleep 60
