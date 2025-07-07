@@ -102,15 +102,10 @@ jobs:
           helm install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m -n everest-monitoring
           echo "PMM2_IP=$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
           sleep 60
-
-      - name: Get API keys
-        run: |
-          echo "------"
-          echo "$(curl https://admin:admin@$PMM1_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8'  --insecure)"
-          echo "------------"
-          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@$PMM1_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
-          echo "------------"
-          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@$PMM2_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
+          kubectl --namespace default port-forward svc/monitoring-service 8090:443 &
+          kubectl --namespace everest-monitoring port-forward svc/monitoring-service 8091:443 &
+          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
+          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@localhost:8091/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
 
       - name: Uninstall PMM
         run: |
