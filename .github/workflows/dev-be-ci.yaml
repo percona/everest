@@ -105,8 +105,11 @@ jobs:
 
       - name: Get API keys
         run: |
+          echo "------"
           echo "$(curl https://admin:admin@$PMM1_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8'  --insecure)"
+          echo "------------"
           echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@$PMM1_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
+          echo "------------"
           echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@$PMM2_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
 
       - name: Uninstall PMM
