@@ -100,3 +100,45 @@ func CreatePMMApiKey(
 
 	return key, nil
 }
+
+func CheckAccess(url, apiKey string, insecure bool, ctx context.Context) error {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("%s/v1/version", url),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	req.Close = true
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	httpClient := newHTTPClient(insecure)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close() //nolint:errcheck
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return nil
+	case http.StatusUnauthorized:
+		return errors.New("authorization failed, please provide the correct credentials")
+	default:
+		var pmmErr *pmmErrorMessage
+		if err := json.Unmarshal(data, &pmmErr); err != nil {
+			return errors.Join(err, fmt.Errorf("PMM returned an unknown error. HTTP status code %d", resp.StatusCode))
+		}
+		return fmt.Errorf("PMM returned an error with message: %s", pmmErr.Message)
+	}
+
+	return nil
+}
