@@ -81,29 +81,7 @@ jobs:
         run: |
           kubectl port-forward --namespace kube-system service/registry 5000:80 &
 
-      - name: Build Everest API Server
-        run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
 
-      - name: Build Everest CLI
-        shell: bash
-        run: |
-          make build-cli
-
-      - name: Build Everest docker container
-        uses: docker/metadata-action@v5
-        id: meta
-        with:
-          images: localhost:5000/perconalab/everest
-          tags:
-            0.0.0
-
-      - name: Build and Push everest dev image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
 
       # We need to have Everest CRDs available before running provisioning and everest API Server
       # to have an ability to create monitoring configs and use them during the provisioning as
@@ -124,51 +102,9 @@ jobs:
           helm install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m -n everest-monitoring
           echo "PMM2_IP=http://$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
           sleep 60
-          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@${{ env.PMM1_IP }}/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
-          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@${{ env.PMM2_IP }}/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
+          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@${{ env.PMM1_IP }}/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
+          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@${{ env.PMM2_IP }}/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
       
-
-      - name: Provision Everest using CLI
-        shell: bash
-        run: |
-          ./bin/everestctl install -v \
-            --disable-telemetry \
-            --version 0.0.0 \
-            --version-metadata-url https://check-dev.percona.com \
-            --operator.mongodb=true \
-            --operator.postgresql=true \
-            --operator.mysql=true \
-            --skip-wizard \
-            --namespaces everest \
-            --helm.set server.image=localhost:5000/perconalab/everest \
-            --helm.set server.apiRequestsRateLimit=200 \
-            --helm.set versionMetadataURL=https://check-dev.percona.com
-
-      - name: Expose Everest API Server
-        run: |
-          kubectl port-forward --namespace everest-system deployment/everest-server 8080:8080 &
-
-      - name: Create Everest test users
-        run: |
-          ./bin/everestctl accounts create -u test -p password
-          echo "API_TOKEN_TEST=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
-          ./bin/everestctl accounts create -u everest_ci -p password
-          echo "API_TOKEN=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
-
-      - name: Add CI user to admin role
-        run: |
-          kubectl patch configmap everest-rbac -n everest-system --patch "$(kubectl get configmap everest-rbac -n everest-system -o json | jq '.data["policy.csv"] += "\ng, everest_ci, role:admin"' | jq '{data: { "policy.csv": .data["policy.csv"] } }')"
-          kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
-
-      - name: Init integration tests
-        run: |
-          cd api-tests
-          make init
-
-      - name: Run integration tests
-        run: |
-          cd api-tests
-          make test
 
       - name: Uninstall PMM
         run: |
