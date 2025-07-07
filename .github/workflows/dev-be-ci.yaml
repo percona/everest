@@ -169,7 +169,7 @@ jobs:
       - name: Run linters
         run: |
           bin/golangci-lint run --new --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} bin/reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
-      
+
       - name: Check that dev Helm chart is up-to-date
         run: |
           make update-dev-chart
@@ -292,22 +292,23 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-      # We need to have Everest CRDs available before running provisioning and everest API Server
-      # to have an ability to create monitoring configs and use them during the provisioning as
-      # a mock pmm server without running a real PMM.
-      - name: Install everest operator without Everest
-        run: |
-          kubectl create ns everest-system
-          kubectl create ns everest-monitoring
-          curl https://raw.githubusercontent.com/percona/everest-operator/main/deploy/bundle.yaml -o bundle.yaml
-          sed -i  "s/namespace: everest-operator-system/namespace: everest-system/g" bundle.yaml
-          kubectl -n everest-system apply -f bundle.yaml
-
       - name: Create a monitoring instance
         run: |
-          helm install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m
-          echo "PMM_IP=http://$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
+          helm repo add percona https://percona.github.io/percona-helm-charts/
+          helm install pmm1 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m
+          echo "PMM1_IP=$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
+          
+          kubectl create ns everest-monitoring
+          helm install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m -n everest-monitoring
+          echo "PMM2_IP=$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
+          sleep 60
+          kubectl port-forward --namespace default svc/monitoring-service 8090:443 &
+          kubectl port-forward --namespace everest-monitoring  svc/monitoring-service 8091:443 &
 
+      - name: Get PMM API keys
+        run: |
+          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV 
+          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@localhost:8091/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
 
       - name: Provision Everest using CLI
         shell: bash
@@ -350,6 +351,11 @@ jobs:
         run: |
           cd api-tests
           make test
+
+      - name: Uninstall PMM
+        run: |
+          helm uninstall pmm1
+          helm uninstall pmm2 -n everest-monitoring
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
