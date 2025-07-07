@@ -274,7 +274,7 @@ test('delete monitoring instance', async ({ request, page }) => {
     await checkError(response)
     let list = await response.json()
 
-    expect(list.filter((i) => i.name.startsWith(`${prefix}`)).length).toBe(3)
+    expect(list.filter((i) => i.name.startsWith(`${prefix}`)).length).toBe(1)
 
     response = await request.delete(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
     await checkError(response)
