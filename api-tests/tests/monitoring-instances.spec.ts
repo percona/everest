@@ -21,10 +21,10 @@ test('create monitoring instance with api key', async ({ request }) => {
    data = {
     type: 'pmm',
     name: `${prefix}-key`,
-    url: 'http://monitoring',
-    allowedNamespaces: [testsNs],
+    url: `http://${process.env.PMM_IP}`,
     pmm: {
-      apiKey: '123',
+      login: 'admin',
+      password: 'admin',
     },
   },
 

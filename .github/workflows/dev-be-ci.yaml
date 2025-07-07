@@ -210,6 +210,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
+      PMM_HELM_VER: "1.3.21"
     steps:
 
       - name: Set up Go release
@@ -302,33 +303,11 @@ jobs:
           sed -i  "s/namespace: everest-operator-system/namespace: everest-system/g" bundle.yaml
           kubectl -n everest-system apply -f bundle.yaml
 
-      # We create a dummy monitoring instance so we can enable monitoring during provisioning
-      # without having to install PMM.
       - name: Create a monitoring instance
         run: |
-          cat <<EOF | kubectl apply -f -
-          kind: Secret
-          apiVersion: v1
-          metadata:
-            name: pmm-local
-            namespace: everest-monitoring
-          type: Opaque
-          stringData:
-            "apiKey": "dummy-key"
-          EOF
-          cat <<EOF | kubectl apply -f -
-          kind: MonitoringConfig
-          apiVersion: everest.percona.com/v1alpha1
-          metadata:
-            name: pmm-local
-            namespace: everest-monitoring
-          spec:
-            type: pmm
-            credentialsSecretName: pmm-local
-            pmm:
-              url: http://localhost
-              image: percona/pmm-client:2
-          EOF
+          helm install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m
+          echo "PMM_IP=http://$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
+
 
       - name: Provision Everest using CLI
         shell: bash
