@@ -38,6 +38,10 @@ func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace str
 	if err != nil {
 		return nil, err
 	}
+	err = h.checkPMMAPIAccess(apiKey, req.Url, req.Name, namespace, m, ctx, req.VerifyTLS)
+	if err != nil {
+		return nil, err
+	}
 	return h.createMonitoringK8sResources(ctx, namespace, req, apiKey)
 }
 
