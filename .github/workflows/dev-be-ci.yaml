@@ -120,12 +120,13 @@ jobs:
         run: |
           helm install pmm1 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m
           echo "PMM1_IP=http://$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
-          echo "PMM1_API_KEY=http://$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test-2","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
           # create another PMM instance in another namespace 
           kubectl create ns monitoring
           helm install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m -n monitoring
           echo "PMM2_IP=http://$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n monitoring | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
-          echo "PMM2_API_KEY=http://$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test-2","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
+          sleep 60
+          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@$PMM1_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
+          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@$PMM2_IP/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
       
 
       - name: Provision Everest using CLI
