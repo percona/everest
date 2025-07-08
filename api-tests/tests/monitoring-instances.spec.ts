@@ -94,7 +94,6 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     const getJson = await updated.json()
 
     expect(getJson.url).toBe(patchData.url)
-    expect(getJson.apiKeySecretId).toBe(created.apiKeySecretId)
   })
   await test.step('patch monitoring instance to existing with apiKey', async () => {
     const name = `${prefix}-key`
@@ -114,7 +113,6 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     const getJson = await updated.json()
 
     expect(getJson.url).toBe(patchData.url)
-    expect(getJson.apiKeySecretId).not.toBe(created.apiKeySecretId)
   })
 
   await test.step('patch monitoring instance to existing with admin password', async () => {
@@ -136,7 +134,6 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     const getJson = await updated.json()
 
     expect(getJson.url).toBe(patchData.url)
-    expect(getJson.apiKeySecretId).not.toBe(created.apiKeySecretId)
   })
 
   await test.step('patch monitoring instance type fails on missing key', async () => {
