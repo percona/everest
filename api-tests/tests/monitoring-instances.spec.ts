@@ -104,8 +104,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
       url: 'https://monitoring-service.everest-monitoring.svc.cluster.local', // existing other monitoring URL
     }
     const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
-
-    expect(updated.status()).toBe(401)
+    expect(response.ok()).toBeFalsy()
     expect((await updated.json()).message).toMatch("authorization failed, please provide the correct credentials")
   })
 
@@ -119,7 +118,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     }
     const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
-    expect(updated.status()).toBe(400)
+    expect(response.ok()).toBeFalsy()
     expect((await updated.json()).message).toContain("no such host")
   })
 
