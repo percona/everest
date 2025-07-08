@@ -294,13 +294,9 @@ jobs:
       # We need to have Everest CRDs available before running provisioning and everest API Server
       # to have an ability to create monitoring configs and use them during the provisioning as
       # a mock pmm server without running a real PMM.
-      - name: Install everest operator without Everest
+      - name: Install everest operator CRDs
         run: |
-          kubectl create ns everest-system
-          kubectl create ns everest-monitoring
-          curl https://raw.githubusercontent.com/percona/everest-operator/main/deploy/bundle.yaml -o bundle.yaml
-          sed -i  "s/namespace: everest-operator-system/namespace: everest-system/g" bundle.yaml
-          kubectl -n everest-system apply -f bundle.yaml
+          kubectl apply -k https://github.com/percona/everest-operator/config/crd\?ref\=main --server-side
 
       # We create a dummy monitoring instance so we can enable monitoring during provisioning
       # without having to install PMM.
