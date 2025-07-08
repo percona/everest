@@ -101,7 +101,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
 
     await checkError(response)
     const patchData = {
-      url: 'https://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
+      url: 'https://monitoring-service.everest-monitoring.svc.cluster.local', // existing other monitoring URL
     }
     const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
@@ -129,7 +129,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
 
     await checkError(response)
     const patchData = {
-      url: 'https://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
+      url: 'https://monitoring-service.everest-monitoring.svc.cluster.local', // existing other monitoring URL
       pmm: {
         apiKey: `${process.env.PMM1_API_KEY}`,
       },
@@ -148,7 +148,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
 
     await checkError(response)
     const patchData = {
-      url: 'https://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
+      url: 'https://monitoring-service.everest-monitoring.svc.cluster.local', // existing other monitoring URL
       pmm: {
         user: 'admin',
         password: 'admin'
