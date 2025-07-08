@@ -86,8 +86,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
     await checkError(response)
-    const created = await response.json(),
-        patchData = { url: `http://monitoring-service.default.svc.cluster.local` },// URL pointing to the same instance
+    const patchData = { url: `http://monitoring-service.default.svc.cluster.local` },// URL pointing to the same instance
         updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
     await checkError(updated)
@@ -95,12 +94,40 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
 
     expect(getJson.url).toBe(patchData.url)
   })
+
+  await test.step('patch monitoring instance to existing with no creds', async () => {
+    const name = `${prefix}-key`
+    const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+
+    await checkError(response)
+    const patchData = {
+      url: 'https://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
+    }
+    const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
+
+    expect(updated.status()).toBe(401)
+    expect((await updated.json()).message).toMatch("authorization failed, please provide the correct credentials")
+  })
+
+  await test.step('patch monitoring instance to not existing', async () => {
+    const name = `${prefix}-key`
+    const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+
+    await checkError(response)
+    const patchData = {
+      url: 'http://not-existing-url', // existing other monitoring URL
+    }
+    const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
+
+    expect(updated.status()).toBe(400)
+    expect((await updated.json()).message).toContain("no such host")
+  })
+
   await test.step('patch monitoring instance to existing with apiKey', async () => {
     const name = `${prefix}-key`
     const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
     await checkError(response)
-    const created = await response.json()
     const patchData = {
       url: 'https://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
       pmm: {
@@ -120,7 +147,6 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
     await checkError(response)
-    const created = await response.json()
     const patchData = {
       url: 'https://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
       pmm: {
