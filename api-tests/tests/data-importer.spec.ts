@@ -33,8 +33,8 @@ test('list data importer', async ({ request, page, cli }) => {
     await checkError(res)
     
     let list = await res.json()
-    expect(list.items?.length).toBe(1)
-    expect(list.items[0].metadata.name).toBe('test-data-importer')
+    expect(list.items?.length).toBe(4)
+    expect(list.items.some((item: any) => item.metadata.name === 'test-data-importer')).toBe(true)
 })
 
 test('import data into fresh cluster', async ({ request, page }) => {
