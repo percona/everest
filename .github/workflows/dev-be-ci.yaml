@@ -122,7 +122,6 @@ jobs:
         run: |
           echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV 
           echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@localhost:8091/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
-            - name: Provision Everest using CLI
 
       - name: Provision Everest using CLI
         shell: bash
