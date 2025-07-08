@@ -23,13 +23,12 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     const data = {
           type: 'pmm',
           name: `${prefix}-key`,
-          url: `http://${process.env.PMM1_IP}`,
+          url: `https://${process.env.PMM1_IP}`,
           pmm: {
             apiKey: `${process.env.PMM1_API_KEY}`,
           },
-        },
-
-        response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
+        }
+    let response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
     await checkError(response)
     const created = await response.json()
@@ -43,14 +42,14 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     const data = {
       type: 'pmm',
       name: `${prefix}-pass`,
-      url: `http://${process.env.PMM2_IP}`,
+      url: `https://${process.env.PMM2_IP}`,
       pmm: {
         user: 'admin',
         password: 'admin',
       },
-    },
+    }
 
-     response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
+    let response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
     await checkError(response)
     const created = await response.json()
@@ -102,7 +101,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     await checkError(response)
     const created = await response.json()
     const patchData = {
-      url: 'http://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
+      url: 'https://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
       pmm: {
         apiKey: `${process.env.PMM1_API_KEY}`,
       },
@@ -123,7 +122,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     await checkError(response)
     const created = await response.json()
     const patchData = {
-      url: 'http://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
+      url: 'https://monitoring-service.monitoring.svc.cluster.local', // existing other monitoring URL
       pmm: {
         user: 'admin',
         password: 'admin'
