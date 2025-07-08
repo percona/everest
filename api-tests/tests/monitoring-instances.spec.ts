@@ -27,6 +27,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
           pmm: {
             apiKey: `${process.env.PMM1_API_KEY}`,
           },
+          verifyTLS: false,
         }
     let response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
@@ -47,6 +48,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
         user: 'admin',
         password: 'admin',
       },
+      verifyTLS: false,
     }
 
     let response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
