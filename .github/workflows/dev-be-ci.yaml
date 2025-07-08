@@ -160,6 +160,10 @@ jobs:
           cd api-tests
           make init
 
+      - name: "Setup tmate session"
+        uses: "percona/gh-action-action-tmate@v3"
+        if: ${{ always() }}
+
       - name: Run integration tests
         run: |
           cd api-tests
