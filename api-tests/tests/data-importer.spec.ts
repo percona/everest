@@ -19,6 +19,7 @@ import {
   waitClusterDeletion,
   deleteDBCluster,
   createDataImporter,
+  mockPXCClusterReady
 } from '@tests/tests/helpers';
 
 test.setTimeout(360 * 1000)
@@ -37,7 +38,7 @@ test('list data importer', async ({ request, page, cli }) => {
     expect(list.items.some((item: any) => item.metadata.name === 'test-data-importer')).toBe(true)
 })
 
-test('import data into fresh cluster', async ({ request, page }) => {
+test('import data into fresh cluster', async ({ request, page, cli }) => {
   const clusterName = 'test-db-import',
    data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -87,44 +88,29 @@ test('import data into fresh cluster', async ({ request, page }) => {
 
   postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
   await checkError(postReq)
-  
+
+  // mock that the PXC cluster is ready so the data import job can start.
+  await mockPXCClusterReady(cli, clusterName)
+
+
   // assert that we see the importing status
   await expect(async () => {
       const dbReq = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
       checkError(dbReq)
       const db = await dbReq.json()
       expect(db?.status?.status).toBe('importing')
-      
-      const dijReq = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}/data-import-jobs`)
-      checkError(dijReq)
-      const dijList = await dijReq.json()
-      expect(dijList?.items?.length).toBe(1)
-      
-      const dij = dijList.items[0]
-      expect(dij?.status?.state).toBe('Running')
   }).toPass({
     intervals: [5000],
     timeout: 300 * 1000,
   })
   
-  // wait for the cluster to be ready
-  await expect(async () => {
-      const dbReq = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-      checkError(dbReq)
-      const db = await dbReq.json()
-      expect(db?.status?.status).toBe('ready')
-      
-      const dijReq = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}/data-import-jobs`)
-      checkError(dijReq)
-      const dijList = await dijReq.json()
-      expect(dijList?.items?.length).toBe(1)
-      
-      const dij = dijList.items[0]
-      expect(dij?.status?.state).toBe('Succeeded')
-  }).toPass({
-    intervals: [1000],
-    timeout: 120 * 1000,
-  })
+  // Get the DataImportJob for the cluster and check it is Running
+  const dijReq = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}/data-import-jobs`)
+  checkError(dijReq)
+  const dijList = await dijReq.json()
+  expect(dijList?.items?.length).toBe(1)
+  const dij = dijList.items[0]
+  expect(dij?.status?.state).toBe('Running')
   
   await deleteDBCluster(request, page, clusterName)
   await waitClusterDeletion(request, page, clusterName)

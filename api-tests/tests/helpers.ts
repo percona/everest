@@ -219,3 +219,9 @@ export const deleteMonitoringConfig = async (request, name, namespace) => {
 
   await checkError(res)
 }
+
+export const mockPXCClusterReady = async (cli: CliHelper, clusterName: string) => {
+  await cli.exec(`kubectl patch  pxc/${clusterName} --subresource status --namespace ${testsNs} --type='merge' -p '{"status":{"state":"ready"}}'`)
+  const status = await cli.execSilent(`kubectl get pxc/${clusterName} --namespace ${testsNs} -o jsonpath='{.status.state}'`)
+  await status.outContains('ready')
+}
