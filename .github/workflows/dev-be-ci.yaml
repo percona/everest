@@ -296,6 +296,7 @@ jobs:
       # a mock pmm server without running a real PMM.
       - name: Install everest operator CRDs
         run: |
+          kubectl create ns everest-monitoring
           kubectl apply -k https://github.com/percona/everest-operator/config/crd\?ref\=main --server-side
 
       # We create a dummy monitoring instance so we can enable monitoring during provisioning
