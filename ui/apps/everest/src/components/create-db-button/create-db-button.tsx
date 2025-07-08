@@ -14,7 +14,16 @@
 // limitations under the License.
 
 import { useEffect, useState } from 'react';
-import { Box, Button, Menu, MenuItem, Skeleton } from '@mui/material';
+import {
+  Box,
+  Button,
+  Divider,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { dbEngineToDbType } from '@percona/utils';
 import { Link, useNavigate } from 'react-router-dom';
@@ -94,22 +103,37 @@ export const CreateDbButton = ({
     borderRadius: '128px',
   };
 
+  const showTechPreviewTooltip =
+    createFromImport && availableEngines.length === 1;
+
+  const techPreviewText = 'Technical Preview';
+
+  const createButton = (
+    <Button
+      data-testid="add-db-cluster-button"
+      size="small"
+      variant={createFromImport ? 'text' : 'contained'}
+      sx={buttonStyle}
+      aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
+      aria-haspopup="true"
+      aria-expanded={open ? 'true' : undefined}
+      onClick={handleClick}
+      endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
+    >
+      {createFromImport ? 'Import' : 'Create database'}
+    </Button>
+  );
+
   return availableEngines.length > 0 ? (
     <Box>
       {showDropdownButton ? (
-        <Button
-          data-testid="add-db-cluster-button"
-          size="small"
-          variant={createFromImport ? 'text' : 'contained'}
-          sx={buttonStyle}
-          aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
-          onClick={handleClick}
-          endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
-        >
-          {createFromImport ? 'Import' : 'Create database'}
-        </Button>
+        showTechPreviewTooltip ? (
+          <Tooltip title={techPreviewText} enterDelay={0}>
+            {createButton}
+          </Tooltip>
+        ) : (
+          createButton
+        )
       ) : (
         <Skeleton variant="rounded" sx={skeletonStyle} />
       )}
@@ -127,6 +151,25 @@ export const CreateDbButton = ({
         >
           {
             <Box>
+              {createFromImport && (
+                <>
+                  <MenuItem
+                    sx={{
+                      cursor: 'text',
+                      userSelect: 'text',
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Typography
+                      sx={{ fontSize: '14px !important' }}
+                      color="text.secondary"
+                    >
+                      {techPreviewText}
+                    </Typography>
+                  </MenuItem>
+                  <Divider />
+                </>
+              )}
               {availableDbTypes.map((item) => (
                 <MenuItem
                   data-testid={`add-db-cluster-button-${item.type}`}

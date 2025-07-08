@@ -23,6 +23,7 @@ export const ImportStep = () => {
       <StepHeader
         pageTitle={Messages.pageTitle}
         pageDescription={Messages.pageDescription}
+        techPreview
       />
       <ImportForm />
     </>
