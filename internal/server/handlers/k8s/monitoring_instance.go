@@ -123,7 +123,11 @@ func (h *k8sHandler) checkPMMAPIAccess(apiKey, url, secretName, secretNS string,
 		url = m.Spec.PMM.URL
 	}
 	if verifyTLS == nil {
-		verifyTLS = m.Spec.VerifyTLS
+		if m.Spec.VerifyTLS != nil {
+			verifyTLS = m.Spec.VerifyTLS
+		} else {
+			verifyTLS = pointer.ToBool(true)
+		}
 	}
 	// if there is no apiSecret provided or created, read the existing one and try to use it
 	if apiKey == "" {
