@@ -104,9 +104,12 @@ jobs:
           sleep 60
           kubectl port-forward --namespace default svc/monitoring-service 8090:443 &
           kubectl port-forward --namespace everest-monitoring  svc/monitoring-service 8091:443 &
+      - name: Get API keys
+        run: |
           echo "all=$(curl https://admin:admin@localhost:8090/v1/version --header 'Content-Type: application/json; charset=utf-8'  --insecure)" 
           echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
           echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@localhost:8091/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" 
+      
 
       - name: Uninstall PMM
         run: |
