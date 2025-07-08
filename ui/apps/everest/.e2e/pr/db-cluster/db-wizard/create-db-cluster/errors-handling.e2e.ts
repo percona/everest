@@ -80,7 +80,6 @@ test.describe('DB Cluster creation', () => {
     await goToStep(page, 'resources');
     await page.getByTestId('text-input-memory').fill('1');
     await goToStep(page, 'advanced-configurations');
-    await page.getByTestId('delete-text-input-1-button').click();
     await page
       .getByTestId('text-input-source-ranges.0.source-range')
       .fill('192.168.1.1');
