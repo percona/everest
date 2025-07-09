@@ -118,7 +118,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     }
     const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
-    expect(response.ok()).toBeFalsy()
+    expect(updated.ok()).toBeFalsy()
     expect((await updated.json()).message).toContain("no such host")
   })
 
