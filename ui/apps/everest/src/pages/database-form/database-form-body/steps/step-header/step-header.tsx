@@ -1,15 +1,23 @@
-import { Typography } from '@mui/material';
+import { Chip, Typography } from '@mui/material';
 
 type StepHeaderProps = {
   pageTitle?: string;
   pageDescription?: string;
+  techPreview?: boolean;
 };
-export const StepHeader = ({ pageTitle, pageDescription }: StepHeaderProps) => {
+export const StepHeader = ({
+  pageTitle,
+  pageDescription,
+  techPreview,
+}: StepHeaderProps) => {
   return (
     <>
       {pageTitle && (
         <Typography variant="h5" data-testid="step-header">
           {pageTitle}
+          {techPreview && (
+            <Chip size="small" label="Technical preview" sx={{ ml: 1 }} />
+          )}
         </Typography>
       )}
       {pageDescription && (

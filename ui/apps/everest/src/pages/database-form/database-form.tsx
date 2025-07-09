@@ -13,16 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useBlocker, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Stack, Step, StepLabel } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import { Stepper } from '@percona/ui-lib';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useCreateDbCluster } from 'hooks/api/db-cluster/useCreateDbCluster';
+import {
+  useCreateDbCluster,
+  useCreateDbClusterSecret,
+} from 'hooks/api/db-cluster/useCreateDbCluster';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
-import { steps } from './database-form-body/steps';
 import { DbWizardType } from './database-form-schema';
 import { useDatabasePageDefaultValues } from './useDatabaseFormDefaultValues';
 import { useDatabasePageMode } from './useDatabasePageMode';
@@ -36,14 +38,20 @@ import {
   DB_CLUSTERS_QUERY_KEY,
 } from 'hooks';
 import { WizardMode } from 'shared-types/wizard.types';
+import { useSteps } from './database-form-body/steps';
+import { ZodType } from 'zod';
 
 export const DatabasePage = () => {
+  const latestDataRef = useRef<DbWizardType | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [longestAchievedStep, setLongestAchievedStep] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [stepsWithErrors, setStepsWithErrors] = useState<number[]>([]);
   const { mutate: addDbCluster, isPending: isCreating } = useCreateDbCluster();
+  const { mutate: addDbClusterSecret } = useCreateDbClusterSecret();
   const location = useLocation();
+  const steps = useSteps();
+
   const navigate = useNavigate();
   const { isDesktop } = useActiveBreakpoint();
   const mode = useDatabasePageMode();
@@ -66,21 +74,20 @@ export const DatabasePage = () => {
       namespace: db?.metadata.namespace!,
     }));
 
+  const hasImportStep = location.state?.showImport;
+
   const validationSchema = useDbValidationSchema(
     activeStep,
     defaultValues,
     dbClustersNamesList,
-    mode
-  );
-
+    mode,
+    hasImportStep
+  ) as unknown as ZodType<DbWizardType>;
   const methods = useForm<DbWizardType>({
     mode: 'onChange',
     resolver: async (data, context, options) => {
-      const result = await zodResolver(validationSchema)(
-        data,
-        context,
-        options
-      );
+      const customResolver = zodResolver(validationSchema);
+      const result = await customResolver(data, context, options);
       if (Object.keys(result.errors).length > 0) {
         setStepsWithErrors((prev) => {
           if (!prev.includes(activeStep)) {
@@ -115,32 +122,50 @@ export const DatabasePage = () => {
   );
 
   const onSubmit: SubmitHandler<DbWizardType> = (data) => {
+    latestDataRef.current = data;
     if (mode === WizardMode.New || mode === WizardMode.Restore) {
-      addDbCluster(
-        {
-          dbPayload: data,
-          ...(mode === WizardMode.Restore && {
-            backupDataSource: {
-              dbClusterBackupName: location.state?.backupName,
-              ...(location.state?.pointInTimeDate && {
-                pitr: {
-                  date: location.state?.pointInTimeDate,
-                  type: 'date',
-                },
-              }),
-            },
-          }),
-        },
-        {
-          onSuccess: (cluster) => {
-            // We clear the query for the namespace to make sure the new cluster is fetched
-            queryClient.removeQueries({
-              queryKey: [DB_CLUSTERS_QUERY_KEY, cluster.metadata.namespace],
-            });
-            setFormSubmitted(true);
+      const addCluster = () =>
+        addDbCluster(
+          {
+            dbPayload: data,
+            ...(mode === WizardMode.Restore && {
+              backupDataSource: {
+                dbClusterBackupName: location.state?.backupName,
+                ...(location.state?.pointInTimeDate && {
+                  pitr: {
+                    date: location.state?.pointInTimeDate,
+                    type: 'date',
+                  },
+                }),
+              },
+            }),
           },
-        }
-      );
+          {
+            onSuccess: (cluster) => {
+              // We clear the query for the namespace to make sure the new cluster is fetched
+              queryClient.removeQueries({
+                queryKey: [DB_CLUSTERS_QUERY_KEY, cluster.metadata.namespace],
+              });
+              setFormSubmitted(true);
+            },
+          }
+        );
+
+      const credentials = latestDataRef.current?.credentials;
+      if (hasImportStep && credentials && Object.keys(credentials).length > 0) {
+        addDbClusterSecret(
+          {
+            dbClusterName: data.dbName,
+            namespace: data.k8sNamespace || '',
+            credentials: credentials as Record<string, string>,
+          },
+          {
+            onSuccess: addCluster,
+          }
+        );
+      } else {
+        addCluster();
+      }
     }
   };
 
@@ -227,6 +252,9 @@ export const DatabasePage = () => {
             longestAchievedStep={longestAchievedStep}
             isSubmitting={isCreating}
             hasErrors={stepsWithErrors.length > 0}
+            disableNext={
+              hasImportStep && activeStep === 1 && stepsWithErrors.includes(1)
+            }
             onSubmit={handleSubmit(onSubmit)}
             onCancel={() => navigate('/databases')}
             handleNextStep={handleNext}

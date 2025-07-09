@@ -11,37 +11,40 @@ export const DbErrors = ({ conditions }: { conditions: StatusCondition[] }) => {
   return (
     <>
       {conditions.map((condition) => {
+        const humanizedDbError = humanizeDbError(condition.type);
         return (
-          <Box>
-            <Alert
-              severity="error"
-              sx={{
-                width: '100%',
-                height: 'auto',
-                marginTop: 1,
-                marginBottom: 1,
-                alignItems: 'center',
-              }}
-              action={
-                <Button
-                  sx={{ color: 'error.contrastText' }}
-                  size="small"
-                  onClick={() => setOpenDialog(true)}
-                >
-                  {Messages.errorDetails}
-                </Button>
-              }
-            >
-              <Typography>{humanizeDbError(condition.type)}</Typography>
-            </Alert>
+          humanizedDbError && (
+            <Box>
+              <Alert
+                severity="error"
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  marginTop: 1,
+                  marginBottom: 1,
+                  alignItems: 'center',
+                }}
+                action={
+                  <Button
+                    sx={{ color: 'error.contrastText' }}
+                    size="small"
+                    onClick={() => setOpenDialog(true)}
+                  >
+                    {Messages.errorDetails}
+                  </Button>
+                }
+              >
+                <Typography>{humanizedDbError}</Typography>
+              </Alert>
 
-            <DbErrorDialog
-              title={Messages.errorDetails}
-              content={condition.message}
-              open={openDialog}
-              onClose={() => setOpenDialog(false)}
-            />
-          </Box>
+              <DbErrorDialog
+                title={Messages.errorDetails}
+                content={condition.message}
+                open={openDialog}
+                onClose={() => setOpenDialog(false)}
+              />
+            </Box>
+          )
         );
       })}
     </>
