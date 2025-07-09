@@ -37,7 +37,9 @@ export type RBACResource =
   | 'database-cluster-credentials'
   | 'backup-storages'
   | 'monitoring-instances'
-  | 'pod-scheduling-policies';
+  | 'pod-scheduling-policies'
+  | 'data-importers'
+  | 'data-import-jobs';
 
 const constructAuthorizer = async () => {
   const newAuthorizer = new Authorizer('auto', { endpoint: '/' });

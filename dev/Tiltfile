@@ -299,6 +299,7 @@ everest_yaml = helm(
     name='everest',
     namespace=EVEREST_NAMESPACE,
     skip_crds=True,
+    values=['./helm-values/webhook-tls-cert-values.yaml'],
     set=[
         'dbNamespace.enabled=false',
         'upgrade.preflightChecks=false',
@@ -524,6 +525,8 @@ k8s_resource(
         'databaseengines.everest.percona.com:customresourcedefinition',
         'monitoringconfigs.everest.percona.com:customresourcedefinition',
         'podschedulingpolicies.everest.percona.com:customresourcedefinition',
+        'dataimporters.everest.percona.com:customresourcedefinition',
+        'dataimportjobs.everest.percona.com:customresourcedefinition',
     ],
     new_name='everest-crds',
     labels=["everest-operator"]
@@ -539,8 +542,9 @@ k8s_resource(
     'everest-operator-metrics-auth-rolebinding:clusterrolebinding',
     'everest-operator-manager-role:clusterrole',
     'everest-operator-leader-election-rolebinding:rolebinding',
-    'everest-operator-manager-rolebinding:clusterrolebinding'
-
+    'everest-operator-manager-rolebinding:clusterrolebinding',
+    'webhook-server-cert:secret',
+    'everest-operator-validating-webhook-configuration:validatingwebhookconfiguration'
     ],
     resource_deps = [
       'everest-namespace',
