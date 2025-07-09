@@ -19,7 +19,11 @@ import {
   useMutation,
   useQuery,
 } from '@tanstack/react-query';
-import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import {
+  createDbClusterFn,
+  createDbClusterSecretFn,
+  getDbClusterCredentialsFn,
+} from 'api/dbClusterApi';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   MIN_NUMBER_OF_SHARDS,
@@ -33,7 +37,7 @@ import {
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
-import { getProxySpec } from './utils';
+import { getDataSource, getProxySpec } from './utils';
 import { DbType } from '@percona/types';
 import { useRBACPermissions } from 'hooks/rbac';
 
@@ -101,6 +105,13 @@ const formValuesToPayloadMapping = (
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
           : '',
+        ...(dbPayload.dataImporter &&
+        dbPayload.credentials &&
+        Object.keys(dbPayload.credentials).length > 0
+          ? {
+              userSecretsName: `everest-secrets-${dbPayload.dbName}`,
+            }
+          : {}),
       },
       monitoring: {
         ...(!!dbPayload.monitoring && {
@@ -126,17 +137,16 @@ const formValuesToPayloadMapping = (
           },
         },
       }),
-      ...(backupDataSource?.dbClusterBackupName && {
-        dataSource: {
-          dbClusterBackupName: backupDataSource.dbClusterBackupName,
-          ...(backupDataSource?.pitr && {
-            pitr: {
-              date: backupDataSource.pitr.date,
-              type: 'date',
+      ...(backupDataSource?.dbClusterBackupName || dbPayload.dataImporter
+        ? {
+            dataSource: {
+              ...getDataSource({
+                backupDataSource: backupDataSource,
+                dbPayload: dbPayload,
+              }),
             },
-          }),
-        },
-      }),
+          }
+        : {}),
       ...(dbPayload.podSchedulingPolicyEnabled &&
         dbPayload.podSchedulingPolicy && {
           podSchedulingPolicyName: dbPayload.podSchedulingPolicy,
@@ -184,3 +194,19 @@ export const useDbClusterCredentials = (
     enabled: (options?.enabled ?? true) && canReadCredentials,
   });
 };
+
+type CreateDbClusterSecretProps = {
+  dbClusterName: string;
+  namespace: string;
+  credentials: Record<string, string>;
+};
+
+export const useCreateDbClusterSecret = () =>
+  useMutation({
+    mutationFn: ({
+      dbClusterName,
+      namespace,
+      credentials,
+    }: CreateDbClusterSecretProps) =>
+      createDbClusterSecretFn(dbClusterName, namespace, credentials),
+  });

@@ -32,7 +32,7 @@ var (
 	errPXCPitrS3Only                 = errors.New("point-in-time recovery only supported for s3 compatible storages")
 	errPSMDBMultipleStorages         = errors.New("can't use more than one backup storage for PSMDB clusters")
 	errPSMDBViolateActiveStorage     = errors.New("can't change the active storage for PSMDB clusters")
-	errDataSourceConfig              = errors.New("either DBClusterBackupName or BackupSource must be specified in the DataSource field")
+	errDataSourceConfig              = errors.New("either DBClusterBackupName, BackupSource or DataImport must be specified in the DataSource field")
 	errDataSourceNoPitrDateSpecified = errors.New("pitr Date must be specified for type Date")
 	errDataSourceWrongDateFormat     = errors.New("failed to parse .Spec.DataSource.Pitr.Date as 2006-01-02T15:04:05Z")
 	errDataSourceNoBackupStorageName = errors.New("'backupStorageName' should be specified in .Spec.DataSource.BackupSource")
