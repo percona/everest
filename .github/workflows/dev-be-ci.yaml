@@ -291,45 +291,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-      # We need to have Everest CRDs available before running provisioning and everest API Server
-      # to have an ability to create monitoring configs and use them during the provisioning as
-      # a mock pmm server without running a real PMM.
-      - name: Install everest operator without Everest
-        run: |
-          kubectl create ns everest-system
-          kubectl create ns everest-monitoring
-          curl https://raw.githubusercontent.com/percona/everest-operator/main/deploy/bundle.yaml -o bundle.yaml
-          sed -i  "s/namespace: everest-operator-system/namespace: everest-system/g" bundle.yaml
-          kubectl -n everest-system apply -f bundle.yaml
-
-      # We create a dummy monitoring instance so we can enable monitoring during provisioning
-      # without having to install PMM.
-      - name: Create a monitoring instance
-        run: |
-          cat <<EOF | kubectl apply -f -
-          kind: Secret
-          apiVersion: v1
-          metadata:
-            name: pmm-local
-            namespace: everest-monitoring
-          type: Opaque
-          stringData:
-            "apiKey": "dummy-key"
-          EOF
-          cat <<EOF | kubectl apply -f -
-          kind: MonitoringConfig
-          apiVersion: everest.percona.com/v1alpha1
-          metadata:
-            name: pmm-local
-            namespace: everest-monitoring
-          spec:
-            type: pmm
-            credentialsSecretName: pmm-local
-            pmm:
-              url: http://localhost
-              image: percona/pmm-client:2
-          EOF
-
       - name: Provision Everest using CLI
         shell: bash
         run: |

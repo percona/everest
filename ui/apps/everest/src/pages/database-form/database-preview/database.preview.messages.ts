@@ -22,13 +22,6 @@ import { addZeroToSingleDigit } from 'components/time-selection/time-selection.u
 
 export const Messages = {
   title: 'Database Summary',
-  preview: [
-    'Basic Information',
-    'Resources',
-    'Backups',
-    'Advanced Configurations',
-    'Monitoring',
-  ],
 };
 
 export const getTimeSelectionPreviewMessage = ({
