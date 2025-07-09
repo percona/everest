@@ -72,7 +72,8 @@ const WithPermissionDetails = ({
               statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
             >
               {beautifyDbClusterStatus(
-                dbCluster?.status?.status || DbClusterStatus.creating
+                dbCluster?.status?.status || DbClusterStatus.creating,
+                dbCluster?.status?.conditions || []
               )}
             </StatusField>
             <DbActions showStatusActions={true} dbCluster={dbCluster!} />
