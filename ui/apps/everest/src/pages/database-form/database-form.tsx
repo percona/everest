@@ -252,7 +252,9 @@ export const DatabasePage = () => {
             longestAchievedStep={longestAchievedStep}
             isSubmitting={isCreating}
             hasErrors={stepsWithErrors.length > 0}
-            disableNext={activeStep === 1 && stepsWithErrors.includes(1)}
+            disableNext={
+              hasImportStep && activeStep === 1 && stepsWithErrors.includes(1)
+            }
             onSubmit={handleSubmit(onSubmit)}
             onCancel={() => navigate('/databases')}
             handleNextStep={handleNext}
