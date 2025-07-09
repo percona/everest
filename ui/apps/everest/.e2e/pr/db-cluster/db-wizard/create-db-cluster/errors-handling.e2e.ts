@@ -59,7 +59,7 @@ test.describe('DB Cluster creation', () => {
     await moveForward(page);
 
     await page
-      .getByLabel('switch-input-external-access')
+      .getByLabel('switch-input-external-access-label')
       .getByRole('checkbox')
       .check();
     // Introduce an error on advanced configs step: two invalid IPs
