@@ -9,6 +9,7 @@ import (
 
 	goversion "github.com/hashicorp/go-version"
 	"golang.org/x/mod/semver"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -375,8 +376,22 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 	if dataSource == nil {
 		return nil
 	}
-	if (dataSource.DBClusterBackupName == "" && dataSource.BackupSource == nil) ||
-		(dataSource.DBClusterBackupName != "" && dataSource.BackupSource != nil) {
+
+	ensureOneDataSourceSpecified := func() bool {
+		sources := 0
+		if dataSource.DBClusterBackupName != "" {
+			sources++
+		}
+		if dataSource.BackupSource != nil {
+			sources++
+		}
+		if dataSource.DataImport != nil {
+			sources++
+		}
+
+		return sources == 1
+	}
+	if !ensureOneDataSourceSpecified() {
 		return errDataSourceConfig
 	}
 
@@ -737,4 +752,9 @@ func (h *validateHandler) validatePodSchedulingPolicy(ctx context.Context, db *e
 		}
 	}
 	return nil
+}
+
+func (h *validateHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret,
+) (*corev1.Secret, error) {
+	return h.next.CreateDatabaseClusterSecret(ctx, namespace, dbName, secret)
 }
