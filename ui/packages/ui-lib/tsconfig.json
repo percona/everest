@@ -5,7 +5,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "declaration": true,
-    "declarationDir": "typings",
+    "declarationDir": "dist/typings",
     "types": ["@testing-library/jest-dom", "vitest/globals"]
   }
 }
