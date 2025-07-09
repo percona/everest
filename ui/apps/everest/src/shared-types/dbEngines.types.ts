@@ -67,6 +67,18 @@ export type GetDbEnginesPayload = {
   }>;
 };
 
+export type GetDbEnginePayload = {
+  metadata: {
+    name: string;
+  };
+  spec: {
+    type: DbEngineType;
+    secretKeys: {
+      user: [{ name: string; description: string }];
+    };
+  };
+};
+
 export type DbEngineTool = {
   version: string;
 } & EngineToolPayload;

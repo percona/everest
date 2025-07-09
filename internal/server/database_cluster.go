@@ -19,10 +19,13 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
+	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	corev1 "k8s.io/api/core/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -139,4 +142,32 @@ func (e *EverestServer) GetDatabaseClusterPitr(c echo.Context, namespace, name s
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
+}
+
+// CreateDatabaseClusterSecret creates a secret for the specified database cluster.
+func (e *EverestServer) CreateDatabaseClusterSecret(
+	c echo.Context,
+	namespace,
+	dbName string,
+	params api.CreateDatabaseClusterSecretParams,
+) error {
+	secret := &corev1.Secret{}
+	if err := e.getBodyFromContext(c, secret); err != nil {
+		return errors.Join(errFailedToReadRequestBody, err)
+	}
+	secret.SetNamespace(namespace)
+
+	// if name is not set, generate a random one
+	name := secret.GetName()
+	if name == "" {
+		randNum := rand.Intn(90000) + 10000 //nolint:gosec
+		name = fmt.Sprintf("%s-%d-secret", dbName, randNum)
+		secret.SetName(name)
+	}
+	result, err := e.handler.CreateDatabaseClusterSecret(c.Request().Context(), namespace, dbName, secret)
+	if err != nil {
+		e.l.Errorf("CreateDatabaseClusterSecret failed: %w", err)
+		return err
+	}
+	return c.JSON(http.StatusCreated, result)
 }
