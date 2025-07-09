@@ -39,7 +39,7 @@ export const basicInformationStepCheck = async (
     recommendedEngineVersions.psmdb
   );
 
-  await page.getByRole('option').filter({ hasText: '6.0.9-7' }).click();
+  await page.getByRole('option').filter({ hasText: '6.0.15-12' }).click();
   await page.getByTestId('text-input-db-name').fill(clusterName);
   expect(
     await page.getByTestId('switch-input-sharding').getByRole('checkbox')

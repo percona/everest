@@ -160,7 +160,7 @@ test.describe('DB Cluster creation', () => {
     // Test the mechanism for default number of nodes
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Here we test that version wasn't reset to default
-    await expect(page.getByText('Version: 6.0.9-7')).toBeVisible();
+    await expect(page.getByText('Version: 6.0.15-12')).toBeVisible();
 
     // Make sure name doesn't change when we go back to first step
     expect(await page.getByTestId('text-input-db-name').inputValue()).toBe(
