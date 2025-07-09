@@ -110,11 +110,16 @@ export const CreateDbButton = ({
 
   const createButton = (
     <Button
-      data-testid="add-db-cluster-button"
+      data-testid={`${createFromImport ? 'import' : 'add'}-db-cluster-button`}
       size="small"
       variant={createFromImport ? 'text' : 'contained'}
       sx={buttonStyle}
-      aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
+      aria-controls={
+        open
+          ? `${createFromImport ? 'import' : 'add'}
+            -db-cluster-button-menu`
+          : undefined
+      }
       aria-haspopup="true"
       aria-expanded={open ? 'true' : undefined}
       onClick={handleClick}
@@ -139,7 +144,9 @@ export const CreateDbButton = ({
       )}
       {availableEngines.length > 1 && (
         <Menu
-          data-testid="add-db-cluster-button-menu"
+          data-testid={`${
+            createFromImport ? 'import' : 'add'
+          }-db-cluster-button-menu`}
           anchorEl={anchorEl}
           open={open}
           onClose={closeMenu}
@@ -172,7 +179,7 @@ export const CreateDbButton = ({
               )}
               {availableDbTypes.map((item) => (
                 <MenuItem
-                  data-testid={`add-db-cluster-button-${item.type}`}
+                  data-testid={`${createFromImport ? 'import' : 'add'}-db-cluster-button-${item.type}`}
                   disabled={!item.available}
                   key={item.type}
                   component={Link}
