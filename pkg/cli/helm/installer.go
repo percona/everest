@@ -355,7 +355,7 @@ func everestctlCacheDir() (string, error) {
 	return res, nil
 }
 
-// Runs `helm dependency build` in the chart directory.
+// Runs `helm dependency update` in the chart directory.
 func buildChartDeps(chartDir string) error {
 	man := &downloader.Manager{
 		Out:              io.Discard,
@@ -364,7 +364,7 @@ func buildChartDeps(chartDir string) error {
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
 	}
-	return man.Build()
+	return man.Update()
 }
 
 func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) {
