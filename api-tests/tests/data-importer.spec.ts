@@ -52,7 +52,7 @@ test('import data into fresh cluster', async ({ request, page, cli }) => {
         type: 'pxc',
         replicas: 1,
         storage: {
-          size: '4G',
+          size: '4Gi',
         },
         resources: {
           cpu: '1',
