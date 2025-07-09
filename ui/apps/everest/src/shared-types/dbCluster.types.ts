@@ -33,6 +33,7 @@ export enum DbClusterStatus {
   resizingVolumes = 'resizingVolumes',
   creating = 'creating',
   upgrading = 'upgrading',
+  importing = 'importing',
 }
 
 export interface Schedule {
@@ -89,8 +90,25 @@ export interface Proxy {
   type: ProxyType;
 }
 
+export interface DataImporter {
+  dataImporterName: string;
+  source: {
+    path: string;
+    s3: {
+      accessKeyId: string;
+      bucket: string;
+      credentialsSecretName: string;
+      endpointURL: string;
+      region: string;
+      secretAccessKey: string;
+      verifyTLS: boolean;
+    };
+  };
+}
+
 export interface DataSource {
-  dbClusterBackupName: string;
+  dataImport?: DataImporter;
+  dbClusterBackupName?: string;
   pitr?: DataSourcePitr;
 }
 
