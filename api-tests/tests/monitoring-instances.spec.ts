@@ -119,7 +119,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
 
     expect(updated.ok()).toBeFalsy()
-    expect((await updated.json()).message).toContain("no such host")
+    expect((await updated.json()).message).toContain("dial tcp: lookup not-existing-url")
   })
 
   await test.step('patch monitoring instance to existing with apiKey', async () => {
