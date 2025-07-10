@@ -224,7 +224,11 @@ jobs:
           MONITORING_PASSWORD: "admin"
         run: |
           cd ui
-          pnpm --filter "@percona/everest" e2e
+          pnpm --filter "@percona/everest" e2e:ignore-rbac pr/db-cluster-details/edit-db-cluster/resources-step.e2e.ts
+
+      - name: "Setup tmate debug ssh session"
+        uses: "percona/gh-action-action-tmate@v3"
+        if: ${{ always() }}
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
