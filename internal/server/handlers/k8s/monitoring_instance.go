@@ -109,7 +109,8 @@ func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, na
 	if req.VerifyTLS != nil {
 		m.Spec.VerifyTLS = req.VerifyTLS
 	}
-	return h.kubeConnector.UpdateMonitoringConfig(ctx, m)
+	config, err := h.kubeConnector.UpdateMonitoringConfig(ctx, m)
+	return config, trimWebhookError(err)
 }
 
 func (h *k8sHandler) getPMMApiKey(ctx context.Context, params *api.CreateMonitoringInstanceJSONRequestBody) (string, error) {
