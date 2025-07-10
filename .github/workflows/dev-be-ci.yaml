@@ -185,20 +185,3 @@ jobs:
           kubectl -n everest describe pods
           kubectl -n everest-system logs deploy/everest-server
 
-
-
-  merge-gatekeeper:
-    needs: [ test, check, integration_tests_api, integration_tests_flows, integration_tests_cli]
-    name: Merge Gatekeeper
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Merge Gatekeeper
-        uses: upsidr/merge-gatekeeper@v1.2.1
-        with:
-          self: Merge Gatekeeper
-          token: ${{ secrets.GITHUB_TOKEN }}
-          interval: 45
-          timeout: 600
-          ignored: "license/snyk (Percona Everest), security/snyk (Percona Everest)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
