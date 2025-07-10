@@ -19,13 +19,18 @@ import {
   waitClusterDeletion,
   deleteDBCluster,
   createDataImporter,
-  mockPXCClusterReady
 } from '@tests/tests/helpers';
 
 test.setTimeout(360 * 1000)
 
 test.beforeEach(async ({ request, cli }) => {
     await createDataImporter(cli)
+})
+
+test.afterEach(async ({ request, page, cli }) => {
+  // We will be mocking a 'ready' status on the PXC cluster, so we scale down the PXC operator to 0 replicas.
+  // After the test, we shall scale it back up to 1 replica.
+  await cli.exec(`kubectl scale --replicas=1 deploy/percona-xtradb-cluster-operator -n ${testsNs}`)
 })
 
 
@@ -88,9 +93,12 @@ test('import data into fresh cluster', async ({ request, page, cli }) => {
 
   postReq = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
   await checkError(postReq)
-
-  // mock that the PXC cluster is ready so the data import job can start.
-  await mockPXCClusterReady(cli, clusterName)
+  
+  // We need to mock the PXC cluster to be ready so the data import can start.
+  // NOTE: it does not matter if the PXC cluster actually comes up, this test does not perform an actual import.
+  await cli.exec(`kubectl scale --replicas=0 deploy/percona-xtradb-cluster-operator -n ${testsNs}`)
+  await page.waitForTimeout(3000) // wait for the operator to scale down
+  await cli.exec(`kubectl patch  pxc/${clusterName} --subresource status --namespace ${testsNs} --type='merge' -p '{"status":{"state":"ready"}}'`)
 
 
   // assert that we see the importing status
