@@ -4,6 +4,6 @@
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
     "declaration": true,
-    "declarationDir": "typings"
+    "declarationDir": "dist/typings"
   }
 }
