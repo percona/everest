@@ -6,7 +6,7 @@ on:
       - 'ui/**'
       - '.github/workflows/dev-fe-ci.yaml'
     branches:
-      - test
+      - test_ci
   pull_request:
     paths-ignore:
       - 'ui/**'
