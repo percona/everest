@@ -240,10 +240,14 @@ export const populateAdvancedConfig = async (
   await combobox.waitFor({ state: 'visible', timeout: 5000 });
   await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
 
-  await page
-    .getByTestId('switch-input-pod-scheduling-policy-enabled')
-    .getByRole('checkbox')
-    [enablePodSchedulingPolicy ? 'check' : 'uncheck']();
+  // policy is already enabled by default
+  if (!enablePodSchedulingPolicy) {
+    await page
+      .getByTestId('switch-input-pod-scheduling-policy-enabled')
+      .getByRole('checkbox')
+      // https://github.com/microsoft/playwright/issues/20893
+      .dispatchEvent('click');
+  }
 
   if (externalAccess) {
     await page
