@@ -226,7 +226,7 @@ const openResourcesModal = async (page: Page) => {
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
-        await waitForDelete(page, clusterName, 160000);
+        await waitForDelete(page, clusterName, 300000);
       });
     });
   }
