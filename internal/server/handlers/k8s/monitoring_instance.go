@@ -2,7 +2,9 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/google/uuid"
@@ -35,10 +37,6 @@ func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace str
 		)
 	}
 	apiKey, err := h.getPMMApiKey(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	err = h.checkPMMAPIAccess(apiKey, req.Url, req.Name, namespace, m, ctx, req.VerifyTLS)
 	if err != nil {
 		return nil, err
 	}
@@ -89,10 +87,6 @@ func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, na
 			return nil, err
 		}
 	}
-	err = h.checkPMMAPIAccess(apiKey, req.Url, name, namespace, m, ctx, req.VerifyTLS)
-	if err != nil {
-		return nil, err
-	}
 	if apiKey != "" {
 		_, err := h.kubeConnector.UpdateSecret(ctx, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -116,37 +110,6 @@ func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, na
 		m.Spec.VerifyTLS = req.VerifyTLS
 	}
 	return h.kubeConnector.UpdateMonitoringConfig(ctx, m)
-}
-
-func (h *k8sHandler) checkPMMAPIAccess(apiKey, url, secretName, secretNS string, m *everestv1alpha1.MonitoringConfig, ctx context.Context, verifyTLS *bool) error {
-	if url == "" {
-		url = m.Spec.PMM.URL
-	}
-	if verifyTLS == nil {
-		if m.Spec.VerifyTLS != nil {
-			verifyTLS = m.Spec.VerifyTLS
-		} else {
-			verifyTLS = pointer.ToBool(true)
-		}
-	}
-	// if there is no apiSecret provided or created, read the existing one and try to use it
-	if apiKey == "" {
-		s, err := h.kubeConnector.GetSecret(ctx, ctrlclient.ObjectKey{
-			Name:      secretName,
-			Namespace: secretNS,
-		},
-		)
-		if err != nil {
-			return fmt.Errorf("could not get k8s secret %s", secretName)
-		}
-		key, ok := s.Data["apiKey"]
-		if !ok {
-			return fmt.Errorf("could not get apiKey from k8s secret %s", secretName)
-		}
-
-		return pmm.CheckAccess(url, string(key), !*verifyTLS, ctx)
-	}
-	return nil
 }
 
 func (h *k8sHandler) getPMMApiKey(ctx context.Context, params *api.CreateMonitoringInstanceJSONRequestBody) (string, error) {
@@ -208,10 +171,21 @@ func (h *k8sHandler) createMonitoringK8sResources(
 		if dErr := h.kubeConnector.DeleteSecret(c, delObj); dErr != nil {
 			return nil, fmt.Errorf("failed cleaning up the secret because failed creating monitoring instance")
 		}
-		return nil, fmt.Errorf("failed creating monitoring instance")
+		return nil, trimWebhookError(err)
 	}
 
 	return created, nil
+}
+
+func trimWebhookError(err error) error {
+	if err == nil {
+		return err
+	}
+	webhookPrefix := `admission webhook "vmonitoringconfig-v1alpha1.everest.percona.com" denied the request: `
+	if strings.Contains(err.Error(), webhookPrefix) {
+		return errors.New(strings.TrimPrefix(err.Error(), webhookPrefix))
+	}
+	return err
 }
 
 func (h *k8sHandler) monitoringConfigSecretData(apiKey string) map[string]string {
