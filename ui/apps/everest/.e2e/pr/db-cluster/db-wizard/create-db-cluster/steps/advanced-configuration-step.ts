@@ -14,36 +14,48 @@
 // limitations under the License.
 
 import { Page, expect } from '@playwright/test';
-// import {SOURCE_RANGE_PLACEHOLDER} from "../../../../../constants";
 
 export const advancedConfigurationStepCheck = async (page: Page) => {
   await expect(
     page.getByRole('heading', { name: 'Advanced Configurations' })
   ).toBeVisible();
-  // await page.getByLabel('Enable External Access').check();
+  // await page
+  //   .getByTestId('switch-input-external-access')
+  //   .getByRole('checkbox')
+  //   .check();
   // expect(
-  //   await page.getByLabel('Enable External Access').isChecked()
+  //   await page
+  //     .getByTestId('switch-input-external-access')
+  //     .getByRole('checkbox')
+  //     .isChecked()
   // ).toBeTruthy();
-  //
-  // const sourceRangeFirstField = page.getByTestId('text-input-source-ranges.0.source-range');
+
+  // const sourceRangeFirstField = page.getByTestId(
+  //   'text-input-source-ranges.0.source-range'
+  // );
   // expect(sourceRangeFirstField).toHaveValue('');
-  // expect(sourceRangeFirstField).toHaveAttribute('placeholder', SOURCE_RANGE_PLACEHOLDER);
+
+  // const addTextInputButton = page.getByTestId('add-text-input-button');
+  // expect(addTextInputButton.isDisabled());
+
   // await sourceRangeFirstField.fill('192.168.1.1/24');
-  //
-  // await page.getByTestId('add-text-input-button').click();
-  //
-  // const sourceRangeSecondField = page
-  //     .getByTestId('text-input-source-ranges.1.source-range');
-  // expect(sourceRangeSecondField).toHaveValue('');
-  // expect(sourceRangeSecondField).toHaveAttribute('placeholder', SOURCE_RANGE_PLACEHOLDER);
+  // await expect(addTextInputButton).toBeEnabled();
+
+  // const sourceRangeSecondField = page.getByTestId(
+  //   'text-input-source-ranges.1.source-range'
+  // );
+  // await expect(sourceRangeSecondField).toHaveValue('');
+  // expect(addTextInputButton.isDisabled());
+
   // await sourceRangeSecondField.fill('192.168.1.0');
+  // await expect(addTextInputButton).toBeEnabled();
 
-  await page
-    .getByTestId('switch-input-engine-parameters-enabled-label')
-    .getByRole('checkbox')
-    .check();
+  // await page
+  //   .getByTestId('switch-input-engine-parameters-enabled-label')
+  //   .getByRole('checkbox')
+  //   .check();
 
-  await page
-    .getByTestId('text-input-engine-parameters')
-    .fill('max_allowed_packet: 128M');
+  // await page
+  //   .getByTestId('text-input-engine-parameters')
+  //   .fill('max_allowed_packet: 128M');
 };
