@@ -251,7 +251,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
         await waitForStatus(
           page,
           `${c.name}`,
-          'Initializing',
+          'Upgrading',
           TIMEOUTS.ThreeMinutes
         );
         await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.FifteenMinutes);
