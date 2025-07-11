@@ -196,11 +196,11 @@ export const createMonitoringConfig = async (request, name, namespace) => {
   const miData = {
     type: 'pmm',
     name: name,
-    url: 'http://monitoring',
-    allowedNamespaces: [testsNs],
+    url: `https://${process.env.PMM1_IP}`,
     pmm: {
-      apiKey: '123',
+      apiKey: `${process.env.PMM1_API_KEY}`,
     },
+    verifyTLS: false,
   },
    res = await request.post(`/v1/namespaces/${namespace}/monitoring-instances`, { data: miData })
 
