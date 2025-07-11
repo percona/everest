@@ -74,6 +74,11 @@ export const goToLastStepByStepAndSubmit = async (
     if (waitMs) {
       await page.waitForTimeout(waitMs);
     }
+    const oneNodeVisible = await page.getByTestId("toggle-button-nodes-1").isVisible()
+    if (oneNodeVisible) {
+      await page.getByTestId('toggle-button-nodes-1').click();
+    }
+
     await moveForward(page);
     const a = await page.getByTestId('db-wizard-submit-button').isVisible();
     if (a) {
