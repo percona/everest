@@ -189,7 +189,7 @@ const zephyrMap: Record<string, string> = {
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-		  await waitForStatus(page, clusterName, 'Initializing', 30000);
+          await waitForStatus(page, clusterName, 'Initializing', 30000);
           await waitForStatus(page, clusterName, 'Up', 720000);
         });
 
@@ -421,7 +421,7 @@ const zephyrMap: Record<string, string> = {
         page,
       }) => {
         await resumeDbCluster(page, clusterName);
-		await waitForStatus(page, clusterName, 'Initializing', 45000);
+        await waitForStatus(page, clusterName, 'Initializing', 45000);
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
@@ -433,7 +433,7 @@ const zephyrMap: Record<string, string> = {
         if (size != 1 && db != 'postgresql') {
           await waitForStatus(page, clusterName, 'Stopping', 45000);
         }
-		await waitForStatus(page, clusterName, 'Initializing', 120000);
+        await waitForStatus(page, clusterName, 'Initializing', 120000);
         await waitForStatus(page, clusterName, 'Up', 600000);
       });
 
@@ -493,7 +493,7 @@ const zephyrMap: Record<string, string> = {
 
         await test.step('Wait for cluster status', async () => {
           await page.goto('databases');
-		  await waitForStatus(page, clusterName, 'Initializing', 60000);
+          await waitForStatus(page, clusterName, 'Initializing', 60000);
           await waitForStatus(page, clusterName, 'Up', 300000);
         });
       });
