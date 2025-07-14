@@ -431,17 +431,19 @@ func (e *EverestServer) errorHandlerChain() echo.HTTPErrorHandler {
 func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 	return func(err error, c echo.Context) {
 		echoErrTarget := &echo.HTTPError{}
-		statusError := &k8serrors.StatusError{}
 		switch {
 		case errors.As(err, &echoErrTarget):
 		case k8serrors.IsNotFound(err):
 			err = &echo.HTTPError{
 				Code: http.StatusNotFound,
 			}
-		case errors.As(err, &statusError):
-			err = &echo.HTTPError{
-				Code:    int(statusError.Status().Code),
-				Message: trimWebhookErrorText(statusError.Status().Message),
+		case k8serrors.IsForbidden(err):
+			statusError := &k8serrors.StatusError{}
+			if errors.As(err, &statusError) {
+				err = &echo.HTTPError{
+					Code:    int(statusError.Status().Code),
+					Message: trimWebhookErrorText(statusError.Status().Message),
+				}
 			}
 		case k8serrors.IsAlreadyExists(err),
 			k8serrors.IsConflict(err):
