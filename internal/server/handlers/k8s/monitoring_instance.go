@@ -2,9 +2,7 @@ package k8s
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/google/uuid"
@@ -110,7 +108,7 @@ func (h *k8sHandler) UpdateMonitoringInstance(ctx context.Context, namespace, na
 		m.Spec.VerifyTLS = req.VerifyTLS
 	}
 	config, err := h.kubeConnector.UpdateMonitoringConfig(ctx, m)
-	return config, trimWebhookError(err)
+	return config, err
 }
 
 func (h *k8sHandler) getPMMApiKey(ctx context.Context, params *api.CreateMonitoringInstanceJSONRequestBody) (string, error) {
@@ -172,21 +170,10 @@ func (h *k8sHandler) createMonitoringK8sResources(
 		if dErr := h.kubeConnector.DeleteSecret(c, delObj); dErr != nil {
 			return nil, fmt.Errorf("failed cleaning up the secret because failed creating monitoring instance")
 		}
-		return nil, trimWebhookError(err)
+		return nil, err
 	}
 
 	return created, nil
-}
-
-func trimWebhookError(err error) error {
-	if err == nil {
-		return err
-	}
-	webhookPrefix := `admission webhook "vmonitoringconfig-v1alpha1.everest.percona.com" denied the request: `
-	if strings.Contains(err.Error(), webhookPrefix) {
-		return errors.New(strings.TrimPrefix(err.Error(), webhookPrefix))
-	}
-	return err
 }
 
 func (h *k8sHandler) monitoringConfigSecretData(apiKey string) map[string]string {
