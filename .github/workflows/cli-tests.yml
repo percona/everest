@@ -50,6 +50,7 @@ jobs:
         working-directory: cli-tests
         id: cli-tests
         run: |
+          make init
           make ${{ env.MAKE_TARGET }}
 
       - name: Collect logs from backend
