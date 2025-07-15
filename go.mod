@@ -28,7 +28,7 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.32.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250715104805-0ed530d7a965
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250715131303-e4818d78556e
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250710185617-e513d2283e09
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
@@ -36,7 +36,7 @@ require (
 	github.com/unrolled/secure v1.17.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.39.0
-	golang.org/x/mod v0.25.0
+	golang.org/x/mod v0.26.0
 	golang.org/x/term v0.32.0
 	golang.org/x/time v0.12.0
 	google.golang.org/protobuf v1.36.6
