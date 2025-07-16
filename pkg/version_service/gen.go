@@ -15,4 +15,4 @@
 
 package versionservice
 
-//go:generate ../../bin/mockery --name=Interface --case=snake --inpackage
+//go:generate go tool mockery --name=Interface --case=snake --inpackage
