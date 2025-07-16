@@ -10,6 +10,6 @@
   ],
   "compilerOptions": {
     "declaration": true,
-    "declarationDir": "typings"
+    "declarationDir": "dist/typings"
   }
 }
