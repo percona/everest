@@ -36,9 +36,11 @@ jobs:
           pnpm install
           EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
 
-      - uses: actions/setup-go@v5
+      - name: Set up Go release
+        uses: actions/setup-go@v5
         with:
-          go-version-file: "./go.mod"
+          go-version-file: 'go.mod'
+          cache: false
 
       - name: Build Everest
         run: |
