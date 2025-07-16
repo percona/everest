@@ -19,16 +19,12 @@ help:                   ## Display this help message
 	@grep '^[a-zA-Z]' $(MAKEFILE_LIST) | \
 		awk -F ':.*?## ' 'NF==2 {printf "  %-26s%s\n", $$1, $$2}'
 
-.PHONY: init
-init:                   ## Install development tools
-	cd tools && go generate -x -tags=tools
-
 .PHONY: build
-build:                ## Build binaries
+build: gen               ## Build binaries
 	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
 
 .PHONY: build-cli
-build-cli: init charts                ## Build binaries
+build-cli: charts                ## Build binaries
 	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
 
 .PHONY: release
@@ -54,20 +50,20 @@ build-debug:                ## Build binaries
 	CGO_ENABLED=0 go build -tags debug -v $(LD_FLAGS_API) -gcflags=all="-N -l" -o bin/everest ./cmd
 
 .PHONY: gen
-gen:                    ## Generate code
+gen: ## Generate code
 	go generate ./...
 	$(MAKE) format
 
 .PHONY: format
 format:                 ## Format source code
-	bin/gofumpt -l -w $(FILES)
-	bin/goimports -local github.com/percona/everest -l -w $(FILES)
-	bin/gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" $(FILES)
+	go tool gofumpt -l -w $(FILES)
+	go tool goimports -local github.com/percona/everest -l -w $(FILES)
+	go tool gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" $(FILES)
 
 .PHONY: check
 check:                  ## Run checks/linters for the whole project
-	bin/go-consistent -pedantic ./...
-	LOG_LEVEL=error bin/golangci-lint run
+	go tool go-consistent -pedantic ./...
+	LOG_LEVEL=error go tool golangci-lint run
 
 .PHONY: test
 test:                   ## Run tests
@@ -110,13 +106,12 @@ k8s-macos: k8s          ## Create a local minikube cluster with MacOS specific c
 	kubectl delete storageclass standard
 	kubectl apply -f ./dev/kubevirt-hostpath-provisioner.yaml
 
-HELM := bin/helm
 .PHONY: charts
-charts: $(HELM)         ## Install Helm charts
-	$(HELM) repo add prometheus-community https://prometheus-community.github.io/helm-charts
-	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
-	$(HELM) repo add vm https://victoriametrics.github.io/helm-charts
-	$(HELM) repo update
+charts:        ## Install Helm charts
+	go tool helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	go tool helm repo add percona https://percona.github.io/percona-helm-charts/
+	go tool helm repo add vm https://victoriametrics.github.io/helm-charts
+	go tool helm repo update
 
 CHART_BRANCH ?= main
 .PHONY: update-dev-chart
@@ -131,7 +126,7 @@ update-dev-everest-operator:
 	go mod tidy
 
 .PHONY: prepare-pr
-prepare-pr: init
+prepare-pr:
 	$(MAKE) gen
 	CHART_BRANCH=${CHART_BRANCH} $(MAKE) update-dev-chart
 	EVEREST_OPERATOR_BRANCH=${EVEREST_OPERATOR_BRANCH} $(MAKE) update-dev-everest-operator
