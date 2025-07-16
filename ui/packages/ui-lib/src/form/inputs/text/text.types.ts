@@ -25,4 +25,5 @@ export type TextInputProps = {
   labelProps?: LabeledContentProps;
   textFieldProps?: TextFieldProps;
   isRequired?: boolean;
+  endAdornment?: React.ReactNode;
 };

@@ -10,6 +10,7 @@ const TextInput = ({
   controllerProps,
   textFieldProps = {},
   isRequired,
+  endAdornment,
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
   const { sx: textFieldPropsSx, onChange, ...restFieldProps } = textFieldProps;
@@ -19,6 +20,9 @@ const TextInput = ({
       control={control ?? contextControl}
       render={({ field, fieldState: { error } }) => (
         <TextField
+          InputProps={{
+            endAdornment,
+          }}
           label={label}
           {...field}
           size={restFieldProps?.size || 'small'}

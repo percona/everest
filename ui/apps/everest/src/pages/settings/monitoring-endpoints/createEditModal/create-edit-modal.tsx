@@ -2,8 +2,11 @@ import { AutoCompleteInput, TextInput } from '@percona/ui-lib';
 import { FormDialog } from 'components/form-dialog';
 import TlsAlert from 'components/tls-alert';
 import TlsCheckbox from 'components/tls-checkbox';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Messages } from '../monitoring-endpoints.messages';
+import { IconButton } from '@mui/material';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import {
   CreateEditEndpointModalProps,
   EndpointFormFields,
@@ -20,6 +23,7 @@ export const CreateEditEndpointModal = ({
   handleSubmit,
   selectedEndpoint,
 }: CreateEditEndpointModalProps) => {
+  const [showPassword, setShowPassword] = useState(false);
   const isEditMode = !!selectedEndpoint;
 
   const { canCreate } = useNamespacePermissionsForResource(
@@ -34,6 +38,10 @@ export const CreateEditEndpointModal = ({
         : endpointDefaultValues,
     [selectedEndpoint]
   );
+
+  const handleSetShowPassword = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   const onSubmit = (data: EndpointFormType) => {
     handleSubmit(isEditMode, data);
@@ -101,7 +109,7 @@ export const CreateEditEndpointModal = ({
             label={Messages.fieldLabels.password}
             isRequired={!isEditMode}
             textFieldProps={{
-              type: 'password',
+              type: showPassword ? 'text' : 'password',
               placeholder: Messages.fieldPlaceholders.password,
             }}
             {...(isEditMode && {
@@ -111,6 +119,15 @@ export const CreateEditEndpointModal = ({
                 },
               },
             })}
+            endAdornment={
+              <IconButton onClick={handleSetShowPassword}>
+                {showPassword ? (
+                  <VisibilityOutlinedIcon />
+                ) : (
+                  <VisibilityOffOutlinedIcon />
+                )}
+              </IconButton>
+            }
           />
           <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
           {!watch(EndpointFormFields.verifyTLS) && <TlsAlert sx={{ mt: 2 }} />}
