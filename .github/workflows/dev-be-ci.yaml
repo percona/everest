@@ -1,12 +1,6 @@
 ---
 name: API CI
 on:
-  push:
-    paths-ignore:
-      - 'ui/**'
-      - '.github/workflows/dev-fe-ci.yaml'
-    branches:
-      - main
   pull_request:
     paths-ignore:
       - 'ui/**'
@@ -22,58 +16,26 @@ jobs:
   test:
     name: Test
     timeout-minutes: 30
-
     strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.24.x ]
-        may-fail: [ false ]
-
-    continue-on-error: ${{ matrix.may-fail }}
+      fail-fast: true
+    continue-on-error: false
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
+      - name: Set up Go release
+        uses: actions/setup-go@v5
         with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+          go-version-file: 'go.mod'
+          cache: false
 
       - name: Download Go modules
         run: go mod download
-
-      - name: Install development tools
-        run: make init
-
-      - name: Generate code
-        run: make gen
 
       - name: Install binaries
         run: make build
@@ -102,74 +64,35 @@ jobs:
           go env
           pwd
           git status
+
   check:
     name: Check
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
-
     strategy:
-      fail-fast: false
-      matrix:
-        go-version: [1.24.x]
-        may-fail: [false]
-
-    continue-on-error: ${{ matrix.may-fail }}
+      fail-fast: true
+    continue-on-error: false
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go release
-        if: matrix.go-version != 'tip'
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set up Go tip
-        if: matrix.go-version == 'tip'
-        run: |
-          git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
-          cd $HOME/gotip/src
-          ./make.bash
-          echo "GOROOT=$HOME/gotip" >> $GITHUB_ENV
-          echo "$HOME/gotip/bin" >> $GITHUB_PATH
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Enable Go modules cache
-        uses: actions/cache@v4
+      - name: Set up Go release
+        uses: actions/setup-go@v5
         with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+          go-version-file: 'go.mod'
+          cache: false
 
       - name: Download Go modules
         run: go mod download
 
-      - name: Install tools
-        run: make init
-
       - name: Run linters
         run: |
-          bin/golangci-lint run --new --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} bin/reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
-      
+          go tool golangci-lint run --new --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} go tool reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
+
       - name: Check that dev Helm chart is up-to-date
         run: |
           make update-dev-chart
@@ -201,27 +124,13 @@ jobs:
 
   integration_tests_api:
     strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.24.x ]
-        may-fail: [ false ]
-
+      fail-fast: true
+    continue-on-error: false
     name: API Integration Tests
     runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
     steps:
-
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
@@ -229,22 +138,11 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
+      - name: Set up Go release
+        uses: actions/setup-go@v5
         with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+          go-version-file: 'go.mod'
+          cache: false
 
       # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
       - name: Switch docker-daemon data directory to /mnt
@@ -344,54 +242,28 @@ jobs:
   integration_tests_cli:
     name: CLI Integration Tests
     strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.24.x ]
-        may-fail: [ false ]
-
+      fail-fast: true
+    continue-on-error: false
     runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
     steps:
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
+      - name: Set up Go release
+        uses: actions/setup-go@v5
         with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
-      - name: Set up Go release for CLI
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
+          go-version-file: 'go.mod'
+          cache: false
 
       - name: Build CLI binary
         run: |
-          make init
           make build-cli
+
       - name: Create KIND cluster
         uses: helm/kind-action@v1.12.0
 
@@ -402,6 +274,7 @@ jobs:
           make init
           make install-operators
           make test-cli
+
       - name: Attach the report
         if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
         uses: actions/upload-artifact@v4
