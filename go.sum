@@ -587,8 +587,8 @@ github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250710094607-6119
 github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250710094607-6119610a40ed/go.mod h1:j5Ci48Azwb4Xs4XvZQNfleWCn2uyiZywazklxNH1ut4=
 github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26 h1:hng2p9QPk/OxHVZEdsv+k0ByyHzTNSB0SWlVuuTxMjs=
 github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26/go.mod h1:3D56UIi6Z0Z2gduNUuBcgjd1RNht3N8RKKmR9Wbfu4o=
-github.com/percona/percona-server-mongodb-operator v1.20.1 h1:j+SIm9TQB0FlG3WS7Afm6X8BdkS5CWDABErdmxZ08yA=
-github.com/percona/percona-server-mongodb-operator v1.20.1/go.mod h1:x3PI+1HbzP1QSO/f5MYChJ6aHTT6uFr2Zir6rVjwpOw=
+github.com/percona/percona-server-mongodb-operator v1.19.1 h1:lqIC7V80bZPJwjeYLYl/WA+QVQMHo193uEAx5zyIg84=
+github.com/percona/percona-server-mongodb-operator v1.19.1/go.mod h1:BEw28t4Byx7NK3APLDc7KENgYxPyMPcDLN2ylML5Jo4=
 github.com/percona/percona-xtradb-cluster-operator v1.17.0 h1:TJSWG/C78jthN48NMW5ys5LOPU59lhTzVxtozUNkgqY=
 github.com/percona/percona-xtradb-cluster-operator v1.17.0/go.mod h1:6uwWKdJiivkYaknuklbD8GVvJjZSTdpFtEUiVv+3TjM=
 github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=

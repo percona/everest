@@ -1,6 +1,6 @@
 module github.com/percona/everest/tools
 
-go 1.24.0
+go 1.24.4
 
 require (
 	github.com/daixiang0/gci v0.13.6
@@ -10,8 +10,8 @@ require (
 	github.com/reviewdog/reviewdog v0.20.3
 	github.com/vburenin/ifacemaker v1.3.0
 	github.com/vektra/mockery/v2 v2.53.4
-	golang.org/x/tools v0.34.0
-	helm.sh/helm/v3 v3.18.3
+	golang.org/x/tools v0.35.0
+	helm.sh/helm/v3 v3.18.4
 	mvdan.cc/gofumpt v0.8.0
 )
 
@@ -280,17 +280,19 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/build v0.0.0-20240906172953-ad8de1aafeaf // indirect
-	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac // indirect
 	golang.org/x/exp/typeparams v0.0.0-20250210185358-939b2ce775ac // indirect
-	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/mod v0.26.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/term v0.32.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/term v0.33.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
+	golang.org/x/tools/go/expect v0.1.1-deprecated // indirect
+	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
@@ -299,16 +301,16 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
-	k8s.io/api v0.33.1 // indirect
-	k8s.io/apiextensions-apiserver v0.33.1 // indirect
-	k8s.io/apimachinery v0.33.1 // indirect
-	k8s.io/apiserver v0.33.1 // indirect
-	k8s.io/cli-runtime v0.33.1 // indirect
-	k8s.io/client-go v0.33.1 // indirect
-	k8s.io/component-base v0.33.1 // indirect
+	k8s.io/api v0.33.2 // indirect
+	k8s.io/apiextensions-apiserver v0.33.2 // indirect
+	k8s.io/apimachinery v0.33.2 // indirect
+	k8s.io/apiserver v0.33.2 // indirect
+	k8s.io/cli-runtime v0.33.2 // indirect
+	k8s.io/client-go v0.33.2 // indirect
+	k8s.io/component-base v0.33.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
-	k8s.io/kubectl v0.33.1 // indirect
+	k8s.io/kubectl v0.33.2 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	mvdan.cc/unparam v0.0.0-20240528143540-8a5130ca722f // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect

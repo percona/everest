@@ -166,7 +166,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20250327100109-3ca299246bfe // indirect
 	github.com/percona/percona-postgresql-operator v0.0.0-20250313094841-676233c83e26 // indirect
-	github.com/percona/percona-server-mongodb-operator v1.20.1 // indirect
+	github.com/percona/percona-server-mongodb-operator v1.19.1 // indirect
 	github.com/percona/percona-xtradb-cluster-operator v1.17.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
