@@ -20,6 +20,13 @@ else
   sleep 2
 fi
 
+# upgrade CRDs first
+echo "Upgrading Percona Everest CRDs..."
+helm upgrade \
+  "./helm-chart/charts/everest-crds" \
+  --namespace=${everest_namespace} \
+  --wait
+
 # run everest installation with helm
 echo "Upgrading Percona Everest to version $(cat version.txt)..."
 helm upgrade \
