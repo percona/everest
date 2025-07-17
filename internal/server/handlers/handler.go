@@ -1,7 +1,7 @@
 // Package handlers contains the interface and types for the Everest API handlers.
 package handlers
 
-//go:generate ../../../bin/mockery --name=Handler --case=snake --inpackage
+//go:generate go tool mockery --name=Handler --case=snake --inpackage
 
 import (
 	"context"
