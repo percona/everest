@@ -48,7 +48,6 @@ jobs:
 
       - name: Init ${{ env.MAKE_TARGET }} integration tests
         working-directory: cli-tests
-        id: cli-tests
         run: |
           make init
 
