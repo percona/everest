@@ -104,6 +104,13 @@ export const CreateEditEndpointModal = ({
               label: Messages.fieldLabels.password,
               placeholder: Messages.fieldPlaceholders.password,
             }}
+            {...(isEditMode && {
+              controllerProps: {
+                rules: {
+                  deps: [EndpointFormFields.user],
+                },
+              },
+            })}
           />
           <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
           {!watch(EndpointFormFields.verifyTLS) && <TlsAlert sx={{ mt: 2 }} />}
