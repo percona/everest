@@ -22,9 +22,11 @@ fi
 
 # upgrade CRDs first
 echo "Upgrading Percona Everest CRDs..."
-helm upgrade \
+helm upgrade --install \
+    everest-crds \
   "./helm-chart/charts/everest-crds" \
   --namespace=${everest_namespace} \
+  --take-ownership \
   --wait
 
 # run everest installation with helm
