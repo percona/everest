@@ -16,4 +16,4 @@
 // Package api contains the API server implementation.
 package api
 
-//go:generate ../bin/oapi-codegen --config=server.cfg.yml  ../docs/spec/openapi.yml
+//go:generate go tool oapi-codegen --config=server.cfg.yml  ../docs/spec/openapi.yml
