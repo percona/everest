@@ -2,11 +2,8 @@ import { AutoCompleteInput, TextInput } from '@percona/ui-lib';
 import { FormDialog } from 'components/form-dialog';
 import TlsAlert from 'components/tls-alert';
 import TlsCheckbox from 'components/tls-checkbox';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Messages } from '../monitoring-endpoints.messages';
-import { IconButton } from '@mui/material';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import {
   CreateEditEndpointModalProps,
   EndpointFormFields,
@@ -15,6 +12,7 @@ import {
   getEndpointSchema,
 } from './create-edit-modal.types';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
+import { HiddenInput } from 'components/hidden-input';
 
 export const CreateEditEndpointModal = ({
   open,
@@ -23,7 +21,6 @@ export const CreateEditEndpointModal = ({
   handleSubmit,
   selectedEndpoint,
 }: CreateEditEndpointModalProps) => {
-  const [showPassword, setShowPassword] = useState(false);
   const isEditMode = !!selectedEndpoint;
 
   const { canCreate } = useNamespacePermissionsForResource(
@@ -38,10 +35,6 @@ export const CreateEditEndpointModal = ({
         : endpointDefaultValues,
     [selectedEndpoint]
   );
-
-  const handleSetShowPassword = () => {
-    setShowPassword((prev) => !prev);
-  };
 
   const onSubmit = (data: EndpointFormType) => {
     handleSubmit(isEditMode, data);
@@ -104,30 +97,13 @@ export const CreateEditEndpointModal = ({
               placeholder: Messages.fieldPlaceholders.user,
             }}
           />
-          <TextInput
-            name={EndpointFormFields.password}
-            label={Messages.fieldLabels.password}
+          <HiddenInput
+            name="password"
             isRequired={!isEditMode}
             textFieldProps={{
-              type: showPassword ? 'text' : 'password',
+              label: Messages.fieldLabels.password,
               placeholder: Messages.fieldPlaceholders.password,
             }}
-            {...(isEditMode && {
-              controllerProps: {
-                rules: {
-                  deps: [EndpointFormFields.user],
-                },
-              },
-            })}
-            endAdornment={
-              <IconButton onClick={handleSetShowPassword}>
-                {showPassword ? (
-                  <VisibilityOutlinedIcon />
-                ) : (
-                  <VisibilityOffOutlinedIcon />
-                )}
-              </IconButton>
-            }
           />
           <TlsCheckbox formControlLabelProps={{ sx: { mt: 2 } }} />
           {!watch(EndpointFormFields.verifyTLS) && <TlsAlert sx={{ mt: 2 }} />}
