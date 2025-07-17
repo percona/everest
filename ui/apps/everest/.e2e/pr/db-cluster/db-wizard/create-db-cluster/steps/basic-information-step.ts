@@ -15,7 +15,7 @@
 
 import { Page, expect } from '@playwright/test';
 
-export const DEFAULT_CLUSTER_VERSION = '6.0.21-18';
+export const DEFAULT_CLUSTER_VERSION = '6.0.9-7';
 
 export const basicInformationStepCheck = async (
   page: Page,
