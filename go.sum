@@ -925,8 +925,10 @@ github.com/otiai10/mint v1.3.1/go.mod h1:/yxELlJQ0ufhjUwhshSj+wFjZ78CnZ48/1wtmBH
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
-github.com/percona/everest-operator v0.6.0-dev1.0.20250715171754-b9951417c106 h1:uNoN7RXAKEOgYUAJhNLls8U2BQcUDoCw1tA39HkItKc=
-github.com/percona/everest-operator v0.6.0-dev1.0.20250715171754-b9951417c106/go.mod h1:CXwR+V5+AJHWrf4bE75x6bjZMNrU6fCQ7eLsjjlhWyc=
+github.com/pelletier/go-toml/v2 v2.2.3 h1:YmeHyLY8mFWbdkNWwpr+qIL2bEqT0o95WSdkNHvL12M=
+github.com/pelletier/go-toml/v2 v2.2.3/go.mod h1:MfCQTFTvCcUyyvvwm1+G6H/jORL20Xlb6rzQu9GuUkc=
+github.com/percona/everest-operator v0.6.0-dev1.0.20250718123235-dccb1be21f3d h1:LE7ZrXOIzjBbk16e+ZkETL0aaICLvjQDMvPQ+wXWZ8Y=
+github.com/percona/everest-operator v0.6.0-dev1.0.20250718123235-dccb1be21f3d/go.mod h1:paFDkRZkT3tUoTaCEc/Y0XDvbPf53nhEZPSFRprLtlY=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20250327100109-3ca299246bfe h1:CPO2T7ADauXJEXjwflAVYGRSZ/fKVVP12jE/Iy/1b7k=
 github.com/percona/percona-backup-mongodb v1.8.1-0.20250327100109-3ca299246bfe/go.mod h1:HRKf8nO4SqtNJ1oNzfY3THcwIsjGTWGBF3rNz1TwA9c=
 github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250710094607-6119610a40ed h1:fEPF8w945nwJwMhB3uaV4HWcwzYF0BJGleyp6TDw/5w=
