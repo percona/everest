@@ -47,6 +47,19 @@ export const getK8sResource = async (
   }
 };
 
+export const deleteAllK8sPVCs = async (
+  namespace: string
+) => {
+  try {
+    const command = `kubectl delete --namespace ${namespace} pvc --all --timeout=30s || true`;
+    execSync(command);
+    console.log(`All PVCs deleted in namespace ${namespace}`);
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
+};
+
 export const getK8sNodes = async () => {
   try {
     const command = `kubectl get nodes -o jsonpath='{.items[*].metadata.name}'`;

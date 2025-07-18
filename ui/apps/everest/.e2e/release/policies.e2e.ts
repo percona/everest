@@ -40,6 +40,7 @@ import {
 } from '@e2e/utils/policies';
 import {
   addLabelToK8sNode,
+  deleteAllK8sPVCs,
   getK8sNodes,
   getK8sResource,
   removeLabelFromK8sNode,
@@ -537,6 +538,7 @@ test.describe(
       await test.step('Check restart status', async () => {
         await page.goto('/databases');
         await waitForStatus(page, secondClusterName, 'Initializing', 30000);
+        await deleteAllK8sPVCs('everest-ui');
         await waitForStatus(page, secondClusterName, 'Up', 600000);
       });
 
