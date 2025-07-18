@@ -12,6 +12,7 @@ import {
   getEndpointSchema,
 } from './create-edit-modal.types';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
+import { HiddenInput } from 'components/hidden-input';
 
 export const CreateEditEndpointModal = ({
   open,
@@ -96,12 +97,11 @@ export const CreateEditEndpointModal = ({
               placeholder: Messages.fieldPlaceholders.user,
             }}
           />
-          <TextInput
-            name={EndpointFormFields.password}
-            label={Messages.fieldLabels.password}
+          <HiddenInput
+            name="password"
             isRequired={!isEditMode}
             textFieldProps={{
-              type: 'password',
+              label: Messages.fieldLabels.password,
               placeholder: Messages.fieldPlaceholders.password,
             }}
             {...(isEditMode && {
