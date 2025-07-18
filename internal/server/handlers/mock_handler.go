@@ -1300,8 +1300,7 @@ func (_m *MockHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *v1alp
 func NewMockHandler(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockHandler {
+}) *MockHandler {
 	mock := &MockHandler{}
 	mock.Mock.Test(t)
 
