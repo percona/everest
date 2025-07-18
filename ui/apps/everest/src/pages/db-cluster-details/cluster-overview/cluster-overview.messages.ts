@@ -14,6 +14,12 @@ export const Messages = {
     editMonitoring: 'Edit Monitoring',
     noData: 'You currently do not have any backups. Create one to get started.',
     createScheduleToEnable: 'Create a schedule first to enable PITR.',
+    noPitr:
+      'Create an on-demand backup or backup schedule first to enable PITR.',
+    scheduleExists:
+      'Point-in-Time Recovery (PITR) is automatically enabled when a backup or backup schedule is created.',
+    onDemandBackupExists:
+      'PITR is enabled for all on-demand and scheduled backups and is stored in the same location as scheduled backups.',
     default: 'Default',
     custom: 'Custom',
   },
