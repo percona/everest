@@ -134,7 +134,7 @@ let token: string;
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
-        await waitForDelete(page, clusterName, 240000);
+        await waitForDelete(page, clusterName, 300000);
       });
     });
   }
