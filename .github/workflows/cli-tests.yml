@@ -11,9 +11,8 @@ on:
 jobs:
   integration_tests:
     strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.24.x ]
+      fail-fast: true
+    continue-on-error: false
     name: CLI ${{inputs.make_target}}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -21,39 +20,17 @@ jobs:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
       MAKE_TARGET: ${{ inputs.make_target }}
     steps:
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
+      - name: Set up Go release
+        uses: actions/setup-go@v5
         with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
-
+          go-version-file: 'go.mod'
+          cache: false
 
       # https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
       # https://minikube.sigs.k8s.io/docs/drivers/docker/
@@ -65,21 +42,19 @@ jobs:
           minikube config set cpus 2
           minikube start
 
-      - name: Set up Go release for CLI
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
       - name: Build CLI binary
         run: |
-          make init
           make build-cli
+
+      - name: Init ${{ env.MAKE_TARGET }} integration tests
+        working-directory: cli-tests
+        run: |
+          make init
 
       - name: Run ${{ env.MAKE_TARGET }} integration tests
         working-directory: cli-tests
         id: cli-tests
         run: |
-          make init
           make ${{ env.MAKE_TARGET }}
 
       - name: Collect logs from backend

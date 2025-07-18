@@ -10,6 +10,14 @@ LD_FLAGS_API = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.Pr
 LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
 LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl' \
 										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
+OS=$(shell go env GOHOSTOS)
+ARCH=$(shell go env GOHOSTARCH)
+
+## Location to install binaries to
+LOCALBIN := $(shell pwd)/bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
+
 .PHONY: default
 default: help
 
@@ -19,17 +27,13 @@ help:                   ## Display this help message
 	@grep '^[a-zA-Z]' $(MAKEFILE_LIST) | \
 		awk -F ':.*?## ' 'NF==2 {printf "  %-26s%s\n", $$1, $$2}'
 
-.PHONY: init
-init:                   ## Install development tools
-	cd tools && go generate -x -tags=tools
-
 .PHONY: build
-build:                ## Build binaries
-	go build -v $(LD_FLAGS_API) -o bin/everest ./cmd
+build: $(LOCALBIN) gen               ## Build binaries
+	go build -v $(LD_FLAGS_API) -o $(LOCALBIN)/everest ./cmd
 
 .PHONY: build-cli
-build-cli: init charts                ## Build binaries
-	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o bin/everestctl ./cmd/cli
+build-cli: $(LOCALBIN) charts                ## Build binaries
+	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o $(LOCALBIN)/everestctl ./cmd/cli
 
 .PHONY: release
 release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
@@ -50,24 +54,24 @@ release-cli:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl.exe ./cmd/cli
 
 .PHONY: build-debug
-build-debug:                ## Build binaries
-	CGO_ENABLED=0 go build -tags debug -v $(LD_FLAGS_API) -gcflags=all="-N -l" -o bin/everest ./cmd
+build-debug: $(LOCALBIN)   ## Build binaries
+	CGO_ENABLED=0 go build -tags debug -v $(LD_FLAGS_API) -gcflags=all="-N -l" -o $(LOCALBIN)/everest ./cmd
 
 .PHONY: gen
-gen:                    ## Generate code
-	go generate ./...
+gen: ## Generate code
+	GOOS=$(OS) GOARCH=$(ARCH) go generate ./...
 	$(MAKE) format
 
 .PHONY: format
 format:                 ## Format source code
-	bin/gofumpt -l -w $(FILES)
-	bin/goimports -local github.com/percona/everest -l -w $(FILES)
-	bin/gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" $(FILES)
+	GOOS=$(OS) GOARCH=$(ARCH) go tool gofumpt -l -w $(FILES)
+	GOOS=$(OS) GOARCH=$(ARCH) go tool goimports -local github.com/percona/everest -l -w $(FILES)
+	GOOS=$(OS) GOARCH=$(ARCH) go tool gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" $(FILES)
 
 .PHONY: check
 check:                  ## Run checks/linters for the whole project
-	bin/go-consistent -pedantic ./...
-	LOG_LEVEL=error bin/golangci-lint run
+	go tool go-consistent -pedantic ./...
+	LOG_LEVEL=error go tool golangci-lint run
 
 .PHONY: test
 test:                   ## Run tests
@@ -83,17 +87,17 @@ test-crosscover:        ## Run tests and collect cross-package coverage informat
 
 .PHONY: run
 run: build            ## Run binary
-	bin/everest
+	$(LOCALBIN)/everest
 
 .PHONY: run-debug
 run-debug: build-debug    ## Run binary
 	TELEMETRY_URL=https://check-dev.percona.com \
 	TELEMETRY_INTERVAL=30m \
-	bin/everest
+	$(LOCALBIN)/everest
 
 .PHONY: run-cli-install
 run-cli-install: build-cli
-	bin/everestctl install --disable-telemetry --skip-wizard --namespaces=everest
+	$(LOCALBIN)/everestctl install --disable-telemetry --skip-wizard --namespaces=everest
 
 .PHONY: cert
 cert:                   ## Install dev TLS certificates
@@ -110,13 +114,12 @@ k8s-macos: k8s          ## Create a local minikube cluster with MacOS specific c
 	kubectl delete storageclass standard
 	kubectl apply -f ./dev/kubevirt-hostpath-provisioner.yaml
 
-HELM := bin/helm
 .PHONY: charts
-charts: $(HELM)         ## Install Helm charts
-	$(HELM) repo add prometheus-community https://prometheus-community.github.io/helm-charts
-	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
-	$(HELM) repo add vm https://victoriametrics.github.io/helm-charts
-	$(HELM) repo update
+charts:        ## Install Helm charts
+	GOOS=$(OS) GOARCH=$(ARCH) go tool helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	GOOS=$(OS) GOARCH=$(ARCH) go tool helm repo add percona https://percona.github.io/percona-helm-charts/
+	GOOS=$(OS) GOARCH=$(ARCH) go tool helm repo add vm https://victoriametrics.github.io/helm-charts
+	GOOS=$(OS) GOARCH=$(ARCH) go tool helm repo update
 
 CHART_BRANCH ?= main
 .PHONY: update-dev-chart
@@ -131,7 +134,7 @@ update-dev-everest-operator:
 	go mod tidy
 
 .PHONY: prepare-pr
-prepare-pr: init
+prepare-pr:
 	$(MAKE) gen
 	CHART_BRANCH=${CHART_BRANCH} $(MAKE) update-dev-chart
 	EVEREST_OPERATOR_BRANCH=${EVEREST_OPERATOR_BRANCH} $(MAKE) update-dev-everest-operator
