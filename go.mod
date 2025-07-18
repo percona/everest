@@ -28,8 +28,8 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.32.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250718071505-dcba13be5b90
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250710185617-e513d2283e09
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250718123235-dccb1be21f3d
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250710094607-6119610a40ed
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -373,6 +373,7 @@ require (
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel v1.36.0 // indirect
 	go.opentelemetry.io/otel/metric v1.36.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v1.36.0 // indirect
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
