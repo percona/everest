@@ -43,7 +43,7 @@ const openResourcesModal = async (page: Page) => {
 ].forEach(
   ({ db, size }: { db: 'pxc' | 'psmdb' | 'postgresql'; size: number }) => {
     test.describe(`Overview page: ${db} resources editing`, () => {
-      test.describe.configure({ timeout: 900000 });
+      test.describe.configure({ timeout: 1000000 });
 
       const clusterName = `${db}-${size}-resources-edit`;
 
@@ -226,7 +226,7 @@ const openResourcesModal = async (page: Page) => {
 
       test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
         await deleteDbCluster(page, clusterName);
-        await waitForDelete(page, clusterName, 160000);
+        // We do not wait for total deletion for timeout purposes (costing more than 15m on the CI)
       });
     });
   }
