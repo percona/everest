@@ -6777,6 +6777,7 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Registers handlers, and prepends BaseURL to the paths, so that the paths
 // can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
@@ -6829,10 +6830,12 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/session", wrapper.CreateSession)
 	router.GET(baseURL+"/settings", wrapper.GetSettings)
 	router.GET(baseURL+"/version", wrapper.VersionInfo)
+
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
+
 	"H4sIAAAAAAAC/+y9iXMcuZE3+q8g2hsx0mx3U5oZ+635xRf7KFKepa2Dj5Q879tpPQtdhe6GWQWUCyhS",
 	"PbP6318gcdSF6oOHREm5EesRu6pwJBKJ/OWF30eJzAspmNBqdPj7SCUrllP45zOaXFbFhZYlXTLzA01T",
 	"rrkUNDsrZcFKzZkaHS5opth4lDKVlLwwz0eH7lui7MeEi4UscwoPx6Oi8fXvI5pl8pqlr2jOVEET+2PK",
