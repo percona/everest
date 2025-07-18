@@ -44,9 +44,7 @@ export const getK8sResource = async (
   }
 };
 
-export const deleteAllK8sPVCs = async (
-  namespace: string
-) => {
+export const deleteAllK8sPVCs = async (namespace: string) => {
   try {
     const command = `kubectl delete --namespace ${namespace} pvc --all --timeout=30s || true`;
     execSync(command);
