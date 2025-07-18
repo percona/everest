@@ -44,7 +44,7 @@ import {
   getK8sNodes,
   getK8sResource,
   removeLabelFromK8sNode,
-} from '@e2e/utils/db-cmd-line';
+} from '@e2e/utils/kubernetes';
 
 let token: string;
 
