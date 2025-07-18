@@ -32,7 +32,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: false
+          cache: true
 
       - name: Download Go modules
         run: go mod download
@@ -84,7 +84,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: false
+          cache: true
 
       - name: Download Go modules
         run: go mod download
@@ -142,7 +142,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: false
+          cache: true
 
       # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
       - name: Switch docker-daemon data directory to /mnt
@@ -258,7 +258,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-          cache: false
+          cache: true
 
       - name: Build CLI binary
         run: |
