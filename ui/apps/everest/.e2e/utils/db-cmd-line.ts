@@ -18,35 +18,6 @@ import { expect } from '@playwright/test';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const getK8sUid = async () => {
-  try {
-    const command = `kubectl get namespace kube-system -o jsonpath='{.metadata.uid}'`;
-    const output = execSync(command).toString();
-    return output;
-  } catch (error) {
-    console.error(`Error executing command: ${error}`);
-    throw error;
-  }
-};
-
-export const getK8sResource = async (
-  resourceType: string,
-  resourceName: string,
-  namespace: string
-) => {
-  try {
-    if (resourceType === 'postgresql') {
-      resourceType = 'pg';
-    }
-    const command = `kubectl get --namespace ${namespace} ${resourceType} ${resourceName} -ojson`;
-    const output = execSync(command);
-    return JSON.parse(output.toString());
-  } catch (error) {
-    console.error(`Error executing command: ${error}`);
-    throw error;
-  }
-};
-
 export const getPGStsName = async (cluster: string, namespace: string) => {
   try {
     const command = `kubectl get sts --namespace ${namespace} --selector=app.kubernetes.io/instance=${cluster},app.kubernetes.io/component=pg -o 'jsonpath={.items[*].metadata.name}'`;
