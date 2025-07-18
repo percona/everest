@@ -3233,8 +3233,7 @@ func (_m *IEnforcer) UpdatePolicy(oldPolicy []string, newPolicy []string) (bool,
 func NewIEnforcer(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *IEnforcer {
+}) *IEnforcer {
 	mock := &IEnforcer{}
 	mock.Mock.Test(t)
 
