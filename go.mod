@@ -1,6 +1,6 @@
 module github.com/percona/everest
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/AlekSi/pointer v1.2.0
