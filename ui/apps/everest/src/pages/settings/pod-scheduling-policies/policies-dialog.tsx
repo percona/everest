@@ -59,7 +59,11 @@ const PoliciesDialog = ({
           (availableDbTypes.length ? availableDbTypes[0].type : undefined),
       }}
     >
-      <TextInput name="name" label="Policy name" />
+      <TextInput
+        name="name"
+        label="Policy name"
+        textFieldProps={{ sx: { minHeight: '64px' } }}
+      />
       <SelectInput
         name="type"
         label="Technology"
