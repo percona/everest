@@ -6637,6 +6637,7 @@ func NewListDataImportersRequest(server string, params *ListDataImportersParams)
 		queryValues := queryURL.Query()
 
 		if params.SupportedEngines != nil {
+
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "supportedEngines", runtime.ParamLocationQuery, *params.SupportedEngines); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -6648,6 +6649,7 @@ func NewListDataImportersRequest(server string, params *ListDataImportersParams)
 					}
 				}
 			}
+
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -6989,6 +6991,7 @@ func NewDeleteDatabaseClusterBackupRequest(server string, namespace string, name
 		queryValues := queryURL.Query()
 
 		if params.CleanupBackupStorage != nil {
+
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cleanupBackupStorage", runtime.ParamLocationQuery, *params.CleanupBackupStorage); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -7000,6 +7003,7 @@ func NewDeleteDatabaseClusterBackupRequest(server string, namespace string, name
 					}
 				}
 			}
+
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -7489,6 +7493,7 @@ func NewCreateDatabaseClusterSecretRequestWithBody(server string, namespace stri
 		queryValues := queryURL.Query()
 
 		if params.SecretName != nil {
+
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "secretName", runtime.ParamLocationQuery, *params.SecretName); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -7500,6 +7505,7 @@ func NewCreateDatabaseClusterSecretRequestWithBody(server string, namespace stri
 					}
 				}
 			}
+
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -7552,6 +7558,7 @@ func NewDeleteDatabaseClusterRequest(server string, namespace string, name strin
 		queryValues := queryURL.Query()
 
 		if params.CleanupBackupStorage != nil {
+
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cleanupBackupStorage", runtime.ParamLocationQuery, *params.CleanupBackupStorage); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -7563,6 +7570,7 @@ func NewDeleteDatabaseClusterRequest(server string, namespace string, name strin
 					}
 				}
 			}
+
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -8271,6 +8279,7 @@ func NewListPodSchedulingPolicyRequest(server string, params *ListPodSchedulingP
 		queryValues := queryURL.Query()
 
 		if params.EngineType != nil {
+
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "engineType", runtime.ParamLocationQuery, *params.EngineType); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -8282,9 +8291,11 @@ func NewListPodSchedulingPolicyRequest(server string, params *ListPodSchedulingP
 					}
 				}
 			}
+
 		}
 
 		if params.HasRules != nil {
+
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "hasRules", runtime.ParamLocationQuery, *params.HasRules); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -8296,6 +8307,7 @@ func NewListPodSchedulingPolicyRequest(server string, params *ListPodSchedulingP
 					}
 				}
 			}
+
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -10636,6 +10648,7 @@ func ParseListNamespacesResponse(rsp *http.Response) (*ListNamespacesResponse, e
 			return nil, err
 		}
 		response.JSON200 = &dest
+
 	}
 
 	return response, nil
@@ -12425,6 +12438,7 @@ func ParseGetSettingsResponse(rsp *http.Response) (*GetSettingsResponse, error) 
 			return nil, err
 		}
 		response.JSON200 = &dest
+
 	}
 
 	return response, nil
@@ -12450,6 +12464,7 @@ func ParseVersionInfoResponse(rsp *http.Response) (*VersionInfoResponse, error) 
 			return nil, err
 		}
 		response.JSON200 = &dest
+
 	}
 
 	return response, nil
@@ -12457,6 +12472,7 @@ func ParseVersionInfoResponse(rsp *http.Response) (*VersionInfoResponse, error) 
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
+
 	"H4sIAAAAAAAC/+y9iXMcuZE3+q8g2hsx0mx3U5oZ+635xRf7KFKepa2Dj5Q879tpPQtdhe6GWQWUCyhS",
 	"PbP6318gcdSF6oOHREm5EesRu6pwJBKJ/OWF30eJzAspmNBqdPj7SCUrllP45zOaXFbFhZYlXTLzA01T",
 	"rrkUNDsrZcFKzZkaHS5opth4lDKVlLwwz0eH7lui7MeEi4UscwoPx6Oi8fXvI5pl8pqlr2jOVEET+2PK",
