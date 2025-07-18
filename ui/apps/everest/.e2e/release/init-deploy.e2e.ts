@@ -39,8 +39,8 @@ import {
   queryPSMDB,
   queryMySQL,
   getPGStsName,
-  getK8sResource,
 } from '@e2e/utils/db-cmd-line';
+import { getK8sResource } from '@e2e/utils/kubernetes';
 import { checkDBMetrics, checkQAN } from '@e2e/utils/monitoring-instance';
 
 let token: string;
