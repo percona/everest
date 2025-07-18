@@ -1,5 +1,3 @@
-FILES = $(shell find . -type f -name '*.go')
-
 RELEASE_VERSION ?= v0.0.0-$(shell git rev-parse --short HEAD)
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
 
@@ -64,9 +62,9 @@ gen: ## Generate code
 
 .PHONY: format
 format:                 ## Format source code
-	GOOS=$(OS) GOARCH=$(ARCH) go tool gofumpt -l -w $(FILES)
-	GOOS=$(OS) GOARCH=$(ARCH) go tool goimports -local github.com/percona/everest -l -w $(FILES)
-	GOOS=$(OS) GOARCH=$(ARCH) go tool gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" $(FILES)
+	GOOS=$(OS) GOARCH=$(ARCH) go tool gofumpt -l -w .
+	GOOS=$(OS) GOARCH=$(ARCH) go tool goimports -local github.com/percona/everest -l -w .
+	GOOS=$(OS) GOARCH=$(ARCH) go tool gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" .
 
 .PHONY: check
 check:                  ## Run checks/linters for the whole project
