@@ -118,7 +118,9 @@ let token: string;
 test('Switch between table view and diagram view', async ({ page }) => {
   await page.goto('/databases/components');
 
-  const tableViewSwitch = page.getByTestId('switch-input-table-view');
+  const tableViewSwitch = page
+    .getByTestId('switch-input-table-view')
+    .getByRole('checkbox');
   if (await tableViewSwitch.isChecked()) {
     await expect(page.getByTestId('components-table-view')).toBeVisible();
   } else {
