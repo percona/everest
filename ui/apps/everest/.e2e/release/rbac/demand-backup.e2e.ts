@@ -45,8 +45,8 @@ test.describe(
     let storageClasses = [];
     const namespace2 = EVEREST_CI_NAMESPACES.EVEREST_UI;
     const namespace1 = EVEREST_CI_NAMESPACES.PXC_ONLY;
-    const pxcDb = 'pxc-test';
-    const psmdbDb = 'psmdb-test';
+    const pxcDb = 'backup-pxc';
+    const psmdbDb = 'backup-psmdb';
 
     test.beforeAll(async ({ request }) => {
       token = await getTokenFromLocalStorage();

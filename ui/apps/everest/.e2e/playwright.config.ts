@@ -91,7 +91,6 @@ export default defineConfig({
     },
     {
       name: 'rbac-setup',
-      teardown: 'rbac-teardown',
       testDir: './setup',
       testMatch: /rbac.setup\.ts/,
       use: {
@@ -116,6 +115,7 @@ export default defineConfig({
       use: {
         storageState: STORAGE_STATE_FILE,
       },
+      dependencies: ['rbac'],
     },
     {
       name: 'pr',
@@ -129,8 +129,18 @@ export default defineConfig({
         ...(process.env.IGNORE_RBAC_TESTS &&
         process.env.IGNORE_RBAC_TESTS !== 'false'
           ? []
-          : ['rbac']),
+          : ['rbac', 'rbac-teardown']),
       ],
+    },
+    {
+      name: 'release-rbac-setup',
+      teardown: 'release-rbac-teardown',
+      testDir: './setup',
+      testMatch: /rbac.setup\.ts/,
+      use: {
+        storageState: STORAGE_STATE_FILE,
+      },
+      dependencies: ['setup'],
     },
     {
       name: 'release-rbac',
@@ -140,7 +150,16 @@ export default defineConfig({
         storageState: STORAGE_STATE_FILE,
       },
       testDir: './release/rbac',
-      dependencies: ['setup', 'rbac-setup'],
+      dependencies: ['setup', 'release-rbac-setup'],
+    },
+    {
+      name: 'release-rbac-teardown',
+      testDir: './teardown',
+      testMatch: /rbac\.teardown\.ts/,
+      use: {
+        storageState: STORAGE_STATE_FILE,
+      },
+      // dependencies: ['release-rbac'],
     },
     {
       name: 'release',
@@ -149,7 +168,7 @@ export default defineConfig({
         actionTimeout: 10000,
       },
       testDir: 'release',
-      testIgnore: ['release/rbac/**/*'],
+      testIgnore: ['release/rbac/*'],
       dependencies: [
         'setup',
         ...(process.env.IGNORE_RBAC_TESTS &&

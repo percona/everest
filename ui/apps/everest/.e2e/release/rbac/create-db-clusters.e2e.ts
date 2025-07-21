@@ -39,9 +39,9 @@ test.describe(
     let storageClasses = [];
     const namespace2 = EVEREST_CI_NAMESPACES.EVEREST_UI;
     const namespace1 = EVEREST_CI_NAMESPACES.PXC_ONLY;
-    const pxcDb = 'pxc-test';
-    const psmdbDb = 'psmdb-test';
-    const pgDb = 'pg-test';
+    const pxcDb = 'create-pxc-0';
+    const psmdbDb = 'create-psmdb-0';
+    const pgDb = 'create-pg-0';
 
     test.beforeAll(async ({ request }) => {
       token = await getTokenFromLocalStorage();
@@ -182,8 +182,8 @@ test.describe(
     let storageClasses = [];
     const namespace2 = EVEREST_CI_NAMESPACES.EVEREST_UI;
     const namespace1 = EVEREST_CI_NAMESPACES.PXC_ONLY;
-    const pxcDb = 'pxc-test-1';
-    const psmdbDb = 'psmdb-test-1';
+    const pxcDb = 'create-pxc-1';
+    const psmdbDb = 'create-psmdb-1';
 
     test.beforeAll(async ({ request }) => {
       token = await getTokenFromLocalStorage();
@@ -289,7 +289,7 @@ test.describe(
         await page.goto('/settings/monitoring-endpoints');
         await expect(page.getByRole('table')).toBeVisible();
         await expect(
-          page.getByRole('row').filter({ hasText: 'e2e-endpoint-3' })
+          page.getByRole('row').filter({ hasText: 'e2e-endpoint-0' })
         ).toBeVisible();
         await expect(
           page.getByTestId('add-monitoring-endpoint')
