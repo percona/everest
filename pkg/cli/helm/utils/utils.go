@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -130,7 +131,24 @@ func devChart() (string, error) {
 		}
 		return "", err
 	}
+	// The Helm chart contains CRDs that are symlinked to the everest-crds sub-chart.
+	// However, we use EmbedFS to reference the chart files, but EmbedFS does not honor symlinks.
+	// So we need to re-create them by calling the `make link-crds` command.
+	if err := makeCRDSymlink(tmp); err != nil {
+		return "", err
+	}
 	return tmp, nil
+}
+
+// Runs `make link-crds` in the chartDir.
+func makeCRDSymlink(chartDir string) error {
+	cmd := exec.Command("make", "link-crds")
+	cmd.Dir = chartDir
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to link CRDs: %w", err)
+	}
+	return nil
 }
 
 // SetupEverestDevChart sets up the development chart for Everest.
