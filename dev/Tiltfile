@@ -56,6 +56,8 @@ print('Using chart dir: {0}'.format(everest_chart_dir))
 # Optional env vars
 pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.17.0')
 print('Using PXC operator version: {0}'.format(pxc_operator_version))
+ps_operator_version = os.getenv('PS_OPERATOR_VERSION', '0.10.0')
+print('Using PS operator version: {0}'.format(ps_operator_version))
 psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.19.1')
 print('Using PSMDB operator version: {0}'.format(psmdb_operator_version))
 pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.6.0')
@@ -185,6 +187,47 @@ for namespace in pxc_namespaces:
     new_name='pxc:%s' % namespace,
     labels=["db-operators"]
   )
+
+# PS
+ps_operator_bundle_yaml = local(['curl', '-s', 'https://raw.githubusercontent.com/percona/percona-server-mysql-operator/v%s/deploy/bundle.yaml' % ps_operator_version], quiet=True)
+ps_namespaces = [namespace['name'] for namespace in config_yaml['namespaces'] if 'ps' in namespace['operators']]
+# We keep track of the CRD objects separately from the operator deployment so
+# that we can make the deployment depend on the CRDs to avoid tilt thinking
+# that there are conflicts with multiple CRDs.
+if ps_namespaces:
+    k8s_resource(
+        objects=[
+            # The CRDs don't really get installed in a namespace, but since each
+            # operator install is tied to a namespace, tilt uses a namespace to track
+            # the install so we need to include one object per CRD per namespace.
+            '%s:%s' % (crd, namespace) for namespace in ps_namespaces for crd in [
+                'perconaservermysqlbackups.ps.percona.com:customresourcedefinition',
+                'perconaservermysqlrestores.ps.percona.com:customresourcedefinition',
+                'perconaservermysqls.ps.percona.com:customresourcedefinition'
+            ]
+        ],
+        resource_deps = [
+            'namespaces',
+        ],
+        new_name='ps-crds',
+        labels=["db-operators"]
+    )
+for namespace in pxc_namespaces:
+    k8s_yaml(namespace_inject(ps_operator_bundle_yaml, namespace))
+    k8s_resource(
+        workload='percona-server-mysql-operator%s' % (':deployment:' + namespace if len(ps_namespaces) > 1 else ''),
+        objects=[
+            'percona-server-mysql-operator:serviceaccount:%s' % namespace,
+            'percona-server-mysql-operator:role:%s' % namespace,
+            'percona-server-mysql-operator:rolebinding:%s' % namespace,
+            ],
+        resource_deps = [
+            'namespaces',
+            'ps-crds',
+        ],
+        new_name='ps:%s' % namespace,
+        labels=["db-operators"]
+    )
 
 # PSMDB
 psmdb_operator_bundle_yaml = local(['curl', '-s', 'https://raw.githubusercontent.com/percona/percona-server-mongodb-operator/v%s/deploy/bundle.yaml' % psmdb_operator_version], quiet=True)

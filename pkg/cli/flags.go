@@ -34,6 +34,8 @@ const (
 	FlagOperatorXtraDBCluster = "operator.xtradb-cluster"
 	// FlagOperatorMySQL represents the MySQL operator flag.
 	FlagOperatorMySQL = "operator.mysql"
+	// FlagOperatorPS represents the Percona Server for MySQL operator flag.
+	FlagOperatorPS = "operator.ps"
 	// FlagOperatorMongoDB represents the psmdb operator flag.
 	FlagOperatorMongoDB = "operator.mongodb"
 	// FlagNamespaces represents the namespaces flag.

@@ -37,6 +37,8 @@ import (
 const (
 	// PXCOperatorName is the name of the PXC operator in the version service.
 	PXCOperatorName = "pxc-operator"
+	// PSOperatorName is the name of the PS operator in the version service.
+	PSOperatorName = "ps-operator"
 	// PSMDBOperatorName is the name of the PSMDB operator in the version service.
 	PSMDBOperatorName = "psmdb-operator"
 	// PGOperatorName is the name of the PG operator in the version service.
@@ -48,6 +50,7 @@ const (
 //nolint:gochecknoglobals
 var EngineTypeToOperatorName = map[everestv1alpha1.EngineType]string{
 	everestv1alpha1.DatabaseEnginePXC:        PXCOperatorName,
+	everestv1alpha1.DatabaseEnginePS:         PSOperatorName,
 	everestv1alpha1.DatabaseEnginePSMDB:      PSMDBOperatorName,
 	everestv1alpha1.DatabaseEnginePostgresql: PGOperatorName,
 }

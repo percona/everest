@@ -68,6 +68,7 @@ func init() {
 	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
 	_ = namespacesUpdateCmd.Flags().MarkDeprecated(cli.FlagOperatorXtraDBCluster, fmt.Sprintf("please use --%s instead", cli.FlagOperatorMySQL))
 	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PXC, cli.FlagOperatorMySQL, true, "Install MySQL operator")
+	namespacesUpdateCmd.Flags().BoolVar(&namespacesUpdateCfg.Operators.PS, cli.FlagOperatorPS, true, "Install Percona Server for MySQL operator")
 }
 
 func namespacesUpdatePreRun(cmd *cobra.Command, args []string) { //nolint:revive

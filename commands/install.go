@@ -42,8 +42,8 @@ var (
 		Args:  cobra.NoArgs,
 		Short: "Install Percona Everest using Helm",
 		Long:  "Install Percona Everest using Helm",
-		Example: fmt.Sprintf("everestctl install --%s dev,staging,prod --%s=true --%s=false --%s=false --%s",
-			cli.FlagNamespaces, cli.FlagOperatorMongoDB, cli.FlagOperatorPostgresql, cli.FlagOperatorMySQL, cli.FlagSkipWizard,
+		Example: fmt.Sprintf("everestctl install --%s dev,staging,prod --%s=true --%s=false --%s=false --%s=false --%s",
+			cli.FlagNamespaces, cli.FlagOperatorMongoDB, cli.FlagOperatorPostgresql, cli.FlagOperatorMySQL, cli.FlagOperatorPS, cli.FlagSkipWizard,
 		),
 		PreRun: installPreRun,
 		Run:    installRun,
@@ -81,6 +81,7 @@ func init() {
 	installCmd.Flags().BoolVar(&installCfg.NamespaceAddConfig.Operators.PXC, cli.FlagOperatorXtraDBCluster, true, "Install XtraDB Cluster operator")
 	_ = installCmd.Flags().MarkDeprecated(cli.FlagOperatorXtraDBCluster, fmt.Sprintf("please use --%s instead", cli.FlagOperatorMySQL))
 	installCmd.Flags().BoolVar(&installCfg.NamespaceAddConfig.Operators.PXC, cli.FlagOperatorMySQL, true, "Install MySQL operator")
+	installCmd.Flags().BoolVar(&installCfg.NamespaceAddConfig.Operators.PS, cli.FlagOperatorPS, true, "Install Percona Server for MySQL operator")
 }
 
 func installPreRun(cmd *cobra.Command, _ []string) { //nolint:revive
