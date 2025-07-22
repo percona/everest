@@ -109,8 +109,9 @@ const ComponentsDiagramView = ({
   }, [components, setEdges, setNodes, fitView]);
 
   return (
-    <Box data-testid="components-diagram-view">
+    <>
       <ReactFlowStyled
+        data-testid="components-diagram-view"
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -141,7 +142,7 @@ const ComponentsDiagramView = ({
           {Messages.button.resetView}
         </Button>
       </Box>
-    </Box>
+    </>
   );
 };
 

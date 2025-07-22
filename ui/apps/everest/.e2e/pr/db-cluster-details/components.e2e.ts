@@ -105,8 +105,7 @@ test.describe('Cluster components', async () => {
       ).toBe(type);
 
       if (!isSelected) {
-        await correspondingNode.scrollIntoViewIfNeeded();
-        await correspondingNode.click({ timeout: 10000 });
+        await correspondingNode.click();
       }
       // Wait for the diagram to be updated
       await page.waitForTimeout(300);
