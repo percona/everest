@@ -16,6 +16,7 @@ type SupportedVersion struct {
 	Olm           goversion.Constraints
 	PGOperator    goversion.Constraints
 	PXCOperator   goversion.Constraints
+	PSOperator    goversion.Constraints
 	PSMBDOperator goversion.Constraints
 }
 
@@ -83,6 +84,7 @@ func NewSupportedVersion(meta *versionpb.MetadataVersion) (*SupportedVersion, er
 		"kubernetes":    &supVer.Kubernetes,
 		"pgOperator":    &supVer.PGOperator,
 		"pxcOperator":   &supVer.PXCOperator,
+		"psOperator":    &supVer.PSOperator,
 		"psmdbOperator": &supVer.PSMBDOperator,
 	}
 	for key, ref := range config {
