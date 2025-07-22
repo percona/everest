@@ -62,7 +62,6 @@ export const createDbWithParameters = async ({
   await submitWizard(page);
 
   await page.goto('/databases');
-  await waitForStatus(page, dbName, 'Initializing', 30000);
-  // disable up state for now, as it takes a lot of time
+  await waitForStatus(page, dbName, 'Initializing', 120000);
   await waitForStatus(page, dbName, 'Up', 600000);
 };

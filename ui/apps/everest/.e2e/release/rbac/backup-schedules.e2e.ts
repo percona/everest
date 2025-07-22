@@ -596,8 +596,8 @@ test.describe(
       await deleteDbClusterFn(request, pxcDb, namespace1);
       await deleteDbClusterFn(request, psmdbDb, namespace2);
       await deleteDbClusterFn(request, 'restore-1-pxc', namespace1);
-      await deleteDbClusterFn(request, 'restore-1-psmdbDb', namespace2);
-      await deleteDbClusterFn(request, 'restore-2-psmdbDb', namespace2);
+      await deleteDbClusterFn(request, 'restore-1-psmdb', namespace2);
+      await deleteDbClusterFn(request, 'restore-2-psmdb', namespace2);
 
       await expect(page.getByText(pxcDb)).not.toBeVisible({ timeout: 70000 });
       await expect(page.getByText(psmdbDb)).not.toBeVisible({ timeout: 70000 });
