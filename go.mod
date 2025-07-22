@@ -1,18 +1,18 @@
 module github.com/percona/everest
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.1
 	github.com/Percona-Lab/percona-version-service v0.0.0-20240311164804-ffbc02387a1b
 	github.com/aws/aws-sdk-go v1.55.7
-	github.com/casbin/casbin/v2 v2.108.0
+	github.com/casbin/casbin/v2 v2.109.0
 	github.com/casbin/govaluate v1.8.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/charmbracelet/bubbles v0.20.0
-	github.com/charmbracelet/bubbletea v1.3.5
+	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/getkin/kin-openapi v0.132.0
@@ -28,7 +28,7 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.32.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250717144729-32ce354c5b37
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250718071505-dcba13be5b90
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250710185617-e513d2283e09
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
@@ -107,7 +107,7 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/charithe/durationcheck v0.0.10 // indirect
 	github.com/charmbracelet/colorprofile v0.2.3-0.20250311203215-f60798e515dc // indirect
-	github.com/charmbracelet/x/ansi v0.8.0 // indirect
+	github.com/charmbracelet/x/ansi v0.9.3 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/chavacava/garif v0.1.0 // indirect
