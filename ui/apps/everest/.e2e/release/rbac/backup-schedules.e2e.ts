@@ -592,10 +592,10 @@ test.describe(
       });
     });
     test('Delete databases', async ({ page, request }) => {
-      giveUserAdminPermissions();
+      await giveUserAdminPermissions();
       await deleteDbClusterFn(request, pxcDb, namespace1);
       await deleteDbClusterFn(request, psmdbDb, namespace2);
-      await deleteDbClusterFn(request, 'restore-1-pxc', namespace2);
+      await deleteDbClusterFn(request, 'restore-1-pxc', namespace1);
       await deleteDbClusterFn(request, 'restore-1-psmdbDb', namespace2);
       await deleteDbClusterFn(request, 'restore-2-psmdbDb', namespace2);
 
