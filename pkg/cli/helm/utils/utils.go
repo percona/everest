@@ -140,11 +140,10 @@ func devChart() (string, error) {
 	return tmp, nil
 }
 
-// assumes that dir is the directory where the Everest Helm chart is located.
-// It runs the `make link-crds` command to create symlinks for the CRDs in the chart.
-func makeCRDSymlink(dir string) error {
+// Runs `make link-crds` in the chartDir.
+func makeCRDSymlink(chartDir string) error {
 	cmd := exec.Command("make", "link-crds")
-	cmd.Dir = dir
+	cmd.Dir = chartDir
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to link CRDs: %w", err)
