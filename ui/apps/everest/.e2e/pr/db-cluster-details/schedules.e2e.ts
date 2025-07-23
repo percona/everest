@@ -249,7 +249,7 @@ test.describe('Schedules List', async () => {
     await scheduledBackupsAccordion.click();
 
     const scheduleForEditBtn = await page
-      .getByTestId('schedule-0 1 1 * *')
+      .getByTestId('schedule-test-name-one')
       .getByTestId('edit-schedule-button');
 
     await scheduleForEditBtn.click();
