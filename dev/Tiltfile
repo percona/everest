@@ -212,7 +212,7 @@ if ps_namespaces:
         new_name='ps-crds',
         labels=["db-operators"]
     )
-for namespace in pxc_namespaces:
+for namespace in ps_namespaces:
     k8s_yaml(namespace_inject(ps_operator_bundle_yaml, namespace))
     k8s_resource(
         workload='percona-server-mysql-operator%s' % (':deployment:' + namespace if len(ps_namespaces) > 1 else ''),
@@ -220,6 +220,9 @@ for namespace in pxc_namespaces:
             'percona-server-mysql-operator:serviceaccount:%s' % namespace,
             'percona-server-mysql-operator:role:%s' % namespace,
             'percona-server-mysql-operator:rolebinding:%s' % namespace,
+            'percona-server-mysql-operator-leaderelection:role:%s' % namespace,
+            'percona-server-mysql-operator-leaderelection:rolebinding:%s' % namespace,
+            'percona-server-mysql-operator-config:configmap:%s' % namespace,
             ],
         resource_deps = [
             'namespaces',
