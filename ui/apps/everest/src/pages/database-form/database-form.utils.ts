@@ -130,7 +130,7 @@ export const DbClusterPayloadToFormValues = (
       mode === WizardMode.Restore
         ? `${dbCluster?.metadata?.name.slice(
             0,
-            MAX_DB_CLUSTER_NAME_LENGTH - 3
+            MAX_DB_CLUSTER_NAME_LENGTH - 4
           )}-${generateShortUID()}`
         : dbCluster?.metadata?.name,
     [DbWizardFormFields.dbVersion]: dbCluster?.spec?.engine?.version || '',
