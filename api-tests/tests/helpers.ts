@@ -1,5 +1,6 @@
 import {expect} from '@playwright/test'
 import { execSync } from 'child_process';
+import { CliHelper } from '../helpers/cliHelper'
 
 // testPrefix is used to differentiate between several workers
 // running this test to avoid conflicts in instance names
@@ -29,7 +30,7 @@ export const createDBCluster = async (request, name) => {
     },
     spec: {
       engine: {
-        type: 'pxc',
+        type: 'postgresql',
         replicas: 1,
         storage: {
           size: '4G',
@@ -40,7 +41,7 @@ export const createDBCluster = async (request, name) => {
         },
       },
       proxy: {
-        type: 'haproxy',
+        type: 'pgbouncer',
         replicas: 1,
         expose: {
           type: 'internal',
@@ -204,6 +205,13 @@ export const createMonitoringConfig = async (request, name, namespace) => {
    res = await request.post(`/v1/namespaces/${namespace}/monitoring-instances`, { data: miData })
 
   await checkError(res)
+}
+
+export const createDataImporter = async (cli: CliHelper) => {
+  let dataImporterPath = 'testdata/dataimporter.yaml'
+  await cli.exec(`kubectl apply -f ${dataImporterPath} || true`)
+  const out = await cli.execSilent(`kubectl get dataimporters`)
+  out.outContains("test-data-importer")
 }
 
 export const deleteMonitoringConfig = async (request, name, namespace) => {

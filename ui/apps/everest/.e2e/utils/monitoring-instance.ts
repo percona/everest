@@ -15,7 +15,8 @@
 
 import { APIRequestContext, expect } from '@playwright/test';
 import { execSync } from 'child_process';
-import { getDBClientPod, getK8sUid } from '@e2e/utils/db-cmd-line';
+import { getDBClientPod } from '@e2e/utils/db-cmd-line';
+import { getK8sUid } from '@e2e/utils/kubernetes';
 
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 

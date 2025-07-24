@@ -1,13 +1,6 @@
 ---
 name: FE CI Gatekeeper
 on:
-  push:
-    paths:
-      - "ui/**"
-      - ".github/workflows/dev-fe-gatekeeper.yaml"
-      - ".github/workflows/dev-fe-e2e.yaml"
-    branches:
-      - main
   pull_request:
     paths:
       - "ui/**"
@@ -28,6 +21,9 @@ env:
 jobs:
   cache_pnpm:
     name: Cache PNPM
+    strategy:
+      fail-fast: true
+    continue-on-error: false
     runs-on: ubuntu-latest
 
     steps:
@@ -56,6 +52,8 @@ jobs:
     strategy:
       matrix:
         action: ["lint", "format", "test", "build"]
+      fail-fast: true
+    continue-on-error: false
     defaults:
       run:
         working-directory: ui
@@ -66,9 +64,11 @@ jobs:
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
+
       - uses: pnpm/action-setup@v4
         with:
           version: 9.4.0
+
       - name: Use Node
         uses: actions/setup-node@v4
         with:
@@ -101,7 +101,7 @@ jobs:
           git config --global user.name "CI Bot"
           git diff --exit-code || echo "::set-output name=changes::true"
 
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: stefanzweifel/git-auto-commit-action@v6
         if: steps.check_changes.outputs.changes == 'true' && github.event_name == 'pull_request'
         with:
           commit_message: "chore: lint/format"
