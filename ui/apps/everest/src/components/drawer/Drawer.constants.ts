@@ -30,4 +30,9 @@ export const ROUTES: EverestRoute[] = [
     icon: SettingsIcon,
     text: 'Settings',
   },
+  {
+    to: `ui-generator`,
+    icon: SettingsIcon,
+    text: 'UI Generator',
+  },
 ];
