@@ -97,7 +97,7 @@ const BackupListTableHeader = ({
             {Messages.activeSchedules(schedulesNumber)}
           </Button>
         )}
-        {canCreate && (
+        {canCreate && canUpdateDb && (
           <MenuButton
             buttonProps={{
               disabled: restoring,

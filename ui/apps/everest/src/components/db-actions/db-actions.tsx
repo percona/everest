@@ -104,7 +104,7 @@ export const DbActions = ({
     `${namespace}/${dbClusterName}`
   );
 
-  const canRestore = canCreateRestore && canReadCredentials;
+  const canRestore = canCreateRestore && canReadCredentials && canUpdate;
   const noActionAvailable = !canUpdate && !canDelete && !canRestore;
   let canCreateClusterFromBackup = canRestore && canCreateClusters;
 
