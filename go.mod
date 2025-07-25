@@ -28,8 +28,8 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.32.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250718071505-dcba13be5b90
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250710185617-e513d2283e09
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250722133348-b41f708ec84e
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250723100327-e39bb54eeb40
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -43,9 +43,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.18.4
-	k8s.io/api v0.33.2
+	k8s.io/api v0.33.3
 	k8s.io/apiextensions-apiserver v0.33.2
-	k8s.io/apimachinery v0.33.2
+	k8s.io/apimachinery v0.33.3
 	k8s.io/cli-runtime v0.33.2
 	k8s.io/client-go v0.33.2
 	k8s.io/kubectl v0.33.2
