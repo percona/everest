@@ -1,7 +1,10 @@
 import { test } from '@playwright/test';
 import { execSync } from 'child_process';
+import { getCliPath } from '../utils/session-cli';
 
 const USER = process.env.SESSION_USER!;
+
+const cliPath = getCliPath();
 
 test('Teardown session user', async () => {
   if (!USER) {
@@ -12,7 +15,7 @@ test('Teardown session user', async () => {
 
   // List users
   const output = execSync(
-    `go run ../../../cmd/cli/main.go accounts list`
+    `go run ${cliPath} accounts list`
   ).toString();
 
   // Check if USER exists

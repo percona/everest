@@ -73,10 +73,9 @@ export default defineConfig({
     },
     {
       name: 'session',
-      testDir: './release',
+      testDir: './session',
       testMatch: 'session-management.e2e.ts',
       dependencies: ['session-setup'],
-      teardown: 'session-teardown',
       use: {
         storageState: path.join(__dirname, 'sessionUser.json'),
       },
@@ -85,6 +84,7 @@ export default defineConfig({
       name: 'session-teardown',
       testDir: './teardown',
       testMatch: /session-teardown\.ts$/,
+      dependencies: ['session'],
       use: {
         storageState: path.join(__dirname, 'sessionUser.json'),
       },
@@ -93,6 +93,7 @@ export default defineConfig({
       name: 'auth',
       testDir: './setup',
       testMatch: /auth.setup\.ts/,
+      dependencies: process.env.SKIP_SESSION === 'true' ? [] : ['session-teardown'],
     },
     {
       name: 'setup',

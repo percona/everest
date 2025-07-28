@@ -17,7 +17,11 @@ import { test, expect } from '@playwright/test';
 import { loginSessionUser, logout } from '../utils/user';
 import { getSessionToken } from '../utils/localStorage';
 import { execSync } from 'child_process';
+import { getCliPath } from '../utils/session-cli';
+
 const USER = process.env.SESSION_USER!;
+
+const cliPath = getCliPath();
 
 // ——————————————————————————————————————————————————
 // check API response for valid and invalid tokens
@@ -75,7 +79,7 @@ test('T189 - Verify user is logged out and token is invalidated after user delet
     await expect(page.getByTestId('user-appbar-button')).toBeVisible();
 
     // Delete user via CLI
-    execSync(`go run ../../../cmd/cli/main.go accounts delete -u ${USER}`, {
+    execSync(`go run ${cliPath} accounts delete -u ${USER}`, {
       stdio: 'inherit',
     });
 
