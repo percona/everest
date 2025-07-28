@@ -14,9 +14,7 @@ test('Teardown session user', async () => {
   console.log(`Checking if user '${USER}' exists before deleting...`);
 
   // List users
-  const output = execSync(
-    `go run ${cliPath} accounts list`
-  ).toString();
+  const output = execSync(`go run ${cliPath} accounts list`).toString();
 
   // Check if USER exists
   if (output.includes(USER)) {
