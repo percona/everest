@@ -294,10 +294,11 @@ jobs:
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: Everest - setup golang
+      - name: Set up Go release
         uses: actions/setup-go@v5
         with:
           go-version-file: "./go.mod"
+          cache: true
 
       - name: Everest - create and update release branch
         run: |

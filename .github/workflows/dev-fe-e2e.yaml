@@ -15,24 +15,10 @@ on:
 jobs:
   e2e:
     strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.24.x ]
-        may-fail: [ false ]
+      fail-fast: true
+    continue-on-error: false
     runs-on: ubuntu-latest
     steps:
-      # Setup Go
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        shell: bash
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
@@ -40,22 +26,11 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
+      - name: Set up Go release
+        uses: actions/setup-go@v5
         with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
-
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
-        with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+          go-version-file: 'go.mod'
+          cache: true
 
       # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
       - name: Switch docker-daemon data directory to /mnt
@@ -77,9 +52,6 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: ui/pnpm-lock.yaml
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-
       - name: Start local Kubernetes cluster with the local registry
         uses: medyagh/setup-minikube@latest
         id: minikube
@@ -99,12 +71,12 @@ jobs:
       - name: Add Helm Percona repository
         shell: bash
         run: |
-          helm repo add percona https://percona.github.io/percona-helm-charts/
+          go tool helm repo add percona https://percona.github.io/percona-helm-charts/
 
       - name: Install Helm PMM chart
         shell: bash
         run: |
-          helm install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm
+          go tool helm install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm
 
       - name: Echo PMM credentials
         shell: bash

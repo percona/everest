@@ -61,8 +61,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
 [
   { db: 'psmdb', size: 3 },
-  // TODO: Re-enable after fix for https://perconadev.atlassian.net/browse/EVEREST-2017
-  //  { db: 'pxc', size: 3 },
+  { db: 'pxc', size: 3 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
@@ -356,7 +355,8 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Check restored DB list and status', async () => {
           await waitForStatus(page, restoredClusterName, 'Initializing', 15000);
-          await waitForStatus(page, restoredClusterName, 'Up', 600000);
+          await waitForStatus(page, restoredClusterName, 'Restoring', 600000);
+          await waitForStatus(page, restoredClusterName, 'Up', 2400000);
         });
 
         await test.step(`Delete primary database cluster`, async () => {

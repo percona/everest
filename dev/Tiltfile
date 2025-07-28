@@ -56,7 +56,7 @@ print('Using chart dir: {0}'.format(everest_chart_dir))
 # Optional env vars
 pxc_operator_version = os.getenv('PXC_OPERATOR_VERSION', '1.17.0')
 print('Using PXC operator version: {0}'.format(pxc_operator_version))
-psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.20.1')
+psmdb_operator_version = os.getenv('PSMDB_OPERATOR_VERSION', '1.19.1')
 print('Using PSMDB operator version: {0}'.format(psmdb_operator_version))
 pg_operator_version = os.getenv('PG_OPERATOR_VERSION', '2.6.0')
 print('Using PG operator version: {0}'.format(pg_operator_version))
@@ -109,23 +109,10 @@ watch_settings(
 # Ensure operator's kustomize is installed
 local('[ -x %s/bin/kustomize ] || make -C %s kustomize' % (operator_dir, operator_dir), quiet=True)
 
-# Need to init tools in order to install Helm
-local_resource(
-    'backend-init',
-    'make -C {0} init'.format(backend_dir),
-    deps=[
-        '{0}/tools'.format(backend_dir),
-    ],
-    labels=["everest"],
-)
-
 # Build helm dependencies
 local_resource(
     'everest-chart-deps',
-    'HELM={0}/bin/helm make -C {1} deps'.format(backend_dir, everest_chart_dir),
-    resource_deps = [
-        'backend-init',
-    ],
+    'HELM="go tool -modfile={0}/go.mod helm" make -C {1} deps'.format(backend_dir, everest_chart_dir),
 )
 
 # Create namespaces
@@ -299,6 +286,7 @@ everest_yaml = helm(
     name='everest',
     namespace=EVEREST_NAMESPACE,
     skip_crds=True,
+    values=['./helm-values/webhook-tls-cert-values.yaml'],
     set=[
         'dbNamespace.enabled=false',
         'upgrade.preflightChecks=false',
@@ -457,27 +445,6 @@ if everest_operator_debug:
 local_resource(
     'operator-init',
     'make -C {0} init'.format(operator_dir),
-    deps=[
-        '{0}/tools'.format(operator_dir),
-    ],
-    labels=["everest-operator"],
-)
-
-local_resource(
-    'operator-generate',
-    'make -C {0} generate'.format(operator_dir),
-    deps=[
-        '{0}/api'.format(operator_dir),
-    ],
-    ignore=[
-        '{0}/**/*.deepcopy.go*'.format(operator_dir),
-        '{0}/**/mock_*.go*'.format(operator_dir),
-        '{0}/**/*_test.go'.format(operator_dir),
-        '{0}/**/*.gen.go*'.format(operator_dir),
-    ],
-    resource_deps = [
-        'operator-init',
-    ],
     labels=["everest-operator"],
 )
 
@@ -498,7 +465,7 @@ local_resource(
   ],
   labels=["everest-operator"],
   resource_deps = [
-    'operator-generate',
+    'operator-init',
   ],
 )
 
@@ -524,6 +491,8 @@ k8s_resource(
         'databaseengines.everest.percona.com:customresourcedefinition',
         'monitoringconfigs.everest.percona.com:customresourcedefinition',
         'podschedulingpolicies.everest.percona.com:customresourcedefinition',
+        'dataimporters.everest.percona.com:customresourcedefinition',
+        'dataimportjobs.everest.percona.com:customresourcedefinition',
     ],
     new_name='everest-crds',
     labels=["everest-operator"]
@@ -539,8 +508,33 @@ k8s_resource(
     'everest-operator-metrics-auth-rolebinding:clusterrolebinding',
     'everest-operator-manager-role:clusterrole',
     'everest-operator-leader-election-rolebinding:rolebinding',
-    'everest-operator-manager-rolebinding:clusterrolebinding'
-
+    'everest-operator-manager-rolebinding:clusterrolebinding',
+    'webhook-server-cert:secret',
+    'everest-operator-validating-webhook-configuration:validatingwebhookconfiguration',
+    'everest-operator-mutating-webhook-configuration:mutatingwebhookconfiguration',
+    'everest-helm-psp-cleanup-hook:serviceaccount:{0}'.format(EVEREST_NAMESPACE),
+    'everest-operator-backupstorage-editor-role:clusterrole',
+    'everest-operator-backupstorage-viewer-role:clusterrole',
+    'everest-operator-databasecluster-editor-role:clusterrole',
+    'everest-operator-databasecluster-viewer-role:clusterrole',
+    'everest-operator-databaseclusterbackup-editor-role:clusterrole',
+    'everest-operator-databaseclusterbackup-viewer-role:clusterrole',
+    'everest-operator-databaseclusterrestore-editor-role:clusterrole',
+    'everest-operator-databaseclusterrestore-viewer-role:clusterrole',
+    'everest-operator-databaseengine-editor-role:clusterrole',
+    'everest-operator-databaseengine-viewer-role:clusterrole',
+    'everest-operator-monitoringconfig-editor-role:clusterrole',
+    'everest-operator-monitoringconfig-viewer-role:clusterrole',
+    'everest-operator-podschedulingpolicy-editor-role:clusterrole',
+    'everest-operator-podschedulingpolicy-viewer-role:clusterrole',
+    'everest-helm-psp-cleanup-hook:clusterrole',
+    'everest-helm-psp-cleanup-hook:clusterrolebinding',
+    'everest-percona-pg-operator:dataimporter',
+    'everest-percona-psmdb-operator:dataimporter',
+    'everest-percona-pxc-operator:dataimporter',
+    'everest-default-mysql:podschedulingpolicy',
+    'everest-default-postgresql:podschedulingpolicy',
+    'everest-default-mongodb:podschedulingpolicy'
     ],
     resource_deps = [
       'everest-namespace',
@@ -626,9 +620,6 @@ local_resource(
         '{0}/**/*_test.go'.format(backend_dir),
         '{0}/**/*.gen.go*'.format(backend_dir),
         '{0}/**/*.deepcopy.go*'.format(backend_dir),
-    ],
-    resource_deps = [
-        'backend-init',
     ],
     labels=["everest"],
 )
