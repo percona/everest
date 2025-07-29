@@ -1,6 +1,6 @@
 import { MenuItem } from '@mui/material';
 import { SelectInput, TextInput } from '@percona/ui-lib';
-import { useDBEnginesForDbEngineTypes } from 'hooks';
+import { useActiveBreakpoint, useDBEnginesForDbEngineTypes } from 'hooks';
 import { humanizeDbType } from 'utils/db';
 import { dbEngineToDbType } from '@percona/utils';
 import { FormDialog } from 'components/form-dialog';
@@ -42,6 +42,7 @@ const PoliciesDialog = ({
 }: Props) => {
   const [availableDbTypes] = useDBEnginesForDbEngineTypes();
   const isEditing = !!policy;
+  const { isMobile } = useActiveBreakpoint();
 
   return (
     <FormDialog
@@ -59,7 +60,19 @@ const PoliciesDialog = ({
           (availableDbTypes.length ? availableDbTypes[0].type : undefined),
       }}
     >
-      <TextInput name="name" label="Policy name" />
+      <TextInput
+        name="name"
+        label="Policy name"
+        textFieldProps={{ sx: { minHeight: '64px' } }}
+        formHelperTextProps={{
+          sx: {
+            maxWidth: isMobile ? '300px' : '100%',
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+            overflowWrap: 'anywhere',
+          },
+        }}
+      />
       <SelectInput
         name="type"
         label="Technology"

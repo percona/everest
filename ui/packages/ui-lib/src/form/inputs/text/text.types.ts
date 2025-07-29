@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TextFieldProps } from '@mui/material';
+import { FormHelperTextProps, TextFieldProps } from '@mui/material';
 import { LabeledContentProps } from '../../../labeled-content';
 import { Control, UseControllerProps } from 'react-hook-form';
 
@@ -25,4 +25,5 @@ export type TextInputProps = {
   labelProps?: LabeledContentProps;
   textFieldProps?: TextFieldProps;
   isRequired?: boolean;
+  formHelperTextProps?: Partial<FormHelperTextProps>;
 };
