@@ -68,6 +68,7 @@ const ScheduledBackupsList = ({ currentBackups }: Props) => {
           pitr: {
             ...newClusterData.spec.backup?.pitr,
             enabled: false,
+            backupStorageName: '',
           },
         };
       }
