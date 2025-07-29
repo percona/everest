@@ -159,7 +159,7 @@ export default defineConfig({
       use: {
         storageState: STORAGE_STATE_FILE,
       },
-      // dependencies: ['release-rbac'],
+      dependencies: ['release-rbac'],
     },
     {
       name: 'release',
