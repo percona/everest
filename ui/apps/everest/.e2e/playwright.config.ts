@@ -134,7 +134,6 @@ export default defineConfig({
     },
     {
       name: 'release-rbac-setup',
-      teardown: 'release-rbac-teardown',
       testDir: './setup',
       testMatch: /rbac.setup\.ts/,
       use: {
@@ -174,7 +173,7 @@ export default defineConfig({
         ...(process.env.IGNORE_RBAC_TESTS &&
         process.env.IGNORE_RBAC_TESTS !== 'false'
           ? []
-          : ['release-rbac']),
+          : ['release-rbac', 'release-rbac-teardown']),
       ],
     },
     {
