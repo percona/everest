@@ -10,9 +10,12 @@ const TextInput = ({
   controllerProps,
   textFieldProps = {},
   isRequired,
+  formHelperTextProps = {},
 }: TextInputProps) => {
   const { control: contextControl } = useFormContext();
   const { sx: textFieldPropsSx, onChange, ...restFieldProps } = textFieldProps;
+  const { sx: formHelperTextPropsSx } = formHelperTextProps;
+
   return (
     <Controller
       name={name}
@@ -64,6 +67,9 @@ const TextInput = ({
             ...restFieldProps?.inputProps,
           }}
           helperText={error ? error.message : restFieldProps?.helperText}
+          FormHelperTextProps={{
+            sx: formHelperTextPropsSx,
+          }}
         />
       )}
       {...controllerProps}
