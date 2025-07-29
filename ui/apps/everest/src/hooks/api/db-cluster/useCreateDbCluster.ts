@@ -73,9 +73,11 @@ const formValuesToPayloadMapping = (
                 ? dbPayload.schedules.length > 0
                 : dbPayload.pitrEnabled,
             backupStorageName:
-              typeof dbPayload.pitrStorageLocation === 'string'
-                ? dbPayload.pitrStorageLocation
-                : dbPayload.pitrStorageLocation!.name,
+              dbPayload.dbType === DbType.Postresql
+                ? ''
+                : typeof dbPayload.pitrStorageLocation === 'string'
+                  ? dbPayload.pitrStorageLocation
+                  : dbPayload.pitrStorageLocation!.name,
           },
         }),
         schedules:
