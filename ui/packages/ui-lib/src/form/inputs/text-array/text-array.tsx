@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { useEffect, useState } from 'react';
 import { FieldError, useFieldArray, useFormContext } from 'react-hook-form';
 import { IconButton, InputAdornment } from '@mui/material';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
@@ -31,24 +32,37 @@ const TextArray = ({
   const {
     control,
     formState: { errors },
+    watch,
   } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: fieldName,
   });
 
-  const defaultFields = fields.length ? fields : [];
+  const [isDisabled, setIsDisabled] = useState<boolean>(true);
+  const defaultFields: Record<string, string>[] = fields.length ? fields : [];
+  const [changed, setChanged] = useState(false);
   const error = (index: number): FieldError | undefined =>
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[fieldKey];
+
+  useEffect(() => {
+    const isAnyFieldEmpty = defaultFields.some(
+      (field) => field[fieldKey] === ''
+    );
+
+    setIsDisabled(isAnyFieldEmpty);
+  }, [defaultFields.length, changed]);
 
   return (
     <>
       <ActionableLabeledContent
         label={label}
         actionButtonProps={{
+          disabled: isDisabled,
           dataTestId: 'add-text-input-button',
           onClick: () => {
+            setIsDisabled(true);
             append({
               [fieldKey]: '',
             });
@@ -73,6 +87,13 @@ const TextArray = ({
               },
 
               InputProps: {
+                onChange: () => {
+                  const initialFieldValue = watch(
+                    `${fieldName}.${index}.${fieldKey}`
+                  );
+                  defaultFields[index][fieldKey] = initialFieldValue;
+                  setChanged((prev) => !prev);
+                },
                 onBlur: handleBlur
                   ? (e) => {
                       handleBlur(
