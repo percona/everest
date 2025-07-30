@@ -55,9 +55,7 @@ export const ClusterOverview = () => {
   const canChangeResources =
     canUpdateDb && !shouldDbActionsBeBlocked(dbCluster.status?.status);
 
-  const pitrEnabled =
-    dbCluster?.spec.backup?.pitr?.enabled! &&
-    dbType !== DbEngineType.POSTGRESQL;
+  const pitrEnabled = dbCluster?.spec.backup?.pitr?.enabled!;
 
   return (
     <>

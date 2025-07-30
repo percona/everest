@@ -53,7 +53,7 @@ export const BackupsDetails = ({
     canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
   const dbType = dbEngineToDbType(dbCluster!.spec.engine.type);
-  const backupsEnabled =
+  const pitrEditable =
     (schedules || []).length > 0 && dbType !== DbType.Postresql;
 
   const [openEditModal, setOpenEditModal] = useState(false);
@@ -68,15 +68,15 @@ export const BackupsDetails = ({
     }
   );
 
-  const schedulesExists = (schedules || []).length > 0;
-  const backupsExists = backups.length > 0;
+  const schedulesExist = (schedules || []).length > 0;
+  const backupsExist = backups.length > 0;
 
   const getTooltipText = () => {
     if (dbType === DbType.Postresql) {
-      if (schedulesExists && !backupsExists) {
+      if (schedulesExist && !backupsExist) {
         return Messages.titles.scheduleExists;
       }
-      if (backupsExists || (backupsExists && schedulesExists)) {
+      if (backupsExist || (backupsExist && schedulesExist)) {
         return Messages.titles.onDemandBackupExists;
       }
       return Messages.titles.noPitr;
@@ -220,8 +220,8 @@ export const BackupsDetails = ({
             },
             'data-testid': 'edit-pitr-button',
           }}
-          editable={editable && backupsEnabled}
-          showTooltip={editable && !backupsEnabled}
+          editable={editable && pitrEditable}
+          showTooltip={editable && !pitrEditable}
           disabledEditTooltipText={getTooltipText()}
         >
           {/*// TODO EVEREST-1066 the width of the columns on the layouts in different places is limited by a different number (but not by the content), a discussion with Design is required*/}
