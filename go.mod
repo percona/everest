@@ -28,8 +28,8 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.32.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250722114920-d21dc95fb320
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250722100525-d7c5b1570f06
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250723074817-6f35f2396c84
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250722124829-e3379cea03aa
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -43,12 +43,12 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.18.4
-	k8s.io/api v0.33.2
+	k8s.io/api v0.33.3
 	k8s.io/apiextensions-apiserver v0.33.2
-	k8s.io/apimachinery v0.33.2
-	k8s.io/cli-runtime v0.33.2
-	k8s.io/client-go v0.33.2
-	k8s.io/kubectl v0.33.2
+	k8s.io/apimachinery v0.33.3
+	k8s.io/cli-runtime v0.33.3
+	k8s.io/client-go v0.33.3
+	k8s.io/kubectl v0.33.3
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/yaml v1.5.0
@@ -396,7 +396,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
 	k8s.io/apiserver v0.33.2 // indirect
-	k8s.io/component-base v0.33.2 // indirect
+	k8s.io/component-base v0.33.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
 	mvdan.cc/gofumpt v0.8.0 // indirect
