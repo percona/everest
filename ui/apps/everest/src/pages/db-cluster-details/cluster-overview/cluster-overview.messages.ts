@@ -16,6 +16,12 @@ export const Messages = {
     createScheduleToEnable: 'Create a schedule first to enable PITR.',
     default: 'Default',
     custom: 'Custom',
+    noPitr:
+      'Create an on-demand backup or backup schedule first to enable PITR.',
+    scheduleExists:
+      'Point-in-Time Recovery (PITR) is automatically enabled when a backup or backup schedule is created.',
+    onDemandBackupExists:
+      'PITR is enabled for all on-demand and scheduled backups and is stored in the same location as scheduled backups.',
   },
   actions: {
     edit: 'Edit',
