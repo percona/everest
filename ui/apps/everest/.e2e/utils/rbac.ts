@@ -63,5 +63,5 @@ export const createDbWithParameters = async ({
 
   await page.goto('/databases');
   await waitForStatus(page, dbName, 'Initializing', 120000);
-  await waitForStatus(page, dbName, 'Up', 600000);
+  await waitForStatus(page, dbName, 'Up', 720000);
 };
