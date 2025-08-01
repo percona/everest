@@ -169,7 +169,7 @@ func (h *k8sHandler) createMonitoringK8sResources(
 		if dErr := h.kubeConnector.DeleteSecret(c, delObj); dErr != nil {
 			return nil, fmt.Errorf("failed cleaning up the secret because failed creating monitoring instance")
 		}
-		return nil, fmt.Errorf("failed creating monitoring instance")
+		return nil, err
 	}
 
 	return created, nil
