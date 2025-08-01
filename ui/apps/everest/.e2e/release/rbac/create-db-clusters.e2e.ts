@@ -119,9 +119,6 @@ test.describe(
         ['database-clusters', 'create', `${namespace2}/*`],
       ]);
 
-      await page.waitForTimeout(5000);
-      await page.reload({ waitUntil: 'networkidle' });
-
       await expect(page.getByText(pxcDb)).not.toBeVisible();
       await expect(page.getByText(psmdbDb)).toBeVisible();
 
