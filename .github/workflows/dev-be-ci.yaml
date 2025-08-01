@@ -140,10 +140,6 @@ jobs:
           cd api-tests
           make test
 
-      - name: "Setup tmate session"
-        uses: "percona/gh-action-action-tmate@v3"
-        if: ${{ always() }}
-
       - name: Uninstall PMM
         run: |
           helm uninstall pmm1
