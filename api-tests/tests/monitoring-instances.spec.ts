@@ -19,7 +19,7 @@ import {checkError, testPrefix, testsNs} from '@tests/tests/helpers';
 const prefix = testPrefix()
 
 test('create/update/delete monitoring instance', async ({ request, page }) => {
-  await test.step('create monitoring instance with api key', async () => {
+  await test.step('create monitoring instance with api key (key1)', async () => {
     const data = {
           type: 'pmm',
           name: `${prefix}-key`,
@@ -39,7 +39,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     expect(created.type).toBe(data.type)
   })
 
-  await test.step('create monitoring instance with user/password', async () => {
+  await test.step('create monitoring instance with user/password (pass)', async () => {
     const data = {
       type: 'pmm',
       name: `${prefix}-pass`,
@@ -52,7 +52,11 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     }
 
     let response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
-
+    console.log("----")
+    console.log(response.status())
+    console.log(response.url())
+    console.log(response.statusText())
+    console.log(await response.json())
     await checkError(response)
     const created = await response.json()
 
@@ -80,7 +84,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     expect(i.name).toBe(name)
   })
 
-  await test.step('patch monitoring instance', async () => {
+  await test.step('patch monitoring instance (key2)', async () => {
     const name = `${prefix}-key`
 
     const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
@@ -88,8 +92,13 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     await checkError(response)
     const patchData = { url: `http://monitoring-service.default.svc.cluster.local` },// URL pointing to the same instance
         updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
-
+    console.log("----")
+    console.log(updated.status())
+    console.log(updated.url())
+    console.log(updated.statusText())
+    console.log(await updated.json())
     await checkError(updated)
+
     const getJson = await updated.json()
 
     expect(getJson.url).toBe(patchData.url)
@@ -104,6 +113,11 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
       url: 'https://monitoring-service.everest-monitoring.svc.cluster.local', // existing other monitoring URL
     }
     const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
+    console.log("--------------")
+    console.log(updated.status())
+    console.log(updated.url())
+    console.log(updated.statusText())
+    console.log(updated.json())
     expect(updated.ok()).toBeFalsy()
     expect((await updated.json()).message).toMatch("authorization failed, please provide the correct credentials")
   })
@@ -122,7 +136,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     expect((await updated.json()).message).toContain("dial tcp: lookup not-existing-url")
   })
 
-  await test.step('patch monitoring instance to existing with apiKey', async () => {
+  await test.step('patch monitoring instance to existing with apiKey (key3)', async () => {
     const name = `${prefix}-key`
     const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
@@ -134,14 +148,18 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
       },
     }
     const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
-
+    console.log("--!1!--")
+    console.log(updated.status())
+    console.log(updated.url())
+    console.log(updated.statusText())
+    console.log(await updated.json())
     await checkError(updated)
     const getJson = await updated.json()
 
     expect(getJson.url).toBe(patchData.url)
   })
 
-  await test.step('patch monitoring instance to existing with admin password', async () => {
+  await test.step('patch monitoring instance to existing with admin password (key4)', async () => {
     const name = `${prefix}-key`
     const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 
@@ -154,7 +172,11 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
       },
     }
     const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
-
+    console.log("--!111!--")
+    console.log(updated.status())
+    console.log(updated.url())
+    console.log(updated.statusText())
+    console.log(await updated.json())
     await checkError(updated)
     const getJson = await updated.json()
 
