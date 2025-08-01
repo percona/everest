@@ -111,6 +111,7 @@ const ComponentsDiagramView = ({
   return (
     <>
       <ReactFlowStyled
+        data-testid="components-diagram-view"
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
