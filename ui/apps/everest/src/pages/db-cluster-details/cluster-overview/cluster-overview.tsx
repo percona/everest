@@ -49,10 +49,11 @@ export const ClusterOverview = () => {
     }
   );
   const schedules = dbCluster?.spec.backup?.schedules || [];
+  const isStatusReady = dbCluster?.status?.status === 'ready';
 
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
-      enabled: !!dbClusterName && canRead,
+      enabled: !!dbClusterName && canRead && isStatusReady,
     });
 
   if (!dbCluster) {
