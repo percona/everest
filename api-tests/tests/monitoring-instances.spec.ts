@@ -19,32 +19,6 @@ import {checkError, testPrefix, testsNs} from '@tests/tests/helpers';
 const prefix = testPrefix()
 
 test('create/update/delete monitoring instance', async ({ request, page }) => {
-  await test.step('create monitoring instance with user/password (pass)', async () => {
-    const data = {
-      type: 'pmm',
-      name: `${prefix}-pass`,
-      url: `https://${process.env.PMM2_IP}`,
-      pmm: {
-        user: 'admin',
-        password: 'admin',
-      },
-      verifyTLS: false,
-    }
-
-    let response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
-    console.log("----")
-    console.log(response.status())
-    console.log(response.url())
-    console.log(response.statusText())
-    console.log(await response.json())
-    await checkError(response)
-    const created = await response.json()
-
-    expect(created.name).toBe(data.name)
-    expect(created.url).toBe(data.url)
-    expect(created.type).toBe(data.type)
-  })
-
   await test.step('create monitoring instance with api key (key1)', async () => {
     const data = {
           type: 'pmm',
@@ -57,6 +31,31 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
         }
     let response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
 
+    await checkError(response)
+    const created = await response.json()
+
+    expect(created.name).toBe(data.name)
+    expect(created.url).toBe(data.url)
+    expect(created.type).toBe(data.type)
+  })
+
+  await test.step('create another monitoring instance (pass)', async () => {
+    const data = {
+      type: 'pmm',
+      name: `${prefix}-pass`,
+      url: `https://${process.env.PMM2_IP}`,
+      pmm: {
+        apiKey: `${process.env.PMM2_API_KEY}`,
+      },
+      verifyTLS: false,
+    }
+
+    let response = await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data })
+    console.log("----")
+    console.log(response.status())
+    console.log(response.url())
+    console.log(response.statusText())
+    console.log(await response.json())
     await checkError(response)
     const created = await response.json()
 
