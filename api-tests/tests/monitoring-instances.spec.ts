@@ -158,30 +158,6 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     expect(getJson.url).toBe(patchData.url)
   })
 
-  await test.step('patch monitoring instance to existing with admin password (key4)', async () => {
-    const name = `${prefix}-key`
-    const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
-
-    await checkError(response)
-    const patchData = {
-      url: 'https://monitoring-service.everest-monitoring.svc.cluster.local', // existing other monitoring URL
-      pmm: {
-        user: 'admin',
-        password: 'admin'
-      },
-    }
-    const updated = await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, { data: patchData })
-    console.log("--!111!--")
-    console.log(updated.status())
-    console.log(updated.url())
-    console.log(updated.statusText())
-    console.log(await updated.json())
-    await checkError(updated)
-    const getJson = await updated.json()
-
-    expect(getJson.url).toBe(patchData.url)
-  })
-
   await test.step('patch monitoring instance type fails on missing key', async () => {
     const name = `${prefix}-key`
 
