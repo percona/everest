@@ -1,7 +1,9 @@
 ---
 name: API CI
 on:
-  push: integrtest
+  push:
+    branches:
+      - integrtest
 
 permissions:
   contents: read
