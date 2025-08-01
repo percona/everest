@@ -1,7 +1,7 @@
 ---
 name: API CI
 on:
-  push: test
+  push: integrtest
 
 permissions:
   contents: read
