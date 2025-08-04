@@ -18,7 +18,12 @@ import { execSync } from 'child_process';
 import { getDBClientPod } from '@e2e/utils/db-cmd-line';
 import { getK8sUid } from '@e2e/utils/kubernetes';
 
-const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
+const {
+  MONITORING_URL,
+  MONITORING_USER,
+  MONITORING_PASSWORD,
+  MONITORING_NAMESPACE = 'monitoring',
+} = process.env;
 
 export const testMonitoringName = 'ui-test-monitoring';
 export const testMonitoringName2 = 'ui-test-monitoring-1';
@@ -99,7 +104,7 @@ export const checkDBMetrics = async (
   const date = new Date();
   const end = Math.floor(date.getTime() / 1000);
   const start = end - 60;
-  const endpoint = 'monitoring-service.monitoring:443';
+  const endpoint = `monitoring-service.${MONITORING_NAMESPACE}:443`;
   const url = `https://${userPass}@${endpoint}/graph/api/datasources/proxy/1/api/v1/query_range?query=min%28${metric}%7Bnode_name%3D%7E%22${instance}%22%7d%20or%20${metric}%7Bnode_name%3D%7E%22${instance}%22%7D%29&start=${start}&end=${end}&step=60`;
 
   try {
