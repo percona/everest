@@ -39,18 +39,13 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     expect(created.type).toBe(data.type)
   })
 
-  /*
-  In CI, the steps that access PMM with basic auth fail consistently while they do not fail when running locally.
-  Commenting out the steps until we have better understanding of what exactly causes the failure.
-
-  await test.step('create monitoring instance with user/password', async () => {
+  await test.step('create another monitoring instance', async () => {
     const data = {
       type: 'pmm',
       name: `${prefix}-pass`,
       url: `https://${process.env.PMM2_IP}`,
       pmm: {
-        user: 'admin',
-        password: 'admin',
+        apiKey: `${process.env.PMM2_API_KEY}`,
       },
       verifyTLS: false,
     }
@@ -64,7 +59,7 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     expect(created.url).toBe(data.url)
     expect(created.type).toBe(data.type)
   })
- */
+
   await test.step('list monitoring instances', async () => {
     const response = await request.get(`/v1/namespaces/${testsNs}/monitoring-instances`)
 
