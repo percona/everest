@@ -94,7 +94,7 @@ export default defineConfig({
       testDir: './setup',
       testMatch: /auth.setup\.ts/,
       dependencies:
-        process.env.SKIP_SESSION === 'true' ? [] : ['session-teardown'],
+        process.env.IGNORE_SESSION_TESTS === 'true' ? [] : ['session-teardown'],
     },
     {
       name: 'setup',
