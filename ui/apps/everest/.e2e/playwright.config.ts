@@ -73,7 +73,7 @@ export default defineConfig({
     },
     {
       name: 'session',
-      testDir: './session',
+      testDir: './release/session',
       testMatch: 'session-management.e2e.ts',
       dependencies: ['session-setup'],
       use: {

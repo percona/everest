@@ -14,10 +14,10 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { loginSessionUser, logout } from '../utils/user';
-import { getSessionToken } from '../utils/localStorage';
+import { loginSessionUser, logout } from '../../utils/user';
+import { getSessionToken } from '../../utils/localStorage';
 import { execSync } from 'child_process';
-import { getCliPath } from '../utils/session-cli';
+import { getCliPath } from '../../utils/session-cli';
 
 const USER = process.env.SESSION_USER!;
 
