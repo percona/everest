@@ -63,8 +63,7 @@ export const AdvancedConfigurationForm = ({
   const { watch, setValue, getFieldState, getValues } = useFormContext();
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
   const selectedPolicy = useRef<PodSchedulingPolicy>();
-  const [externalAccess, engineParametersEnabled, policiesEnabled] = watch([
-    AdvancedConfigurationFields.externalAccess,
+  const [engineParametersEnabled, policiesEnabled] = watch([
     AdvancedConfigurationFields.engineParametersEnabled,
     AdvancedConfigurationFields.podSchedulingPolicyEnabled,
   ]);
@@ -185,16 +184,14 @@ export const AdvancedConfigurationForm = ({
       />
       <FormCard
         title={Messages.cards.policies.title}
-        description={
+        description={Messages.cards.policies.description}
+        cardContent={
           <Box
             display="flex"
             justifyContent="space-between"
             alignItems="top"
             minHeight={'50px'}
           >
-            <Typography variant="caption" maxWidth="60%">
-              {Messages.cards.policies.description}
-            </Typography>
             {!!policiesEnabled && (
               <Box display="flex" ml="auto" alignItems="center">
                 <SelectInput
@@ -245,38 +242,92 @@ export const AdvancedConfigurationForm = ({
       />
       <FormCard
         title={Messages.cards.enableExternalAccess.title}
-        description={
-          <Stack>
-            <Typography variant="caption">
-              {Messages.cards.enableExternalAccess.description}
-            </Typography>
-            {externalAccess && (
-              <Stack sx={{ ml: 6 }} data-testid="external-access-fields">
-                <TextArray
-                  placeholder={Messages.sourceRangePlaceholder}
-                  fieldName={AdvancedConfigurationFields.sourceRanges}
-                  fieldKey="sourceRange"
-                  label={Messages.sourceRange}
-                  handleBlur={handleBlur}
-                />
-              </Stack>
-            )}
-          </Stack>
-        }
-        controlComponent={
-          <SwitchInput
-            label={Messages.enable}
-            name={AdvancedConfigurationFields.externalAccess}
-          />
+        description={Messages.cards.enableExternalAccess.description}
+        cardContent={
+          <Box display="flex" flexDirection="column" gap={2}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Typography variant="sectionHeading">
+                {Messages.cards.exposureMethod.title}
+              </Typography>
+              <SelectInput
+                name={AdvancedConfigurationFields.podSchedulingPolicy}
+                loading={fetchingPolicies || loadingDefaultsForEdition}
+                formControlProps={{
+                  sx: {
+                    width: SELECT_WIDTH,
+                    mt: 0,
+                  },
+                }}
+              >
+                {policies.map((policy) => (
+                  <MenuItem
+                    value={policy.metadata.name}
+                    key={policy.metadata.name}
+                  >
+                    {policy.metadata.name}
+                  </MenuItem>
+                ))}
+              </SelectInput>
+            </Box>
+
+            <FormCard
+              title={Messages.cards.loadBalancerConfiguration.title}
+              controlComponent={
+                <Box display="flex" ml="auto" alignItems="center">
+                  <SelectInput
+                    name={AdvancedConfigurationFields.podSchedulingPolicy}
+                    loading={fetchingPolicies || loadingDefaultsForEdition}
+                    formControlProps={{
+                      sx: {
+                        width: SELECT_WIDTH,
+                        mt: 0,
+                      },
+                    }}
+                  >
+                    {policies.map((policy) => (
+                      <MenuItem
+                        value={policy.metadata.name}
+                        key={policy.metadata.name}
+                      >
+                        {policy.metadata.name}
+                      </MenuItem>
+                    ))}
+                  </SelectInput>
+                  {!!policies.length && (
+                    <IconButton onClick={handleOnPolicyInfoClick}>
+                      <InfoIcon sx={{ width: '20px' }} />
+                    </IconButton>
+                  )}
+                </Box>
+              }
+            />
+            <FormCard
+              title={Messages.cards.sourceRange.title}
+              description={Messages.cards.sourceRange.description}
+              cardContent={
+                <Stack data-testid="external-access-fields">
+                  <TextArray
+                    placeholder={Messages.sourceRangePlaceholder}
+                    fieldName={AdvancedConfigurationFields.sourceRanges}
+                    fieldKey="sourceRange"
+                    label={Messages.cards.sourceRange.title}
+                    handleBlur={handleBlur}
+                  />
+                </Stack>
+              }
+            />
+          </Box>
         }
       />
       <FormCard
         title={Messages.cards.engineParameters.title}
-        description={
+        description={Messages.cards.engineParameters.description}
+        cardContent={
           <Stack>
-            <Typography variant="caption">
-              {Messages.cards.engineParameters.description}
-            </Typography>
             {engineParametersEnabled && (
               <TextInput
                 name={AdvancedConfigurationFields.engineParameters}

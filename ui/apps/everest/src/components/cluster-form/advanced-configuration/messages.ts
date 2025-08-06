@@ -21,7 +21,6 @@ import {
 
 export const Messages = {
   enable: 'Enable',
-  sourceRange: 'Source Range',
   sourceRangePlaceholder: SOURCE_RANGE_PLACEHOLDER,
   placeholders: {
     storageClass: 'Storage class',
@@ -42,6 +41,17 @@ export const Messages = {
         Enable this to make this database available outside of the Kubernetes cluster network.
         Exposing your database to remote access poses severe risks, including unauthorized access, data breaches and compliance violations.
       `,
+    },
+    exposureMethod: {
+      title: 'Exposure Method',
+    },
+    loadBalancerConfiguration: {
+      title: 'Load balancer configuration',
+    },
+    sourceRange: {
+      title: 'Source Range',
+      description:
+        'Specify trusted IP addresses to restrict access. Leaving this blank will expose the database to all IP addresses.',
     },
     engineParameters: {
       title: 'Set database engine parameters',
