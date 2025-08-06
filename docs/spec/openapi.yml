@@ -1987,6 +1987,175 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/load-balancer-configs':
+    x-everest-resource-name: load-balancer-configs
+    post:
+      tags:
+        - Load Balancer Config
+      summary: Create load balancer config
+      description: |
+        This API creates a new load balancer config.
+      operationId: createLoadBalancerConfig
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadBalancerConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The load balancer config object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadBalancerConfig'
+    get:
+      tags:
+        - Load Balancer Config
+      summary: List load balancer configs
+      description: |
+        This API lists all load balancer configs in the kubernetes cluster.
+      operationId: listLoadBalancerConfig
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadBalancerConfigList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/load-balancer-configs/{config-name}':
+    x-everest-resource-name: load-balancer-configs
+    get:
+      tags:
+        - Load Balancer Config
+      summary: Get load balancer config
+      description: |
+        This API gets the load balancer config specified by the `name`.
+      operationId: getLoadBalancerConfig
+      parameters:
+        - name: config-name
+          in: path
+          description: Name of the load balancer config. Can be found under Metadata["name"] of the LoadBalancerConfig object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadBalancerConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Load Balancer Config
+      summary: Update load balancer config
+      description: |
+        This API updates a load balancer config specified by the `name`.
+      operationId: updateLoadBalancerConfig
+      parameters:
+        - name: config-name
+          in: path
+          description: Name of the load balancer config. Can be found under Metadata["name"] of the LoadBalancerConfig object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadBalancerConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The load balancer config object to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadBalancerConfig'
+    delete:
+      tags:
+        - Load Balancer Config
+      summary: Delete load balancer config
+      description: |
+        This API deletes the load balancer config specified by the `name`.
+      operationId: deleteLoadBalancerConfig
+      parameters:
+        - name: config-name
+          in: path
+          description: Name of the load balancer config. Can be found under Metadata["name"] of the LoadBalancerConfig object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     BearerAuth:
@@ -2613,6 +2782,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PodSchedulingPolicy'
+        metadata:
+          type: object
+      type: object
+    LoadBalancerConfigList:
+      description: LoadBalancerConfigList is an object that contains the list of the existing load balancer configs.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoadBalancerConfig'
         metadata:
           type: object
       type: object
@@ -10468,6 +10660,60 @@ components:
             lastObservedGeneration:
               description: LastObservedGeneration is the most recent generation
                 observed for this PodSchedulingPolicy.
+              format: int64
+              type: integer
+          type: object
+      type: object
+    # -------------------------
+
+    # -------------------------
+    # LoadBalancerConfig spec is imported from the everest operator,
+    # please do not edit the definition below manually
+    # -------------------------
+    LoadBalancerConfig:
+      description: LoadBalancerConfig is the Schema for the Load Balancer Config
+        API.
+      properties:
+        apiVersion:
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+          type: string
+        kind:
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: LoadBalancerConfigSpec defines the desired state of LoadBalancerConfig.
+          properties:
+            annotations:
+              additionalProperties:
+                type: string
+              description: Annotations key-value pairs to apply as annotations to
+                the load balancer
+              type: object
+          type: object
+        status:
+          default:
+            inUse: false
+          description: LoadBalancerConfigStatus defines the observed state of LoadBalancerConfig.
+          properties:
+            inUse:
+              default: false
+              description: InUse is a flag that indicates if the config is used
+                by any DB cluster.
+              type: boolean
+            lastObservedGeneration:
+              description: LastObservedGeneration is the most recent generation
+                observed for this LoadBalancerConfig.
               format: int64
               type: integer
           type: object
