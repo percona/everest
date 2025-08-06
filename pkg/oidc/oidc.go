@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
+	"net/url"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/v2/jwk"
@@ -33,13 +33,14 @@ import (
 //
 //nolint:tagliatelle
 type ProviderConfig struct {
-	Issuer        string   `json:"issuer"`
-	AuthURL       string   `json:"authorization_endpoint"`
-	TokenURL      string   `json:"token_endpoint"`
-	DeviceAuthURL string   `json:"device_authorization_endpoint"`
-	JWKSURL       string   `json:"jwks_uri"`
-	UserInfoURL   string   `json:"userinfo_endpoint"`
-	Algorithms    []string `json:"id_token_signing_alg_values_supported"`
+	OriginalIssuer string
+	Issuer         string   `json:"issuer"`
+	AuthURL        string   `json:"authorization_endpoint"`
+	TokenURL       string   `json:"token_endpoint"`
+	DeviceAuthURL  string   `json:"device_authorization_endpoint"`
+	JWKSURL        string   `json:"jwks_uri"`
+	UserInfoURL    string   `json:"userinfo_endpoint"`
+	Algorithms     []string `json:"id_token_signing_alg_values_supported"`
 }
 
 const (
@@ -51,7 +52,10 @@ const (
 var ErrUnexpectedSatusCode = fmt.Errorf("unexpected status code")
 
 func NewProviderConfig(ctx context.Context, issuer string) (ProviderConfig, error) {
-	wellKnown := strings.TrimSuffix(issuer, "/") + WellKnownPath
+	wellKnown, err := url.JoinPath(issuer, WellKnownPath)
+	if err != nil {
+		return ProviderConfig{}, errors.Join(err, errors.New("failed to join issuer url and well-known path"))
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, wellKnown, nil)
 	if err != nil {
 		return ProviderConfig{}, err
@@ -75,6 +79,11 @@ func NewProviderConfig(ctx context.Context, issuer string) (ProviderConfig, erro
 	if err := json.Unmarshal(body, &result); err != nil {
 		return ProviderConfig{}, fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
+
+	// Is appears that issuerUrl provided by user is not always
+	// the same as the one fetched from the OIDC provider's .well-known/openid-configuration (Microsoft Entra case).
+	// Need to store the original issuer URL too.
+	result.OriginalIssuer = issuer
 	return result, nil
 }
 
