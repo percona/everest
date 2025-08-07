@@ -6,35 +6,39 @@ import {
   getParticularLoadBalancerConfigFn,
   updateLoadBalancerConfigFn,
 } from 'api/loadBalancer';
+import {
+  LoadBalancerConfig,
+  LoadBalancerConfigRequest,
+} from 'shared-types/loadbalancer.types';
 
 export const useLoadBalancerConfigs = () =>
   // TODO add types
-  useQuery({
+  useQuery<LoadBalancerConfigRequest>({
     queryKey: ['load-balancer-configs'],
     queryFn: getLoadBalancerConfigsFn,
   });
 
 export const useLoadBalancerConfig = (configName: string) =>
-  useQuery({
+  useQuery<LoadBalancerConfig>({
     queryKey: ['load-balancer-config', configName],
     queryFn: () => getParticularLoadBalancerConfigFn(configName),
     enabled: !!configName,
   });
 
 export const useCreateLoadBalancerConfig = () => {
-  return useMutation({
+  return useMutation<LoadBalancerConfig, unknown, LoadBalancerConfigRequest>({
     mutationFn: (payload: object) => createLoadBalancerConfigFn(payload),
   });
 };
 
 export const useDeleteLoadBalancerConfig = (configName: string) => {
-  return useMutation({
+  return useMutation<unknown, unknown, void>({
     mutationFn: () => deleteParticularLoadBalancerConfigFn(configName),
   });
 };
 
 export const useUpdateLoadBalancerConfig = (configName: string) => {
-  return useMutation({
+  return useMutation<LoadBalancerConfig, unknown, LoadBalancerConfigRequest>({
     mutationFn: (payload: object) =>
       updateLoadBalancerConfigFn(configName, payload),
   });
