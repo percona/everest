@@ -213,8 +213,6 @@ type KubernetesConnector interface {
 	ListLoadBalancerConfigs(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.LoadBalancerConfigList, error)
 	// GetLoadBalancerConfig returns load balancer config(full object) that matches the criteria.
 	GetLoadBalancerConfig(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.LoadBalancerConfig, error)
-	// GetLoadBalancerConfigMeta returns load balancer config(metadata only) that matches the criteria.
-	GetLoadBalancerConfigMeta(ctx context.Context, key ctrlclient.ObjectKey) (*metav1.PartialObjectMetadata, error)
 	// DeleteLoadBalancerConfig deletes load balancer config that matches the criteria.
 	DeleteLoadBalancerConfig(ctx context.Context, obj *everestv1alpha1.LoadBalancerConfig) error
 	// CreateLoadBalancerConfig creates load balancer config.

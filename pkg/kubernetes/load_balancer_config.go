@@ -18,7 +18,6 @@ package kubernetes
 import (
 	"context"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -41,16 +40,6 @@ func (k *Kubernetes) GetLoadBalancerConfig(ctx context.Context, key ctrlclient.O
 		return nil, err
 	}
 	return result, nil
-}
-
-// GetLoadBalancerConfigMeta returns load balancer config(metadata only) that matches the criteria.
-func (k *Kubernetes) GetLoadBalancerConfigMeta(ctx context.Context, key ctrlclient.ObjectKey) (*metav1.PartialObjectMetadata, error) {
-	objMeta := &metav1.PartialObjectMetadata{}
-	objMeta.SetGroupVersionKind(everestv1alpha1.GroupVersion.WithKind("LoadBalancerConfig"))
-	if err := k.k8sClient.Get(ctx, key, objMeta); err != nil {
-		return nil, err
-	}
-	return objMeta, nil
 }
 
 // DeleteLoadBalancerConfig deletes load balancer config that matches the criteria.
