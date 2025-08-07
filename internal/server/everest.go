@@ -437,7 +437,8 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 			err = &echo.HTTPError{
 				Code: http.StatusNotFound,
 			}
-		case k8serrors.IsForbidden(err):
+		case k8serrors.IsForbidden(err),
+			k8serrors.IsInvalid(err):
 			statusError := &k8serrors.StatusError{}
 			if errors.As(err, &statusError) {
 				err = &echo.HTTPError{
@@ -472,8 +473,9 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 }
 
 func trimWebhookErrorText(fullText string) string {
-	webhookPrefix := `admission webhook "vmonitoringconfig-v1alpha1.everest.percona.com" denied the request: `
-	return strings.TrimPrefix(fullText, webhookPrefix)
+	monitoringWebhookPrefix := `admission webhook "vmonitoringconfig-v1alpha1.everest.percona.com" denied the request: `
+	loadBalancerConfigWebhookPrefix := `admission webhook "vloadbalancerconfig-v1alpha1.everest.percona.com" denied the request: `
+	return strings.TrimPrefix(strings.TrimPrefix(fullText, loadBalancerConfigWebhookPrefix), monitoringWebhookPrefix)
 }
 
 // createSessionManagerClient creates a k8s client for a session manager.
