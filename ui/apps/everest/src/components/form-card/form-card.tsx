@@ -9,43 +9,43 @@ const Header = ({
   controlComponent,
 }: {
   title: string;
-  controlComponent: React.ReactNode;
+  controlComponent?: React.ReactNode;
 }) => (
   <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
     <Typography variant="sectionHeading">{title}</Typography>
-    <Box
-      sx={{
-        flexBasis: '20%',
-        maxWidth: '40%',
-        textAlign: 'right',
-      }}
-    >
-      {controlComponent}
-    </Box>
+    {controlComponent && (
+      <Box
+        sx={{
+          flexBasis: '20%',
+          maxWidth: '40%',
+          textAlign: 'right',
+        }}
+      >
+        {controlComponent}
+      </Box>
+    )}
   </Box>
 );
 
 type FormCardProps = {
   title: string;
-  description?: string | React.ReactNode;
-  controlComponent: React.ReactNode;
+  controlComponent?: React.ReactNode;
+  description?: string;
+  cardContent?: React.ReactNode;
 };
 
 const FormCard: React.FC<FormCardProps> = ({
   title,
   description = '',
+  cardContent,
   controlComponent,
 }) => {
   return (
     <RoundedBox
       title={<Header title={title} controlComponent={controlComponent} />}
     >
-      {description &&
-        (typeof description === 'string' ? (
-          <Typography variant="caption">{description}</Typography>
-        ) : (
-          description
-        ))}
+      {description && <Typography variant="caption">{description}</Typography>}
+      {cardContent && <Box sx={{ mt: 1 }}>{cardContent}</Box>}
     </RoundedBox>
   );
 };
