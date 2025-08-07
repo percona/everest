@@ -185,6 +185,36 @@ func (_m *MockHandler) CreateDatabaseClusterSecret(ctx context.Context, namespac
 	return r0, r1
 }
 
+// CreateLoadBalancerConfig provides a mock function with given fields: ctx, psp
+func (_m *MockHandler) CreateLoadBalancerConfig(ctx context.Context, psp *v1alpha1.LoadBalancerConfig) (*v1alpha1.LoadBalancerConfig, error) {
+	ret := _m.Called(ctx, psp)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateLoadBalancerConfig")
+	}
+
+	var r0 *v1alpha1.LoadBalancerConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.LoadBalancerConfig) (*v1alpha1.LoadBalancerConfig, error)); ok {
+		return rf(ctx, psp)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.LoadBalancerConfig) *v1alpha1.LoadBalancerConfig); ok {
+		r0 = rf(ctx, psp)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.LoadBalancerConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.LoadBalancerConfig) error); ok {
+		r1 = rf(ctx, psp)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateMonitoringInstance provides a mock function with given fields: ctx, namespace, req
 func (_m *MockHandler) CreateMonitoringInstance(ctx context.Context, namespace string, req *api.MonitoringInstanceCreateParams) (*v1alpha1.MonitoringConfig, error) {
 	ret := _m.Called(ctx, namespace, req)
@@ -310,6 +340,24 @@ func (_m *MockHandler) DeleteDatabaseClusterRestore(ctx context.Context, namespa
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
 		r0 = rf(ctx, namespace, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteLoadBalancerConfig provides a mock function with given fields: ctx, name
+func (_m *MockHandler) DeleteLoadBalancerConfig(ctx context.Context, name string) error {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteLoadBalancerConfig")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -646,6 +694,36 @@ func (_m *MockHandler) GetKubernetesClusterResources(ctx context.Context) (*api.
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetLoadBalancerConfig provides a mock function with given fields: ctx, name
+func (_m *MockHandler) GetLoadBalancerConfig(ctx context.Context, name string) (*v1alpha1.LoadBalancerConfig, error) {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLoadBalancerConfig")
+	}
+
+	var r0 *v1alpha1.LoadBalancerConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v1alpha1.LoadBalancerConfig, error)); ok {
+		return rf(ctx, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v1alpha1.LoadBalancerConfig); ok {
+		r0 = rf(ctx, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.LoadBalancerConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1020,6 +1098,36 @@ func (_m *MockHandler) ListDatabaseEngines(ctx context.Context, namespace string
 	return r0, r1
 }
 
+// ListLoadBalancerConfigs provides a mock function with given fields: ctx
+func (_m *MockHandler) ListLoadBalancerConfigs(ctx context.Context) (*v1alpha1.LoadBalancerConfigList, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLoadBalancerConfigs")
+	}
+
+	var r0 *v1alpha1.LoadBalancerConfigList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*v1alpha1.LoadBalancerConfigList, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *v1alpha1.LoadBalancerConfigList); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.LoadBalancerConfigList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListMonitoringInstances provides a mock function with given fields: ctx, namespaces
 func (_m *MockHandler) ListMonitoringInstances(ctx context.Context, namespaces string) (*v1alpha1.MonitoringConfigList, error) {
 	ret := _m.Called(ctx, namespaces)
@@ -1228,6 +1336,36 @@ func (_m *MockHandler) UpdateDatabaseEngine(ctx context.Context, req *v1alpha1.D
 
 	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.DatabaseEngine) error); ok {
 		r1 = rf(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateLoadBalancerConfig provides a mock function with given fields: ctx, psp
+func (_m *MockHandler) UpdateLoadBalancerConfig(ctx context.Context, psp *v1alpha1.LoadBalancerConfig) (*v1alpha1.LoadBalancerConfig, error) {
+	ret := _m.Called(ctx, psp)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateLoadBalancerConfig")
+	}
+
+	var r0 *v1alpha1.LoadBalancerConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.LoadBalancerConfig) (*v1alpha1.LoadBalancerConfig, error)); ok {
+		return rf(ctx, psp)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1alpha1.LoadBalancerConfig) *v1alpha1.LoadBalancerConfig); ok {
+		r0 = rf(ctx, psp)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.LoadBalancerConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.LoadBalancerConfig) error); ok {
+		r1 = rf(ctx, psp)
 	} else {
 		r1 = ret.Error(1)
 	}
