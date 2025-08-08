@@ -79,9 +79,12 @@ test('T190 - Verify user is logged out and token is invalidated after updating u
     await expect(page.getByTestId('user-appbar-button')).toBeVisible();
 
     // Update user password via CLI
-    execSync(`go run ${cliPath} accounts set-password -u ${USER} -p ${process.env.SESSION_PASS}`, {
-      stdio: 'inherit',
-    });
+    execSync(
+      `go run ${cliPath} accounts set-password -u ${USER} -p ${process.env.SESSION_PASS}`,
+      {
+        stdio: 'inherit',
+      }
+    );
 
     // After password update, UI should auto-logout
     await page.waitForURL('**/login', { timeout: 10000 });
