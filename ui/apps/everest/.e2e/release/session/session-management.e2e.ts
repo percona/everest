@@ -59,6 +59,39 @@ test('T191 - Verify token invalidity after user logout from Everest UI - Everest
     expectUnauthorized(request, token));
 });
 
+test('T190 - Verify user is logged out and token is invalidated after updating user password', async ({
+  page,
+  request,
+}) => {
+  let token: string;
+
+  await test.step('Login as session user', async () => {
+    await loginSessionUser(page, true);
+    token = await getSessionToken();
+    expect(token).toBeTruthy();
+  });
+
+  await test.step('Token works before logout', () =>
+    expectAuthorized(request, token));
+
+  await test.step('Update user password and verify UI logout', async () => {
+    // Confirm user is logged in
+    await expect(page.getByTestId('user-appbar-button')).toBeVisible();
+
+    // Update user password via CLI
+    execSync(`go run ${cliPath} accounts set-password -u ${USER} -p ${process.env.SESSION_PASS}`, {
+      stdio: 'inherit',
+    });
+
+    // After password update, UI should auto-logout
+    await page.waitForURL('**/login', { timeout: 10000 });
+    await expect(page.getByTestId('login-button')).toBeVisible();
+  });
+
+  await test.step('Token invalid after logout', () =>
+    expectUnauthorized(request, token));
+});
+
 test('T189 - Verify user is logged out and token is invalidated after user deletion', async ({
   page,
   request,
