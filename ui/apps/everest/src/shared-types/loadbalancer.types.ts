@@ -16,7 +16,7 @@
 export interface LoadBalancerConfigRequest {
   apiVersion?: string;
   kind?: string;
-  metadata?: object;
+  metadata?: { resourceVersion?: string; name: string };
   spec?: {
     annotations?: Record<string, string>;
   };
@@ -26,13 +26,13 @@ export interface LoadBalancerConfigListResponse {
   apiVersion?: string;
   kind?: string;
   items: LoadBalancerConfig[];
-  metadata?: object;
+  metadata?: { resourceVersion?: string; name: string };
 }
 
 export interface LoadBalancerConfig {
   apiVersion?: string;
   kind?: string;
-  metadata?: object;
+  metadata?: { resourceVersion?: string; name: string };
   spec?: {
     annotations?: Record<string, string>;
   };

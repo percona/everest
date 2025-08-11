@@ -43,7 +43,8 @@ import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { SELECT_WIDTH } from './constants';
+import { exposureMethods, SELECT_WIDTH } from './constants';
+import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -73,6 +74,16 @@ export const AdvancedConfigurationForm = ({
     usePodSchedulingPolicies(dbTypeToDbEngine(dbType), true, {
       refetchInterval: 2000,
     });
+
+  const exposureMethodValue =
+    watch(AdvancedConfigurationFields.exposureMethod) ?? '';
+  const isExposureMethodLoadBalancer = exposureMethodValue === 'Load balancer';
+
+  const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
+    useLoadBalancerConfigs('load-balancer-configs');
+
+  const loadBalancerConfigValue =
+    watch(AdvancedConfigurationFields.loadBalancerConfig) ?? '';
 
   const handleOnPolicyInfoClick = () => {
     const policyName = getValues<string>(
@@ -137,6 +148,21 @@ export const AdvancedConfigurationForm = ({
     setDefaultsOnLoad,
     automaticallyTogglePodSchedulingPolicySwitch,
   ]);
+
+  useEffect(() => {
+    if (!exposureMethodValue) {
+      setValue(AdvancedConfigurationFields.exposureMethod, exposureMethods[0]);
+    }
+  }, [setValue, exposureMethodValue, getFieldState]);
+
+  useEffect(() => {
+    if (!loadBalancerConfigValue) {
+      setValue(
+        AdvancedConfigurationFields.loadBalancerConfig,
+        loadBalancerConfigs?.items?.[0]?.metadata?.name ?? ''
+      );
+    }
+  }, [loadBalancerConfigValue, loadBalancerConfigs?.items, setValue]);
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
@@ -254,72 +280,81 @@ export const AdvancedConfigurationForm = ({
                 {Messages.cards.exposureMethod.title}
               </Typography>
               <SelectInput
-                name={AdvancedConfigurationFields.podSchedulingPolicy}
-                loading={fetchingPolicies || loadingDefaultsForEdition}
+                name={AdvancedConfigurationFields.exposureMethod}
+                loading={loadingDefaultsForEdition}
                 formControlProps={{
                   sx: {
                     width: SELECT_WIDTH,
                     mt: 0,
                   },
                 }}
+                selectFieldProps={{
+                  value: exposureMethodValue,
+                }}
               >
-                {policies.map((policy) => (
-                  <MenuItem
-                    value={policy.metadata.name}
-                    key={policy.metadata.name}
-                  >
-                    {policy.metadata.name}
+                {exposureMethods.map((method) => (
+                  <MenuItem value={method} key={method}>
+                    {method}
                   </MenuItem>
                 ))}
               </SelectInput>
             </Box>
 
-            <FormCard
-              title={Messages.cards.loadBalancerConfiguration.title}
-              controlComponent={
-                <Box display="flex" ml="auto" alignItems="center">
-                  <SelectInput
-                    name={AdvancedConfigurationFields.podSchedulingPolicy}
-                    loading={fetchingPolicies || loadingDefaultsForEdition}
-                    formControlProps={{
-                      sx: {
-                        width: SELECT_WIDTH,
-                        mt: 0,
-                      },
-                    }}
-                  >
-                    {policies.map((policy) => (
-                      <MenuItem
-                        value={policy.metadata.name}
-                        key={policy.metadata.name}
+            {isExposureMethodLoadBalancer && (
+              <>
+                <FormCard
+                  title={Messages.cards.loadBalancerConfiguration.title}
+                  controlComponent={
+                    <Box display="flex" ml="auto" alignItems="center">
+                      <SelectInput
+                        name={AdvancedConfigurationFields.loadBalancerConfig}
+                        loading={
+                          fetchingLoadBalancer || loadingDefaultsForEdition
+                        }
+                        formControlProps={{
+                          sx: {
+                            width: SELECT_WIDTH,
+                            mt: 0,
+                          },
+                        }}
                       >
-                        {policy.metadata.name}
-                      </MenuItem>
-                    ))}
-                  </SelectInput>
-                  {!!policies.length && (
-                    <IconButton onClick={handleOnPolicyInfoClick}>
-                      <InfoIcon sx={{ width: '20px' }} />
-                    </IconButton>
-                  )}
-                </Box>
-              }
-            />
-            <FormCard
-              title={Messages.cards.sourceRange.title}
-              description={Messages.cards.sourceRange.description}
-              cardContent={
-                <Stack data-testid="external-access-fields">
-                  <TextArray
-                    placeholder={Messages.sourceRangePlaceholder}
-                    fieldName={AdvancedConfigurationFields.sourceRanges}
-                    fieldKey="sourceRange"
-                    label={Messages.cards.sourceRange.title}
-                    handleBlur={handleBlur}
-                  />
-                </Stack>
-              }
-            />
+                        {loadBalancerConfigs?.items.map((loadBlancerConfig) => (
+                          <MenuItem
+                            value={loadBlancerConfig?.metadata?.name}
+                            key={loadBlancerConfig?.metadata?.name}
+                          >
+                            {loadBlancerConfig?.metadata?.name}
+                          </MenuItem>
+                        ))}
+                      </SelectInput>
+                      {!loadBalancerConfigs?.items.length && (
+                        <IconButton
+                          sx={{ ml: '20px' }}
+                          onClick={handleOnPolicyInfoClick}
+                        >
+                          <InfoIcon sx={{ width: '20px' }} />
+                        </IconButton>
+                      )}
+                    </Box>
+                  }
+                />
+                <FormCard
+                  title={Messages.cards.sourceRange.title}
+                  description={Messages.cards.sourceRange.description}
+                  cardContent={
+                    <Stack data-testid="external-access-fields">
+                      <TextArray
+                        placeholder={Messages.sourceRangePlaceholder}
+                        fieldName={AdvancedConfigurationFields.sourceRanges}
+                        fieldKey="sourceRange"
+                        label={Messages.cards.sourceRange.title}
+                        handleBlur={handleBlur}
+                      />
+                    </Stack>
+                  }
+                />
+              </>
+            )}
           </Box>
         }
       />

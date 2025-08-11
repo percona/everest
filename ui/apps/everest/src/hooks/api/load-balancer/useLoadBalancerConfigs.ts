@@ -8,38 +8,44 @@ import {
 } from 'api/loadBalancer';
 import {
   LoadBalancerConfig,
+  LoadBalancerConfigListResponse,
   LoadBalancerConfigRequest,
 } from 'shared-types/loadbalancer.types';
 
-export const useLoadBalancerConfigs = () =>
-  // TODO add types
-  useQuery<LoadBalancerConfigRequest>({
-    queryKey: ['load-balancer-configs'],
+export const useLoadBalancerConfigs = (
+  LOAD_BALANCER_CONFIGS_QUERY_KEY: string
+) =>
+  useQuery<LoadBalancerConfigListResponse>({
+    queryKey: [LOAD_BALANCER_CONFIGS_QUERY_KEY],
     queryFn: getLoadBalancerConfigsFn,
   });
 
-export const useLoadBalancerConfig = (configName: string) =>
+export const useLoadBalancerConfig = (
+  configName: string,
+  LOAD_BALANCER_CONFIG_QUERY_KEY: string
+) =>
   useQuery<LoadBalancerConfig>({
-    queryKey: ['load-balancer-config', configName],
+    queryKey: [LOAD_BALANCER_CONFIG_QUERY_KEY, configName],
     queryFn: () => getParticularLoadBalancerConfigFn(configName),
     enabled: !!configName,
   });
 
 export const useCreateLoadBalancerConfig = () => {
   return useMutation<LoadBalancerConfig, unknown, LoadBalancerConfigRequest>({
-    mutationFn: (payload: object) => createLoadBalancerConfigFn(payload),
+    mutationFn: (payload: LoadBalancerConfigRequest) =>
+      createLoadBalancerConfigFn(payload),
+  });
+};
+
+export const useUpdateLoadBalancerConfig = (configName: string) => {
+  return useMutation<LoadBalancerConfig, unknown, LoadBalancerConfigRequest>({
+    mutationFn: (payload: LoadBalancerConfigRequest) =>
+      updateLoadBalancerConfigFn(configName, payload),
   });
 };
 
 export const useDeleteLoadBalancerConfig = (configName: string) => {
   return useMutation<unknown, unknown, void>({
     mutationFn: () => deleteParticularLoadBalancerConfigFn(configName),
-  });
-};
-
-export const useUpdateLoadBalancerConfig = (configName: string) => {
-  return useMutation<LoadBalancerConfig, unknown, LoadBalancerConfigRequest>({
-    mutationFn: (payload: object) =>
-      updateLoadBalancerConfigFn(configName, payload),
   });
 };
