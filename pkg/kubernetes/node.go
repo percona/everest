@@ -25,7 +25,7 @@ func (k *Kubernetes) ListWorkerNodes(ctx context.Context, opts ...ctrlclient.Lis
 		"node.kubernetes.io/unschedulable":               corev1.TaintEffectNoSchedule,
 		"node-role.kubernetes.io/master":                 corev1.TaintEffectNoSchedule,
 	}
-	slices.DeleteFunc(result.Items, func(node corev1.Node) bool {
+	result.Items = slices.DeleteFunc(result.Items, func(node corev1.Node) bool {
 		for _, taint := range node.Spec.Taints {
 			effect, ok := forbidenTaints[taint.Key]
 			if ok && effect == taint.Effect {
