@@ -1,10 +1,15 @@
-import { LoadBalancerConfigListResponse, LoadBalancerConfigRequest } from 'shared-types/loadbalancer.types';
+import {
+  LoadBalancerConfigListResponse,
+  LoadBalancerConfigRequest,
+} from 'shared-types/loadbalancer.types';
 import { api } from './api';
 
 const loadBalancerUrl = '/load-balancer-configs';
 
 export const getLoadBalancerConfigsFn = async () => {
-  const response = await api.get<LoadBalancerConfigListResponse>(`${loadBalancerUrl}/`);
+  const response = await api.get<LoadBalancerConfigListResponse>(
+    `${loadBalancerUrl}/`
+  );
 
   return response.data;
 };
