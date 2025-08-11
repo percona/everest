@@ -53,7 +53,7 @@ func (k *Kubernetes) GetDBNamespaces(ctx context.Context, opts ...ctrlclient.Lis
 
 	internalNs := []string{common.SystemNamespace, common.MonitoringNamespace}
 	// filter out Everest system and monitoring namespaces.
-	slices.DeleteFunc(result.Items, func(ns corev1.Namespace) bool {
+	result.Items = slices.DeleteFunc(result.Items, func(ns corev1.Namespace) bool {
 		return slices.Contains(internalNs, ns.Name)
 	})
 	return result, nil
