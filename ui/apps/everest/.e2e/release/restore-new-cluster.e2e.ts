@@ -38,7 +38,7 @@ import {
   findRowAndClickActions,
 } from '@e2e/utils/table';
 import { clickCreateSchedule } from '@e2e/pr/db-cluster-details/utils';
-import { prepareTestDB, dropTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
+import { prepareTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
@@ -355,7 +355,10 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Check restored DB list and status', async () => {
           await waitForStatus(page, restoredClusterName, 'Initializing', 15000);
-          await waitForStatus(page, restoredClusterName, 'Restoring', 600000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, restoredClusterName, 'Restoring', 600000);
+          }
+
           await waitForStatus(page, restoredClusterName, 'Up', 2400000);
         });
 
