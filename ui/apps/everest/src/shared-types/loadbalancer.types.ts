@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { DbEngineType } from '@percona/types';
+
 export interface LoadBalancerConfigRequest {
   apiVersion?: string;
   kind?: string;
@@ -22,7 +24,7 @@ export interface LoadBalancerConfigRequest {
   };
 }
 
-export interface LoadBalancerConfigListResponse {
+export interface LoadBalancerConfigList {
   apiVersion?: string;
   kind?: string;
   items: LoadBalancerConfig[];
@@ -35,6 +37,7 @@ export interface LoadBalancerConfig {
   metadata?: { resourceVersion?: string; name: string };
   spec?: {
     annotations?: Record<string, string>;
+    engineType?: DbEngineType;
   };
   status?: {
     inUse?: boolean;
