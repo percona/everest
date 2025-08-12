@@ -18,10 +18,10 @@ package rbac
 import (
 	"context"
 	"fmt"
-	"github.com/percona/everest/pkg/rbac"
 	"slices"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest/pkg/rbac"
 )
 
 // CreateLoadBalancerConfig creates a new load balancer config.
