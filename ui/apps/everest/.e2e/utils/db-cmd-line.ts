@@ -118,7 +118,7 @@ export const queryMySQL = async (
   cluster: string,
   namespace: string,
   query: string,
-  retry: number = 1
+  retry: number = 2
 ): Promise<string> => {
   const password = await getPXCPassword(cluster, namespace);
   const clientPod = await getDBClientPod('mysql', 'db-client');
@@ -152,7 +152,7 @@ export const queryPSMDB = async (
   namespace: string,
   db: string,
   query: string,
-  retry: number = 1
+  retry: number = 2
 ): Promise<string> => {
   const password = await getPSMDBPassword(cluster, namespace);
   const clientPod = await getDBClientPod('psmdb', 'db-client');
@@ -191,7 +191,7 @@ export const queryPG = async (
   namespace: string,
   db: string,
   query: string,
-  retry: number = 1
+  retry: number = 2
 ): Promise<string> => {
   const password = await getPGPassword(cluster, namespace);
   const clientPod = await getDBClientPod('postgresql', 'db-client');
