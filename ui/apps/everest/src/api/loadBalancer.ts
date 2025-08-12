@@ -7,7 +7,7 @@ import { api } from './api';
 const loadBalancerUrl = '/load-balancer-configs';
 
 export const getLoadBalancerConfigsFn = async () => {
-  const response = await api.get<LoadBalancerConfigList>(`${loadBalancerUrl}`);
+  const response = await api.get<LoadBalancerConfigList>(`${loadBalancerUrl}/`);
 
   return response.data;
 };
