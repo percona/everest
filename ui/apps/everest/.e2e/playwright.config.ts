@@ -49,6 +49,7 @@ export default defineConfig({
     ['github'],
     ['list'],
     ['html', { open: 'never', outputFolder: './playwright-report' }],
+    ['json', { outputFile: './playwright-report/report.json' }]
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
