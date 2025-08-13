@@ -1,8 +1,9 @@
 import { Box, Typography } from '@mui/material';
 import { FormCard } from 'components/form-card';
-import { policies } from './policies.messages';
+import { policies } from './constants';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Link } from 'react-router-dom';
+import { messages } from './policies.messages';
 
 const Policies = () => {
   return (
@@ -15,8 +16,7 @@ const Policies = () => {
       }}
     >
       <Typography variant="body2" py={2}>
-        Define and manage policies that control how users can provision
-        clusters.
+        {messages.policiesDescription}
       </Typography>
       {policies.map((policy) => (
         <FormCard
@@ -34,7 +34,7 @@ const Policies = () => {
                 }}
               >
                 <Typography variant="body2" color="primary.main">
-                  Configure
+                  {messages.configure}
                 </Typography>
                 <ArrowForwardIcon sx={{ color: 'primary.main' }} />
               </Box>

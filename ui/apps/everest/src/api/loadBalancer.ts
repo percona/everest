@@ -7,7 +7,7 @@ import { api } from './api';
 const loadBalancerUrl = '/load-balancer-configs';
 
 export const getLoadBalancerConfigsFn = async () => {
-  const response = await api.get<LoadBalancerConfigList>(`${loadBalancerUrl}/`);
+  const response = await api.get<LoadBalancerConfigList>(`${loadBalancerUrl}`);
 
   return response.data;
 };
@@ -17,10 +17,16 @@ export const getParticularLoadBalancerConfigFn = async (configName: string) => {
   return response.data;
 };
 
-export const createLoadBalancerConfigFn = async (
-  payload: LoadBalancerConfigRequest
-) => {
-  const response = await api.post(`${loadBalancerUrl}/`, payload);
+export const createLoadBalancerConfigFn = async (name: string) => {
+  const response = await api.post(`${loadBalancerUrl}`, {
+    metadata: {
+      name,
+    },
+    spec: {
+      annotations: { key: 'key', value: 'value' },
+    },
+  });
+
   return response.data;
 };
 

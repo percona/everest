@@ -21,7 +21,10 @@ import {
   TextInput,
 } from '@percona/ui-lib';
 import { Messages } from './messages';
-import { AdvancedConfigurationFields } from './advanced-configuration.types';
+import {
+  AdvancedConfigurationFields,
+  ExposureMethod,
+} from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
 import { DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
@@ -43,7 +46,7 @@ import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { exposureMethods, SELECT_WIDTH } from './constants';
+import { SELECT_WIDTH } from './constants';
 import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 
 interface AdvancedConfigurationFormProps {
@@ -75,12 +78,17 @@ export const AdvancedConfigurationForm = ({
       refetchInterval: 2000,
     });
 
+  const exposureMethods = Object.values(ExposureMethod);
+
   const exposureMethodValue =
     watch(AdvancedConfigurationFields.exposureMethod) ?? '';
-  const isExposureMethodLoadBalancer = exposureMethodValue === 'Load balancer';
+  const isExposureMethodLoadBalancer =
+    exposureMethodValue === ExposureMethod.LoadBalancer;
 
   const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
-    useLoadBalancerConfigs('load-balancer-configs');
+    useLoadBalancerConfigs('load-balancer-configs', {
+      refetchInterval: 10000,
+    });
 
   const loadBalancerConfigValue =
     watch(AdvancedConfigurationFields.loadBalancerConfig) ?? '';
@@ -153,7 +161,7 @@ export const AdvancedConfigurationForm = ({
     if (!exposureMethodValue) {
       setValue(AdvancedConfigurationFields.exposureMethod, exposureMethods[0]);
     }
-  }, [setValue, exposureMethodValue, getFieldState]);
+  }, [setValue, exposureMethodValue, getFieldState, exposureMethods]);
 
   useEffect(() => {
     if (!loadBalancerConfigValue) {

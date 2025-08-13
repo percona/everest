@@ -24,6 +24,7 @@ import Policies from 'pages/settings/policies/policies';
 import PoliciesList from 'pages/settings/policies/pod-scheduling-policies/policies-list';
 import PolicyDetails from 'pages/settings/policies/pod-scheduling-policies/policy-details';
 import LoadBalancerConfiguration from 'pages/settings/policies/load-balancer-configuration';
+import LoadBalancerConfigDetails from 'pages/settings/policies/load-balancer-configuration/load-balancer-config-detials/load-balancer-config-detials';
 
 const router = createBrowserRouter([
   {
@@ -118,6 +119,10 @@ const router = createBrowserRouter([
       {
         path: '/settings/policies/load-balancer-configuration',
         element: <LoadBalancerConfiguration />,
+      },
+      {
+        path: '/settings/policies/load-balancer-configuration/:configName',
+        element: <LoadBalancerConfigDetails />,
       },
       {
         path: '/settings/namespaces/:namespace',

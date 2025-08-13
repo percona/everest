@@ -4,24 +4,39 @@ import { Table } from '@percona/ui-lib';
 import EmptyState from 'components/empty-state';
 import {
   useCreateLoadBalancerConfig,
+  useDeleteLoadBalancerConfig,
   useLoadBalancerConfigs,
 } from 'hooks/api/load-balancer';
 import { useRBACPermissions } from 'hooks/rbac';
 import { useNavigate } from 'react-router-dom';
-// import PolicyRowActions from '../../pod-scheduling-policies/policies-list/policy-row-actions';
-// import { EVEREST_READ_ONLY_FINALIZER } from 'consts';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import LoadBalancerDialog from '../load-balancer-dialog';
+import LoadBalancerRowActions from '../load-balancer-row-actions';
+import DeleteLoadBalancerConfig from './delete-config-dialog';
+import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
+import { useQueryClient } from '@tanstack/react-query';
+import { messages } from '../load-balancer.messages';
 
 const LoadBalancerConfigurationList = () => {
   const { data: loadBalancerConfigurations } = useLoadBalancerConfigs(
-    'load-balancer-configs'
+    'load-balancer-configs',
+    {
+      refetchInterval: 10000,
+    }
   );
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const selectedConfig = useRef<LoadBalancerConfig | null>(null);
+  const queryClient = useQueryClient();
 
   const navigate = useNavigate();
   const { canCreate } = useRBACPermissions('load-balancer-configuration');
-  const { mutate: createConfiguration } = useCreateLoadBalancerConfig();
+  const { mutate: createConfiguration } = useCreateLoadBalancerConfig(
+    'create-load-balancer-config'
+  );
+  const { mutate: deleteConfiguration } = useDeleteLoadBalancerConfig(
+    'delete-load-balancer-config'
+  );
 
   const columns = [
     {
@@ -32,11 +47,30 @@ const LoadBalancerConfigurationList = () => {
 
   const handleOnCreateConfiguration = (data: { name: string }) => {
     setDialogOpen(false);
-    createConfiguration({
-      metadata: {
-        name: data.name,
-      },
-    });
+    createConfiguration(data.name);
+  };
+
+  const handleOnDeleteIconClick = (config: LoadBalancerConfig) => {
+    selectedConfig.current = config;
+    setDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    selectedConfig.current = null;
+  };
+
+  const handleOnDeleteConfig = () => {
+    if (selectedConfig.current && selectedConfig.current.metadata) {
+      deleteConfiguration(selectedConfig.current.metadata.name, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: ['load-balancer-configs'],
+          });
+          handleCloseDeleteDialog();
+        },
+      });
+    }
   };
 
   return (
@@ -46,11 +80,11 @@ const LoadBalancerConfigurationList = () => {
         emptyState={
           <EmptyState
             onButtonClick={() => setDialogOpen(true)}
-            buttonText="Create configuration"
+            buttonText={messages.configurationList.createButton}
             showCreationButton={canCreate}
             contentSlot={
               <Typography variant="body1">
-                You currently do not have any policy
+                {messages.configurationList.emptyState.contentSlot}
               </Typography>
             }
           />
@@ -65,28 +99,27 @@ const LoadBalancerConfigurationList = () => {
           )
         }
         renderTopToolbarCustomActions={() =>
-          canCreate ? (
+          canCreate && loadBalancerConfigurations?.items.length ? (
             <Button
-              size="small"
+              size="medium"
               startIcon={<Add />}
-              data-testid="add-policy"
-              variant="outlined"
+              data-testid="add-config"
+              variant="contained"
               onClick={() => setDialogOpen(true)}
               sx={{ display: 'flex' }}
             >
-              Create configuration
+              {messages.configurationList.createButton}
             </Button>
           ) : null
         }
-        // renderRowActions={({ row }) => (
-        //   <PolicyRowActions
-        //     policyName={row.original.metadata?.name ?? ''}
-        //     // readOnly={row.original.metadata.finalizers.includes(
-        //     //   EVEREST_READ_ONLY_FINALIZER
-        //     // )}
-        //     // handleOnDeleteIconClick={() => handleOnDeleteIconClick(row.original)}
-        //   />
-        // )}
+        renderRowActions={({ row }) => (
+          <LoadBalancerRowActions
+            configName={row.original.metadata?.name ?? ''}
+            handleOnDeleteIconClick={() =>
+              handleOnDeleteIconClick(row.original)
+            }
+          />
+        )}
       />
       {dialogOpen && (
         <LoadBalancerDialog
@@ -96,14 +129,14 @@ const LoadBalancerConfigurationList = () => {
           onSubmit={handleOnCreateConfiguration}
         />
       )}
-      {/* {deleteDialogOpen && (
-        <DeletePolicyDialog
-          open
-          policyName={selectedPolicy?.metadata.name ?? ''}
-          onClose={() => setDeleteDialogOpen(false)}
-          onConfirm={handleConfirmDelete}
+      {deleteDialogOpen && (
+        <DeleteLoadBalancerConfig
+          isOpen
+          configName={selectedConfig?.current?.metadata?.name ?? ''}
+          handleConfirmDelete={handleOnDeleteConfig}
+          handleCloseDeleteDialog={handleCloseDeleteDialog}
         />
-      )} */}
+      )}
     </>
   );
 };

@@ -1,29 +1,16 @@
 import { Box, Typography } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Link } from 'react-router-dom';
+import LoadBalancerConfigurationList from './configurations-list';
+import { messages } from './load-balancer.messages';
+import BackTo from '../shared/back-to';
 
 const LoadBalancerConfiguration = () => {
   return (
     <Box>
-      <Link to="/settings/policies" style={{ textDecoration: 'none' }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'start',
-            alignItems: 'center',
-            gap: 1,
-            ml: 2,
-          }}
-        >
-          <ArrowBackIcon sx={{ color: 'primary.main' }} />
-          <Typography variant="body2" color="primary.main">
-            Back to all policies
-          </Typography>
-        </Box>
-      </Link>
-      <Typography variant="h6" sx={{ mt: 2, mb: 3 }}>
-        Load Balancer Configuration
+      <BackTo to="/settings/policies" prevPage="all policies" />
+      <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+        {messages.title}
       </Typography>
+      <LoadBalancerConfigurationList />
     </Box>
   );
 };

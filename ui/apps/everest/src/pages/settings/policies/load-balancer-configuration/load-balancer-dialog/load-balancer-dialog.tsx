@@ -60,7 +60,7 @@ const LoadBalancerDialog = ({
     >
       <TextInput
         name="name"
-        label="Policy name"
+        label="Config name"
         textFieldProps={{ sx: { minHeight: '64px' } }}
         formHelperTextProps={{
           sx: {
