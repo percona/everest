@@ -21,4 +21,6 @@ export enum AdvancedConfigurationFields {
   storageClass = 'storageClass',
   podSchedulingPolicyEnabled = 'podSchedulingPolicyEnabled',
   podSchedulingPolicy = 'podSchedulingPolicy',
+  exposureMethod = 'exposureMethod',
+  loadBalancerConfig = 'loadBalancerConfig',
 }

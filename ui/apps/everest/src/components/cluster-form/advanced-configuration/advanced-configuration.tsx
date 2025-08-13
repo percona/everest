@@ -43,7 +43,8 @@ import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { SELECT_WIDTH } from './constants';
+import { exposureMethods, SELECT_WIDTH } from './constants';
+import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -63,8 +64,7 @@ export const AdvancedConfigurationForm = ({
   const { watch, setValue, getFieldState, getValues } = useFormContext();
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
   const selectedPolicy = useRef<PodSchedulingPolicy>();
-  const [externalAccess, engineParametersEnabled, policiesEnabled] = watch([
-    AdvancedConfigurationFields.externalAccess,
+  const [engineParametersEnabled, policiesEnabled] = watch([
     AdvancedConfigurationFields.engineParametersEnabled,
     AdvancedConfigurationFields.podSchedulingPolicyEnabled,
   ]);
@@ -74,6 +74,16 @@ export const AdvancedConfigurationForm = ({
     usePodSchedulingPolicies(dbTypeToDbEngine(dbType), true, {
       refetchInterval: 2000,
     });
+
+  const exposureMethodValue =
+    watch(AdvancedConfigurationFields.exposureMethod) ?? '';
+  const isExposureMethodLoadBalancer = exposureMethodValue === 'Load balancer';
+
+  const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
+    useLoadBalancerConfigs('load-balancer-configs');
+
+  const loadBalancerConfigValue =
+    watch(AdvancedConfigurationFields.loadBalancerConfig) ?? '';
 
   const handleOnPolicyInfoClick = () => {
     const policyName = getValues<string>(
@@ -139,6 +149,21 @@ export const AdvancedConfigurationForm = ({
     automaticallyTogglePodSchedulingPolicySwitch,
   ]);
 
+  useEffect(() => {
+    if (!exposureMethodValue) {
+      setValue(AdvancedConfigurationFields.exposureMethod, exposureMethods[0]);
+    }
+  }, [setValue, exposureMethodValue, getFieldState]);
+
+  useEffect(() => {
+    if (!loadBalancerConfigValue) {
+      setValue(
+        AdvancedConfigurationFields.loadBalancerConfig,
+        loadBalancerConfigs?.items?.[0]?.metadata?.name ?? ''
+      );
+    }
+  }, [loadBalancerConfigValue, loadBalancerConfigs?.items, setValue]);
+
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
       setValue(fieldName, `${value}/32`, { shouldValidate: true });
@@ -185,16 +210,14 @@ export const AdvancedConfigurationForm = ({
       />
       <FormCard
         title={Messages.cards.policies.title}
-        description={
+        description={Messages.cards.policies.description}
+        cardContent={
           <Box
             display="flex"
             justifyContent="space-between"
             alignItems="top"
             minHeight={'50px'}
           >
-            <Typography variant="caption" maxWidth="60%">
-              {Messages.cards.policies.description}
-            </Typography>
             {!!policiesEnabled && (
               <Box display="flex" ml="auto" alignItems="center">
                 <SelectInput
@@ -245,38 +268,101 @@ export const AdvancedConfigurationForm = ({
       />
       <FormCard
         title={Messages.cards.enableExternalAccess.title}
-        description={
-          <Stack>
-            <Typography variant="caption">
-              {Messages.cards.enableExternalAccess.description}
-            </Typography>
-            {externalAccess && (
-              <Stack sx={{ ml: 6 }} data-testid="external-access-fields">
-                <TextArray
-                  placeholder={Messages.sourceRangePlaceholder}
-                  fieldName={AdvancedConfigurationFields.sourceRanges}
-                  fieldKey="sourceRange"
-                  label={Messages.sourceRange}
-                  handleBlur={handleBlur}
+        description={Messages.cards.enableExternalAccess.description}
+        cardContent={
+          <Box display="flex" flexDirection="column" gap={2}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Typography variant="sectionHeading">
+                {Messages.cards.exposureMethod.title}
+              </Typography>
+              <SelectInput
+                name={AdvancedConfigurationFields.exposureMethod}
+                loading={loadingDefaultsForEdition}
+                formControlProps={{
+                  sx: {
+                    width: SELECT_WIDTH,
+                    mt: 0,
+                  },
+                }}
+                selectFieldProps={{
+                  value: exposureMethodValue,
+                }}
+              >
+                {exposureMethods.map((method) => (
+                  <MenuItem value={method} key={method}>
+                    {method}
+                  </MenuItem>
+                ))}
+              </SelectInput>
+            </Box>
+
+            {isExposureMethodLoadBalancer && (
+              <>
+                <FormCard
+                  title={Messages.cards.loadBalancerConfiguration.title}
+                  controlComponent={
+                    <Box display="flex" ml="auto" alignItems="center">
+                      <SelectInput
+                        name={AdvancedConfigurationFields.loadBalancerConfig}
+                        loading={
+                          fetchingLoadBalancer || loadingDefaultsForEdition
+                        }
+                        formControlProps={{
+                          sx: {
+                            width: SELECT_WIDTH,
+                            mt: 0,
+                          },
+                        }}
+                      >
+                        {loadBalancerConfigs?.items.map((loadBlancerConfig) => (
+                          <MenuItem
+                            value={loadBlancerConfig?.metadata?.name}
+                            key={loadBlancerConfig?.metadata?.name}
+                          >
+                            {loadBlancerConfig?.metadata?.name}
+                          </MenuItem>
+                        ))}
+                      </SelectInput>
+                      {!loadBalancerConfigs?.items.length && (
+                        <IconButton
+                          sx={{ ml: '20px' }}
+                          onClick={handleOnPolicyInfoClick}
+                        >
+                          <InfoIcon sx={{ width: '20px' }} />
+                        </IconButton>
+                      )}
+                    </Box>
+                  }
                 />
-              </Stack>
+                <FormCard
+                  title={Messages.cards.sourceRange.title}
+                  description={Messages.cards.sourceRange.description}
+                  cardContent={
+                    <Stack data-testid="external-access-fields">
+                      <TextArray
+                        placeholder={Messages.sourceRangePlaceholder}
+                        fieldName={AdvancedConfigurationFields.sourceRanges}
+                        fieldKey="sourceRange"
+                        label={Messages.cards.sourceRange.title}
+                        handleBlur={handleBlur}
+                      />
+                    </Stack>
+                  }
+                />
+              </>
             )}
-          </Stack>
-        }
-        controlComponent={
-          <SwitchInput
-            label={Messages.enable}
-            name={AdvancedConfigurationFields.externalAccess}
-          />
+          </Box>
         }
       />
       <FormCard
         title={Messages.cards.engineParameters.title}
-        description={
+        description={Messages.cards.engineParameters.description}
+        cardContent={
           <Stack>
-            <Typography variant="caption">
-              {Messages.cards.engineParameters.description}
-            </Typography>
             {engineParametersEnabled && (
               <TextInput
                 name={AdvancedConfigurationFields.engineParameters}
