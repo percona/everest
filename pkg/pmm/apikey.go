@@ -24,8 +24,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/percona/everest/cmd/config"
 )
 
 func newHTTPClient(insecure bool) *http.Client {
@@ -44,9 +42,6 @@ func CreatePMMApiKey(
 	hostname, apiKeyName, user, password string,
 	skipTLSVerify bool,
 ) (string, error) {
-	if config.Debug {
-		return "test-api-key", nil
-	}
 	apiKey := map[string]string{
 		"name": apiKeyName,
 		"role": "Admin",
