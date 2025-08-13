@@ -3434,6 +3434,10 @@ components:
                           notation or without a netmask.
                         type: string
                       type: array
+                    loadBalancerConfigName:
+                      description: LoadBalancerConfigName is the name of load balancer
+                        config if applied
+                      type: string
                     type:
                       default: internal
                       description: Type is the expose type, can be internal or external

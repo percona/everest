@@ -90,7 +90,7 @@ func (h *k8sHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
 	}
 	config, err := settings.OIDCConfig()
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, errors.New("cannot parse OIDC raw config"))
 	}
 	return &api.Settings{
 		OidcConfig: api.OIDCConfig{

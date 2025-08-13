@@ -16,6 +16,7 @@
 package session
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -41,12 +42,13 @@ const (
 )
 
 var (
-	errExtractJti       = errors.New("could not extract jti")
+	errExtractTokenID   = errors.New("token doesn't contains jti or uti claim")
 	errExtractExp       = errors.New("could not extract exp")
 	errEmptyToken       = errors.New("token is empty")
 	errUnsupportedClaim = func(claims any) error {
 		return errors.New(fmt.Sprintf("unsupported claims type: %T", claims))
 	}
+	errShortenToken = errors.New("failed to shorten token")
 )
 
 // Blocklist represents interface to block JWT tokens and check if a token is blocked.
@@ -119,7 +121,7 @@ func (b *blocklist) Block(ctx context.Context, token *jwt.Token) error {
 func (b *blocklist) IsBlocked(ctx context.Context, token *jwt.Token) (bool, error) {
 	shortenedToken, err := shortenToken(token)
 	if err != nil {
-		return false, fmt.Errorf("failed to shorten token: %w", err)
+		return false, errors.Join(err, errShortenToken)
 	}
 
 	return b.tokenStore.Exists(ctx, shortenedToken)
@@ -133,20 +135,32 @@ func shortenToken(token *jwt.Token) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	jti, ok := content.Payload["jti"].(string)
-	if !ok {
-		return "", errExtractJti
+	tId := cmp.Or(
+		content.getStringClaim("jti"),
+		content.getStringClaim("uti"), // "uti" is used by Microsoft Entra ID instead of "jti" claim
+	)
+	if tId == "" {
+		return "", errExtractTokenID
 	}
+
 	exp, ok := content.Payload["exp"].(float64)
 	if !ok {
 		return "", errExtractExp
 	}
-	return jti + strconv.FormatFloat(exp, 'f', 0, 64), nil
+	return tId + strconv.FormatFloat(exp, 'f', 0, 64), nil
 }
 
 // JWTContent represents the JWT token structure that is used by blocklist.
 type JWTContent struct {
 	Payload map[string]interface{} `json:"payload"`
+}
+
+func (j JWTContent) getStringClaim(key string) string {
+	value, ok := j.Payload[key]
+	if !ok {
+		return ""
+	}
+	return value.(string)
 }
 
 func extractContent(token *jwt.Token) (*JWTContent, error) {
