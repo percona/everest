@@ -107,6 +107,7 @@ export const ClusterOverview = () => {
           parameters={!!dbCluster?.spec.engine.config}
           storageClass={dbCluster?.spec.engine.storage.class!}
           podSchedulingPolicy={dbCluster?.spec.podSchedulingPolicyName}
+          loadBalancerConfig={dbCluster?.spec.loadBalancerConfigName}
         />
         <ResourcesDetails
           dbCluster={dbCluster}

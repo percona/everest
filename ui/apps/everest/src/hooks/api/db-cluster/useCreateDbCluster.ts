@@ -148,6 +148,9 @@ const formValuesToPayloadMapping = (
         dbPayload.podSchedulingPolicy && {
           podSchedulingPolicyName: dbPayload.podSchedulingPolicy,
         }),
+      ...(dbPayload.loadBalancerConfig && {
+        loadBalancerConfigName: dbPayload.loadBalancerConfig,
+      }),
     },
   };
 

@@ -139,6 +139,7 @@ export interface Spec {
   monitoring: Monitoring;
   sharding?: Sharding;
   podSchedulingPolicyName?: string;
+  loadBalancerConfigName?: string;
 }
 export interface StatusCondition {
   type: DbErrorType;
