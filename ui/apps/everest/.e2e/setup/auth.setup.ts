@@ -15,7 +15,6 @@
 
 import { test as setup } from '@playwright/test';
 import { login } from '@e2e/utils/user';
-import { execSync } from 'child_process';
 
 setup('Login', async ({ page }) => {
   await login(page);
@@ -29,9 +28,4 @@ setup('Login', async ({ page }) => {
   // Wait for the user to be logged out and end up in login page again
   await page.waitForURL(/login/);
   await login(page);
-
-  // reset permissions in case they got stuck
-  await execSync(
-    `kubectl patch configmap/everest-rbac --namespace everest-system --type merge -p '{"data":{"enabled": "true", "policy.csv":"g,admin,role:admin"}}'`
-  );
 });
