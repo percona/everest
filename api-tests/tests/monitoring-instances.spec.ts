@@ -39,13 +39,14 @@ test('create/update/delete monitoring instance', async ({ request, page }) => {
     expect(created.type).toBe(data.type)
   })
 
-  await test.step('create another monitoring instance', async () => {
+  await test.step('create another monitoring instance with login and password', async () => {
     const data = {
       type: 'pmm',
       name: `${prefix}-pass`,
       url: `https://${process.env.PMM2_IP}`,
       pmm: {
-        apiKey: `${process.env.PMM2_API_KEY}`,
+        user: "admin",
+        password: "admin",
       },
       verifyTLS: false,
     }
