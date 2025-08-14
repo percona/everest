@@ -18,11 +18,7 @@ import { execSync } from 'child_process';
 import { getDBClientPod } from '@e2e/utils/db-cmd-line';
 import { getK8sUid } from '@e2e/utils/kubernetes';
 
-const {
-  MONITORING_URL,
-  MONITORING_USER,
-  MONITORING_PASSWORD
-} = process.env;
+const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 export const testMonitoringName = 'ui-test-monitoring';
 export const testMonitoringName2 = 'ui-test-monitoring-1';
