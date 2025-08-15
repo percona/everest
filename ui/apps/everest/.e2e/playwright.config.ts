@@ -68,9 +68,34 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'session-setup',
+      testDir: './setup',
+      testMatch: /session-setup\.ts$/,
+    },
+    {
+      name: 'session',
+      testDir: './release/session',
+      testMatch: 'session-management.e2e.ts',
+      dependencies: ['session-setup'],
+      use: {
+        storageState: path.join(__dirname, 'sessionUser.json'),
+      },
+    },
+    {
+      name: 'session-teardown',
+      testDir: './teardown',
+      testMatch: /session-teardown\.ts$/,
+      dependencies: ['session'],
+      use: {
+        storageState: path.join(__dirname, 'sessionUser.json'),
+      },
+    },
+    {
       name: 'auth',
       testDir: './setup',
       testMatch: /auth.setup\.ts/,
+      dependencies:
+        process.env.IGNORE_SESSION_TESTS === 'true' ? [] : ['session-teardown'],
     },
     {
       name: 'setup',
