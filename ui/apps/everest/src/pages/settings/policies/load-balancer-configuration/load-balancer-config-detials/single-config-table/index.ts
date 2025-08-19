@@ -1,1 +1,1 @@
-export  { default } from './single-config-table';
+export { default } from './single-config-table';
