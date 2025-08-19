@@ -1,5 +1,5 @@
 import { CustomConfirmDialog } from 'components/custom-confirm-dialog';
-import { messages } from '../load-balancer.messages';
+import { messages } from '../../load-balancer.messages';
 
 interface DeleteLoadBalancerConfigProps {
   isOpen: boolean;

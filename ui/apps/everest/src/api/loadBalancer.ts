@@ -1,6 +1,6 @@
 import {
+  LoadBalancerConfig,
   LoadBalancerConfigList,
-  LoadBalancerConfigRequest,
 } from 'shared-types/loadbalancer.types';
 import { api } from './api';
 
@@ -13,17 +13,19 @@ export const getLoadBalancerConfigsFn = async () => {
 };
 
 export const getParticularLoadBalancerConfigFn = async (configName: string) => {
-  const response = await api.post(`${loadBalancerUrl}/${configName}`);
+  const response = await api.get<LoadBalancerConfig>(
+    `${loadBalancerUrl}/${configName}`
+  );
   return response.data;
 };
 
 export const createLoadBalancerConfigFn = async (name: string) => {
-  const response = await api.post(`${loadBalancerUrl}`, {
+  const response = await api.post<LoadBalancerConfig>(`${loadBalancerUrl}`, {
     metadata: {
       name,
     },
     spec: {
-      annotations: { key: 'key', value: 'value' },
+      annotations: {},
     },
   });
 
@@ -32,9 +34,9 @@ export const createLoadBalancerConfigFn = async (name: string) => {
 
 export const updateLoadBalancerConfigFn = async (
   configName: string,
-  payload: LoadBalancerConfigRequest
+  payload: LoadBalancerConfig
 ) => {
-  const response = await api.patch(`${loadBalancerUrl}/${configName}`, payload);
+  const response = await api.put(`${loadBalancerUrl}/${configName}`, payload);
   return response.data;
 };
 

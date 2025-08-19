@@ -6,13 +6,13 @@ import { rfc_123_schema } from 'utils/common-validation';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import { useDBEnginesForDbEngineTypes } from 'hooks';
 
-const schema = (existingPolicies: LoadBalancerConfig[]) =>
+const schema = (existingConfigs: LoadBalancerConfig[]) =>
   z.object({
     name: rfc_123_schema({
       fieldName: 'name',
       maxLength: 63,
     }).refine((val) => {
-      const isNameTaken = existingPolicies.some(
+      const isNameTaken = existingConfigs.some(
         (config) => config.metadata?.name === val
       );
       return !isNameTaken;
@@ -46,7 +46,7 @@ const LoadBalancerDialog = ({
       closeModal={onClose}
       submitting={submitting}
       headerMessage={
-        isEditing ? 'Edit configuration details' : 'Create configuration'
+        isEditing ? 'Edit configuration name' : 'Create configuration'
       }
       onSubmit={onSubmit}
       submitMessage={isEditing ? 'Save' : 'Create'}

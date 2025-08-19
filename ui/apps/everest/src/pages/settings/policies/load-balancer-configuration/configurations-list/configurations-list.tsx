@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import LoadBalancerDialog from '../load-balancer-dialog';
 import LoadBalancerRowActions from '../load-balancer-row-actions';
-import DeleteLoadBalancerConfig from './delete-config-dialog';
+import DeleteLoadBalancerConfig from '../load-balancer-dialog/delete';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import { useQueryClient } from '@tanstack/react-query';
 import { messages } from '../load-balancer.messages';
@@ -95,7 +95,7 @@ const LoadBalancerConfigurationList = () => {
         enableRowHoverAction
         rowHoverAction={(row) =>
           navigate(
-            `/settings/policies/pod-scheduling/${row.original.metadata?.name}`
+            `/settings/policies/load-balancer-configuration/${row.original.metadata?.name}`
           )
         }
         renderTopToolbarCustomActions={() =>

@@ -7,8 +7,8 @@ import {
   updateLoadBalancerConfigFn,
 } from 'api/loadBalancer';
 import {
+  LoadBalancerConfig,
   LoadBalancerConfigList,
-  LoadBalancerConfigRequest,
 } from 'shared-types/loadbalancer.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 
@@ -24,12 +24,13 @@ export const useLoadBalancerConfigs = (
 
 export const useLoadBalancerConfig = (
   configName: string,
-  LOAD_BALANCER_CONFIG_QUERY_KEY: string
+  options?: PerconaQueryOptions<LoadBalancerConfig, unknown, LoadBalancerConfig>
 ) =>
   useQuery({
-    queryKey: [LOAD_BALANCER_CONFIG_QUERY_KEY, configName],
+    queryKey: ['load-balancer-config', configName],
     queryFn: () => getParticularLoadBalancerConfigFn(configName),
     enabled: !!configName,
+    ...options,
   });
 
 export const useCreateLoadBalancerConfig = (
@@ -47,7 +48,7 @@ export const useUpdateLoadBalancerConfig = (
 ) => {
   return useMutation({
     mutationKey: [UPDATE_LOAD_BALANCER_CONFIG_QUERY_KEY, configName],
-    mutationFn: (payload: LoadBalancerConfigRequest) =>
+    mutationFn: (payload: LoadBalancerConfig) =>
       updateLoadBalancerConfigFn(configName, payload),
   });
 };

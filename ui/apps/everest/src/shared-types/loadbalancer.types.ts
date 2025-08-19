@@ -15,28 +15,23 @@
 
 import { DbEngineType } from '@percona/types';
 
-export interface LoadBalancerConfigRequest {
-  apiVersion?: string;
-  kind?: string;
-  metadata?: { resourceVersion?: string; name: string };
-  spec?: {
-    annotations?: Record<string, string>;
-  };
-}
+export type AnnotationType = {
+  [key: string]: string;
+};
 
 export interface LoadBalancerConfigList {
-  apiVersion?: string;
-  kind?: string;
+  apiVersion: string;
+  kind: string;
   items: LoadBalancerConfig[];
-  metadata?: { resourceVersion?: string; name: string };
+  metadata: { resourceVersion?: string; name: string };
 }
 
 export interface LoadBalancerConfig {
-  apiVersion?: string;
-  kind?: string;
-  metadata?: { resourceVersion?: string; name: string };
-  spec?: {
-    annotations?: Record<string, string>;
+  apiVersion: string;
+  kind: string;
+  metadata: { resourceVersion?: string; name: string };
+  spec: {
+    annotations?: AnnotationType;
     engineType?: DbEngineType;
   };
   status?: {

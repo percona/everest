@@ -19,6 +19,7 @@ const BackTo = ({ to, prevPage }: BackToProps) => {
           alignItems: 'center',
           gap: 1,
           ml: 2,
+          mb: 2,
         }}
       >
         <ArrowBackIcon sx={{ color: 'primary.main' }} />

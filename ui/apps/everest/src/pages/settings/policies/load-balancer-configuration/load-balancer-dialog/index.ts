@@ -1,1 +1,1 @@
-export { default } from './load-balancer-dialog';
+export { default } from './create-config-dialog';

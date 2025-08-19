@@ -23,4 +23,8 @@ export const messages = {
     },
     createButton: 'Create configuration',
   },
+  details: {
+    editButton: 'Edit configuration',
+    saveButton: 'Save configuration',
+  },
 };
