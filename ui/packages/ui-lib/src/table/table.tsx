@@ -4,7 +4,13 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { Alert, AlertProps, Box } from '@mui/material';
-import { MaterialReactTable, MRT_VisibilityState } from 'material-react-table';
+import {
+  MaterialReactTable,
+  MRT_ShowHideColumnsButton,
+  MRT_VisibilityState,
+  MRT_ToggleFiltersButton,
+  MRT_ToggleGlobalFilterButton,
+} from 'material-react-table';
 import { useEffect } from 'react';
 import { ICONS_OPACITY } from './table.constants';
 import { TableProps } from './table.types';
@@ -168,13 +174,24 @@ function Table<T extends Record<string, any>>(props: TableProps<T>) {
         sx: {
           backgroundColor: 'transparent',
           '& > .MuiBox-root': {
-            flexDirection: data.length ? 'row-reverse' : 'row',
+            flexDirection: 'row-reverse',
             flexWrap: 'wrap',
+
+            '& > .MuiBox-root:has(.percona-table-internal-actions)': {
+              marginRight: 'auto',
+            },
           },
           ...muiTopToolbarPropsSx,
         },
         ...muiTopToolbarRestProps,
       }}
+      renderToolbarInternalActions={({ table }) => (
+        <Box className="percona-table-internal-actions">
+          <MRT_ToggleGlobalFilterButton table={table} />
+          <MRT_ToggleFiltersButton table={table} />
+          <MRT_ShowHideColumnsButton table={table} />
+        </Box>
+      )}
       displayColumnDefOptions={{
         'mrt-row-actions': {
           size: 30,
