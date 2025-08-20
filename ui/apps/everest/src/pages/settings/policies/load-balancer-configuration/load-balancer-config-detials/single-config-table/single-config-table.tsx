@@ -7,15 +7,17 @@ import { MultipleTextInput } from '@percona/ui-lib';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
 import { AnnotationType } from 'shared-types/loadbalancer.types';
 
-interface ConfigDetailsProps {
-  configName: string;
-  isSaved?: boolean;
-  handleSetAnnotations: (annotations: AnnotationType[]) => void;
-}
-
-const FormProviderWrapper = ({ children }: { children: ReactNode }) => {
+const FormProviderWrapper = ({
+  children,
+  defaultValues,
+}: {
+  children: ReactNode;
+  defaultValues?: Record<string, string>[];
+}) => {
   const methods = useForm({
-    defaultValues: {},
+    defaultValues: {
+      annotations: defaultValues || [],
+    },
   });
 
   return (
@@ -25,10 +27,20 @@ const FormProviderWrapper = ({ children }: { children: ReactNode }) => {
   );
 };
 
+interface ConfigDetailsProps {
+  configName: string;
+  isSaved?: boolean;
+  annotationsArray: Record<string, string>[];
+  handleSetAnnotations: (annotations: AnnotationType[]) => void;
+  handleDelete?: (annotation: [string, string]) => void;
+}
+
 const ConfigDetails = ({
   configName,
   isSaved,
+  annotationsArray,
   handleSetAnnotations,
+  handleDelete,
 }: ConfigDetailsProps) => {
   const { data: config } = useLoadBalancerConfig(configName, {
     refetchInterval: 3000,
@@ -43,9 +55,10 @@ const ConfigDetails = ({
       {isSaved ? (
         <LoadBalancerTable config={config} />
       ) : (
-        <FormProviderWrapper>
+        <FormProviderWrapper defaultValues={annotationsArray}>
           <MultipleTextInput
             fieldName="annotations"
+            handleDelete={handleDelete}
             getValues={handleSetAnnotations}
           />
         </FormProviderWrapper>

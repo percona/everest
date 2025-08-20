@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMatch } from 'react-router-dom';
 import ConfigDetails from './single-config-table';
 import BackTo from '../../shared/back-to';
@@ -12,52 +12,90 @@ import SaveIcon from '@mui/icons-material/Save';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
 import { messages } from '../load-balancer.messages';
 import { AnnotationType } from 'shared-types/loadbalancer.types';
+import { useQueryClient } from '@tanstack/react-query';
 
 const LoadBalancerConfigDetails = () => {
   const match = useMatch(
     '/settings/policies/load-balancer-configuration/:configName'
   );
-
   const configName = match?.params.configName || '';
-  const [isSaved, setIsSaved] = useState(false);
 
   const { data: config } = useLoadBalancerConfig(configName, {
     refetchInterval: 3000,
   });
 
-  const { mutate: updateAnnotations } = useUpdateLoadBalancerConfig(
-    configName,
-    'update-load-balancer-config'
-  );
+  const entries = useMemo(() => {
+    if (config && config.spec.annotations) {
+      return Object.entries(config.spec.annotations);
+    }
+    return [];
+  }, [config]);
+
+  const [isSaved, setIsSaved] = useState(true);
 
   const [annotationsArray, setAnnotationsArray] = useState<AnnotationType[]>(
-    []
+    entries.length
+      ? entries.map(([key, value]) => ({
+          key,
+          value,
+        }))
+      : []
   );
 
-  const handleSetAnnotations = (annotations: AnnotationType[]) => {
+  const queryClient = useQueryClient();
+  const { mutate: updateAnnotations } = useUpdateLoadBalancerConfig(
+    configName,
+    'update-load-balancer-config',
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['load-balancer-config', configName],
+        });
+        queryClient.invalidateQueries({ queryKey: ['load-balancer-configs'] });
+      },
+    }
+  );
+
+  const handleSetAnnotations = useCallback((annotations: AnnotationType[]) => {
     setAnnotationsArray(annotations);
-  };
+  }, []);
+
+  const handleAddAnnotations = useCallback(() => {
+    const annotationsObject = annotationsArray.reduce((acc, { key, value }) => {
+      if (key) acc[key] = value;
+      return acc;
+    }, {} as AnnotationType);
+
+    if (config) {
+      updateAnnotations({
+        ...config,
+        spec: {
+          annotations: { ...config.spec.annotations, ...annotationsObject },
+        },
+      });
+    }
+  }, [annotationsArray, config, updateAnnotations]);
+
+  const handleDelete = useCallback(
+    (annotation: [string, string]) => {
+      if (config && config.spec.annotations) {
+        const updatedAnnotations = { ...config.spec.annotations };
+        delete updatedAnnotations[annotation[0]];
+
+        updateAnnotations({
+          ...config,
+          spec: {
+            annotations: updatedAnnotations,
+          },
+        });
+      }
+    },
+    [config, updateAnnotations]
+  );
 
   if (!config) {
     return <LoadingPageSkeleton />;
   }
-
-  const handleAddAnnotations = () => {
-    const annotationsObject = annotationsArray.reduce(
-      (acc, { key, value }) => {
-        if (key) acc[key] = value;
-        return acc;
-      },
-      {} as Record<string, string>
-    );
-
-    updateAnnotations({
-      ...config,
-      spec: {
-        annotations: { ...config.spec.annotations, ...annotationsObject },
-      },
-    });
-  };
 
   return (
     <>
@@ -95,7 +133,9 @@ const LoadBalancerConfigDetails = () => {
       <ConfigDetails
         configName={configName}
         isSaved={isSaved}
+        annotationsArray={annotationsArray}
         handleSetAnnotations={handleSetAnnotations}
+        handleDelete={handleDelete}
       />
     </>
   );

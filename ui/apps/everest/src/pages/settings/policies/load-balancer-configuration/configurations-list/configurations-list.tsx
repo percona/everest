@@ -67,9 +67,9 @@ const LoadBalancerConfigurationList = () => {
           queryClient.invalidateQueries({
             queryKey: ['load-balancer-configs'],
           });
-          handleCloseDeleteDialog();
         },
       });
+      handleCloseDeleteDialog();
     }
   };
 

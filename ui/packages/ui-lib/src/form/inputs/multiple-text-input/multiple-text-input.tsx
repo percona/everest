@@ -10,12 +10,14 @@ interface MultipleTextInputProps {
   buttonProps?: {
     buttonText?: string;
   };
+  handleDelete?: (fields: [string, string]) => void;
   getValues?: (values: Record<string, string>[]) => void;
 }
 
 const MultipleTextInput = ({
   fieldName,
   buttonProps,
+  handleDelete,
   getValues,
 }: MultipleTextInputProps) => {
   const {
@@ -29,7 +31,7 @@ const MultipleTextInput = ({
     name: fieldName,
   });
 
-  const values = watch(fieldName) || [];
+  const values: Record<string, string>[] = watch(fieldName) || [];
 
   useEffect(() => {
     if (getValues && values.length > 0) {
@@ -89,7 +91,6 @@ const MultipleTextInput = ({
               },
             }}
           />
-
           <TextInput
             name={`${fieldName}.${index}.value`}
             control={control}
@@ -104,10 +105,13 @@ const MultipleTextInput = ({
               },
             }}
           />
-
           <IconButton
-            onClick={() => remove(index)}
-            disabled={fields.length === 1}
+            onClick={() => {
+              if (handleDelete) {
+                handleDelete([values[index]?.key, values[index]?.value]);
+              }
+              remove(index);
+            }}
           >
             <DeleteOutlineOutlinedIcon />
           </IconButton>

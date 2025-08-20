@@ -1,4 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  useMutation,
+  UseMutationOptions,
+  useQuery,
+} from '@tanstack/react-query';
 import {
   createLoadBalancerConfigFn,
   deleteParticularLoadBalancerConfigFn,
@@ -44,12 +48,14 @@ export const useCreateLoadBalancerConfig = (
 
 export const useUpdateLoadBalancerConfig = (
   configName: string,
-  UPDATE_LOAD_BALANCER_CONFIG_QUERY_KEY: string
+  UPDATE_LOAD_BALANCER_CONFIG_QUERY_KEY: string,
+  options?: UseMutationOptions<LoadBalancerConfig, unknown, LoadBalancerConfig>
 ) => {
-  return useMutation({
+  return useMutation<LoadBalancerConfig, unknown, LoadBalancerConfig>({
     mutationKey: [UPDATE_LOAD_BALANCER_CONFIG_QUERY_KEY, configName],
     mutationFn: (payload: LoadBalancerConfig) =>
       updateLoadBalancerConfigFn(configName, payload),
+    ...options,
   });
 };
 
