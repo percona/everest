@@ -55,6 +55,15 @@ const TextArray = ({
     setIsDisabled(isAnyFieldEmpty);
   }, [defaultFields.length, changed]);
 
+  useEffect(() => {
+    const lastField = document.querySelector(
+      `input[name="${fieldName}.${fields.length - 1}.${fieldKey}"]`
+    );
+    if (lastField) {
+      (lastField as HTMLInputElement).focus();
+    }
+  }, [fieldKey, fieldName, fields.length]);
+
   return (
     <>
       <ActionableLabeledContent
@@ -67,6 +76,13 @@ const TextArray = ({
             append({
               [fieldKey]: '',
             });
+            // focus newly added input
+            // setTimeout(() => {
+            //   const lastField = document.querySelector(
+            //     `input[name="${fieldName}.${fields.length - 1}.${fieldKey}"]`
+            //   );
+            //   lastField?.focus();
+            // }, 0);
           },
         }}
       >
