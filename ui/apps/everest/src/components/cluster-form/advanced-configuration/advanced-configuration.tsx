@@ -60,7 +60,8 @@ export const AdvancedConfigurationForm = ({
   automaticallyTogglePodSchedulingPolicySwitch = false,
   allowStorageClassChange = false,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, setValue, getFieldState, getValues } = useFormContext();
+  const { watch, setValue, getFieldState, getValues, trigger } =
+    useFormContext();
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
   const selectedPolicy = useRef<PodSchedulingPolicy>();
   const [externalAccess, engineParametersEnabled, policiesEnabled] = watch([
@@ -258,6 +259,20 @@ export const AdvancedConfigurationForm = ({
                   fieldKey="sourceRange"
                   label={Messages.sourceRange}
                   handleBlur={handleBlur}
+                  onRemove={() => {
+                    const sourceRanges = getValues(
+                      AdvancedConfigurationFields.sourceRanges
+                    );
+                    // revalidate all source ranges
+                    // @ts-ignore
+                    sourceRanges.forEach((range, i) => {
+                      if (range.sourceRange) {
+                        trigger(
+                          `${AdvancedConfigurationFields.sourceRanges}.${i}.sourceRange`
+                        );
+                      }
+                    });
+                  }}
                 />
               </Stack>
             )}

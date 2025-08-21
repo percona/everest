@@ -28,6 +28,7 @@ const TextArray = ({
   label,
   placeholder,
   handleBlur,
+  onRemove = () => {},
 }: TextArrayProps) => {
   const {
     control,
@@ -107,7 +108,10 @@ const TextArray = ({
                   <InputAdornment position="end">
                     <IconButton
                       data-testid={`delete-text-input-${index}-button`}
-                      onClick={() => remove(index)}
+                      onClick={() => {
+                        remove(index);
+                        onRemove(index);
+                      }}
                     >
                       <DeleteOutlineOutlinedIcon />
                     </IconButton>
