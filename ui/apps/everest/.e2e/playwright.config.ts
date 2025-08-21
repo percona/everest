@@ -193,7 +193,7 @@ export default defineConfig({
         actionTimeout: 10000,
       },
       testDir: 'release',
-      testIgnore: ['release/rbac/*', 'release/session/**/*'],
+      testIgnore: ['release/rbac/*', 'release/session/*'],
       dependencies: [
         'setup',
         ...(process.env.IGNORE_RBAC_TESTS &&
