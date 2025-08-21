@@ -1,4 +1,5 @@
 tests-out
 .env
 user.json
+sessionUser.json
 old_rbac_permissions
