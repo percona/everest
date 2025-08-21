@@ -89,11 +89,23 @@ export const AdvancedConfigurationForm = ({
     }
   };
 
+  const revalidateSourceRanges = () => {
+    const sourceRanges = getValues(AdvancedConfigurationFields.sourceRanges);
+    // @ts-ignore
+    sourceRanges.forEach((range, i) => {
+      if (range.sourceRange) {
+        trigger(`${AdvancedConfigurationFields.sourceRanges}.${i}.sourceRange`);
+      }
+    });
+  };
+
   // setting the storage class default value
   useEffect(() => {
     const { isTouched: storageClassTouched } = getFieldState(
       DbWizardFormFields.storageClass
     );
+
+    revalidateSourceRanges();
 
     if (
       setDefaultsOnLoad &&
@@ -259,20 +271,7 @@ export const AdvancedConfigurationForm = ({
                   fieldKey="sourceRange"
                   label={Messages.sourceRange}
                   handleBlur={handleBlur}
-                  onRemove={() => {
-                    const sourceRanges = getValues(
-                      AdvancedConfigurationFields.sourceRanges
-                    );
-                    // revalidate all source ranges
-                    // @ts-ignore
-                    sourceRanges.forEach((range, i) => {
-                      if (range.sourceRange) {
-                        trigger(
-                          `${AdvancedConfigurationFields.sourceRanges}.${i}.sourceRange`
-                        );
-                      }
-                    });
-                  }}
+                  onRemove={revalidateSourceRanges}
                 />
               </Stack>
             )}

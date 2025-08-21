@@ -43,6 +43,7 @@ const TextArray = ({
   const [isDisabled, setIsDisabled] = useState<boolean>(true);
   const defaultFields: Record<string, string>[] = fields.length ? fields : [];
   const [changed, setChanged] = useState(false);
+  const [fieldAppended, setFieldAppended] = useState(false);
   const error = (index: number): FieldError | undefined =>
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[fieldKey];
@@ -56,13 +57,16 @@ const TextArray = ({
   }, [defaultFields.length, changed]);
 
   useEffect(() => {
-    const lastField = document.querySelector(
-      `input[name="${fieldName}.${fields.length - 1}.${fieldKey}"]`
-    );
-    if (lastField) {
-      (lastField as HTMLInputElement).focus();
+    if (fieldAppended) {
+      const lastField = document.querySelector(
+        `input[name="${fieldName}.${fields.length - 1}.${fieldKey}"]`
+      );
+      if (lastField) {
+        (lastField as HTMLInputElement).focus();
+      }
+      setFieldAppended(false);
     }
-  }, [fieldKey, fieldName, fields.length]);
+  }, [fieldAppended]);
 
   return (
     <>
@@ -76,13 +80,7 @@ const TextArray = ({
             append({
               [fieldKey]: '',
             });
-            // focus newly added input
-            // setTimeout(() => {
-            //   const lastField = document.querySelector(
-            //     `input[name="${fieldName}.${fields.length - 1}.${fieldKey}"]`
-            //   );
-            //   lastField?.focus();
-            // }, 0);
+            setFieldAppended(true);
           },
         }}
       >
