@@ -68,5 +68,7 @@ export const advancedConfigurationModalDefaultValues = (
       dbCluster?.spec.podSchedulingPolicyName,
     [AdvancedConfigurationFields.loadBalancerConfig]:
       dbCluster?.spec.loadBalancerConfigName || '',
+    [AdvancedConfigurationFields.exposureMethod]:
+      dbCluster?.spec.exposureMethod || '',
   };
 };

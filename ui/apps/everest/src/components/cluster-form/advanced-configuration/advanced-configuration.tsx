@@ -179,10 +179,8 @@ export const AdvancedConfigurationForm = ({
   ]);
 
   useEffect(() => {
-    if (!exposureMethodValue) {
-      setValue(AdvancedConfigurationFields.exposureMethod, exposureMethods[0]);
-    }
-  }, [setValue, exposureMethodValue, getFieldState, exposureMethods]);
+    setValue(AdvancedConfigurationFields.exposureMethod, exposureMethodValue);
+  }, [setValue, exposureMethodValue, getFieldState]);
 
   useEffect(() => {
     if (!loadBalancerConfigValue) {
@@ -356,7 +354,7 @@ export const AdvancedConfigurationForm = ({
                           </MenuItem>
                         ))}
                       </SelectInput>
-                      {loadBalancerConfigs?.items.length && (
+                      {!!loadBalancerConfigs?.items.length && (
                         <IconButton
                           sx={{ ml: '20px' }}
                           onClick={handleOnLoadBalancerConfigInfoClick}
