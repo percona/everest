@@ -344,8 +344,17 @@ def patch_everest_operator_debug(in_yaml):
           c['resources'] = None
   return encode_yaml_stream(objects)
 
+def patch_remove_operator_init_container(in_yaml):
+  print('Patching Everest operator deployment to delete init-containers')
+  objects = decode_yaml_stream(in_yaml)
+  for o in objects:
+    if o.get('kind') == 'Deployment' and o.get('metadata').get('name') == 'everest-operator':
+      o['spec']['template']['spec']['initContainers']= None
+  return encode_yaml_stream(objects)
+
 everest_yaml=patch_everest_debug(everest_yaml)
 everest_yaml=patch_everest_operator_debug(everest_yaml)
+everest_yaml=patch_remove_operator_init_container(everest_yaml)
 k8s_yaml(everest_yaml)
 
 #################################
