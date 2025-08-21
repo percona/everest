@@ -196,6 +196,8 @@ jobs:
           RBAC_PASSWORD: "rbac-e2e-test"
           MONITORING_USER: "admin"
           MONITORING_PASSWORD: "admin"
+          SESSION_USER: "session"
+          SESSION_PASS: "session1234"
         run: |
           cd ui
           pnpm --filter "@percona/everest" e2e
