@@ -75,7 +75,6 @@ export default defineConfig({
     {
       name: 'session',
       testDir: './release/session',
-      testMatch: 'session-management.e2e.ts',
       dependencies: ['session-setup'],
       use: {
         storageState: path.join(__dirname, 'sessionUser.json'),
