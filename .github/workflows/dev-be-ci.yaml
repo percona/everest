@@ -221,7 +221,8 @@ jobs:
             --namespaces everest \
             --helm.set server.image=localhost:5000/perconalab/everest \
             --helm.set server.apiRequestsRateLimit=200 \
-            --helm.set versionMetadataURL=https://check-dev.percona.com
+            --helm.set versionMetadataURL=https://check-dev.percona.com \
+            --helm.set operator.init=false
 
       - name: Expose Everest API Server
         run: |
