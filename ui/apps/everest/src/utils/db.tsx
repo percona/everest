@@ -747,7 +747,8 @@ export const changeDbClusterAdvancedConfig = (
   engineParameters = '',
   sourceRanges?: Array<{ sourceRange?: string }>,
   podSchedulingPolicyEnabled = false,
-  podSchedulingPolicy = ''
+  podSchedulingPolicy = '',
+  loadBalancerConfig = ''
 ) => ({
   ...dbCluster,
   spec: {
@@ -755,6 +756,7 @@ export const changeDbClusterAdvancedConfig = (
     podSchedulingPolicyName: podSchedulingPolicyEnabled
       ? podSchedulingPolicy
       : undefined,
+    loadBalancerConfigName: loadBalancerConfig || undefined,
     engine: {
       ...dbCluster.spec.engine,
       config: engineParametersEnabled ? engineParameters : '',

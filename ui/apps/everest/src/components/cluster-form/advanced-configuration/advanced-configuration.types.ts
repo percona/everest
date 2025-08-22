@@ -24,3 +24,8 @@ export enum AdvancedConfigurationFields {
   exposureMethod = 'exposureMethod',
   loadBalancerConfig = 'loadBalancerConfig',
 }
+
+export enum ExposureMethod {
+  ClusterIP = 'Cluster IP',
+  LoadBalancer = 'Load balancer',
+}

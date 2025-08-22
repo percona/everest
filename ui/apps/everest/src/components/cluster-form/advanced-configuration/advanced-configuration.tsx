@@ -21,9 +21,12 @@ import {
   TextInput,
 } from '@percona/ui-lib';
 import { Messages } from './messages';
-import { AdvancedConfigurationFields } from './advanced-configuration.types';
+import {
+  AdvancedConfigurationFields,
+  ExposureMethod,
+} from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
-import { DbType } from '@percona/types';
+import { DbEngineType, DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
 import {
   Box,
@@ -36,15 +39,17 @@ import {
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DbWizardFormFields, EVEREST_READ_ONLY_FINALIZER } from 'consts';
 import { FormCard } from 'components/form-card';
 import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { exposureMethods, SELECT_WIDTH } from './constants';
+import { SELECT_WIDTH } from './constants';
 import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
+import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
+import LoadBalancerDialog from './load-balancer.dialog';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -64,6 +69,11 @@ export const AdvancedConfigurationForm = ({
   const { watch, setValue, getFieldState, getValues } = useFormContext();
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
   const selectedPolicy = useRef<PodSchedulingPolicy>();
+  const [loadBalancerConfigDialogOpen, setLoadBalancerConfigDialogOpen] =
+    useState(false);
+  const selectedLoadBalancerConfig = useRef<
+    LoadBalancerConfig | null | undefined
+  >(null);
   const [engineParametersEnabled, policiesEnabled] = watch([
     AdvancedConfigurationFields.engineParametersEnabled,
     AdvancedConfigurationFields.podSchedulingPolicyEnabled,
@@ -75,15 +85,21 @@ export const AdvancedConfigurationForm = ({
       refetchInterval: 2000,
     });
 
+  const exposureMethods = Object.values(ExposureMethod);
+
   const exposureMethodValue =
     watch(AdvancedConfigurationFields.exposureMethod) ?? '';
-  const isExposureMethodLoadBalancer = exposureMethodValue === 'Load balancer';
+  const isExposureMethodLoadBalancer =
+    exposureMethodValue === ExposureMethod.LoadBalancer;
 
   const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
-    useLoadBalancerConfigs('load-balancer-configs');
+    useLoadBalancerConfigs('load-balancer-configs', {
+      refetchInterval: 10000,
+    });
 
-  const loadBalancerConfigValue =
-    watch(AdvancedConfigurationFields.loadBalancerConfig) ?? '';
+  const loadBalancerConfigValue = watch(
+    AdvancedConfigurationFields.loadBalancerConfig
+  );
 
   const handleOnPolicyInfoClick = () => {
     const policyName = getValues<string>(
@@ -95,6 +111,50 @@ export const AdvancedConfigurationForm = ({
 
     if (selectedPolicy.current) {
       setPolicyDialogOpen(true);
+    }
+  };
+
+  const emptyConfigOption: LoadBalancerConfig = {
+    apiVersion: '',
+    kind: '',
+    metadata: { name: '' },
+    spec: {},
+  };
+
+  const isEksDefault = useMemo(
+    () => clusterInfo?.clusterType === 'eks',
+    [clusterInfo?.clusterType]
+  );
+
+  const selectOptions = loadBalancerConfigs?.items.reverse() ?? [];
+
+  const selectDefaultValue = isEksDefault
+    ? 'eks-default'
+    : selectOptions.length === 1 &&
+        selectOptions[0].metadata.name === 'eks-default'
+      ? ''
+      : (selectOptions[0]?.metadata.name ?? '');
+
+  useEffect(() => {
+    if (!loadBalancerConfigValue) {
+      setValue(
+        AdvancedConfigurationFields.loadBalancerConfig,
+        selectDefaultValue
+      );
+    }
+  }, [loadBalancerConfigValue, selectDefaultValue, setValue]);
+
+  const handleOnLoadBalancerConfigInfoClick = () => {
+    const configName = getValues<string>(
+      AdvancedConfigurationFields.loadBalancerConfig
+    );
+
+    selectedLoadBalancerConfig.current = loadBalancerConfigs?.items.find(
+      (config) => config.metadata?.name === configName
+    );
+
+    if (selectedLoadBalancerConfig.current) {
+      setLoadBalancerConfigDialogOpen(true);
     }
   };
 
@@ -150,19 +210,8 @@ export const AdvancedConfigurationForm = ({
   ]);
 
   useEffect(() => {
-    if (!exposureMethodValue) {
-      setValue(AdvancedConfigurationFields.exposureMethod, exposureMethods[0]);
-    }
+    setValue(AdvancedConfigurationFields.exposureMethod, exposureMethodValue);
   }, [setValue, exposureMethodValue, getFieldState]);
-
-  useEffect(() => {
-    if (!loadBalancerConfigValue) {
-      setValue(
-        AdvancedConfigurationFields.loadBalancerConfig,
-        loadBalancerConfigs?.items?.[0]?.metadata?.name ?? ''
-      );
-    }
-  }, [loadBalancerConfigValue, loadBalancerConfigs?.items, setValue]);
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
@@ -317,20 +366,23 @@ export const AdvancedConfigurationForm = ({
                             mt: 0,
                           },
                         }}
+                        selectFieldProps={{
+                          value: loadBalancerConfigValue || selectDefaultValue,
+                        }}
                       >
-                        {loadBalancerConfigs?.items.map((loadBlancerConfig) => (
+                        {[...selectOptions, emptyConfigOption].map((config) => (
                           <MenuItem
-                            value={loadBlancerConfig?.metadata?.name}
-                            key={loadBlancerConfig?.metadata?.name}
+                            value={config.metadata.name}
+                            key={config.metadata.name}
                           >
-                            {loadBlancerConfig?.metadata?.name}
+                            {config.metadata.name}
                           </MenuItem>
                         ))}
                       </SelectInput>
-                      {!loadBalancerConfigs?.items.length && (
+                      {!!loadBalancerConfigs?.items.length && (
                         <IconButton
                           sx={{ ml: '20px' }}
-                          onClick={handleOnPolicyInfoClick}
+                          onClick={handleOnLoadBalancerConfigInfoClick}
                         >
                           <InfoIcon sx={{ width: '20px' }} />
                         </IconButton>
@@ -387,6 +439,16 @@ export const AdvancedConfigurationForm = ({
           engineType={selectedPolicy.current!.spec.engineType}
           policy={selectedPolicy.current!}
           handleClose={() => setPolicyDialogOpen(false)}
+        />
+      )}
+      {loadBalancerConfigDialogOpen && (
+        <LoadBalancerDialog
+          engineType={
+            selectedLoadBalancerConfig.current!.spec.engineType ||
+            DbEngineType.PSMDB
+          }
+          config={selectedLoadBalancerConfig.current!}
+          handleClose={() => setLoadBalancerConfigDialogOpen(false)}
         />
       )}
     </FormGroup>
