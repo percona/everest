@@ -13,19 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export enum AdvancedConfigurationFields {
-  externalAccess = 'externalAccess',
-  sourceRanges = 'sourceRanges',
-  engineParametersEnabled = 'engineParametersEnabled',
-  engineParameters = 'engineParameters',
-  storageClass = 'storageClass',
-  podSchedulingPolicyEnabled = 'podSchedulingPolicyEnabled',
-  podSchedulingPolicy = 'podSchedulingPolicy',
-  exposureMethod = 'exposureMethod',
-  loadBalancerConfig = 'loadBalancerConfig',
+import { DbEngineType } from '@percona/types';
+
+export type AnnotationType = {
+  [key: string]: string;
+};
+
+export interface LoadBalancerConfigList {
+  apiVersion: string;
+  kind: string;
+  items: LoadBalancerConfig[];
+  metadata: { resourceVersion?: string; name: string };
 }
 
-export enum ExposureMethod {
-  ClusterIP = 'Cluster IP',
-  LoadBalancer = 'Load balancer',
+export interface LoadBalancerConfig {
+  apiVersion: string;
+  kind: string;
+  metadata: { resourceVersion?: string; name: string };
+  spec: {
+    annotations?: AnnotationType;
+    engineType?: DbEngineType;
+  };
+  status?: {
+    inUse?: boolean;
+    lastObservedGeneration?: number;
+  };
 }
