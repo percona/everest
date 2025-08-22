@@ -39,7 +39,7 @@ import {
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DbWizardFormFields, EVEREST_READ_ONLY_FINALIZER } from 'consts';
 import { FormCard } from 'components/form-card';
 import { usePodSchedulingPolicies } from 'hooks';
@@ -97,8 +97,9 @@ export const AdvancedConfigurationForm = ({
       refetchInterval: 10000,
     });
 
-  const loadBalancerConfigValue =
-    watch(AdvancedConfigurationFields.loadBalancerConfig) ?? '';
+  const loadBalancerConfigValue = watch(
+    AdvancedConfigurationFields.loadBalancerConfig
+  );
 
   const handleOnPolicyInfoClick = () => {
     const policyName = getValues<string>(
@@ -112,6 +113,36 @@ export const AdvancedConfigurationForm = ({
       setPolicyDialogOpen(true);
     }
   };
+
+  const emptyConfigOption: LoadBalancerConfig = {
+    apiVersion: '',
+    kind: '',
+    metadata: { name: '' },
+    spec: {},
+  };
+
+  const isEksDefault = useMemo(
+    () => clusterInfo?.clusterType === 'eks',
+    [clusterInfo?.clusterType]
+  );
+
+  const selectOptions = loadBalancerConfigs?.items.reverse() ?? [];
+
+  const selectDefaultValue = isEksDefault
+    ? 'eks-default'
+    : selectOptions.length === 1 &&
+        selectOptions[0].metadata.name === 'eks-default'
+      ? ''
+      : (selectOptions[0]?.metadata.name ?? '');
+
+  useEffect(() => {
+    if (!loadBalancerConfigValue) {
+      setValue(
+        AdvancedConfigurationFields.loadBalancerConfig,
+        selectDefaultValue
+      );
+    }
+  }, [loadBalancerConfigValue, selectDefaultValue, setValue]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
     const configName = getValues<string>(
@@ -181,15 +212,6 @@ export const AdvancedConfigurationForm = ({
   useEffect(() => {
     setValue(AdvancedConfigurationFields.exposureMethod, exposureMethodValue);
   }, [setValue, exposureMethodValue, getFieldState]);
-
-  useEffect(() => {
-    if (!loadBalancerConfigValue) {
-      setValue(
-        AdvancedConfigurationFields.loadBalancerConfig,
-        loadBalancerConfigs?.items?.[0]?.metadata?.name ?? ''
-      );
-    }
-  }, [loadBalancerConfigValue, loadBalancerConfigs?.items, setValue]);
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
@@ -344,13 +366,16 @@ export const AdvancedConfigurationForm = ({
                             mt: 0,
                           },
                         }}
+                        selectFieldProps={{
+                          value: loadBalancerConfigValue || selectDefaultValue,
+                        }}
                       >
-                        {loadBalancerConfigs?.items.map((loadBlancerConfig) => (
+                        {[...selectOptions, emptyConfigOption].map((config) => (
                           <MenuItem
-                            value={loadBlancerConfig?.metadata?.name}
-                            key={loadBlancerConfig?.metadata?.name}
+                            value={config.metadata.name}
+                            key={config.metadata.name}
                           >
-                            {loadBlancerConfig?.metadata?.name}
+                            {config.metadata.name}
                           </MenuItem>
                         ))}
                       </SelectInput>
