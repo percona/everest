@@ -118,6 +118,10 @@ export const AdvancedConfigurationForm = ({
       DbWizardFormFields.podSchedulingPolicy
     );
 
+    const { isTouched: policyEnabledTouched } = getFieldState(
+      DbWizardFormFields.podSchedulingPolicyEnabled
+    );
+
     const defaultPolicy = policies.find((policy) =>
       policy.metadata.finalizers.includes(EVEREST_READ_ONLY_FINALIZER)
     );
@@ -129,7 +133,11 @@ export const AdvancedConfigurationForm = ({
       );
     }
 
-    if (defaultPolicy && automaticallyTogglePodSchedulingPolicySwitch) {
+    if (
+      defaultPolicy &&
+      automaticallyTogglePodSchedulingPolicySwitch &&
+      !policyEnabledTouched
+    ) {
       setValue(AdvancedConfigurationFields.podSchedulingPolicyEnabled, true);
     }
   }, [

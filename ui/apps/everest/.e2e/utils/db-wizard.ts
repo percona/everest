@@ -15,20 +15,27 @@ export const storageLocationAutocompleteEmptyValidationCheck = async (
   ).toBeVisible();
 };
 
-export const moveForward = async (page: Page) => {
+const waitForStepHeaderToChange = async (
+  page: Page,
+  directionalButtonTestId: string
+) => {
   const currHeader = await page.getByTestId('step-header').textContent();
-  await page.getByTestId('db-wizard-continue-button').click();
-
+  await page.getByTestId(directionalButtonTestId).click();
   do {
     if ((await page.getByTestId('step-header').textContent()) !== currHeader) {
       break;
     }
-    page.waitForTimeout(200);
+    await page.waitForTimeout(200);
   } while (1);
 };
 
-export const moveBack = (page: Page) =>
-  page.getByTestId('db-wizard-previous-button').click();
+export const moveForward = async (page: Page) => {
+  await waitForStepHeaderToChange(page, 'db-wizard-continue-button');
+};
+
+export const moveBack = async (page: Page) => {
+  await waitForStepHeaderToChange(page, 'db-wizard-previous-button');
+};
 
 export const goToStep = (
   page: Page,
