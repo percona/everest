@@ -24,8 +24,12 @@ const (
 
 	// MySQLProductName holds the name of the product.
 	MySQLProductName = "MySQL"
+	// PSProductName holds the name of the product.
+	PSProductName = "Percona Server for MySQL"
 	// MySQLOperatorName holds operator name in k8s.
 	MySQLOperatorName = "percona-xtradb-cluster-operator"
+	// PSOperatorName holds operator name in k8s.
+	PSOperatorName = "percona-server-mysql-operator"
 
 	// MongoDBProductName holds the name of the product.
 	MongoDBProductName = "MongoDB"
@@ -108,6 +112,7 @@ const (
 //nolint:gochecknoglobals
 var OperatorTypeToName = map[everestv1alpha1.EngineType]string{
 	everestv1alpha1.DatabaseEnginePXC:        MySQLOperatorName,
+	everestv1alpha1.DatabaseEnginePS:         PSOperatorName,
 	everestv1alpha1.DatabaseEnginePSMDB:      MongoDBOperatorName,
 	everestv1alpha1.DatabaseEnginePostgresql: PostgreSQLOperatorName,
 }

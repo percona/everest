@@ -98,7 +98,7 @@ func namespaceExists(
 
 func ensureNoOperatorsRemoved(
 	subscriptions []olmv1alpha1.Subscription,
-	installPG, installPXC, installPSMDB bool,
+	installPG, installPXC, installPS, installPSMDB bool,
 ) bool {
 	for _, subscription := range subscriptions {
 		switch subscription.GetName() {
@@ -112,6 +112,10 @@ func ensureNoOperatorsRemoved(
 			}
 		case common.MySQLOperatorName:
 			if !installPXC {
+				return false
+			}
+		case common.PSOperatorName:
+			if !installPS {
 				return false
 			}
 		default:

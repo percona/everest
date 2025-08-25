@@ -384,6 +384,7 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 
 	cfg := []requirementsCheck{
 		{common.MySQLOperatorName, supVer.PXCOperator},
+		{common.PSOperatorName, supVer.PSOperator},
 		{common.PostgreSQLOperatorName, supVer.PGOperator},
 		{common.MongoDBOperatorName, supVer.PSMBDOperator},
 	}
@@ -405,7 +406,7 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 			if !c.constraints.Check(v) {
 				return fmt.Errorf(
 					"%s version %q does not meet minimum requirements of %q",
-					c.operatorName, v, supVer.PXCOperator.String(),
+					c.operatorName, v, c.constraints.String(),
 				)
 			}
 			u.l.Debugf("Finished requirements check for operator %s", c.operatorName)

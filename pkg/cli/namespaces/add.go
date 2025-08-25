@@ -44,6 +44,7 @@ type (
 		PG    bool // is set if PostgresSQL shall be installed.
 		PSMDB bool // is set if MongoDB shall be installed.
 		PXC   bool // is set if XtraDB Cluster shall be installed.
+		PS    bool // is set if PS shall be installed.
 	}
 
 	// NamespaceAddConfig is the configuration for adding namespaces.
@@ -143,6 +144,7 @@ func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
 	// By default, all operators are selected.
 	defaultOpts := []tui.MultiSelectOption{
 		{common.MySQLProductName, true},
+		{common.PSProductName, true},
 		{common.MongoDBProductName, true},
 		{common.PostgreSQLProductName, true},
 	}
@@ -162,6 +164,8 @@ func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
 		switch op.Text {
 		case common.MySQLProductName:
 			cfg.Operators.PXC = op.Selected
+		case common.PSProductName:
+			cfg.Operators.PS = op.Selected
 		case common.MongoDBProductName:
 			cfg.Operators.PSMDB = op.Selected
 		case common.PostgreSQLProductName:
@@ -169,7 +173,7 @@ func (cfg *NamespaceAddConfig) PopulateOperators(ctx context.Context) error {
 		}
 	}
 
-	if !(cfg.Operators.PXC || cfg.Operators.PG || cfg.Operators.PSMDB) {
+	if !(cfg.Operators.PXC || cfg.Operators.PS || cfg.Operators.PG || cfg.Operators.PSMDB) {
 		// need to select at least one operator to install
 		return ErrOperatorsNotSelected
 	}
@@ -267,7 +271,7 @@ func NewNamespaceAdd(c NamespaceAddConfig, l *zap.SugaredLogger) (*NamespaceAdde
 			return nil, ErrNamespaceListEmpty
 		}
 
-		if !(c.Operators.PXC || c.Operators.PG || c.Operators.PSMDB) {
+		if !(c.Operators.PXC || c.Operators.PS || c.Operators.PG || c.Operators.PSMDB) {
 			// need to select at least one operator to install
 			return nil, ErrOperatorsNotSelected
 		}
@@ -352,6 +356,7 @@ func (n *NamespaceAdder) getValues() values.Options {
 	var v []string
 	v = append(v, "cleanupOnUninstall=false") // uninstall command will do the clean-up on its own.
 	v = append(v, fmt.Sprintf("pxc=%t", n.cfg.Operators.PXC))
+	v = append(v, fmt.Sprintf("ps=%t", n.cfg.Operators.PS))
 	v = append(v, fmt.Sprintf("postgresql=%t", n.cfg.Operators.PG))
 	v = append(v, fmt.Sprintf("psmdb=%t", n.cfg.Operators.PSMDB))
 	v = append(v, fmt.Sprintf("telemetry=%t", !n.cfg.DisableTelemetry))
@@ -409,7 +414,7 @@ func (n *NamespaceAdder) validateNamespaceUpdate(ctx context.Context, namespace 
 		return fmt.Errorf("cannot list subscriptions: %w", err)
 	}
 	if !ensureNoOperatorsRemoved(subscriptions.Items,
-		n.cfg.Operators.PG, n.cfg.Operators.PXC, n.cfg.Operators.PSMDB,
+		n.cfg.Operators.PG, n.cfg.Operators.PXC, n.cfg.Operators.PS, n.cfg.Operators.PSMDB,
 	) {
 		return ErrCannotRemoveOperators
 	}

@@ -181,6 +181,8 @@ func convertDbOperatorName(name string) string {
 		return string(everestOperator.DatabaseEnginePSMDB)
 	case common.MySQLOperatorName:
 		return string(everestOperator.DatabaseEnginePXC)
+	case common.PSOperatorName:
+		return string(everestOperator.DatabaseEnginePS)
 	case common.PostgreSQLOperatorName:
 		return string(everestOperator.DatabaseEnginePostgresql)
 	default:

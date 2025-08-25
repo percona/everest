@@ -133,6 +133,6 @@ update-dev-everest-operator:
 
 .PHONY: prepare-pr
 prepare-pr:
-	$(MAKE) gen
 	CHART_BRANCH=${CHART_BRANCH} $(MAKE) update-dev-chart
 	EVEREST_OPERATOR_BRANCH=${EVEREST_OPERATOR_BRANCH} $(MAKE) update-dev-everest-operator
+	$(MAKE) gen
