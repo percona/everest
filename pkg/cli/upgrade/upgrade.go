@@ -28,7 +28,6 @@ import (
 	goversion "github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/pkg/cli/helm"
 	helmutils "github.com/percona/everest/pkg/cli/helm/utils"
@@ -201,18 +200,6 @@ func (u *Upgrade) setupHelmInstaller(ctx context.Context) error {
 		ClusterType:        u.clusterType,
 		VersionMetadataURL: u.config.VersionMetadataURL,
 	})
-
-	// We will apply the existing configmap and secret values to the new helm chart.
-	// This way, we ensure that these configs are not accidentally changed during upgrades.
-	// Normally, the Helm chart will include these ConfigMaps and Secrets only during installation and exclude them from upgrades.
-	// However, when upgrading to 1.4.0, we create a new release to migrate the existing installation to Helm.
-	// In this case, we need to ensure that the existing configs and secrets are preserved.
-	if err := u.applyConfigMapValues(ctx); err != nil {
-		return fmt.Errorf("could not build values from configmaps: %w", err)
-	}
-	if err := u.applySecretValues(ctx); err != nil {
-		return fmt.Errorf("could not build values from secrets: %w", err)
-	}
 
 	values := Must(helmutils.MergeVals(u.config.Values, overrides))
 	installer := &helm.Installer{
@@ -423,47 +410,6 @@ func (u *Upgrade) checkOperatorRequirements(ctx context.Context, supVer *common.
 				)
 			}
 			u.l.Debugf("Finished requirements check for operator %s", c.operatorName)
-		}
-	}
-	return nil
-}
-
-func (u *Upgrade) applyConfigMapValues(ctx context.Context) error {
-	cm, err := u.kubeConnector.GetConfigMap(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestRBACConfigMapName})
-	if client.IgnoreNotFound(err) != nil {
-		return err
-	}
-	if !cm.GetCreationTimestamp().Time.IsZero() {
-		if val, ok := cm.Data["enabled"]; ok {
-			u.config.Values.Values = append(u.config.Values.Values, fmt.Sprintf("server.rbac.enabled=%s", val))
-		}
-		if val, ok := cm.Data["policy.csv"]; ok {
-			u.config.Values.LiteralValues = append(u.config.Values.LiteralValues, fmt.Sprintf("server.rbac.policy=%s", val))
-		}
-	}
-
-	cm, err = u.kubeConnector.GetConfigMap(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestSettingsConfigMapName})
-	if client.IgnoreNotFound(err) != nil {
-		return err
-	}
-	if !cm.GetCreationTimestamp().Time.IsZero() {
-		if val, ok := cm.Data["oidc.config"]; ok {
-			u.config.Values.Values = append(u.config.Values.Values, fmt.Sprintf("server.oidc=%s", val))
-		}
-	}
-	return nil
-}
-
-// We don't handle the accounts secret here because we cannot configure it via the Helm values.
-// The Helm chart handles the secret differently.
-func (u *Upgrade) applySecretValues(ctx context.Context) error {
-	secret, err := u.kubeConnector.GetSecret(ctx, types.NamespacedName{Namespace: common.SystemNamespace, Name: common.EverestJWTSecretName})
-	if client.IgnoreNotFound(err) != nil {
-		return err
-	}
-	if !secret.GetCreationTimestamp().Time.IsZero() {
-		if val, ok := secret.Data["id_rsa"]; ok {
-			u.config.Values.LiteralValues = append(u.config.Values.LiteralValues, fmt.Sprintf("server.jwtKey=%s", string(val)))
 		}
 	}
 	return nil
