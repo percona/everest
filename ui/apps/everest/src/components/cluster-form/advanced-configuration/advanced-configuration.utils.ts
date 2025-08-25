@@ -66,5 +66,10 @@ export const advancedConfigurationModalDefaultValues = (
       !!dbCluster?.spec.podSchedulingPolicyName,
     [AdvancedConfigurationFields.podSchedulingPolicy]:
       dbCluster?.spec.podSchedulingPolicyName,
+    [AdvancedConfigurationFields.loadBalancerConfig]: isProxy(
+      dbCluster?.spec?.proxy
+    )
+      ? dbCluster?.spec.proxy.expose.loadBalancerConfigName
+      : '',
   };
 };

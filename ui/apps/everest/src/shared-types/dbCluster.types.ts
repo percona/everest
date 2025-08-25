@@ -81,6 +81,7 @@ interface Engine {
 export interface ProxyExposeConfig {
   type: ProxyExposeType;
   ipSourceRanges?: string[];
+  loadBalancerConfigName?: string;
 }
 
 export interface Proxy {

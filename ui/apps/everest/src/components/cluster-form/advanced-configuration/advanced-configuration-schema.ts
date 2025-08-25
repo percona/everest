@@ -40,6 +40,8 @@ export const advancedConfigurationsSchema = () =>
       [AdvancedConfigurationFields.engineParameters]: z.string().optional(),
       [AdvancedConfigurationFields.podSchedulingPolicyEnabled]: z.boolean(),
       [AdvancedConfigurationFields.podSchedulingPolicy]: z.string().optional(),
+      [AdvancedConfigurationFields.loadBalancerConfig]: z.string().optional(),
+      [AdvancedConfigurationFields.exposureMethod]: z.string().optional(),
     })
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {
