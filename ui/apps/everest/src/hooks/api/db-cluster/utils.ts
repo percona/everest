@@ -11,9 +11,11 @@ import {
 
 const getExposteConfig = (
   externalAccess: boolean,
+  loadBalancerConfigName?: string,
   sourceRanges?: Array<{ sourceRange?: string }>
 ): ProxyExposeConfig => ({
   type: externalAccess ? ProxyExposeType.external : ProxyExposeType.internal,
+  loadBalancerConfigName,
   ...(!!externalAccess &&
     sourceRanges && {
       ipSourceRanges: sourceRanges.flatMap((source) =>
@@ -30,11 +32,16 @@ export const getProxySpec = (
   cpu: number,
   memory: number,
   sharding: boolean,
-  sourceRanges?: Array<{ sourceRange?: string }>
+  sourceRanges?: Array<{ sourceRange?: string }>,
+  loadBalancerConfigName?: string
 ): Proxy | ProxyExposeConfig => {
   if (dbType === DbType.Mongo && !sharding) {
     return {
-      expose: getExposteConfig(externalAccess, sourceRanges),
+      expose: getExposteConfig(
+        externalAccess,
+        loadBalancerConfigName,
+        sourceRanges
+      ),
     } as unknown as ProxyExposeConfig;
   }
   const proxyNr = parseInt(
@@ -53,7 +60,11 @@ export const getProxySpec = (
       cpu: `${cpu}`,
       memory: `${memory}G`,
     },
-    expose: getExposteConfig(externalAccess, sourceRanges),
+    expose: getExposteConfig(
+      externalAccess,
+      loadBalancerConfigName,
+      sourceRanges
+    ),
   };
 };
 

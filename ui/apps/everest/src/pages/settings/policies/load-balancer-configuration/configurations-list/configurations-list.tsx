@@ -16,10 +16,12 @@ import DeleteLoadBalancerConfig from '../load-balancer-dialog/delete';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import { useQueryClient } from '@tanstack/react-query';
 import { messages } from '../load-balancer.messages';
+import { EVEREST_READ_ONLY_FINALIZER } from 'consts';
 
 const LoadBalancerConfigurationList = () => {
-  const { data: loadBalancerConfigurations } = useLoadBalancerConfigs(
+  const { data: loadBalancerConfigs } = useLoadBalancerConfigs(
     'load-balancer-configs',
+    undefined,
     {
       refetchInterval: 10000,
     }
@@ -47,7 +49,14 @@ const LoadBalancerConfigurationList = () => {
 
   const handleOnCreateConfiguration = (data: { name: string }) => {
     setDialogOpen(false);
-    createConfiguration(data.name);
+    createConfiguration(data.name, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['load-balancer-configs'],
+        });
+        navigate(`/settings/policies/load-balancer-configuration/${data.name}`);
+      },
+    });
   };
 
   const handleOnDeleteIconClick = (config: LoadBalancerConfig) => {
@@ -89,7 +98,7 @@ const LoadBalancerConfigurationList = () => {
             }
           />
         }
-        data={loadBalancerConfigurations?.items || []}
+        data={loadBalancerConfigs?.items || []}
         columns={columns}
         enableRowActions
         enableRowHoverAction
@@ -99,7 +108,7 @@ const LoadBalancerConfigurationList = () => {
           )
         }
         renderTopToolbarCustomActions={() =>
-          canCreate && loadBalancerConfigurations?.items.length ? (
+          canCreate && loadBalancerConfigs?.items.length ? (
             <Button
               size="medium"
               startIcon={<Add />}
@@ -112,19 +121,23 @@ const LoadBalancerConfigurationList = () => {
             </Button>
           ) : null
         }
-        renderRowActions={({ row }) => (
-          <LoadBalancerRowActions
-            configName={row.original.metadata?.name ?? ''}
-            handleOnDeleteIconClick={() =>
-              handleOnDeleteIconClick(row.original)
-            }
-          />
-        )}
+        renderRowActions={({ row }) =>
+          !row.original.metadata.finalizers?.includes(
+            EVEREST_READ_ONLY_FINALIZER
+          ) && (
+            <LoadBalancerRowActions
+              configName={row.original.metadata?.name ?? ''}
+              handleOnDeleteIconClick={() =>
+                handleOnDeleteIconClick(row.original)
+              }
+            />
+          )
+        }
       />
       {dialogOpen && (
         <LoadBalancerDialog
           open
-          existingConfigs={loadBalancerConfigurations?.items || []}
+          existingConfigs={loadBalancerConfigs?.items || []}
           onClose={() => setDialogOpen(false)}
           onSubmit={handleOnCreateConfiguration}
         />

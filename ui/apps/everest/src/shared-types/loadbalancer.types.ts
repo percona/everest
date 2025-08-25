@@ -23,13 +23,13 @@ export interface LoadBalancerConfigList {
   apiVersion: string;
   kind: string;
   items: LoadBalancerConfig[];
-  metadata: { resourceVersion?: string; name: string };
+  metadata: { resourceVersion?: string; name: string; finalizers?: string[] };
 }
 
 export interface LoadBalancerConfig {
   apiVersion: string;
   kind: string;
-  metadata: { resourceVersion?: string; name: string };
+  metadata: { resourceVersion?: string; name: string; finalizers?: string[] };
   spec: {
     annotations?: AnnotationType;
     engineType?: DbEngineType;

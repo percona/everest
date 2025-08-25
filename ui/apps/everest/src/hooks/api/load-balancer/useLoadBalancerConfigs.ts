@@ -1,3 +1,4 @@
+import { DbEngineType } from '@percona/types';
 import {
   useMutation,
   UseMutationOptions,
@@ -18,11 +19,22 @@ import { PerconaQueryOptions } from 'shared-types/query.types';
 
 export const useLoadBalancerConfigs = (
   LOAD_BALANCER_CONFIGS_QUERY_KEY: string,
+  dbType?: DbEngineType,
   options?: PerconaQueryOptions<LoadBalancerConfigList, unknown>
 ) =>
   useQuery({
     queryKey: [LOAD_BALANCER_CONFIGS_QUERY_KEY],
-    queryFn: getLoadBalancerConfigsFn,
+    queryFn: () => getLoadBalancerConfigsFn(dbType),
+    select: (data) => ({
+      ...data,
+      items: (data.items || []).map((config) => ({
+        ...config,
+        metadata: {
+          ...config.metadata,
+          finalizers: config.metadata.finalizers || [],
+        },
+      })),
+    }),
     ...options,
   });
 
@@ -33,6 +45,13 @@ export const useLoadBalancerConfig = (
   useQuery({
     queryKey: ['load-balancer-config', configName],
     queryFn: () => getParticularLoadBalancerConfigFn(configName),
+    select: (config) => ({
+      ...config,
+      metadata: {
+        ...config.metadata,
+        finalizers: config.metadata.finalizers || [],
+      },
+    }),
     enabled: !!configName,
     ...options,
   });

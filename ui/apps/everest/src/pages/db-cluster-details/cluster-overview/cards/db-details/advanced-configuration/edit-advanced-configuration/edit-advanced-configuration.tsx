@@ -24,6 +24,8 @@ import {
 import { Messages } from './edit-advanced-configuration.messages';
 import { dbEngineToDbType } from '@percona/utils';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils';
+import { isProxy } from 'utils/db';
+import { ProxyExposeType } from 'shared-types/dbCluster.types';
 
 export const AdvancedConfigurationEditModal = ({
   open,
@@ -33,22 +35,24 @@ export const AdvancedConfigurationEditModal = ({
   submitting,
 }: AdvancedConfigurationModalProps) => {
   const onSubmit: SubmitHandler<AdvancedConfigurationFormType> = ({
-    externalAccess,
+    exposureMethod,
     engineParametersEnabled,
     engineParameters,
     sourceRanges,
     storageClass,
     podSchedulingPolicyEnabled,
     podSchedulingPolicy,
+    loadBalancerConfig,
   }) => {
     handleSubmitModal({
-      externalAccess,
+      externalAccess: exposureMethod === ProxyExposeType.external,
       engineParametersEnabled,
       engineParameters,
       sourceRanges,
       storageClass,
       podSchedulingPolicyEnabled,
       podSchedulingPolicy,
+      loadBalancerConfig,
     });
   };
 
@@ -69,6 +73,11 @@ export const AdvancedConfigurationEditModal = ({
         dbType={dbEngineToDbType(dbCluster?.spec?.engine?.type)}
         allowStorageClassChange={false}
         setDefaultsOnLoad={!dbCluster.spec.podSchedulingPolicyName}
+        expose={
+          isProxy(dbCluster.spec.proxy)
+            ? dbCluster.spec.proxy.expose
+            : undefined
+        }
       />
     </FormDialog>
   );

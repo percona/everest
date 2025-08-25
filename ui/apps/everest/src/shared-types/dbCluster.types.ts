@@ -81,6 +81,7 @@ interface Engine {
 export interface ProxyExposeConfig {
   type: ProxyExposeType;
   ipSourceRanges?: string[];
+  loadBalancerConfigName?: string;
 }
 
 export interface Proxy {
@@ -139,8 +140,6 @@ export interface Spec {
   monitoring: Monitoring;
   sharding?: Sharding;
   podSchedulingPolicyName?: string;
-  exposureMethod?: string;
-  loadBalancerConfigName?: string;
 }
 export interface StatusCondition {
   type: DbErrorType;

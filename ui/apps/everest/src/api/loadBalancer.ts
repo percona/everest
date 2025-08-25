@@ -3,11 +3,16 @@ import {
   LoadBalancerConfigList,
 } from 'shared-types/loadbalancer.types';
 import { api } from './api';
+import { DbEngineType } from '@percona/types';
 
 const loadBalancerUrl = '/load-balancer-configs';
 
-export const getLoadBalancerConfigsFn = async () => {
-  const response = await api.get<LoadBalancerConfigList>(`${loadBalancerUrl}`);
+export const getLoadBalancerConfigsFn = async (dbType?: DbEngineType) => {
+  const response = await api.get<LoadBalancerConfigList>(`${loadBalancerUrl}`, {
+    params: {
+      ...(dbType && { engineType: dbType }),
+    },
+  });
 
   return response.data;
 };

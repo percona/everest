@@ -34,6 +34,7 @@ import {
   DataSource,
   DbCluster,
   GetDbClusterCredentialsPayload,
+  ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
@@ -123,7 +124,8 @@ const formValuesToPayloadMapping = (
         dbPayload.proxyCpu,
         dbPayload.proxyMemory,
         dbPayload.sharding,
-        dbPayload.sourceRanges || []
+        dbPayload.sourceRanges || [],
+        dbPayload.loadBalancerConfig
       ),
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
@@ -148,8 +150,15 @@ const formValuesToPayloadMapping = (
         dbPayload.podSchedulingPolicy && {
           podSchedulingPolicyName: dbPayload.podSchedulingPolicy,
         }),
-      ...(dbPayload.loadBalancerConfig && {
-        loadBalancerConfigName: dbPayload.loadBalancerConfig,
+      ...(!!dbPayload.externalAccess && {
+        spec: {
+          proxy: {
+            expose: {
+              loadBalancerConfigName: dbPayload.loadBalancerConfig,
+              type: ProxyExposeType.external,
+            },
+          },
+        },
       }),
     },
   };

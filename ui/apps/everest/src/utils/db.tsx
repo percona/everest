@@ -748,7 +748,7 @@ export const changeDbClusterAdvancedConfig = (
   sourceRanges?: Array<{ sourceRange?: string }>,
   podSchedulingPolicyEnabled = false,
   podSchedulingPolicy = '',
-  loadBalancerConfig = ''
+  loadBalancerConfigName = ''
 ) => ({
   ...dbCluster,
   spec: {
@@ -756,7 +756,6 @@ export const changeDbClusterAdvancedConfig = (
     podSchedulingPolicyName: podSchedulingPolicyEnabled
       ? podSchedulingPolicy
       : undefined,
-    loadBalancerConfigName: loadBalancerConfig || undefined,
     engine: {
       ...dbCluster.spec.engine,
       config: engineParametersEnabled ? engineParameters : '',
@@ -764,6 +763,8 @@ export const changeDbClusterAdvancedConfig = (
     proxy: {
       ...dbCluster.spec.proxy,
       expose: {
+        loadBalancerConfigName:
+          (externalAccess && loadBalancerConfigName) || undefined,
         type: externalAccess
           ? ProxyExposeType.external
           : ProxyExposeType.internal,

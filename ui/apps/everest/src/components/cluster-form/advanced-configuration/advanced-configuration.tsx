@@ -50,6 +50,10 @@ import { SELECT_WIDTH } from './constants';
 import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import LoadBalancerDialog from './load-balancer.dialog';
+import {
+  ProxyExposeConfig,
+  ProxyExposeType,
+} from 'shared-types/dbCluster.types';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -57,6 +61,7 @@ interface AdvancedConfigurationFormProps {
   setDefaultsOnLoad?: boolean;
   automaticallyTogglePodSchedulingPolicySwitch?: boolean;
   allowStorageClassChange?: boolean;
+  expose?: ProxyExposeConfig;
 }
 
 export const AdvancedConfigurationForm = ({
@@ -65,6 +70,7 @@ export const AdvancedConfigurationForm = ({
   setDefaultsOnLoad = false,
   automaticallyTogglePodSchedulingPolicySwitch = false,
   allowStorageClassChange = false,
+  expose,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues } = useFormContext();
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
@@ -85,15 +91,18 @@ export const AdvancedConfigurationForm = ({
       refetchInterval: 2000,
     });
 
+  const isExternal = expose ? expose.type === ProxyExposeType.external : false;
+
   const exposureMethods = Object.values(ExposureMethod);
 
   const exposureMethodValue =
     watch(AdvancedConfigurationFields.exposureMethod) ?? '';
+
   const isExposureMethodLoadBalancer =
     exposureMethodValue === ExposureMethod.LoadBalancer;
 
   const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
-    useLoadBalancerConfigs('load-balancer-configs', {
+    useLoadBalancerConfigs('load-balancer-configs', dbTypeToDbEngine(dbType), {
       refetchInterval: 10000,
     });
 
@@ -134,6 +143,15 @@ export const AdvancedConfigurationForm = ({
         selectOptions[0].metadata.name === 'eks-default'
       ? ''
       : (selectOptions[0]?.metadata.name ?? '');
+
+  useEffect(() => {
+    if (isExternal) {
+      setValue(
+        AdvancedConfigurationFields.exposureMethod,
+        ExposureMethod.LoadBalancer
+      );
+    }
+  }, [isExternal, setValue]);
 
   useEffect(() => {
     if (!loadBalancerConfigValue) {
@@ -216,10 +234,6 @@ export const AdvancedConfigurationForm = ({
     setDefaultsOnLoad,
     automaticallyTogglePodSchedulingPolicySwitch,
   ]);
-
-  useEffect(() => {
-    setValue(AdvancedConfigurationFields.exposureMethod, exposureMethodValue);
-  }, [setValue, exposureMethodValue, getFieldState]);
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
     if (!hasError && !value.includes('/') && value !== '') {
