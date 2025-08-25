@@ -15,9 +15,11 @@
 
 import { DbType } from '@percona/types';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
-import { AdvancedConfigurationFields } from './advanced-configuration.types';
+import {
+  AdvancedConfigurationFields,
+  ExposureMethod,
+} from './advanced-configuration.types';
 import { AdvancedConfigurationFormType } from './advanced-configuration-schema';
-import { isProxy } from 'utils/db';
 
 export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
   let dynamicText = '';
@@ -43,18 +45,11 @@ export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
 export const advancedConfigurationModalDefaultValues = (
   dbCluster: DbCluster
 ): AdvancedConfigurationFormType => {
-  const sourceRangesSource = isProxy(dbCluster?.spec?.proxy)
-    ? dbCluster?.spec?.proxy?.expose.ipSourceRanges
-    : dbCluster?.spec?.proxy.ipSourceRanges;
+  const sourceRangesSource = dbCluster?.spec?.proxy.expose.ipSourceRanges;
 
   return {
     [AdvancedConfigurationFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
-    [AdvancedConfigurationFields.externalAccess]: isProxy(
-      dbCluster?.spec?.proxy
-    )
-      ? dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external
-      : dbCluster?.spec?.proxy.type === ProxyExposeType.external,
     [AdvancedConfigurationFields.engineParametersEnabled]:
       !!dbCluster?.spec?.engine?.config,
     [AdvancedConfigurationFields.engineParameters]:
@@ -66,10 +61,11 @@ export const advancedConfigurationModalDefaultValues = (
       !!dbCluster?.spec.podSchedulingPolicyName,
     [AdvancedConfigurationFields.podSchedulingPolicy]:
       dbCluster?.spec.podSchedulingPolicyName,
-    [AdvancedConfigurationFields.loadBalancerConfig]: isProxy(
-      dbCluster?.spec?.proxy
-    )
-      ? dbCluster?.spec.proxy.expose.loadBalancerConfigName
-      : '',
+    [AdvancedConfigurationFields.loadBalancerConfigName]:
+      dbCluster?.spec.proxy.expose.loadBalancerConfigName,
+    [AdvancedConfigurationFields.exposureMethod]:
+      dbCluster?.spec?.proxy.expose.type === ProxyExposeType.external
+        ? ExposureMethod.LoadBalancer
+        : ExposureMethod.ClusterIP,
   };
 };

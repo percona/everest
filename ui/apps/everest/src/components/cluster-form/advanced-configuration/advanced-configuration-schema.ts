@@ -14,7 +14,10 @@
 // limitations under the License.
 
 import { z } from 'zod';
-import { AdvancedConfigurationFields } from './advanced-configuration.types';
+import {
+  AdvancedConfigurationFields,
+  ExposureMethod,
+} from './advanced-configuration.types';
 import { IP_REGEX } from 'consts';
 import { Messages } from './messages';
 
@@ -32,7 +35,6 @@ export const advancedConfigurationsSchema = () =>
             });
           }
         }),
-      [AdvancedConfigurationFields.externalAccess]: z.boolean(),
       [AdvancedConfigurationFields.sourceRanges]: z.array(
         z.object({ sourceRange: z.string().optional() })
       ),
@@ -40,8 +42,11 @@ export const advancedConfigurationsSchema = () =>
       [AdvancedConfigurationFields.engineParameters]: z.string().optional(),
       [AdvancedConfigurationFields.podSchedulingPolicyEnabled]: z.boolean(),
       [AdvancedConfigurationFields.podSchedulingPolicy]: z.string().optional(),
-      [AdvancedConfigurationFields.loadBalancerConfig]: z.string().optional(),
-      [AdvancedConfigurationFields.exposureMethod]: z.string().optional(),
+      [AdvancedConfigurationFields.loadBalancerConfigName]: z
+        .string()
+        .optional(),
+      [AdvancedConfigurationFields.exposureMethod]:
+        z.nativeEnum(ExposureMethod),
     })
     .passthrough()
     .superRefine(({ sourceRanges }, ctx) => {

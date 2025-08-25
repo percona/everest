@@ -48,7 +48,6 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   [DbWizardFormFields.dbVersion]: '',
   [DbWizardFormFields.storageClass]: '',
   [DbWizardFormFields.k8sNamespace]: null,
-  [DbWizardFormFields.externalAccess]: false,
   [DbWizardFormFields.sourceRanges]: [{ sourceRange: '' }],
   [DbWizardFormFields.podSchedulingPolicyEnabled]: false,
   [DbWizardFormFields.podSchedulingPolicy]: '',

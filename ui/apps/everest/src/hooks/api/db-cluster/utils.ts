@@ -1,6 +1,7 @@
 import { DbType } from '@percona/types';
 import { dbTypeToProxyType } from '@percona/utils';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema';
 import {
   DataSource,
@@ -28,21 +29,21 @@ export const getProxySpec = (
   dbType: DbType,
   numberOfProxies: string,
   customNrOfProxies: string,
-  externalAccess: boolean,
+  exposureMethod: ExposureMethod,
   cpu: number,
   memory: number,
   sharding: boolean,
   sourceRanges?: Array<{ sourceRange?: string }>,
   loadBalancerConfigName?: string
-): Proxy | ProxyExposeConfig => {
+): Proxy => {
   if (dbType === DbType.Mongo && !sharding) {
     return {
       expose: getExposteConfig(
-        externalAccess,
+        exposureMethod === ExposureMethod.LoadBalancer,
         loadBalancerConfigName,
         sourceRanges
       ),
-    } as unknown as ProxyExposeConfig;
+    } as unknown as Proxy;
   }
   const proxyNr = parseInt(
     numberOfProxies === CUSTOM_NR_UNITS_INPUT_VALUE
@@ -50,8 +51,6 @@ export const getProxySpec = (
       : numberOfProxies,
     10
   );
-  // const showResources =
-  //   dbType !== DbType.Mongo || (dbType === DbType.Mongo && !sharding);
 
   return {
     type: dbTypeToProxyType(dbType),
@@ -61,7 +60,7 @@ export const getProxySpec = (
       memory: `${memory}G`,
     },
     expose: getExposteConfig(
-      externalAccess,
+      exposureMethod === ExposureMethod.LoadBalancer,
       loadBalancerConfigName,
       sourceRanges
     ),

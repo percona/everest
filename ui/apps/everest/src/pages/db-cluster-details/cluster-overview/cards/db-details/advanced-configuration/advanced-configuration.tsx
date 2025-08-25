@@ -28,7 +28,6 @@ import {
 } from 'utils/db';
 import { Link } from 'react-router-dom';
 import { useRBACPermissions } from 'hooks/rbac';
-import { ProxyExposeType } from 'shared-types/dbCluster.types';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -74,19 +73,19 @@ export const AdvancedConfiguration = ({
     podSchedulingPolicyEnabled,
     podSchedulingPolicy,
     exposureMethod,
-    loadBalancerConfig,
+    loadBalancerConfigName,
   }: AdvancedConfigurationFormType) => {
     setUpdating(true);
     updateCluster(
       changeDbClusterAdvancedConfig(
         dbCluster!,
         engineParametersEnabled,
-        exposureMethod === ProxyExposeType.external,
+        exposureMethod,
         engineParameters,
         sourceRanges,
         podSchedulingPolicyEnabled,
         podSchedulingPolicy,
-        loadBalancerConfig
+        loadBalancerConfigName
       )
     );
   };

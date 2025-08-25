@@ -90,3 +90,5 @@ export const DbWizardFormFields = {
   ...DBVersionFields,
   ...AdvancedConfigurationFields,
 };
+
+export const EKS_DEFAULT_LOAD_BALANCER_CONFIG = 'eks-default';

@@ -134,7 +134,7 @@ export interface Spec {
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
   engine: Engine;
-  proxy: Proxy | ProxyExposeConfig;
+  proxy: Proxy;
   paused?: boolean;
   dataSource?: DataSource;
   monitoring: Monitoring;

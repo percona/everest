@@ -120,12 +120,12 @@ const formValuesToPayloadMapping = (
         dbPayload.dbType,
         dbPayload.numberOfProxies,
         dbPayload.customNrOfProxies || '',
-        dbPayload.externalAccess,
+        dbPayload.exposureMethod,
         dbPayload.proxyCpu,
         dbPayload.proxyMemory,
         dbPayload.sharding,
         dbPayload.sourceRanges || [],
-        dbPayload.loadBalancerConfig
+        dbPayload.loadBalancerConfigName
       ),
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {

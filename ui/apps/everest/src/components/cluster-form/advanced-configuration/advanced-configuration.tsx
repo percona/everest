@@ -40,7 +40,11 @@ import {
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import { useKubernetesClusterInfo } from 'hooks/api/kubernetesClusters/useKubernetesClusterInfo';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DbWizardFormFields, EVEREST_READ_ONLY_FINALIZER } from 'consts';
+import {
+  DbWizardFormFields,
+  EKS_DEFAULT_LOAD_BALANCER_CONFIG,
+  EVEREST_READ_ONLY_FINALIZER,
+} from 'consts';
 import { FormCard } from 'components/form-card';
 import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
@@ -50,10 +54,8 @@ import { SELECT_WIDTH } from './constants';
 import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import LoadBalancerDialog from './load-balancer.dialog';
-import {
-  ProxyExposeConfig,
-  ProxyExposeType,
-} from 'shared-types/dbCluster.types';
+import { ProxyExposeConfig } from 'shared-types/dbCluster.types';
+import EmptyMenuItem from 'components/empty-menu-item';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -70,7 +72,6 @@ export const AdvancedConfigurationForm = ({
   setDefaultsOnLoad = false,
   automaticallyTogglePodSchedulingPolicySwitch = false,
   allowStorageClassChange = false,
-  expose,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues } = useFormContext();
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
@@ -91,15 +92,7 @@ export const AdvancedConfigurationForm = ({
       refetchInterval: 2000,
     });
 
-  const isExternal = expose ? expose.type === ProxyExposeType.external : false;
-
   const exposureMethods = Object.values(ExposureMethod);
-
-  const exposureMethodValue =
-    watch(AdvancedConfigurationFields.exposureMethod) ?? '';
-
-  const isExposureMethodLoadBalancer =
-    exposureMethodValue === ExposureMethod.LoadBalancer;
 
   const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
     useLoadBalancerConfigs('load-balancer-configs', dbTypeToDbEngine(dbType), {
@@ -107,7 +100,7 @@ export const AdvancedConfigurationForm = ({
     });
 
   const loadBalancerConfigValue = watch(
-    AdvancedConfigurationFields.loadBalancerConfig
+    AdvancedConfigurationFields.loadBalancerConfigName
   );
 
   const handleOnPolicyInfoClick = () => {
@@ -123,13 +116,6 @@ export const AdvancedConfigurationForm = ({
     }
   };
 
-  const emptyConfigOption: LoadBalancerConfig = {
-    apiVersion: '',
-    kind: '',
-    metadata: { name: '' },
-    spec: {},
-  };
-
   const isEksDefault = useMemo(
     () => clusterInfo?.clusterType === 'eks',
     [clusterInfo?.clusterType]
@@ -138,25 +124,16 @@ export const AdvancedConfigurationForm = ({
   const selectOptions = loadBalancerConfigs?.items.reverse() ?? [];
 
   const selectDefaultValue = isEksDefault
-    ? 'eks-default'
+    ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
     : selectOptions.length === 1 &&
-        selectOptions[0].metadata.name === 'eks-default'
+        selectOptions[0].metadata.name === EKS_DEFAULT_LOAD_BALANCER_CONFIG
       ? ''
       : (selectOptions[0]?.metadata.name ?? '');
 
   useEffect(() => {
-    if (isExternal) {
-      setValue(
-        AdvancedConfigurationFields.exposureMethod,
-        ExposureMethod.LoadBalancer
-      );
-    }
-  }, [isExternal, setValue]);
-
-  useEffect(() => {
     if (!loadBalancerConfigValue) {
       setValue(
-        AdvancedConfigurationFields.loadBalancerConfig,
+        AdvancedConfigurationFields.loadBalancerConfigName,
         selectDefaultValue
       );
     }
@@ -164,7 +141,7 @@ export const AdvancedConfigurationForm = ({
 
   const handleOnLoadBalancerConfigInfoClick = () => {
     const configName = getValues<string>(
-      AdvancedConfigurationFields.loadBalancerConfig
+      AdvancedConfigurationFields.loadBalancerConfigName
     );
 
     selectedLoadBalancerConfig.current = loadBalancerConfigs?.items.find(
@@ -359,9 +336,6 @@ export const AdvancedConfigurationForm = ({
                     mt: 0,
                   },
                 }}
-                selectFieldProps={{
-                  value: exposureMethodValue,
-                }}
               >
                 {exposureMethods.map((method) => (
                   <MenuItem value={method} key={method}>
@@ -371,14 +345,17 @@ export const AdvancedConfigurationForm = ({
               </SelectInput>
             </Box>
 
-            {isExposureMethodLoadBalancer && (
+            {getValues(AdvancedConfigurationFields.exposureMethod) ===
+              ExposureMethod.LoadBalancer && (
               <>
                 <FormCard
                   title={Messages.cards.loadBalancerConfiguration.title}
                   controlComponent={
                     <Box display="flex" ml="auto" alignItems="center">
                       <SelectInput
-                        name={AdvancedConfigurationFields.loadBalancerConfig}
+                        name={
+                          AdvancedConfigurationFields.loadBalancerConfigName
+                        }
                         loading={
                           fetchingLoadBalancer || loadingDefaultsForEdition
                         }
@@ -388,11 +365,8 @@ export const AdvancedConfigurationForm = ({
                             mt: 0,
                           },
                         }}
-                        selectFieldProps={{
-                          value: loadBalancerConfigValue || selectDefaultValue,
-                        }}
                       >
-                        {[...selectOptions, emptyConfigOption].map((config) => (
+                        {selectOptions.map((config) => (
                           <MenuItem
                             value={config.metadata.name}
                             key={config.metadata.name}
@@ -400,6 +374,7 @@ export const AdvancedConfigurationForm = ({
                             {config.metadata.name}
                           </MenuItem>
                         ))}
+                        <EmptyMenuItem />
                       </SelectInput>
                       {!!loadBalancerConfigs?.items.length && (
                         <IconButton

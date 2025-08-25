@@ -14,7 +14,6 @@
 // limitations under the License.
 
 export enum AdvancedConfigurationFields {
-  externalAccess = 'externalAccess',
   sourceRanges = 'sourceRanges',
   engineParametersEnabled = 'engineParametersEnabled',
   engineParameters = 'engineParameters',
@@ -22,7 +21,7 @@ export enum AdvancedConfigurationFields {
   podSchedulingPolicyEnabled = 'podSchedulingPolicyEnabled',
   podSchedulingPolicy = 'podSchedulingPolicy',
   exposureMethod = 'exposureMethod',
-  loadBalancerConfig = 'loadBalancerConfig',
+  loadBalancerConfigName = 'loadBalancerConfigName',
 }
 
 export enum ExposureMethod {
