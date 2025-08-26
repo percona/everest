@@ -50,7 +50,7 @@ import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { dbTypeToDbEngine } from '@percona/utils';
-import { SELECT_WIDTH } from './constants';
+import { emtpyConfig, SELECT_WIDTH } from './constants';
 import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import LoadBalancerDialog from './load-balancer.dialog';
@@ -89,8 +89,6 @@ export const AdvancedConfigurationForm = ({
       refetchInterval: 2000,
     });
 
-  const [noConfig, setNoConfig] = useState(false);
-
   const exposureMethods = Object.values(ExposureMethod);
 
   const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
@@ -120,17 +118,7 @@ export const AdvancedConfigurationForm = ({
     [clusterInfo?.clusterType]
   );
 
-  const emtpyConfig: LoadBalancerConfig = {
-    apiVersion: '',
-    kind: '',
-    metadata: {
-      name: 'No configuration',
-    },
-    spec: { annotations: {} },
-  };
-
-  const selectOptions: LoadBalancerConfig[] =
-    loadBalancerConfigs?.items.reverse() ?? [];
+  const selectOptions: LoadBalancerConfig[] = loadBalancerConfigs?.items ?? [];
 
   const selectDefaultValue = isEksDefault
     ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
@@ -141,16 +129,13 @@ export const AdvancedConfigurationForm = ({
       : (selectOptions[selectOptions.length - 1]?.metadata.name ?? '');
 
   useEffect(() => {
-    if (noConfig) {
-      setValue(AdvancedConfigurationFields.loadBalancerConfigName, '');
-    }
-    if (loadBalancerConfigValue === undefined) {
+    if (!loadBalancerConfigValue) {
       setValue(
         AdvancedConfigurationFields.loadBalancerConfigName,
         selectDefaultValue
       );
     }
-  }, [loadBalancerConfigValue, noConfig, selectDefaultValue, setValue]);
+  }, [loadBalancerConfigValue, selectDefaultValue, setValue]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
     const configName = getValues<string>(
@@ -380,19 +365,16 @@ export const AdvancedConfigurationForm = ({
                         }}
                         selectFieldProps={{
                           onChange: (e) => {
-                            if (e.target.value === 'No configuration') {
-                              setNoConfig(true);
-                            } else {
+                            {
                               setValue(
                                 AdvancedConfigurationFields.loadBalancerConfigName,
                                 e.target.value
                               );
-                              setNoConfig(false);
                             }
                           },
                         }}
                       >
-                        {[...selectOptions, emtpyConfig].map((config) => (
+                        {[emtpyConfig, ...selectOptions].map((config) => (
                           <MenuItem
                             value={config.metadata.name}
                             key={config.metadata.name}
