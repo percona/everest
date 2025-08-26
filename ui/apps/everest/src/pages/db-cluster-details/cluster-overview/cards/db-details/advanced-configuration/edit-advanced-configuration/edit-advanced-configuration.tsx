@@ -24,7 +24,6 @@ import {
 import { Messages } from './edit-advanced-configuration.messages';
 import { dbEngineToDbType } from '@percona/utils';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils';
-import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 import { EMPTY_LOAD_BALACNER_CONFIGURATION } from 'consts';
 
 export const AdvancedConfigurationEditModal = ({
@@ -44,23 +43,18 @@ export const AdvancedConfigurationEditModal = ({
     podSchedulingPolicy,
     loadBalancerConfigName,
   }) => {
-    const isLoadBalancerConfigExists =
-      loadBalancerConfigName !== EMPTY_LOAD_BALACNER_CONFIGURATION;
-
-    const loadBalancerConfig = isLoadBalancerConfigExists
-      ? loadBalancerConfigName
-      : '';
-
     handleSubmitModal({
-      externalAccess: exposureMethod === ExposureMethod.LoadBalancer,
-      exposureMethod,
       engineParametersEnabled,
       engineParameters,
       sourceRanges,
       storageClass,
       podSchedulingPolicyEnabled,
       podSchedulingPolicy,
-      loadBalancerConfig,
+      exposureMethod,
+      loadBalancerConfigName:
+        loadBalancerConfigName !== EMPTY_LOAD_BALACNER_CONFIGURATION
+          ? loadBalancerConfigName
+          : '',
     });
   };
 
