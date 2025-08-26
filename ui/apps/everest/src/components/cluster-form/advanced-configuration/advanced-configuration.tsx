@@ -380,7 +380,7 @@ export const AdvancedConfigurationForm = ({
                         }}
                         selectFieldProps={{
                           onChange: (e) => {
-                            if (e.target.value === 'no config') {
+                            if (e.target.value === 'No configuration') {
                               setNoConfig(true);
                             } else {
                               setValue(
