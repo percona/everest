@@ -7,17 +7,31 @@ import { messages } from '../load-balancer.messages';
 
 interface LoadBalancerRowActionsProps {
   configName: string;
+  readOnly?: boolean;
   handleOnDeleteIconClick: () => void;
 }
 
 const LoadBalancerRowActions = ({
   configName,
   handleOnDeleteIconClick,
+  readOnly,
 }: LoadBalancerRowActionsProps) => {
   const navigate = useNavigate();
-  return (
-    <TableActionsMenu
-      menuItems={[
+  const menuItems = readOnly
+    ? [
+        <MenuItem
+          key="view"
+          onClick={() =>
+            navigate(
+              `/settings/policies/load-balancer-configuration/${configName}`
+            )
+          }
+        >
+          <Visibility sx={{ mr: 1 }} />
+          {messages.rowActions.viewDetails}
+        </MenuItem>,
+      ]
+    : [
         <MenuItem
           key="view"
           onClick={() =>
@@ -33,7 +47,10 @@ const LoadBalancerRowActions = ({
           <DeleteIcon sx={{ mr: 1 }} />
           {messages.rowActions.delete}
         </MenuItem>,
-      ]}
+      ];
+  return (
+    <TableActionsMenu
+      menuItems={menuItems}
       isVertical
       buttonColor="primary.main"
     />

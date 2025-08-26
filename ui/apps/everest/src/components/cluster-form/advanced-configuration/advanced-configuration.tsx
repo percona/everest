@@ -54,8 +54,6 @@ import { SELECT_WIDTH } from './constants';
 import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import LoadBalancerDialog from './load-balancer.dialog';
-import { ProxyExposeConfig } from 'shared-types/dbCluster.types';
-import EmptyMenuItem from 'components/empty-menu-item';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -63,7 +61,6 @@ interface AdvancedConfigurationFormProps {
   setDefaultsOnLoad?: boolean;
   automaticallyTogglePodSchedulingPolicySwitch?: boolean;
   allowStorageClassChange?: boolean;
-  expose?: ProxyExposeConfig;
 }
 
 export const AdvancedConfigurationForm = ({
@@ -91,6 +88,8 @@ export const AdvancedConfigurationForm = ({
     usePodSchedulingPolicies(dbTypeToDbEngine(dbType), true, {
       refetchInterval: 2000,
     });
+
+  const [noConfig, setNoConfig] = useState(false);
 
   const exposureMethods = Object.values(ExposureMethod);
 
@@ -121,23 +120,37 @@ export const AdvancedConfigurationForm = ({
     [clusterInfo?.clusterType]
   );
 
-  const selectOptions = loadBalancerConfigs?.items.reverse() ?? [];
+  const emtpyConfig: LoadBalancerConfig = {
+    apiVersion: '',
+    kind: '',
+    metadata: {
+      name: 'No configuration',
+    },
+    spec: { annotations: {} },
+  };
+
+  const selectOptions: LoadBalancerConfig[] =
+    loadBalancerConfigs?.items.reverse() ?? [];
 
   const selectDefaultValue = isEksDefault
     ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
     : selectOptions.length === 1 &&
-        selectOptions[0].metadata.name === EKS_DEFAULT_LOAD_BALANCER_CONFIG
+        selectOptions[selectOptions.length - 1].metadata.name ===
+          EKS_DEFAULT_LOAD_BALANCER_CONFIG
       ? ''
-      : (selectOptions[0]?.metadata.name ?? '');
+      : (selectOptions[selectOptions.length - 1]?.metadata.name ?? '');
 
   useEffect(() => {
-    if (!loadBalancerConfigValue) {
+    if (noConfig) {
+      setValue(AdvancedConfigurationFields.loadBalancerConfigName, '');
+    }
+    if (loadBalancerConfigValue === undefined) {
       setValue(
         AdvancedConfigurationFields.loadBalancerConfigName,
         selectDefaultValue
       );
     }
-  }, [loadBalancerConfigValue, selectDefaultValue, setValue]);
+  }, [loadBalancerConfigValue, noConfig, selectDefaultValue, setValue]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
     const configName = getValues<string>(
@@ -365,8 +378,21 @@ export const AdvancedConfigurationForm = ({
                             mt: 0,
                           },
                         }}
+                        selectFieldProps={{
+                          onChange: (e) => {
+                            if (e.target.value === 'no config') {
+                              setNoConfig(true);
+                            } else {
+                              setValue(
+                                AdvancedConfigurationFields.loadBalancerConfigName,
+                                e.target.value
+                              );
+                              setNoConfig(false);
+                            }
+                          },
+                        }}
                       >
-                        {selectOptions.map((config) => (
+                        {[...selectOptions, emtpyConfig].map((config) => (
                           <MenuItem
                             value={config.metadata.name}
                             key={config.metadata.name}
@@ -374,7 +400,6 @@ export const AdvancedConfigurationForm = ({
                             {config.metadata.name}
                           </MenuItem>
                         ))}
-                        <EmptyMenuItem />
                       </SelectInput>
                       {!!loadBalancerConfigs?.items.length && (
                         <IconButton

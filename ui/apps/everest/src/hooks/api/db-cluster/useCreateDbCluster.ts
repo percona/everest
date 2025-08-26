@@ -41,6 +41,7 @@ import cronConverter from 'utils/cron-converter';
 import { getDataSource, getProxySpec } from './utils';
 import { DbType } from '@percona/types';
 import { useRBACPermissions } from 'hooks/rbac';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -125,7 +126,9 @@ const formValuesToPayloadMapping = (
         dbPayload.proxyMemory,
         dbPayload.sharding,
         dbPayload.sourceRanges || [],
-        dbPayload.loadBalancerConfigName
+        dbPayload.exposureMethod === ExposureMethod.LoadBalancer
+          ? dbPayload.loadBalancerConfigName
+          : undefined
       ),
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {

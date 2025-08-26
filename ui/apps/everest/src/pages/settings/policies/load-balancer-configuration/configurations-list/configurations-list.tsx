@@ -121,18 +121,17 @@ const LoadBalancerConfigurationList = () => {
             </Button>
           ) : null
         }
-        renderRowActions={({ row }) =>
-          !row.original.metadata.finalizers?.includes(
-            EVEREST_READ_ONLY_FINALIZER
-          ) && (
-            <LoadBalancerRowActions
-              configName={row.original.metadata?.name ?? ''}
-              handleOnDeleteIconClick={() =>
-                handleOnDeleteIconClick(row.original)
-              }
-            />
-          )
-        }
+        renderRowActions={({ row }) => (
+          <LoadBalancerRowActions
+            configName={row.original.metadata?.name ?? ''}
+            handleOnDeleteIconClick={() =>
+              handleOnDeleteIconClick(row.original)
+            }
+            readOnly={row.original.metadata.finalizers?.includes(
+              EVEREST_READ_ONLY_FINALIZER
+            )}
+          />
+        )}
       />
       {dialogOpen && (
         <LoadBalancerDialog

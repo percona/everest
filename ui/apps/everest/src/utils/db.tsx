@@ -853,7 +853,10 @@ export const changeDbClusterResources = (
       !!sharding,
       ((dbCluster.spec.proxy as Proxy).expose.ipSourceRanges || []).map(
         (sourceRange) => ({ sourceRange })
-      )
+      ),
+      dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+        ? dbCluster.spec.proxy.expose.loadBalancerConfigName
+        : undefined
     ),
     ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
       sharding && {
