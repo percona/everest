@@ -219,6 +219,10 @@ jobs:
             exit 1
           fi
 
+          # configure userdata for commits
+          git config --global user.email "everest-ci@percona.com"
+          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
           git tag $GH_TAG
           git push origin $GH_TAG
 
