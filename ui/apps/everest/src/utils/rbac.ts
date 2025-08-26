@@ -39,7 +39,7 @@ export type RBACResource =
   | 'monitoring-instances'
   | 'pod-scheduling-policies'
   | 'data-importers'
-  | 'load-balancer-configuration'
+  | 'load-balancer-configs'
   | 'data-import-jobs';
 
 const constructAuthorizer = async () => {

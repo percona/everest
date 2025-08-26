@@ -13,12 +13,26 @@ import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSke
 import { messages } from '../load-balancer.messages';
 import { AnnotationType } from 'shared-types/loadbalancer.types';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac/rbac';
 
 const LoadBalancerConfigDetails = () => {
   const match = useMatch(
     '/settings/policies/load-balancer-configuration/:configName'
   );
   const configName = match?.params.configName || '';
+
+  useRBACPermissionRoute([
+    {
+      action: 'read',
+      resource: 'load-balancer-configs',
+      specificResources: [configName],
+    },
+  ]);
+
+  const { canUpdate } = useRBACPermissions(
+    'load-balancer-configs',
+    `${configName}`
+  );
 
   const { data: config } = useLoadBalancerConfig(configName, {
     refetchInterval: 3000,
@@ -114,21 +128,25 @@ const LoadBalancerConfigDetails = () => {
         <Typography variant="h5" sx={{ mb: 2 }}>
           {configName}
         </Typography>
-        <Button
-          variant={isSaved ? 'outlined' : 'contained'}
-          size="medium"
-          onClick={() => {
-            if (!isSaved) {
-              handleAddAnnotations();
-            }
-            setIsSaved((prev) => !prev);
-          }}
-          sx={{ ml: 2 }}
-          data-testid={`edit-button-${configName}`}
-          startIcon={isSaved ? <EditOutlinedIcon /> : <SaveIcon />}
-        >
-          {isSaved ? messages.details.editButton : messages.details.saveButton}
-        </Button>
+        {canUpdate && (
+          <Button
+            variant={isSaved ? 'outlined' : 'contained'}
+            size="medium"
+            onClick={() => {
+              if (!isSaved) {
+                handleAddAnnotations();
+              }
+              setIsSaved((prev) => !prev);
+            }}
+            sx={{ ml: 2 }}
+            data-testid={`edit-button-${configName}`}
+            startIcon={isSaved ? <EditOutlinedIcon /> : <SaveIcon />}
+          >
+            {isSaved
+              ? messages.details.editButton
+              : messages.details.saveButton}
+          </Button>
+        )}
       </Box>
       <ConfigDetails
         configName={configName}

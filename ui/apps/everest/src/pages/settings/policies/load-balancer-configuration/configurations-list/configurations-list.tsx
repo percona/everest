@@ -32,7 +32,7 @@ const LoadBalancerConfigurationList = () => {
   const queryClient = useQueryClient();
 
   const navigate = useNavigate();
-  const { canCreate } = useRBACPermissions('load-balancer-configuration');
+  const { canCreate } = useRBACPermissions('load-balancer-configs');
   const { mutate: createConfiguration } = useCreateLoadBalancerConfig(
     'create-load-balancer-config'
   );
