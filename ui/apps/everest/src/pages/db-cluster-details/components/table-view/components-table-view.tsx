@@ -69,6 +69,7 @@ const ComponentsTableView = ({
 
   return (
     <Table
+      data-testid="components-table-view"
       getRowId={(row) => row.name}
       initialState={{
         sorting: [
