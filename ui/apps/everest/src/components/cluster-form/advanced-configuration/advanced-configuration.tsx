@@ -43,6 +43,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   DbWizardFormFields,
   EKS_DEFAULT_LOAD_BALANCER_CONFIG,
+  EMPTY_LOAD_BALACNER_CONFIGURATION,
   EVEREST_READ_ONLY_FINALIZER,
 } from 'consts';
 import { FormCard } from 'components/form-card';
@@ -122,11 +123,7 @@ export const AdvancedConfigurationForm = ({
 
   const selectDefaultValue = isEksDefault
     ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
-    : selectOptions.length === 1 &&
-        selectOptions[selectOptions.length - 1].metadata.name ===
-          EKS_DEFAULT_LOAD_BALANCER_CONFIG
-      ? ''
-      : (selectOptions[selectOptions.length - 1]?.metadata.name ?? '');
+    : EMPTY_LOAD_BALACNER_CONFIGURATION;
 
   useEffect(() => {
     if (!loadBalancerConfigValue) {
@@ -364,6 +361,7 @@ export const AdvancedConfigurationForm = ({
                           },
                         }}
                         selectFieldProps={{
+                          value: loadBalancerConfigValue ?? '',
                           onChange: (e) => {
                             {
                               setValue(
@@ -376,7 +374,11 @@ export const AdvancedConfigurationForm = ({
                       >
                         {[emtpyConfig, ...selectOptions].map((config) => (
                           <MenuItem
-                            value={config.metadata.name}
+                            value={
+                              !config.metadata.name
+                                ? EMPTY_LOAD_BALACNER_CONFIGURATION
+                                : config.metadata.name
+                            }
                             key={config.metadata.name}
                           >
                             {config.metadata.name}
