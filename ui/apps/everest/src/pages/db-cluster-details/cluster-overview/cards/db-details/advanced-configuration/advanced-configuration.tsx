@@ -131,7 +131,7 @@ export const AdvancedConfiguration = ({
           podSchedulingPolicy ? (
             canReadPolicy ? (
               <Link
-                to={`/settings/policies/pod-scheduling-policies/${podSchedulingPolicy}`}
+                to={`/settings/policies/pod-scheduling/${podSchedulingPolicy}`}
               >
                 {podSchedulingPolicy}
               </Link>

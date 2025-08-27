@@ -14,6 +14,7 @@ import { messages } from '../load-balancer.messages';
 import { AnnotationType } from 'shared-types/loadbalancer.types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac/rbac';
+import { EVEREST_READ_ONLY_FINALIZER } from 'consts';
 
 const LoadBalancerConfigDetails = () => {
   const match = useMatch(
@@ -37,6 +38,10 @@ const LoadBalancerConfigDetails = () => {
   const { data: config } = useLoadBalancerConfig(configName, {
     refetchInterval: 3000,
   });
+
+  const isDefault = config?.metadata.finalizers?.includes(
+    EVEREST_READ_ONLY_FINALIZER
+  );
 
   const entries = useMemo(() => {
     if (config && config.spec.annotations) {
@@ -128,7 +133,7 @@ const LoadBalancerConfigDetails = () => {
         <Typography variant="h5" sx={{ mb: 2 }}>
           {configName}
         </Typography>
-        {canUpdate && (
+        {canUpdate && !isDefault && (
           <Button
             variant={isSaved ? 'outlined' : 'contained'}
             size="medium"
