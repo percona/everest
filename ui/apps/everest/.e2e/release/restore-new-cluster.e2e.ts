@@ -357,7 +357,12 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Check restored DB list and status', async () => {
           if (db !== 'postgresql') {
-            await waitForStatus(page, restoredClusterName, 'Initializing', 15000);
+            await waitForStatus(
+              page,
+              restoredClusterName,
+              'Initializing',
+              15000
+            );
           }
           await waitForStatus(page, restoredClusterName, 'Restoring', 600000);
           await waitForStatus(page, restoredClusterName, 'Up', 2400000);
