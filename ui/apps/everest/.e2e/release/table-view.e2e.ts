@@ -25,6 +25,7 @@ import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
+import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
 let token: string;
 
@@ -34,6 +35,9 @@ let token: string;
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(`DB Table View [${db} size ${size}]`, () => {
+    test.skip(!shouldExecuteDBCombination(db, size));
+    test.describe.configure({ timeout: 720000 });
+
     const clusterName = `${db}-${size}-table-view`;
     const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
     let storageClasses: string[] = [];

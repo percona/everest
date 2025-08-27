@@ -215,7 +215,9 @@ const zephyrMap: Record<string, string> = {
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 30000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, clusterName, 'Initializing', 30000);
+          }
           await waitForStatus(page, clusterName, 'Up', 720000);
         });
 

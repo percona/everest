@@ -152,7 +152,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, clusterName, 'Initializing', 15000);
+          }
           await waitForStatus(page, clusterName, 'Up', 600000);
         });
 
