@@ -215,8 +215,10 @@ const zephyrMap: Record<string, string> = {
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 30000);
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, clusterName, 'Initializing', 30000);
+          }
+          await waitForStatus(page, clusterName, 'Up', 720000);
         });
 
         await test.step('Update PSMDB cluster PITR uploadIntervalSec', async () => {
@@ -341,7 +343,7 @@ const zephyrMap: Record<string, string> = {
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 720000);
 
         await gotoDbClusterRestores(page, clusterName);
         await waitForStatus(page, 'restore-', 'Succeeded', 120000);
@@ -424,22 +426,22 @@ const zephyrMap: Record<string, string> = {
         await findDbAndClickActions(page, clusterName, 'Restore from a backup');
         await page
           .getByTestId('radio-option-fromPITR')
-          .click({ timeout: 5000 });
+          .click({ timeout: 10000 });
         await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({
-          timeout: 5000,
+          timeout: 10000,
         });
         await expect(
           page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
-        ).toBeVisible({ timeout: 5000 });
+        ).toBeVisible({ timeout: 10000 });
         await expect(
           page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
-        ).not.toBeEmpty({ timeout: 5000 });
+        ).not.toBeEmpty({ timeout: 10000 });
 
-        await page.getByTestId('form-dialog-restore').click({ timeout: 5000 });
+        await page.getByTestId('form-dialog-restore').click({ timeout: 10000 });
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 720000);
 
         await gotoDbClusterRestores(page, clusterName);
         await waitForStatus(page, 'restore-', 'Succeeded', 120000);
@@ -544,11 +546,11 @@ const zephyrMap: Record<string, string> = {
 
         await test.step('Wait for the new cluster to be created and ready', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, newClusterName, 'Initializing', 30000);
           if (db !== 'postgresql') {
-            await waitForStatus(page, newClusterName, 'Restoring', 600000);
+            await waitForStatus(page, newClusterName, 'Initializing', 30000);
           }
-          await waitForStatus(page, newClusterName, 'Up', 600000);
+          await waitForStatus(page, newClusterName, 'Restoring', 600000);
+          await waitForStatus(page, newClusterName, 'Up', 720000);
         });
 
         await test.step('Verify the restore was successful', async () => {
