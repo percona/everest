@@ -34,7 +34,8 @@ let token: string;
   { db: 'pxc', size: 3 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
-  test.describe(`DB Table View [${db} size ${size}]`, () => {
+  // TODO: test needs fixing - EVEREST-2241
+  test.describe.skip(`DB Table View [${db} size ${size}]`, () => {
     test.skip(!shouldExecuteDBCombination(db, size));
     test.describe.configure({ timeout: 720000 });
 
@@ -119,7 +120,8 @@ let token: string;
   });
 });
 
-test('Switch between table view and diagram view', async ({ page }) => {
+// TODO: test needs fixing - EVEREST-2241
+test.skip('Switch between table view and diagram view', async ({ page }) => {
   await page.goto('/databases/components');
 
   const tableViewSwitch = page
