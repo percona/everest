@@ -75,5 +75,6 @@ export const Messages = {
     storageClass: 'Storage can’t be changed.',
     noPolicies:
       'Seems like you don’t have permission to read any pod scheduling policy.',
+    noConfig: 'No configurations to display',
   },
 };

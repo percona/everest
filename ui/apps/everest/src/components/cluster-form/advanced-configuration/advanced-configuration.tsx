@@ -146,6 +146,9 @@ export const AdvancedConfigurationForm = ({
     }
   };
 
+  const noConfig =
+    loadBalancerConfigValue === EMPTY_LOAD_BALACNER_CONFIGURATION;
+
   // setting the storage class default value
   useEffect(() => {
     const { isTouched: storageClassTouched } = getFieldState(
@@ -380,11 +383,22 @@ export const AdvancedConfigurationForm = ({
                         ))}
                       </SelectInput>
                       {!!loadBalancerConfigs?.items.length && (
-                        <IconButton
-                          onClick={handleOnLoadBalancerConfigInfoClick}
+                        <Tooltip
+                          title={noConfig ? Messages.tooltipTexts.noConfig : ''}
+                          placement="right"
+                          arrow
                         >
-                          <InfoIcon sx={{ width: '20px' }} />
-                        </IconButton>
+                          <IconButton
+                            onClick={handleOnLoadBalancerConfigInfoClick}
+                          >
+                            <InfoIcon
+                              sx={{
+                                width: '20px',
+                                color: noConfig ? 'GrayText' : 'default',
+                              }}
+                            />
+                          </IconButton>
+                        </Tooltip>
                       )}
                     </Box>
                   }
