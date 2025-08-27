@@ -381,7 +381,6 @@ export const AdvancedConfigurationForm = ({
                       </SelectInput>
                       {!!loadBalancerConfigs?.items.length && (
                         <IconButton
-                          sx={{ ml: '20px' }}
                           onClick={handleOnLoadBalancerConfigInfoClick}
                         >
                           <InfoIcon sx={{ width: '20px' }} />
