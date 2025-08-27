@@ -126,13 +126,11 @@ export const AdvancedConfigurationForm = ({
     : EMPTY_LOAD_BALACNER_CONFIGURATION;
 
   useEffect(() => {
-    if (!loadBalancerConfigValue) {
-      setValue(
-        AdvancedConfigurationFields.loadBalancerConfigName,
-        selectDefaultValue
-      );
-    }
-  }, [loadBalancerConfigValue, selectDefaultValue, setValue]);
+    setValue(
+      AdvancedConfigurationFields.loadBalancerConfigName,
+      selectDefaultValue
+    );
+  }, [selectDefaultValue]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
     const configName = getValues<string>(
@@ -374,11 +372,7 @@ export const AdvancedConfigurationForm = ({
                       >
                         {[emtpyConfig, ...selectOptions].map((config) => (
                           <MenuItem
-                            value={
-                              !config.metadata.name
-                                ? EMPTY_LOAD_BALACNER_CONFIGURATION
-                                : config.metadata.name
-                            }
+                            value={config.metadata.name}
                             key={config.metadata.name}
                           >
                             {config.metadata.name}
