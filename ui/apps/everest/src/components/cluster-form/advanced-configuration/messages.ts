@@ -36,10 +36,9 @@ export const Messages = {
       description: 'Select one of the available pod scheduling policies.',
     },
     enableExternalAccess: {
-      title: 'Enable External Access',
+      title: 'External Access',
       description: `
-        Enable this to make this database available outside of the Kubernetes cluster network.
-        Exposing your database to remote access poses severe risks, including unauthorized access, data breaches and compliance violations.
+        Select the desired Exposure Method and provide the appropriate configuration to enable access.
       `,
     },
     exposureMethod: {
