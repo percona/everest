@@ -158,6 +158,7 @@ jobs:
           make build-debug
 
       - name: Deploy Everest into K3D test cluster
+        timeout-minutes: 30
         run: |
           make deploy
 
@@ -188,13 +189,15 @@ jobs:
         run: |
           make test
 
-      - name: Run debug commands on failure
+#      - name: Run debug commands on failure
+      - name: Setup tmate session
+        uses: percona/gh-action-action-tmate@v3
         if: ${{ failure() }}
-        run: |
-          kubectl -n everest-system describe pods
-          kubectl -n everest-monitoring describe pods
-          kubectl -n everest describe pods
-          kubectl -n everest-system logs deploy/everest-server
+#        run: |
+#          kubectl -n everest-system describe pods
+#          kubectl -n everest-monitoring describe pods
+#          kubectl -n everest describe pods
+#          kubectl -n everest-system logs deploy/everest-server
 
   integration_tests_cli:
     name: CLI Integration Tests
