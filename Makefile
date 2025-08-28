@@ -26,7 +26,7 @@ gen: ## Generate code.
 format:                 ## Format source code.
 	go tool gofumpt -l -w .
 	go tool goimports -local github.com/percona/everest -l -w .
-	go tool gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" .
+	go tool gci write --skip-generated -s standard -s default -s "prefix(github.com/percona/everest)" .
 
 .PHONY: check
 check:                  ## Run checks/linters for the whole project.

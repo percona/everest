@@ -1,0 +1,33 @@
+---
+name: 'Adjust GitHub worker node'
+inputs:
+  disable-apparmor:
+    description: 'Disable AppArmor on the host'
+    required: false
+    default: false
+  mount-docker-data:
+    description: 'Mount Docker data directory to /mnt to have more space'
+    required: false
+    default: false
+runs:
+  using: "composite"
+  steps:
+    # GitHub worker node has enabled AppArmor profile for Docker.
+    # Use this step when AppArmor creates issues with running application in Docker container (like PXC).
+    - name: Disable AppArmor on host
+      if: ${{ inputs.disable-apparmor == 'true' }}
+      continue-on-error: true
+      shell: bash
+      run: |
+        sudo systemctl stop apparmor
+        sudo aa-teardown
+
+    # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
+    - name: Switch docker-daemon data directory to /mnt
+      if: ${{ inputs.mount-docker-data == 'true' }}
+      shell: bash
+      run: |
+        sudo systemctl stop docker
+        echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' | sudo tee /etc/docker/daemon.json
+        sudo mkdir /mnt/docker-data
+        sudo systemctl start docker

@@ -131,12 +131,8 @@ jobs:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
       PMM_HELM_VER: "1.3.21"
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
+      - name: Check out code
+        uses: actions/checkout@v5
 
       - name: Set up Go release
         uses: actions/setup-go@v5
@@ -144,115 +140,50 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
-      - name: Switch docker-daemon data directory to /mnt
-        run: |
-          sudo systemctl stop docker
-          echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' | sudo tee /etc/docker/daemon.json
-          sudo mkdir /mnt/docker-data
-          sudo systemctl start docker
-
-      - name: Start local Kubernetes cluster with the local registry
-        uses: medyagh/setup-minikube@latest
-        id: minikube
+      - name: Install Kubernetes tools
+        uses: ./.github/actions/install-kubernetes-tools
         with:
-          cpus: 2
-          memory: 4000m
-          addons: registry
-          insecure-registry: 'localhost:5000'
+          install-kubectl: true
+          install-k3d: true
 
-      - name: Expose local registry
-        run: |
-          kubectl port-forward --namespace kube-system service/registry 5000:80 &
-
-      - name: Build Everest API Server
-        run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build-debug
-
-      - name: Build Everest CLI
-        shell: bash
-        run: |
-          make build-cli
-
-      - name: Build Everest docker container
-        uses: docker/metadata-action@v5
-        id: meta
+      - name: Adjust GitHub worker node
+        uses: ./.github/actions/adjust-github-node
         with:
-          images: localhost:5000/perconalab/everest
-          tags:
-            0.0.0
+          disable-apparmor: true
+          mount-docker-data: true
 
-      - name: Build and Push everest dev image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-
-      - name: Create a monitoring instance
+      - name: Run K3D test cluster
         run: |
-          helm repo add percona https://percona.github.io/percona-helm-charts/
-          helm install pmm1 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m
-          echo "PMM1_IP=$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
-          
-          kubectl create ns everest-monitoring
-          helm install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER --timeout 2m -n everest-monitoring
-          echo "PMM2_IP=$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP')" >> $GITHUB_ENV
-          sleep 60
-          kubectl port-forward --namespace default svc/monitoring-service 8090:443 &
-          kubectl port-forward --namespace everest-monitoring  svc/monitoring-service 8091:443 &
+          make k3d-cluster-up
 
-      - name: Get PMM API keys
+      - name: Deploy Everest into K3D test cluster
         run: |
-          echo "PMM1_API_KEY=$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV 
-          echo "PMM2_API_KEY=$(curl --request POST https://admin:admin@localhost:8091/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data '{"name":"everest-test","role":"Admin"}'  --insecure 2>/dev/null | jq -r '.key')" >> $GITHUB_ENV
+          make deploy
 
-      - name: Provision Everest using CLI
-        shell: bash
+      - name: Init testing environment
+        working-directory: api-tests
         run: |
-          ./bin/everestctl install -v \
-            --disable-telemetry \
-            --version 0.0.0 \
-            --version-metadata-url https://check-dev.percona.com \
-            --operator.mongodb=true \
-            --operator.postgresql=true \
-            --operator.mysql=true \
-            --skip-wizard \
-            --namespaces everest \
-            --helm.set server.image=localhost:5000/perconalab/everest \
-            --helm.set server.apiRequestsRateLimit=200 \
-            --helm.set versionMetadataURL=https://check-dev.percona.com
-
-      - name: Expose Everest API Server
-        run: |
-          kubectl port-forward --namespace everest-system deployment/everest-server 8080:8080 &
-
-      - name: Create Everest test users
-        run: |
-          ./bin/everestctl accounts create -u test -p password
-          echo "API_TOKEN_TEST=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
-          ./bin/everestctl accounts create -u everest_ci -p password
-          echo "API_TOKEN=$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token)" >> $GITHUB_ENV
-
-      - name: Add CI user to admin role
-        run: |
-          kubectl patch configmap everest-rbac -n everest-system --patch "$(kubectl get configmap everest-rbac -n everest-system -o json | jq '.data["policy.csv"] += "\ng, everest_ci, role:admin"' | jq '{data: { "policy.csv": .data["policy.csv"] } }')"
-          kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
-
-      - name: Init integration tests
-        run: |
-          cd api-tests
           make init
 
-      - name: Run integration tests
+      - name: Deploy PMM instances into K3D test cluster
+        working-directory: api-tests
         run: |
-          cd api-tests
-          make test
+          make deploy-monitoring
 
-      - name: Uninstall PMM
+      - name: Create test users
+        working-directory: api-tests
         run: |
-          helm uninstall pmm1
-          helm uninstall pmm2 -n everest-monitoring
+          make create-test-users
+
+      - name: Pre-upload PG,PSMDB,PXC images to K3D test cluster
+        working-directory: api-tests
+        run: |
+          make k3d-upload-images
+
+      - name: Run integration tests
+        working-directory: api-tests
+        run: |
+          make test
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
