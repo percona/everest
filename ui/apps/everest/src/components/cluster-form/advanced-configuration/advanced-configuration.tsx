@@ -357,6 +357,7 @@ export const AdvancedConfigurationForm = ({
                         }
                         formControlProps={{
                           sx: {
+                            width: SELECT_WIDTH,
                             mt: 0,
                             textAlign: 'left',
                           },
