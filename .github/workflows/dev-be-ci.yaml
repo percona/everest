@@ -22,23 +22,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Check out code
+        uses: actions/checkout@v5
 
       - name: Set up Go release
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
           cache: true
-
-      - name: Download Go modules
-        run: go mod download
-
-      - name: Install binaries
-        run: make build
 
       - name: Run tests
         timeout-minutes: 20
