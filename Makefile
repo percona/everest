@@ -164,7 +164,7 @@ docker-build-operator:
 	}
 
 .PHONY: deploy
-deploy: build-cli-debug docker-build docker-build-operator k3d-upload-server-image k3d-upload-operator-image ## Deploy Everest into K8S cluster using Everest CLI.
+deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	$(info Deploying Everest ($(IMAGE_OWNER):$(IMAGE_TAG)) into K8S cluster using everestctl)
 	$(LOCALBIN)/everestctl install -v \
 	--disable-telemetry \
@@ -180,6 +180,12 @@ deploy: build-cli-debug docker-build docker-build-operator k3d-upload-server-ima
 	--helm.set versionMetadataURL=https://check-dev.percona.com \
 	--helm.set server.initialAdminPassword=admin
 	$(MAKE) port-forward
+
+DEPLOY_ALL_DEPS := docker-build k3d-upload-server-image
+DEPLOY_ALL_DEPS += docker-build-operator k3d-upload-operator-image
+DEPLOY_ALL_DEPS += build-cli-debug deploy
+.PHONY: deploy-all
+deploy-all: $(DEPLOY_ALL_DEPS) ## Build and deploy Everest and its dependencies to K3D test cluster.
 
 .PHONY: undeploy-cli
 undeploy: build-cli-debug ## Undeploy Everest from K8S cluster using Everest CLI.
