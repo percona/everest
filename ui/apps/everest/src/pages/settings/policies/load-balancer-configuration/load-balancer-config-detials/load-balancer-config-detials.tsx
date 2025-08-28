@@ -50,7 +50,7 @@ const LoadBalancerConfigDetails = () => {
     return [];
   }, [config]);
 
-  const [isSaved, setIsSaved] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
 
   const [annotationsArray, setAnnotationsArray] = useState<AnnotationType[]>(
     entries.length
@@ -155,6 +155,7 @@ const LoadBalancerConfigDetails = () => {
       </Box>
       <ConfigDetails
         configName={configName}
+        isDefault={isDefault}
         isSaved={isSaved}
         annotationsArray={annotationsArray}
         handleSetAnnotations={handleSetAnnotations}
