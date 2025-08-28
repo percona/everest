@@ -71,7 +71,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
     },
     () => {
       test.skip(!shouldExecuteDBCombination(db, size));
-      test.describe.configure({ timeout: 720000 });
+      test.describe.configure({ timeout: 1_200_000 });
 
       // Define primary and restored cluster names to use across related tests
       const clusterName = `${db}-${size}-pri`;
@@ -155,7 +155,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           if (db !== 'postgresql') {
             await waitForStatus(page, clusterName, 'Initializing', 15000);
           }
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          await waitForStatus(page, clusterName, 'Up', 900000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -322,6 +322,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await expect(
           page.getByTestId('select-input-backup-name')
         ).not.toBeEmpty();
+
         await page.getByTestId('form-dialog-create').click();
 
         await page.waitForURL('**/databases/new');

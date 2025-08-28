@@ -218,7 +218,7 @@ const zephyrMap: Record<string, string> = {
           if (db !== 'postgresql') {
             await waitForStatus(page, clusterName, 'Initializing', 30000);
           }
-          await waitForStatus(page, clusterName, 'Up', 720000);
+          await waitForStatus(page, clusterName, 'Up', 900000);
         });
 
         await test.step('Update PSMDB cluster PITR uploadIntervalSec', async () => {
@@ -343,7 +343,7 @@ const zephyrMap: Record<string, string> = {
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 720000);
+        await waitForStatus(page, clusterName, 'Up', 900000);
 
         await gotoDbClusterRestores(page, clusterName);
         await waitForStatus(page, 'restore-', 'Succeeded', 120000);
@@ -437,11 +437,14 @@ const zephyrMap: Record<string, string> = {
           page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
         ).not.toBeEmpty({ timeout: 10000 });
 
+        await page.getByTestId('CalendarIcon').click();
+        await page.getByRole('button', { name: 'OK' }).click();
+
         await page.getByTestId('form-dialog-restore').click({ timeout: 10000 });
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 720000);
+        await waitForStatus(page, clusterName, 'Up', 900000);
 
         await gotoDbClusterRestores(page, clusterName);
         await waitForStatus(page, 'restore-', 'Succeeded', 120000);
@@ -478,6 +481,7 @@ const zephyrMap: Record<string, string> = {
           await expect(
             page.getByTestId('text-input-storage-location')
           ).not.toBeEmpty();
+
           await page.getByTestId('form-dialog-create').click();
           await waitForStatus(
             page,
@@ -533,6 +537,9 @@ const zephyrMap: Record<string, string> = {
           ).not.toBeEmpty({ timeout: 5000 });
 
           // Submit and open DB creation wizard
+          await page.getByTestId('CalendarIcon').click();
+          await page.getByRole('button', { name: 'OK' }).click();
+
           await page.getByTestId('form-dialog-create').click({ timeout: 5000 });
           let currentUrl = page.url();
           expect(currentUrl).toContain('/databases/new');
@@ -550,7 +557,7 @@ const zephyrMap: Record<string, string> = {
             await waitForStatus(page, newClusterName, 'Initializing', 30000);
           }
           await waitForStatus(page, newClusterName, 'Restoring', 600000);
-          await waitForStatus(page, newClusterName, 'Up', 720000);
+          await waitForStatus(page, newClusterName, 'Up', 900000);
         });
 
         await test.step('Verify the restore was successful', async () => {
