@@ -365,7 +365,7 @@ export const AdvancedConfigurationForm = ({
                           },
                         }}
                         selectFieldProps={{
-                          value: loadBalancerConfigValue ?? '',
+                          value: loadBalancerConfigValue ?? selectDefaultValue,
                           onChange: (e) => {
                             {
                               setValue(
