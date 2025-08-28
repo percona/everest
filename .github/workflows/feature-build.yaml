@@ -287,51 +287,6 @@ jobs:
           push: true
           tags: perconalab/version-service:${{ env.VS_TAG }}
 
-
-      - name: Catalog - checkout
-        uses: actions/checkout@v4
-        with:
-          repository: percona/everest-catalog
-          ref: ${{ env.EVEREST_CATALOG_BRANCH }}
-          path: everest-catalog
-          token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: Catalog - update veneer file
-        run: |
-          cd everest-catalog/tools
-          go run . \
-            --veneer-file ../veneer/everest-operator.yaml \
-            --channel fast-v0  \
-            --new-version ${{ env.VERSION }} 
-          
-          cd ..
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.48.0/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
-          # Check if catalog has the new version listed
-          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
-            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            exit 1
-          fi
-
-      - name: Catalog - setup Docker meta for everest-catalog
-        id: catalog_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            perconalab/everest-catalog
-          tags: |
-            type=raw,value=${{ env.VERSION }}
-
-      - name: Catalog - push everest-catalog image
-        uses: docker/build-push-action@v6
-        with:
-          context: everest-catalog
-          push: true
-          tags: ${{ steps.catalog_meta.outputs.tags }}
-          file: everest-catalog/everest-catalog.Dockerfile
-
-
       - name: Everest - check out
         uses: actions/checkout@v4
         with:
