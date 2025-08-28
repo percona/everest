@@ -30,6 +30,7 @@ const FormProviderWrapper = ({
 interface ConfigDetailsProps {
   configName: string;
   isSaved?: boolean;
+  isDefault?: boolean;
   annotationsArray: Record<string, string>[];
   handleSetAnnotations: (annotations: AnnotationType[]) => void;
   handleDelete?: (annotation: [string, string]) => void;
@@ -38,6 +39,7 @@ interface ConfigDetailsProps {
 const ConfigDetails = ({
   configName,
   isSaved,
+  isDefault,
   annotationsArray,
   handleSetAnnotations,
   handleDelete,
@@ -52,7 +54,7 @@ const ConfigDetails = ({
 
   return (
     <>
-      {isSaved ? (
+      {isSaved || isDefault ? (
         <LoadBalancerTable config={config} />
       ) : (
         <FormProviderWrapper defaultValues={annotationsArray}>
