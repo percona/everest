@@ -22,6 +22,7 @@ const LoadBalancerDialog = ({
       handleConfirm={handleClose}
       submitMessage="OK"
       maxWidth="md"
+      fullWidth
     >
       <LoadBalancerTable config={config} />
     </ConfirmDialog>
