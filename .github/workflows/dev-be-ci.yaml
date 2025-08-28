@@ -156,6 +156,10 @@ jobs:
         run: |
           make k3d-cluster-up
 
+      - name: Build Everest API Server binary
+        run: |
+          make build-debug
+
       - name: Deploy Everest into K3D test cluster
         run: |
           make deploy
