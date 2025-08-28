@@ -5,7 +5,6 @@ import { FormProvider, useForm } from 'react-hook-form';
 import LoadBalancerTable from 'components/load-balancer-table';
 import { MultipleTextInput } from '@percona/ui-lib';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
-import { AnnotationType } from 'shared-types/loadbalancer.types';
 
 const FormProviderWrapper = ({
   children,
@@ -32,7 +31,7 @@ interface ConfigDetailsProps {
   isSaved?: boolean;
   isDefault?: boolean;
   annotationsArray: Record<string, string>[];
-  handleSetAnnotations: (annotations: AnnotationType[]) => void;
+  handleSetAnnotations: (annotations: Record<string, string>[]) => void;
   handleDelete?: (annotation: [string, string]) => void;
 }
 

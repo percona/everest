@@ -11,7 +11,6 @@ import {
 import SaveIcon from '@mui/icons-material/Save';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
 import { messages } from '../load-balancer.messages';
-import { AnnotationType } from 'shared-types/loadbalancer.types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac/rbac';
 import { EVEREST_READ_ONLY_FINALIZER } from 'consts';
@@ -52,7 +51,9 @@ const LoadBalancerConfigDetails = () => {
 
   const [isSaved, setIsSaved] = useState(false);
 
-  const [annotationsArray, setAnnotationsArray] = useState<AnnotationType[]>(
+  const [annotationsArray, setAnnotationsArray] = useState<
+    Record<string, string>[]
+  >(
     entries.length
       ? entries.map(([key, value]) => ({
           key,
@@ -75,21 +76,27 @@ const LoadBalancerConfigDetails = () => {
     }
   );
 
-  const handleSetAnnotations = useCallback((annotations: AnnotationType[]) => {
-    setAnnotationsArray(annotations);
-  }, []);
+  const handleSetAnnotations = useCallback(
+    (annotations: Record<string, string>[]) => {
+      setAnnotationsArray(annotations);
+    },
+    []
+  );
 
   const handleAddAnnotations = useCallback(() => {
-    const annotationsObject = annotationsArray.reduce((acc, { key, value }) => {
-      if (key) acc[key] = value;
-      return acc;
-    }, {} as AnnotationType);
+    const annotationsObject = annotationsArray.reduce(
+      (acc, { key, value }) => {
+        if (key) acc[key] = value;
+        return acc;
+      },
+      {} as Record<string, string>
+    );
 
     if (config) {
       updateAnnotations({
         ...config,
         spec: {
-          annotations: { ...config.spec.annotations, ...annotationsObject },
+          annotations: annotationsObject,
         },
       });
     }
