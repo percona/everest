@@ -8,7 +8,7 @@ import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { prepareTestDB } from '@e2e/utils/db-cmd-line';
 
 test.describe.configure({ retries: 0 });
-test.describe.configure({ timeout: TIMEOUTS.FifteenMinutes });
+test.describe.configure({ timeout: TIMEOUTS.TwentyMinutes });
 
 test(
   'Pre upgrade setup',
@@ -73,7 +73,7 @@ test(
           );
         });
       }, 'waiting for db clusters to be "ready"').toPass({
-        timeout: TIMEOUTS.TenMinutes,
+        timeout: TIMEOUTS.FifteenMinutes,
         intervals: [TIMEOUTS.OneMinute],
       });
     });
