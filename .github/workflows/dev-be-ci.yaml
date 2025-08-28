@@ -142,6 +142,7 @@ jobs:
 
       - name: Run K3D test cluster
         run: |
+          sudo modprobe br_netfilter
           make k3d-cluster-up
 
       - name: Build Everest API Server binary
@@ -149,32 +150,27 @@ jobs:
           make build-debug
 
       - name: Build Everest API server docker image
-        timeout-minutes: 30
         run: |
           make docker-build
 
       - name: Upload Everest API server image to K3D test cluster
-        timeout-minutes: 30
         run: |
           make k3d-upload-server-image
 
       - name: Build Everest operator docker image
-        timeout-minutes: 30
         run: |
           make docker-build-operator
 
       - name: Upload Everest operator image to K3D test cluster
-        timeout-minutes: 30
         run: |
           make k3d-upload-operator-image
 
       - name: Build Everest CLI binary
-        timeout-minutes: 30
         run: |
           make build-cli-debug
 
       - name: Deploy Everest to K3D test cluster
-        timeout-minutes: 30
+        timeout-minutes: 10
         run: |
           make deploy
 

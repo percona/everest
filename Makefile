@@ -159,7 +159,6 @@ docker-build-operator:
 	git clone -q https://github.com/percona/everest-operator.git ;\
 	cd ./everest-operator ;\
 	git reset --hard $${operator_commit_id} ;\
-	make build ;\
 	make docker-build IMG=$(EVEREST_OPERATOR_IMG) ;\
 	}
 
