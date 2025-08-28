@@ -126,11 +126,13 @@ export const AdvancedConfigurationForm = ({
     : EMPTY_LOAD_BALACNER_CONFIGURATION;
 
   useEffect(() => {
-    setValue(
-      AdvancedConfigurationFields.loadBalancerConfigName,
-      selectDefaultValue
-    );
-  }, [selectDefaultValue]);
+    if (!selectDefaultValue) {
+      setValue(
+        AdvancedConfigurationFields.loadBalancerConfigName,
+        selectDefaultValue
+      );
+    }
+  }, [selectDefaultValue, setValue]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
     const configName = getValues<string>(
