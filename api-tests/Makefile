@@ -100,6 +100,7 @@ TEST =
 .PHONY: test
 test:               ## Run all tests.
 	@{ \
+  	set -xe ;\
 	RAND=$$(echo $${RANDOM} | md5sum | head -c 5 ) ;\
 	export PMM1_IP=$$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')  ;\
 	export PMM2_IP=$$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP') ;\

@@ -188,7 +188,7 @@ undeploy: build-cli-debug ## Undeploy Everest from K8S cluster using Everest CLI
 
 .PHONY: port-forward
 port-forward:
-	kubectl port-forward -n everest-system svc/everest 8080:8080 &
+	kubectl port-forward -n everest-system deployment/everest-server 8080:8080 &
 
 .PHONY: k3d-cluster-up
 k3d-cluster-up: ## Create a K8S cluster for testing.
