@@ -139,6 +139,10 @@ export const AdvancedConfigurationForm = ({
       AdvancedConfigurationFields.loadBalancerConfigName
     );
 
+    if (configName === EMPTY_LOAD_BALACNER_CONFIGURATION || !configName) {
+      return;
+    }
+
     selectedLoadBalancerConfig.current = loadBalancerConfigs?.items.find(
       (config) => config.metadata?.name === configName
     );
@@ -391,16 +395,23 @@ export const AdvancedConfigurationForm = ({
                           placement="right"
                           arrow
                         >
-                          <IconButton
-                            onClick={handleOnLoadBalancerConfigInfoClick}
-                          >
-                            <InfoIcon
+                          <span>
+                            <IconButton
+                              onClick={handleOnLoadBalancerConfigInfoClick}
+                              disabled={noConfig}
                               sx={{
-                                width: '20px',
-                                color: noConfig ? 'GrayText' : 'default',
+                                opacity: noConfig ? 0.5 : 1,
+                                cursor: noConfig ? 'not-allowed' : 'pointer',
                               }}
-                            />
-                          </IconButton>
+                            >
+                              <InfoIcon
+                                sx={{
+                                  width: '20px',
+                                  color: noConfig ? 'GrayText' : 'default',
+                                }}
+                              />
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       )}
                     </Box>
