@@ -19,7 +19,7 @@ import { messages } from '../load-balancer.messages';
 import { EVEREST_READ_ONLY_FINALIZER } from 'consts';
 
 const LoadBalancerConfigurationList = () => {
-  const { data: loadBalancerConfigs } = useLoadBalancerConfigs(
+  const { data: loadBalancerConfigs, isSuccess } = useLoadBalancerConfigs(
     'load-balancer-configs',
     undefined,
     {
@@ -84,55 +84,57 @@ const LoadBalancerConfigurationList = () => {
 
   return (
     <>
-      <Table
-        tableName="load-balancer-configuration"
-        emptyState={
-          <EmptyState
-            onButtonClick={() => setDialogOpen(true)}
-            buttonText={messages.configurationList.createButton}
-            showCreationButton={canCreate}
-            contentSlot={
-              <Typography variant="body1">
-                {messages.configurationList.emptyState.contentSlot}
-              </Typography>
-            }
-          />
-        }
-        data={loadBalancerConfigs?.items || []}
-        columns={columns}
-        enableRowActions
-        enableRowHoverAction
-        rowHoverAction={(row) =>
-          navigate(
-            `/settings/policies/load-balancer-configuration/${row.original.metadata?.name}`
-          )
-        }
-        renderTopToolbarCustomActions={() =>
-          canCreate && loadBalancerConfigs?.items.length ? (
-            <Button
-              size="medium"
-              startIcon={<Add />}
-              data-testid="add-config"
-              variant="contained"
-              onClick={() => setDialogOpen(true)}
-              sx={{ display: 'flex' }}
-            >
-              {messages.configurationList.createButton}
-            </Button>
-          ) : null
-        }
-        renderRowActions={({ row }) => (
-          <LoadBalancerRowActions
-            configName={row.original.metadata?.name ?? ''}
-            handleOnDeleteIconClick={() =>
-              handleOnDeleteIconClick(row.original)
-            }
-            readOnly={row.original.metadata.finalizers?.includes(
-              EVEREST_READ_ONLY_FINALIZER
-            )}
-          />
-        )}
-      />
+      {isSuccess && (
+        <Table
+          tableName="load-balancer-configuration"
+          emptyState={
+            <EmptyState
+              onButtonClick={() => setDialogOpen(true)}
+              buttonText={messages.configurationList.createButton}
+              showCreationButton={canCreate}
+              contentSlot={
+                <Typography variant="body1">
+                  {messages.configurationList.emptyState.contentSlot}
+                </Typography>
+              }
+            />
+          }
+          data={loadBalancerConfigs?.items || []}
+          columns={columns}
+          enableRowActions
+          enableRowHoverAction
+          rowHoverAction={(row) =>
+            navigate(
+              `/settings/policies/load-balancer-configuration/${row.original.metadata?.name}`
+            )
+          }
+          renderTopToolbarCustomActions={() =>
+            canCreate && loadBalancerConfigs?.items.length ? (
+              <Button
+                size="medium"
+                startIcon={<Add />}
+                data-testid="add-config"
+                variant="contained"
+                onClick={() => setDialogOpen(true)}
+                sx={{ display: 'flex' }}
+              >
+                {messages.configurationList.createButton}
+              </Button>
+            ) : null
+          }
+          renderRowActions={({ row }) => (
+            <LoadBalancerRowActions
+              configName={row.original.metadata?.name ?? ''}
+              handleOnDeleteIconClick={() =>
+                handleOnDeleteIconClick(row.original)
+              }
+              readOnly={row.original.metadata.finalizers?.includes(
+                EVEREST_READ_ONLY_FINALIZER
+              )}
+            />
+          )}
+        />
+      )}
       {dialogOpen && (
         <LoadBalancerDialog
           open
