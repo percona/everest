@@ -64,7 +64,7 @@ export const DbActions = ({
     dbCluster.spec.backup && (dbCluster.spec.backup.schedules || []).length > 0
   );
   const monitoringEnabled = !!(
-    dbCluster.spec.monitoring && dbCluster.spec.monitoring.monitoringConfigName
+    dbCluster.spec.monitoring && dbCluster.spec.monitoring?.monitoringConfigName
   );
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
