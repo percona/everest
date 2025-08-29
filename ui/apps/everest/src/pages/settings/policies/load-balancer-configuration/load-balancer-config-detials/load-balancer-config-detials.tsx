@@ -49,7 +49,8 @@ const LoadBalancerConfigDetails = () => {
     return [];
   }, [config]);
 
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [annotationsArray, setAnnotationsArray] = useState<
     Record<string, string>[]
@@ -72,6 +73,11 @@ const LoadBalancerConfigDetails = () => {
           queryKey: ['load-balancer-config', configName],
         });
         queryClient.invalidateQueries({ queryKey: ['load-balancer-configs'] });
+        setIsSaved(true);
+        setIsSaving(false);
+      },
+      onError: () => {
+        setIsSaving(false);
       },
     }
   );
@@ -86,13 +92,16 @@ const LoadBalancerConfigDetails = () => {
   const handleAddAnnotations = useCallback(() => {
     const annotationsObject = annotationsArray.reduce(
       (acc, { key, value }) => {
-        if (key) acc[key] = value;
+        if (key && key.trim() !== '') {
+          acc[key] = value;
+        }
         return acc;
       },
       {} as Record<string, string>
     );
 
     if (config) {
+      setIsSaving(true);
       updateAnnotations({
         ...config,
         spec: {
@@ -102,22 +111,13 @@ const LoadBalancerConfigDetails = () => {
     }
   }, [annotationsArray, config, updateAnnotations]);
 
-  const handleDelete = useCallback(
-    (annotation: [string, string]) => {
-      if (config && config.spec.annotations) {
-        const updatedAnnotations = { ...config.spec.annotations };
-        delete updatedAnnotations[annotation[0]];
-
-        updateAnnotations({
-          ...config,
-          spec: {
-            annotations: updatedAnnotations,
-          },
-        });
-      }
-    },
-    [config, updateAnnotations]
-  );
+  const handleDelete = useCallback((annotation: [string, string]) => {
+    setAnnotationsArray((prev) =>
+      prev.filter(
+        (item) => !(item.key === annotation[0] && item.value === annotation[1])
+      )
+    );
+  }, []);
 
   if (!config) {
     return <LoadingPageSkeleton />;
@@ -141,25 +141,70 @@ const LoadBalancerConfigDetails = () => {
           {configName}
         </Typography>
         {canUpdate && !isDefault && (
-          <Button
-            variant={isSaved ? 'outlined' : 'contained'}
-            size="medium"
-            onClick={() => {
-              if (!isSaved) {
-                handleAddAnnotations();
-              }
-              setIsSaved((prev) => !prev);
-            }}
-            sx={{ ml: 2 }}
-            data-testid={`edit-button-${configName}`}
-            startIcon={isSaved ? <EditOutlinedIcon /> : <SaveIcon />}
-          >
-            {isSaved
-              ? messages.details.editButton
-              : messages.details.saveButton}
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {!isSaved && (
+              <Button
+                variant="outlined"
+                size="medium"
+                onClick={() => {
+                  setIsSaved(true);
+                  setAnnotationsArray(
+                    entries.length
+                      ? entries.map(([key, value]) => ({
+                          key,
+                          value,
+                        }))
+                      : []
+                  );
+                }}
+                disabled={isSaving}
+                sx={{ ml: 2 }}
+              >
+                Cancel
+              </Button>
+            )}
+            <Button
+              variant={isSaved ? 'outlined' : 'contained'}
+              size="medium"
+              onClick={() => {
+                if (!isSaved) {
+                  handleAddAnnotations();
+                } else {
+                  setIsSaved(false);
+                  setAnnotationsArray(
+                    entries.length
+                      ? entries.map(([key, value]) => ({
+                          key,
+                          value,
+                        }))
+                      : []
+                  );
+                }
+              }}
+              disabled={isSaving}
+              sx={{ ml: 2 }}
+              data-testid={`edit-button-${configName}`}
+              startIcon={isSaved ? <EditOutlinedIcon /> : <SaveIcon />}
+            >
+              {isSaved
+                ? messages.details.editButton
+                : isSaving
+                  ? 'Saving...'
+                  : messages.details.saveButton}
+            </Button>
+          </Box>
         )}
       </Box>
+      {!isSaved && (
+        <Typography
+          color="text.secondary"
+          variant="body2"
+          sx={{ mt: 1, ml: 2 }}
+        >
+          You have unsaved changes. Click Save to apply changes or Cancel to
+          discard them.
+        </Typography>
+      )}
       <ConfigDetails
         configName={configName}
         isDefault={isDefault}
