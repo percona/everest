@@ -1,8 +1,8 @@
 ---
 name: 'Adjust GitHub worker node'
 inputs:
-  disable-apparmor:
-    description: 'Disable AppArmor on the host'
+  adjust-host-for-k3d:
+    description: 'Adjust host for K3D cluster'
     required: false
     default: false
   mount-docker-data:
@@ -14,11 +14,12 @@ runs:
   steps:
     # GitHub worker node has enabled AppArmor profile for Docker.
     # Use this step when AppArmor creates issues with running application in Docker container (like PXC).
-    - name: Disable AppArmor on host
-      if: ${{ inputs.disable-apparmor == 'true' }}
+    - name: Adjust host for K3D cluster
+      if: ${{ inputs.adjust-host-for-k3d == 'true' }}
       continue-on-error: true
       shell: bash
       run: |
+        sudo modprobe br_netfilter
         sudo systemctl stop apparmor
         sudo aa-teardown
 

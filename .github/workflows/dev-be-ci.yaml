@@ -137,12 +137,11 @@ jobs:
       - name: Adjust GitHub worker node
         uses: ./.github/actions/adjust-github-node
         with:
-          disable-apparmor: true
+          adjust-host-for-k3d: true
           mount-docker-data: true
 
       - name: Run K3D test cluster
         run: |
-          sudo modprobe br_netfilter
           make k3d-cluster-up
 
       - name: Build Everest API Server binary
@@ -201,15 +200,13 @@ jobs:
         run: |
           make test
 
-#      - name: Run debug commands on failure
-      - name: Setup tmate session
-        uses: percona/gh-action-action-tmate@v3
+      - name: Run debug commands on failure
         if: ${{ failure() }}
-#        run: |
-#          kubectl -n everest-system describe pods
-#          kubectl -n everest-monitoring describe pods
-#          kubectl -n everest describe pods
-#          kubectl -n everest-system logs deploy/everest-server
+        run: |
+          kubectl -n everest-system describe pods
+          kubectl -n everest-monitoring describe pods
+          kubectl -n everest describe pods
+          kubectl -n everest-system logs deploy/everest-server
 
   integration_tests_cli:
     name: CLI Integration Tests
