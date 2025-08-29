@@ -47,9 +47,8 @@ export const advancedConfigurationsSchema = () =>
         .map(({ sourceRange }) => sourceRange)
         .filter((range): range is string => !!range);
 
-      const uniqueRanges = new Set(
-        Object.values(nonEmptyRanges).map((item) => item)
-      );
+      // Format: { [range]: [indexes] }
+      const duplicateIndexes: Record<string, number[]> = {};
       sourceRanges.forEach(({ sourceRange }, index) => {
         if (sourceRange) {
           // Validate if it's a valid IP using regex
@@ -66,14 +65,23 @@ export const advancedConfigurationsSchema = () =>
             });
           }
 
-          const isCurrentOneOfDuplicates =
-            nonEmptyRanges.filter((item) => item === sourceRange).length > 1;
+          const duplicateEntry = nonEmptyRanges.filter(
+            (item) => item === sourceRange
+          );
 
-          // Check for duplicates
-          if (
-            nonEmptyRanges.length !== uniqueRanges.size &&
-            isCurrentOneOfDuplicates
-          ) {
+          // We exclude our current entry
+          if (duplicateEntry.length > 1) {
+            duplicateIndexes[sourceRange] = duplicateIndexes[sourceRange] || [];
+            duplicateIndexes[sourceRange].push(index);
+          }
+        }
+      });
+
+      // Check for duplicates
+      Object.entries(duplicateIndexes).forEach(([, indexes]) => {
+        if (indexes.length >= 2) {
+          // Remove the first index to avoid adding an issue for the first occurrence
+          indexes.slice(1).forEach((index) => {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               path: [
@@ -83,7 +91,7 @@ export const advancedConfigurationsSchema = () =>
               ],
               message: Messages.errors.sourceRange.duplicate,
             });
-          }
+          });
         }
       });
     });

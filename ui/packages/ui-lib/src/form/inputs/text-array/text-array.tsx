@@ -28,6 +28,7 @@ const TextArray = ({
   label,
   placeholder,
   handleBlur,
+  onRemove = () => {},
 }: TextArrayProps) => {
   const {
     control,
@@ -42,6 +43,7 @@ const TextArray = ({
   const [isDisabled, setIsDisabled] = useState<boolean>(true);
   const defaultFields: Record<string, string>[] = fields.length ? fields : [];
   const [changed, setChanged] = useState(false);
+  const [fieldAppended, setFieldAppended] = useState(false);
   const error = (index: number): FieldError | undefined =>
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[fieldKey];
@@ -53,6 +55,18 @@ const TextArray = ({
 
     setIsDisabled(isAnyFieldEmpty);
   }, [defaultFields.length, changed]);
+
+  useEffect(() => {
+    if (fieldAppended) {
+      const lastField = document.querySelector(
+        `input[name="${fieldName}.${fields.length - 1}.${fieldKey}"]`
+      );
+      if (lastField) {
+        (lastField as HTMLInputElement).focus();
+      }
+      setFieldAppended(false);
+    }
+  }, [fieldAppended]);
 
   return (
     <>
@@ -66,6 +80,7 @@ const TextArray = ({
             append({
               [fieldKey]: '',
             });
+            setFieldAppended(true);
           },
         }}
       >
@@ -107,7 +122,10 @@ const TextArray = ({
                   <InputAdornment position="end">
                     <IconButton
                       data-testid={`delete-text-input-${index}-button`}
-                      onClick={() => remove(index)}
+                      onClick={() => {
+                        remove(index);
+                        onRemove(index);
+                      }}
                     >
                       <DeleteOutlineOutlinedIcon />
                     </IconButton>
