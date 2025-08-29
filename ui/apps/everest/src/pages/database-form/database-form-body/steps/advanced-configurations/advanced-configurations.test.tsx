@@ -22,7 +22,6 @@ const FormProviderWrapper = ({
     resolver: zodResolver(advancedConfigurationsSchema()),
     defaultValues: {
       storageClass: 'standard',
-      externalAccess: false,
       engineParametersEnabled: false,
       podSchedulingPolicyEnabled: false,
       sourceRanges: [

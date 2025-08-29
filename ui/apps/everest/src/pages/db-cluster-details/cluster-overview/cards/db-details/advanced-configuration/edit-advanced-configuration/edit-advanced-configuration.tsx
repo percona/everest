@@ -24,6 +24,7 @@ import {
 import { Messages } from './edit-advanced-configuration.messages';
 import { dbEngineToDbType } from '@percona/utils';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils';
+import { EMPTY_LOAD_BALACNER_CONFIGURATION } from 'consts';
 
 export const AdvancedConfigurationEditModal = ({
   open,
@@ -33,22 +34,27 @@ export const AdvancedConfigurationEditModal = ({
   submitting,
 }: AdvancedConfigurationModalProps) => {
   const onSubmit: SubmitHandler<AdvancedConfigurationFormType> = ({
-    externalAccess,
+    exposureMethod,
     engineParametersEnabled,
     engineParameters,
     sourceRanges,
     storageClass,
     podSchedulingPolicyEnabled,
     podSchedulingPolicy,
+    loadBalancerConfigName,
   }) => {
     handleSubmitModal({
-      externalAccess,
       engineParametersEnabled,
       engineParameters,
       sourceRanges,
       storageClass,
       podSchedulingPolicyEnabled,
       podSchedulingPolicy,
+      exposureMethod,
+      loadBalancerConfigName:
+        loadBalancerConfigName !== EMPTY_LOAD_BALACNER_CONFIGURATION
+          ? loadBalancerConfigName
+          : '',
     });
   };
 
