@@ -22,7 +22,7 @@ import { DbClusterContextProvider } from 'pages/db-cluster-details/dbCluster.con
 import Logout from 'pages/logout';
 import PodSchedulingPolicies from 'pages/settings/pod-scheduling-policies';
 import PolicyDetails from 'pages/settings/pod-scheduling-policies/policy-details';
-import { UIGenerator } from 'pages/ui-generator/UiGenerator';
+import { UIGeneratorNew } from 'pages/ui-generator/ui-schema/UiGenerator';
 
 const router = createBrowserRouter([
   {
@@ -118,7 +118,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/ui-generator',
-        element: <UIGenerator />,
+        element: <UIGeneratorNew />,
       },
       {
         path: '*',
