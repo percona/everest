@@ -47,7 +47,7 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
 
   const handleOnChange = async (
     value: string,
-    index: number,
+    __: number,
     field: 'key' | 'value'
   ) => {
     const lastLineEmpty = checkIfLastLineEmpty(value, field);
