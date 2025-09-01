@@ -4,14 +4,10 @@ import ConfigDetails from './single-config-table';
 import BackTo from '../../shared/back-to';
 import { Box, Button, Typography } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import {
-  useLoadBalancerConfig,
-  useUpdateLoadBalancerConfig,
-} from 'hooks/api/load-balancer';
+import { useLoadBalancerConfig } from 'hooks/api/load-balancer';
 import SaveIcon from '@mui/icons-material/Save';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
 import { messages } from '../load-balancer.messages';
-import { useQueryClient } from '@tanstack/react-query';
 import { useRBACPermissionRoute, useRBACPermissions } from 'hooks/rbac/rbac';
 import {
   EVEREST_READ_ONLY_FINALIZER,
@@ -21,6 +17,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
+import { useUpdateEntityWithConflictRetry } from 'hooks';
+import { updateLoadBalancerConfigFn } from 'api/loadBalancer';
 
 const convertConfigToFormValues = (config: LoadBalancerConfig) => {
   const entries = Object.entries(config.spec.annotations || {});
@@ -60,9 +58,12 @@ const LoadBalancerConfigDetails = () => {
   const [annotationsArray, setAnnotationsArray] = useState<
     Record<string, string>[]
   >([]);
-  const { data: config } = useLoadBalancerConfig(configName, {
-    refetchInterval: 3000,
-  });
+  const { data: config, refetch: refetchConfig } = useLoadBalancerConfig(
+    configName,
+    {
+      refetchInterval: 3000,
+    }
+  );
   const methods = useForm({
     defaultValues: {
       annotations:
@@ -113,27 +114,12 @@ const LoadBalancerConfigDetails = () => {
         })
     ),
   });
-  const queryClient = useQueryClient();
-  const { mutate: updateAnnotations } = useUpdateLoadBalancerConfig(
-    configName,
-    'update-load-balancer-config',
-    {
-      onSuccess: (newConfig) => {
-        queryClient.setQueryData(
-          ['load-balancer-config', configName],
-          (oldData: LoadBalancerConfig) => {
-            return {
-              ...oldData,
-              spec: {
-                ...oldData.spec,
-                annotations: newConfig.spec.annotations,
-              },
-            };
-          }
-        );
-        methods.setValue('annotations', convertConfigToFormValues(newConfig));
-      },
-    }
+  const { mutate: updateAnnotations } = useUpdateEntityWithConflictRetry(
+    ['load-balancer-config', configName],
+    (newConfig) => updateLoadBalancerConfigFn(configName, newConfig),
+    config?.metadata.generation || 0,
+    refetchConfig,
+    (_, newData) => newData
   );
 
   const isDefault = config?.metadata.finalizers?.includes(
@@ -159,10 +145,11 @@ const LoadBalancerConfigDetails = () => {
     });
 
     updateAnnotations({
-      apiVersion: config?.apiVersion || '',
-      kind: config?.kind || '',
       metadata: config?.metadata || {
         name: configName,
+        resourceVersion: config?.metadata.resourceVersion || '',
+        finalizers: config?.metadata.finalizers || [],
+        generation: config?.metadata.generation || 0,
       },
       spec: {
         annotations: res,

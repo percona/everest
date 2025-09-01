@@ -20,16 +20,17 @@ export type AnnotationType = {
 };
 
 export interface LoadBalancerConfigList {
-  apiVersion: string;
-  kind: string;
   items: LoadBalancerConfig[];
-  metadata: { resourceVersion?: string; name: string; finalizers?: string[] };
+  metadata: { resourceVersion: string; name: string; finalizers?: string[] };
 }
 
 export interface LoadBalancerConfig {
-  apiVersion: string;
-  kind: string;
-  metadata: { resourceVersion?: string; name: string; finalizers?: string[] };
+  metadata: {
+    resourceVersion: string;
+    name: string;
+    finalizers: string[];
+    generation: number;
+  };
   spec: {
     annotations?: AnnotationType;
     engineType?: DbEngineType;
