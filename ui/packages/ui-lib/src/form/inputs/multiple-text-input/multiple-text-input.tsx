@@ -3,27 +3,18 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { FieldError, useFieldArray, useFormContext } from 'react-hook-form';
 import TextInput from '../text';
-import { useEffect } from 'react';
+import { useState } from 'react';
 
 interface MultipleTextInputProps {
   fieldName: string;
-  buttonProps?: {
-    buttonText?: string;
-  };
-  handleDelete?: (fields: [string, string]) => void;
-  getValues?: (values: Record<string, string>[]) => void;
 }
 
-const MultipleTextInput = ({
-  fieldName,
-  buttonProps,
-  handleDelete,
-  getValues,
-}: MultipleTextInputProps) => {
+const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
   const {
     control,
     formState: { errors },
-    watch,
+    getValues,
+    setValue,
   } = useFormContext();
 
   const { fields, append, remove } = useFieldArray({
@@ -31,29 +22,39 @@ const MultipleTextInput = ({
     name: fieldName,
   });
 
-  const values: Record<string, string>[] = watch(fieldName) || [];
-
-  useEffect(() => {
-    if (getValues && values.length > 0) {
-      getValues(values);
-    }
-  }, [values, getValues]);
-
-  const lastRow = values[values.length - 1];
-  const isDisabled = !lastRow?.key || !lastRow?.value;
-
   const error = (index: number, key: 'key' | 'value'): FieldError | undefined =>
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[key];
 
-  useEffect(() => {
-    if (fields.length === 0) {
-      append({ key: '', value: '' });
-    }
-  }, [fields, append]);
+  const [isLastLineEmpty, setIsLastLineEmpty] = useState(false);
 
   const handleAdd = () => {
     append({ key: '', value: '' });
+    setIsLastLineEmpty(true);
+  };
+
+  const checkIfLastLineEmpty = (value: string, field: 'key' | 'value') => {
+    const values = getValues(fieldName);
+    if (
+      value === '' ||
+      values[values.length - 1][field === 'key' ? 'value' : 'key'] === ''
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  const handleOnChange = async (
+    value: string,
+    index: number,
+    field: 'key' | 'value'
+  ) => {
+    const lastLineEmpty = checkIfLastLineEmpty(value, field);
+
+    setIsLastLineEmpty(lastLineEmpty);
+
+    return value;
   };
 
   return (
@@ -64,6 +65,7 @@ const MultipleTextInput = ({
         flexDirection: 'column',
         alignItems: 'flex-start',
         gap: 2,
+        pt: 2,
       }}
     >
       {fields.map((field, index) => (
@@ -73,7 +75,7 @@ const MultipleTextInput = ({
             width: '100%',
             display: 'flex',
             gap: 1,
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'space-between',
           }}
         >
@@ -87,7 +89,10 @@ const MultipleTextInput = ({
               helperText: error(index, 'key')?.message,
               sx: {
                 width: '100%',
-                mt: 1,
+                mt: 0,
+              },
+              onChange: (e) => {
+                handleOnChange(e.target.value, index, 'key');
               },
             }}
           />
@@ -101,16 +106,23 @@ const MultipleTextInput = ({
               helperText: error(index, 'value')?.message,
               sx: {
                 width: '100%',
-                mt: 1,
+                mt: 0,
+              },
+              onChange: (e) => {
+                handleOnChange(e.target.value, index, 'value');
               },
             }}
           />
           <IconButton
             onClick={() => {
-              if (handleDelete) {
-                handleDelete([values[index]?.key, values[index]?.value]);
+              const values = getValues(fieldName);
+
+              if (values.length === 1) {
+                setValue(`${fieldName}.${index}.key`, '');
+                setValue(`${fieldName}.${index}.value`, '');
+              } else {
+                remove(index);
               }
-              remove(index);
             }}
           >
             <DeleteOutlineOutlinedIcon />
@@ -122,10 +134,10 @@ const MultipleTextInput = ({
         variant="text"
         size="small"
         startIcon={<AddIcon />}
-        disabled={isDisabled}
+        disabled={isLastLineEmpty || !!errors?.[fieldName]}
         onClick={handleAdd}
       >
-        {buttonProps?.buttonText || 'Add new'}
+        Add new
       </Button>
     </Box>
   );
