@@ -18,7 +18,6 @@ const BackTo = ({ to, prevPage }: BackToProps) => {
           justifyContent: 'start',
           alignItems: 'center',
           gap: 1,
-          ml: 2,
           mb: 2,
         }}
       >
