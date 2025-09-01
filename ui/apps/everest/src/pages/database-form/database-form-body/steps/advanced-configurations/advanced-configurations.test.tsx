@@ -6,6 +6,7 @@ import { AdvancedConfigurations } from './advanced-configurations';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema';
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const FormProviderWrapper = ({
       storageClass: 'standard',
       engineParametersEnabled: false,
       podSchedulingPolicyEnabled: false,
+      exposureMethod: 'Cluster IP',
       sourceRanges: [
         {
           sourceRange: '192.168.1.1',
@@ -41,64 +43,17 @@ const FormProviderWrapper = ({
 };
 
 describe('FourthStep', () => {
-  it("should render only external access input if it's off", () => {
-    render(
-      <TestWrapper>
-        <FormProviderWrapper>
-          <QueryClientProvider client={queryClient}>
-            <AdvancedConfigurations
-              loadingDefaultsForEdition={false}
-              alreadyVisited={false}
-            />
-          </QueryClientProvider>
-        </FormProviderWrapper>
-      </TestWrapper>
-    );
-
-    expect(
-      screen.getByTestId('switch-input-external-access')
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByTestId('switch-input-internet-facing')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('text-input-source-ranges.0.source-range')
-    ).not.toBeInTheDocument();
-  });
-
-  it('should render remaining fields when external access is on', () => {
-    render(
-      <TestWrapper>
-        <FormProviderWrapper>
-          <QueryClientProvider client={queryClient}>
-            <AdvancedConfigurations
-              loadingDefaultsForEdition={false}
-              alreadyVisited={false}
-            />
-          </QueryClientProvider>
-        </FormProviderWrapper>
-      </TestWrapper>
-    );
-
-    fireEvent.click(screen.getByTestId('switch-input-external-access'));
-
-    expect(
-      screen.getByTestId('switch-input-external-access')
-    ).toBeInTheDocument();
-    // expect(
-    //   screen.getByTestId('switch-input-internet-facing')
-    // ).toBeInTheDocument();
-    expect(
-      screen.getByTestId('text-input-source-ranges.0.source-range')
-    ).toBeInTheDocument();
-  });
-
   it('should show an error message when duplicate sourceRanges are added', async () => {
     render(
       <TestWrapper>
         <FormProviderWrapper
           values={{
-            sourceRanges: [],
+            sourceRanges: [
+              {
+                sourceRange: '',
+              },
+            ],
+            exposureMethod: ExposureMethod.LoadBalancer,
           }}
         >
           <QueryClientProvider client={queryClient}>
@@ -111,19 +66,30 @@ describe('FourthStep', () => {
       </TestWrapper>
     );
 
-    // Enable external access
-    const checkbox = screen
-      .getByTestId('switch-input-external-access')
-      .querySelector('input');
-    fireEvent.click(checkbox!);
+    fireEvent.mouseDown(
+      screen
+        .getAllByRole('combobox')
+        .find((el) => el.id === 'mui-component-select-exposureMethod')!
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('listbox')).toBeInTheDocument()
+    );
+    const loadBalancerOption = screen
+      .getAllByRole('option')
+      .find((el) => el.textContent === 'Load balancer');
 
-    expect(checkbox).toBeChecked();
+    expect(loadBalancerOption).toBeDefined();
+    fireEvent.click(loadBalancerOption!);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('select-input-exposure-method')).toHaveValue(
+        'Load balancer'
+      )
+    );
 
     await waitFor(() =>
       expect(screen.getByTestId('external-access-fields')).toBeInTheDocument()
     );
-
-    fireEvent.click(screen.getByTestId('add-text-input-button'));
 
     // Add the first source range
     const firstSourceRangeInput = screen.getByTestId(
