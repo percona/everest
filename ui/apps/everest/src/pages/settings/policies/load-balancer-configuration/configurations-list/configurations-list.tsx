@@ -19,13 +19,10 @@ import { messages } from '../load-balancer.messages';
 import { EVEREST_READ_ONLY_FINALIZER } from 'consts';
 
 const LoadBalancerConfigurationList = () => {
-  const { data: loadBalancerConfigs } = useLoadBalancerConfigs(
-    'load-balancer-configs',
-    undefined,
-    {
+  const { data: loadBalancerConfigs, isLoading: loadBalancerConfigsLoading } =
+    useLoadBalancerConfigs('load-balancer-configs', undefined, {
       refetchInterval: 10000,
-    }
-  );
+    });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const selectedConfig = useRef<LoadBalancerConfig | null>(null);
@@ -85,6 +82,7 @@ const LoadBalancerConfigurationList = () => {
   return (
     <>
       <Table
+        state={{ isLoading: loadBalancerConfigsLoading }}
         tableName="load-balancer-configuration"
         emptyState={
           <EmptyState

@@ -41,7 +41,9 @@ export const updateLoadBalancerConfigFn = async (
   configName: string,
   payload: LoadBalancerConfig
 ) => {
-  const response = await api.put(`${loadBalancerUrl}/${configName}`, payload);
+  const response = await api.put(`${loadBalancerUrl}/${configName}`, payload, {
+    disableNotifications: (e) => e.status === 409,
+  });
   return response.data;
 };
 
