@@ -175,6 +175,8 @@ jobs:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
+          build-args: |
+            FLAGS="- X 'github.com/percona/everest-operator/internal/consts.Version=${{ env.VERSION }}'"
 
       - name: Operator - build everest-operator-bundle image
         uses: docker/build-push-action@v6
