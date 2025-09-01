@@ -115,24 +115,28 @@ export const AdvancedConfigurationForm = ({
   };
 
   const isEksDefault = useMemo(
-    () => clusterInfo?.clusterType === 'eks',
+    () => clusterInfo?.clusterType && clusterInfo?.clusterType === 'eks',
     [clusterInfo?.clusterType]
   );
 
   const selectOptions: LoadBalancerConfig[] = loadBalancerConfigs?.items ?? [];
 
-  const selectDefaultValue = isEksDefault
-    ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
-    : EMPTY_LOAD_BALACNER_CONFIGURATION;
+  const selectDefaultValue = useMemo(
+    () =>
+      isEksDefault
+        ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
+        : EMPTY_LOAD_BALACNER_CONFIGURATION,
+    [isEksDefault]
+  );
 
   useEffect(() => {
-    if (!selectDefaultValue) {
+    if (!loadBalancerConfigValue && isEksDefault !== undefined) {
       setValue(
         AdvancedConfigurationFields.loadBalancerConfigName,
         selectDefaultValue
       );
     }
-  }, [selectDefaultValue, setValue]);
+  }, [isEksDefault, loadBalancerConfigValue, selectDefaultValue, setValue]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
     const configName = getValues<string>(
