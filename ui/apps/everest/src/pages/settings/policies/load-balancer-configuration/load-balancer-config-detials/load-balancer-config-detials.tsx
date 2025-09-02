@@ -136,6 +136,32 @@ const LoadBalancerConfigDetails = () => {
     }
   }, [config, methods]);
 
+  const shouldDisableEditButton = () => {
+    const values = methods.getValues('annotations');
+    const fieldErrors = methods.formState.errors.annotations;
+
+    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      return true;
+    }
+
+    const hasEmptyFields = values.some(
+      (item: Record<string, string>) => !item.key || !item.value
+    );
+    if (hasEmptyFields) {
+      return true;
+    }
+
+    const keys = values
+      .map((item: Record<string, string>) => item.key)
+      .filter(Boolean);
+    const uniqueKeys = new Set(keys);
+    if (keys.length !== uniqueKeys.size) {
+      return true;
+    }
+
+    return false;
+  };
+
   const handleAddAnnotations = useCallback(() => {
     const annotationsObject = methods.getValues('annotations');
     const res: Record<string, string> = {};
@@ -186,7 +212,7 @@ const LoadBalancerConfigDetails = () => {
           </Typography>
           {canUpdate && !isDefault && (
             <Button
-              disabled={!isSaved && !!methods.formState.errors.annotations}
+              disabled={!isSaved && shouldDisableEditButton()}
               variant={isSaved ? 'outlined' : 'contained'}
               size="medium"
               onClick={() => {
