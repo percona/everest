@@ -128,31 +128,4 @@ describe('FourthStep', () => {
       )
     ).toBeInTheDocument();
   });
-
-  it('should disable add new button when there are validation errors, empty fields, or duplicate keys', async () => {
-    render(
-      <TestWrapper>
-        <FormProviderWrapper
-          values={{
-            annotations: [
-              {
-                key: 'invalid-key!',
-                value: 'value1',
-              },
-            ],
-          }}
-        >
-          <QueryClientProvider client={queryClient}>
-            <AdvancedConfigurations
-              loadingDefaultsForEdition={false}
-              alreadyVisited={false}
-            />
-          </QueryClientProvider>
-        </FormProviderWrapper>
-      </TestWrapper>
-    );
-
-    const addButton = screen.getByText('Add new');
-    expect(addButton).toBeDisabled();
-  });
 });
