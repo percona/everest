@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useMatch } from 'react-router-dom';
+import { useMatch, useNavigate } from 'react-router-dom';
 import ConfigDetails from './single-config-table';
-import BackTo from '../../shared/back-to';
+import ArrowBack from '@mui/icons-material/ArrowBack';
 import { Box, Button, Typography } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { useLoadBalancerConfig } from 'hooks/api/load-balancer';
@@ -37,6 +37,8 @@ const convertConfigToFormValues = (config: LoadBalancerConfig) => {
 };
 
 const LoadBalancerConfigDetails = () => {
+  const navigate = useNavigate();
+
   const match = useMatch(
     '/settings/policies/load-balancer-configuration/:configName'
   );
@@ -163,10 +165,13 @@ const LoadBalancerConfigDetails = () => {
 
   return (
     <>
-      <BackTo
-        to="/settings/policies/load-balancer-configuration"
-        prevPage="Load Balancer configuration"
-      />
+      <Button
+        sx={{ mt: 0, mb: 2 }}
+        startIcon={<ArrowBack />}
+        onClick={() => navigate(-1)}
+      >
+        Back
+      </Button>
       <FormProvider {...methods}>
         <Box
           sx={{
