@@ -101,8 +101,19 @@ describe('FourthStep', () => {
     });
     fireEvent.blur(firstSourceRangeInput);
 
+    await waitFor(() => {
+      const addButton = screen.getByTestId('add-text-input-button');
+      expect(addButton).not.toBeDisabled();
+    });
+
     // Add a new source range input
     fireEvent.click(screen.getByTestId('add-text-input-button'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('text-input-source-ranges.1.source-range')
+      ).toBeInTheDocument();
+    });
 
     const secondSourceRangeInput = screen.getByTestId(
       'text-input-source-ranges.1.source-range'
@@ -127,5 +138,112 @@ describe('FourthStep', () => {
         'Duplicate entry. This IP and netmask combination already exists.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('should trigger validation when switching from Cluster IP to Load Balancer', async () => {
+    render(
+      <TestWrapper>
+        <FormProviderWrapper
+          values={{
+            sourceRanges: [
+              {
+                sourceRange: 'invalid-ip',
+              },
+            ],
+            exposureMethod: ExposureMethod.ClusterIP,
+          }}
+        >
+          <QueryClientProvider client={queryClient}>
+            <AdvancedConfigurations
+              loadingDefaultsForEdition={false}
+              alreadyVisited={false}
+            />
+          </QueryClientProvider>
+        </FormProviderWrapper>
+      </TestWrapper>
+    );
+
+    expect(
+      screen.queryByTestId('external-access-fields')
+    ).not.toBeInTheDocument();
+    fireEvent.mouseDown(
+      screen
+        .getAllByRole('combobox')
+        .find((el) => el.id === 'mui-component-select-exposureMethod')!
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('listbox')).toBeInTheDocument()
+    );
+    const loadBalancerOption = screen
+      .getAllByRole('option')
+      .find((el) => el.textContent === 'Load balancer');
+
+    expect(loadBalancerOption).toBeDefined();
+    fireEvent.click(loadBalancerOption!);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('external-access-fields')).toBeInTheDocument()
+    );
+    const sourceRangeInput = screen.getByTestId(
+      'text-input-source-ranges.0.source-range'
+    );
+
+    await waitFor(() => {
+      expect(sourceRangeInput).toBeInvalid();
+    });
+  });
+
+  it('should clear duplicate error messages when deleting duplicate source range entries', async () => {
+    render(
+      <TestWrapper>
+        <FormProviderWrapper
+          values={{
+            sourceRanges: [
+              {
+                sourceRange: '192.168.1.1/32',
+              },
+              {
+                sourceRange: '192.168.1.1/32',
+              },
+            ],
+            exposureMethod: ExposureMethod.LoadBalancer,
+          }}
+        >
+          <QueryClientProvider client={queryClient}>
+            <AdvancedConfigurations
+              loadingDefaultsForEdition={false}
+              alreadyVisited={false}
+            />
+          </QueryClientProvider>
+        </FormProviderWrapper>
+      </TestWrapper>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('external-access-fields')).toBeInTheDocument()
+    );
+
+    const firstSourceRangeInput = screen.getByTestId(
+      'text-input-source-ranges.0.source-range'
+    );
+    const secondSourceRangeInput = screen.getByTestId(
+      'text-input-source-ranges.1.source-range'
+    );
+
+    await waitFor(() => {
+      expect(firstSourceRangeInput).toBeInvalid();
+      expect(secondSourceRangeInput).toBeInvalid();
+    });
+
+    fireEvent.click(screen.getByTestId('delete-text-input-1-button'));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('text-input-source-ranges.1.source-range')
+      ).not.toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(firstSourceRangeInput).not.toBeInvalid();
+    });
   });
 });

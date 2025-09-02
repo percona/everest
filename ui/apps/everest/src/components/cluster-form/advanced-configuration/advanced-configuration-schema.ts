@@ -49,7 +49,11 @@ export const advancedConfigurationsSchema = () =>
         z.nativeEnum(ExposureMethod),
     })
     .passthrough()
-    .superRefine(({ sourceRanges }, ctx) => {
+    .superRefine(({ sourceRanges, exposureMethod }, ctx) => {
+      if (exposureMethod !== ExposureMethod.LoadBalancer) {
+        return;
+      }
+
       const nonEmptyRanges = sourceRanges
         .map(({ sourceRange }) => sourceRange)
         .filter((range): range is string => !!range);
