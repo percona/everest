@@ -5,13 +5,10 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
@@ -50,30 +47,30 @@ func (u *Uninstall) newStepDeleteNamespace(ns string) steps.Step {
 // helm doesn't delete CRDs by default, so we need to handle this manually.
 func (u *Uninstall) newStepDeleteCRDs() steps.Step {
 	return steps.Step{
-		Desc: "Deleting CRDs",
+		Desc: "Uninstalling CRDs",
 		F: func(ctx context.Context) error {
 			return u.deleteEverestCRDs(ctx)
 		},
 	}
 }
 
-func (u *Uninstall) deleteEverestCRDs(ctx context.Context) error {
-	crds, err := u.kubeConnector.ListCRDs(ctx)
+func (u *Uninstall) deleteEverestCRDs(_ context.Context) error {
+	// Try to uninstall the Everest CRDs chart.
+	// This chart exists only if Everest has been upgraded at least once.
+	// If the chart is not installed, Uninstall() will return early without any error.
+	// If the chart does not exist, that means the CRDs are a part of the Everest chart,
+	// and hence will be deleted during uninstallation of the Everest chart.
+	uninstaller, err := helm.NewUninstaller(
+		helm.EverestCRDChartName,
+		common.SystemNamespace,
+		u.config.KubeconfigPath,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Helm uninstaller (everest-crds): %w", err)
 	}
-	for _, crd := range crds.Items {
-		if crd.Spec.Group == everestv1alpha1.GroupVersion.Group {
-			u.l.Infof("Deleting CRD '%s'", crd.Name)
-			delObj := &apiextv1.CustomResourceDefinition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: crd.Name,
-				},
-			}
-			if err = u.kubeConnector.DeleteCRD(ctx, delObj); client.IgnoreNotFound(err) != nil {
-				return err
-			}
-		}
+	_, err = uninstaller.Uninstall(false)
+	if err != nil {
+		return fmt.Errorf("failed to uninstall Helm chart: %w", err)
 	}
 	return nil
 }
