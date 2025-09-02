@@ -71,7 +71,8 @@ export const AdvancedConfigurationForm = ({
   automaticallyTogglePodSchedulingPolicySwitch = false,
   allowStorageClassChange = false,
 }: AdvancedConfigurationFormProps) => {
-  const { watch, setValue, getFieldState, getValues } = useFormContext();
+  const { watch, setValue, getFieldState, getValues, trigger } =
+    useFormContext();
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
   const selectedPolicy = useRef<PodSchedulingPolicy>();
   const [loadBalancerConfigDialogOpen, setLoadBalancerConfigDialogOpen] =
@@ -79,9 +80,10 @@ export const AdvancedConfigurationForm = ({
   const selectedLoadBalancerConfig = useRef<
     LoadBalancerConfig | null | undefined
   >(null);
-  const [engineParametersEnabled, policiesEnabled] = watch([
+  const [engineParametersEnabled, policiesEnabled, exposureMethod] = watch([
     AdvancedConfigurationFields.engineParametersEnabled,
     AdvancedConfigurationFields.podSchedulingPolicyEnabled,
+    AdvancedConfigurationFields.exposureMethod,
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
@@ -178,7 +180,13 @@ export const AdvancedConfigurationForm = ({
         { shouldValidate: true }
       );
     }
-  }, [clusterInfo, setDefaultsOnLoad, allowStorageClassChange]);
+  }, [
+    clusterInfo,
+    setDefaultsOnLoad,
+    allowStorageClassChange,
+    getFieldState,
+    setValue,
+  ]);
 
   useEffect(() => {
     if (!policies.length) {
@@ -216,6 +224,7 @@ export const AdvancedConfigurationForm = ({
     setValue,
     setDefaultsOnLoad,
     automaticallyTogglePodSchedulingPolicySwitch,
+    getFieldState,
   ]);
 
   const handleBlur = (value: string, fieldName: string, hasError: boolean) => {
@@ -223,6 +232,10 @@ export const AdvancedConfigurationForm = ({
       setValue(fieldName, `${value}/32`, { shouldValidate: true });
     }
   };
+
+  useEffect(() => {
+    trigger();
+  }, [exposureMethod, trigger]);
 
   return (
     <FormGroup
@@ -351,8 +364,7 @@ export const AdvancedConfigurationForm = ({
               </SelectInput>
             </Box>
 
-            {getValues(AdvancedConfigurationFields.exposureMethod) ===
-              ExposureMethod.LoadBalancer && (
+            {exposureMethod === ExposureMethod.LoadBalancer && (
               <>
                 <FormCard
                   title={Messages.cards.loadBalancerConfiguration.title}
