@@ -3,9 +3,9 @@ import { ComponentProperties } from './types';
 import { zodRuleMap } from './constants';
 
 export const zodSchemaMap: Record<string, z.ZodTypeAny> = {
-  Number: z.union([z.number(), z.string().transform((s) => parseInt(s, 10))]),
+  Number: z.number(),
   String: z.string().min(5),
-  TextArea: z.string(),
+  TextArea: z.string().min(5),
   Input: z.string(),
   Switch: z.boolean(),
   Checkbox: z.boolean(),
@@ -32,58 +32,71 @@ export const getDefaultValues = (
 
   Object.entries(fields).forEach(([key, value]) => {
     if (value.uiType === 'Group' && value.subParameters) {
-      defaults[key] = getDefaultValues(value.subParameters, topologyKeys, key);
+      defaults[key] = getDefaultValues(value.subParameters, topologyKeys);
     } else {
       if (value.params?.default !== undefined) {
         defaults[key] = value.params.default;
       } else {
-        defaults[key] = defaultValueMap[value.uiType] ?? '';
+        defaults[key] = value.uiType
+          ? (defaultValueMap[value.uiType] ?? '')
+          : '';
       }
     }
   });
 
   if (parentKey) {
-    if (parentKey.includes('.')) {
-      const keys = parentKey.split('.');
-      let nested = defaults;
-      for (let i = keys.length - 1; i >= 0; i--) {
-        nested = { [keys[i]]: nested };
-      }
-      return nested;
+    const keys = parentKey.split('.');
+    let nested = defaults;
+    for (let i = keys.length - 1; i >= 0; i--) {
+      nested = { [keys[i]]: nested };
     }
-    return { [parentKey]: defaults };
+    return nested;
   }
 
   return defaults;
 };
 
 export const buildZodSchema = (fields: Record<string, any>, parentKey = '') => {
-  const shape: Record<string, any> = {};
+  const schemaShape: Record<string, z.ZodTypeAny> = {};
 
   Object.entries(fields).forEach(([key, value]) => {
+    let fieldSchema: z.ZodTypeAny;
+
     if (value.uiType === 'Group' && value.subParameters) {
-      shape[`${parentKey}.${key}`] = buildZodSchema(value.subParameters, '');
+      fieldSchema = buildZodSchema(value.subParameters);
     } else {
-      let schema = zodSchemaMap[value.uiType] ?? z.any();
+      fieldSchema = zodSchemaMap[value.uiType] ?? z.any();
       if (value.validation) {
         Object.entries(value.validation).forEach(([rule, ruleValue]) => {
           const zodMethod = zodRuleMap[rule];
           if (
             zodMethod &&
-            typeof schema[zodMethod as keyof typeof schema] === 'function'
+            typeof fieldSchema[zodMethod as keyof typeof fieldSchema] ===
+              'function'
           ) {
-            schema = (schema as z.ZodTypeAny)[zodMethod as keyof z.ZodTypeAny](
-              ruleValue
-            );
+            fieldSchema = (fieldSchema as z.ZodTypeAny)[
+              zodMethod as keyof z.ZodTypeAny
+            ](ruleValue);
           }
         });
       }
-      shape[`${parentKey}.${key}`] = schema;
     }
+
+    schemaShape[key] = fieldSchema;
   });
-  const obj = z.object(shape);
+
+  let schema = z.object(schemaShape);
+
   if (parentKey) {
-    return z.object({ [parentKey]: obj });
+    if (parentKey.includes('.')) {
+      const keys = parentKey.split('.');
+      for (let i = keys.length - 1; i >= 0; i--) {
+        schema = z.object({ [keys[i]]: schema });
+      }
+    } else {
+      schema = z.object({ [parentKey]: schema });
+    }
   }
-  return obj;
+
+  return schema;
 };

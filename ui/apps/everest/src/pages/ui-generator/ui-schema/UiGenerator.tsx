@@ -11,12 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
-import {
-  useForm,
-  FormProvider,
-  useFormContext,
-  Controller,
-} from 'react-hook-form';
+import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { OpenAPIFields, OpenAPIObject, ComponentProperties } from './types';
 import { SelectInput } from '@percona/ui-lib';
 import React from 'react';
@@ -108,25 +103,17 @@ const OpenApiUiComponent = ({
   if (!Component) return null;
 
   return (
-    <Controller
-      name={name}
-      control={methods?.control}
-      defaultValue={params?.default ?? ''}
-      render={({ field }) => (
-        <>
-          {React.createElement(Component, {
-            ...field,
-            label: name,
-            name: name,
-            error: 'asdsad', //!!error,
-            style: { minWidth: 240 },
-            ...params,
-          })}
-          {error && <Typography>{error}</Typography>}
-          {/* {params.badge!! && <Typography>{params.badge}</Typography>} */}
-        </>
-      )}
-    />
+    <>
+      {React.createElement(Component, {
+        label: name,
+        name: name,
+        error: !!error,
+        style: { minWidth: 240 },
+        ...params,
+      })}
+      {error && <Typography>{error}</Typography>}
+      {/* {params.badge!! && <Typography>{params.badge}</Typography>} */}
+    </>
   );
 };
 
@@ -193,7 +180,7 @@ export const UIGeneratorNew = () => {
   let parent = '';
   if (activeStep === 0 && selectedTopology && topology[selectedTopology]) {
     selectedData = topology[selectedTopology];
-    parent = selectedTopology;
+    parent = `topology.${selectedTopology}`;
   } else if (activeStep === 1) {
     selectedData = global.properties;
     parent = 'global.params';
@@ -221,12 +208,29 @@ export const UIGeneratorNew = () => {
     Object.keys(topology),
     parent
   );
+  console.log('🚀 ~ UIGeneratorNew ~ defaultValues:', defaultValues);
+
   const methods = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      ...defaultValues,
-      ...{ topology: Object.keys(topology)[0] },
+    mode: 'onChange',
+    // resolver: zodResolver(schema),
+    resolver: async (data, context, options) => {
+      const customResolver = zodResolver(schema);
+      const result = await customResolver(data, context, options);
+      // if (Object.keys(result.errors).length > 0) {
+      //   setStepsWithErrors((prev) => {
+      //     if (!prev.includes(activeStep)) {
+      //       return [...prev, activeStep];
+      //     }
+      //     return prev;
+      //   });
+      // } else {
+      //   setStepsWithErrors((prev) =>
+      //     prev.filter((step) => step !== activeStep)
+      //   );
+      // }
+      return result;
     },
+    defaultValues,
   });
 
   const onSubmit = (data: Record<string, unknown>) => {
