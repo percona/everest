@@ -1,4 +1,4 @@
-import { Switch, Checkbox, TextField } from '@mui/material';
+import { Switch, Checkbox } from '@mui/material';
 import { TextInput } from '@percona/ui-lib';
 import { OpenAPIObject } from './types';
 
@@ -21,9 +21,9 @@ export const muiComponentMap: Record<string, React.ElementType> = {
   Number: TextInput,
   Switch: Switch,
   Checkbox: Checkbox,
-  TextArea: TextField,
-  StorageClassSelect: TextField,
-  Toggle: TextField,
+  TextArea: TextInput,
+  StorageClassSelect: TextInput,
+  Toggle: TextInput,
 };
 
 export const openApiObj: OpenAPIObject = {

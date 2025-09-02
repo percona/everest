@@ -18,6 +18,7 @@ import React from 'react';
 import { buildZodSchema, getDefaultValues } from './utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { muiComponentMap, openApiObj } from './constants';
+import { z } from 'zod';
 
 const parseOpenAPIObject = (openApiObj: OpenAPIObject): OpenAPIFields => {
   const fields = {
@@ -202,6 +203,7 @@ export const UIGeneratorNew = () => {
   );
 
   const schema = buildZodSchema(groupedComponents, parent);
+  console.log('🚀 ~ UIGeneratorNew ~ schema:', schema.shape);
 
   const defaultValues = getDefaultValues(
     groupedComponents,

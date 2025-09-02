@@ -98,5 +98,7 @@ export const buildZodSchema = (fields: Record<string, any>, parentKey = '') => {
     }
   }
 
+  console.log('schema@buildZodSchema', schema.shape);
+
   return schema;
 };
