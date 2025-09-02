@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/pkg/cli/helm"
 	"github.com/percona/everest/pkg/cli/steps"
 	"github.com/percona/everest/pkg/common"
@@ -54,12 +55,9 @@ func (u *Uninstall) newStepDeleteCRDs() steps.Step {
 	}
 }
 
-func (u *Uninstall) deleteEverestCRDs(_ context.Context) error {
-	// Try to uninstall the Everest CRDs chart.
-	// This chart exists only if Everest has been upgraded at least once.
-	// If the chart is not installed, Uninstall() will return early without any error.
-	// If the chart does not exist, that means the CRDs are a part of the Everest chart,
-	// and hence will be deleted during uninstallation of the Everest chart.
+func (u *Uninstall) deleteEverestCRDs(ctx context.Context) error {
+	// We first attempt to uninstall the everest-crds chart.
+	// This chart may be found only if Everest had been upgraded at least once.
 	uninstaller, err := helm.NewUninstaller(
 		helm.EverestCRDChartName,
 		common.SystemNamespace,
@@ -68,9 +66,32 @@ func (u *Uninstall) deleteEverestCRDs(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create Helm uninstaller (everest-crds): %w", err)
 	}
-	_, err = uninstaller.Uninstall(false)
+	chartFound, err := uninstaller.Uninstall(false)
 	if err != nil {
 		return fmt.Errorf("failed to uninstall Helm chart: %w", err)
+	}
+	// If this chart was not found (i.e, if no upgrade was performed), that means the CRDs
+	// were installed via the everest chart. In that case, we will try to uninstall the CRDs explicitly.
+	if !chartFound {
+		u.l.Infof("%s chart was not installed, deleting CRDs explicitly", helm.EverestCRDChartName)
+		return u.listAndDeleteEverestCRDs(ctx)
+	}
+	return nil
+}
+
+func (u *Uninstall) listAndDeleteEverestCRDs(ctx context.Context) error {
+	crds, err := u.kubeConnector.ListCRDs(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list CRDs: %w", err)
+	}
+	for _, crd := range crds.Items {
+		if crd.Spec.Group != everestv1alpha1.GroupVersion.Group {
+			continue
+		}
+		if err := u.kubeConnector.DeleteCRD(ctx, &crd); err != nil {
+			return fmt.Errorf("failed to delete CRD: %w", err)
+		}
+		u.l.Infof("Deleted CRD: %s", crd.GetName())
 	}
 	return nil
 }
