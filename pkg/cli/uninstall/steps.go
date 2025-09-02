@@ -71,7 +71,8 @@ func (u *Uninstall) deleteEverestCRDs(ctx context.Context) error {
 		return fmt.Errorf("failed to uninstall Helm chart: %w", err)
 	}
 	// If this chart was not found (i.e, if no upgrade was performed), that means the CRDs
-	// were installed via the everest chart. In that case, we will try to uninstall the CRDs explicitly.
+	// were installed via the everest chart. In that case, we will try to uninstall the CRDs explicitly,
+	// because Helm does not uninstall CRDs by default.
 	if !chartFound {
 		u.l.Infof("%s chart was not installed, deleting CRDs explicitly", helm.EverestCRDChartName)
 		return u.listAndDeleteEverestCRDs(ctx)
