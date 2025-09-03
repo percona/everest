@@ -118,10 +118,14 @@ function getBackupStorage(): string {
     hasEverestTesting
   ) {
     backupStorage = 'everest-testing';
-    console.log(`AWS credentials present and EVEREST_BUCKETS_NAMESPACES_MAP includes ["everest-testing","everest-ui"], so using bucket ${backupStorage}`);
+    console.log(
+      `AWS credentials present and EVEREST_BUCKETS_NAMESPACES_MAP includes ["everest-testing","everest-ui"], so using bucket ${backupStorage}`
+    );
   } else {
     backupStorage = 'bucket-1';
-    console.log(`AWS credentials missing or EVEREST_BUCKETS_NAMESPACES_MAP does not include ["everest-testing","everest-ui"], so using MinIO bucket ${backupStorage}`);
+    console.log(
+      `AWS credentials missing or EVEREST_BUCKETS_NAMESPACES_MAP does not include ["everest-testing","everest-ui"], so using MinIO bucket ${backupStorage}`
+    );
   }
 
   return backupStorage;
@@ -214,7 +218,9 @@ function getBackupStorage(): string {
               await pitrStorageLocation.click();
               await page.getByRole('option', { name: backupStorage }).click();
             } else {
-              await expect(page.getByText(`Storage: ${backupStorage}`)).toHaveCount(2);
+              await expect(
+                page.getByText(`Storage: ${backupStorage}`)
+              ).toHaveCount(2);
             }
           }
 

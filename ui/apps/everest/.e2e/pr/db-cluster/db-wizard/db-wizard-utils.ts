@@ -42,7 +42,10 @@ const defaultTimeOptions: ScheduleTimeOptions = {
   minute: '05',
 };
 
-export const addFirstScheduleInDBWizard = async (page: Page, backupStorage: string) => {
+export const addFirstScheduleInDBWizard = async (
+  page: Page,
+  backupStorage: string
+) => {
   const bucketNamespacesMap = getBucketNamespacesMap();
   // checking that we haven't schedules
   await expect(
@@ -51,7 +54,13 @@ export const addFirstScheduleInDBWizard = async (page: Page, backupStorage: stri
 
   // creating schedule with schedule modal form dialog
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page, defaultTimeOptions, undefined, backupStorage, '1');
+  await fillScheduleModalForm(
+    page,
+    defaultTimeOptions,
+    undefined,
+    backupStorage,
+    '1'
+  );
   await page.getByTestId('form-dialog-create').click();
   // checking created schedule in dbWizard schedules list
   await expect(
@@ -70,8 +79,7 @@ export const addFirstScheduleInDBWizard = async (page: Page, backupStorage: stri
     matchingBucketNamespace = bucketNamespacesMap.find((b) =>
       b[1].includes(namespace)
     )[0];
-  }
-  else {
+  } else {
     matchingBucketNamespace = backupStorage;
   }
 
@@ -171,8 +179,7 @@ export const fillScheduleModalForm = async (
 
     const storageOptions = page.getByRole('option');
     await storageOptions.first().click();
-  }
-  else if (backupStorage !== undefined) {
+  } else if (backupStorage !== undefined) {
     await storageLocationField.click();
 
     await page.getByRole('option', { name: backupStorage }).click();
