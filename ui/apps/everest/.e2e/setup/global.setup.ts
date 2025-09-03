@@ -79,12 +79,12 @@ setup('Backup storages', async ({ request }) => {
   const promises: Promise<any>[] = [];
   // This has a nested array structure, in the form of
   // [
-  //   ['bucket1', ['namespace1', 'namespace2']],
-  //   ['bucket2', ['namespace3']],
+  //   ['bucket1', 'namespace1'],
+  //   ['bucket2', 'namespace2'],
   // ]
   const bucketNamespacesMap = getBucketNamespacesMap();
 
-  for (const [bucket, namespace] of bucketNamespacesMap) {
+  bucketNamespacesMap.forEach(async ([bucket, namespace]) => {
     const isEverestTesting = bucket === 'everest-testing';
     const data = isEverestTesting
       ? {
@@ -124,7 +124,7 @@ setup('Backup storages', async ({ request }) => {
         })
       )
     );
-  }
+  });
 
   // STORAGE_NAMES.forEach(async (storage) => {
   //   promises.push(

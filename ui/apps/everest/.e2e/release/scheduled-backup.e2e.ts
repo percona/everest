@@ -205,7 +205,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             page,
             timeOption1,
             'first-schedule',
-            false,
+            undefined,
             '0'
           );
           await page.getByTestId('form-dialog-create').click();
@@ -227,7 +227,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
             page,
             timeOption2,
             'second-schedule',
-            false,
+            undefined,
             '0'
           );
           await page.getByTestId('form-dialog-create').click();
