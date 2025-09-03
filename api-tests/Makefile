@@ -14,6 +14,11 @@ init:     ## Install tests dependencies.
 	npm ci
 	PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx playwright install
 
+CI_INIT_DEPS := init deploy-monitoring create-test-users
+CI_INIT_DEPS += k3d-upload-images port-forward-monitoring
+.PHONY: ci-init
+ci-init: $(CI_INIT_DEPS) 	## Prepare environment for running tests.
+
 PMM_HELM_CHART_VER=1.3.21
 HELM=go tool -modfile=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/../go.mod helm
 .PHONY: deploy-monitoring
@@ -22,6 +27,10 @@ deploy-monitoring:     ## Deploy monitoring instances to K3D test cluster.
 	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
 	$(HELM) install pmm1 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 2m --wait
 	$(HELM) install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 2m -n everest-monitoring --wait
+
+.PHONY: port-forward-monitoring
+port-forward-monitoring:
+	$(info Port-forwarding PMM instances to localhost)
 	kubectl port-forward --namespace default svc/monitoring-service 8090:443 &
 	kubectl port-forward --namespace everest-monitoring  svc/monitoring-service 8091:443 &
 
@@ -70,18 +79,17 @@ k3d-upload-pxc-images: ## Pre-upload PXC images to K3D test cluster to speedup t
 	pxc_proxy_image=$$(kubectl -n everest get dbengine/percona-xtradb-cluster-operator -ojson | jq -r '.status.availableVersions.proxy.haproxy[.status.availableVersions.proxy.haproxy | keys | .[-1]].imagePath') ;\
 	pxc_backup_image=$$(kubectl -n everest get dbengine/percona-xtradb-cluster-operator -ojson | jq -r '.status.availableVersions.backup[.status.availableVersions.backup | keys | .[-1]].imagePath') ;\
 	pxc_operator_image=$$(kubectl -n everest get deploy/percona-xtradb-cluster-operator -o json | jq -r '.spec.template.spec.containers[] | select (.name = "percona-xtradb-cluster-operator").image') ;\
+	pmm_client_image=percona/pmm-client:2 ;\
 	docker pull -q $${pxc_engine_image} ;\
 	docker pull -q $${pxc_proxy_image} ;\
 	docker pull -q $${pxc_backup_image} ;\
 	docker pull -q $${pxc_operator_image} ;\
-	k3d image import -c everest-server-test -m direct $${pxc_engine_image} $${pxc_proxy_image} $${pxc_backup_image} $${pxc_operator_image} ;\
+	docker pull -q  $${pmm_client_image};\
+	k3d image import -c everest-server-test -m direct $${pxc_engine_image} $${pxc_proxy_image} $${pxc_backup_image} $${pxc_operator_image} $${pmm_client_image};\
 	}
 
 .PHONY: k3d-upload-images
 k3d-upload-images: k3d-upload-pg-images k3d-upload-psmdb-images k3d-upload-pxc-images 	## Pre-upload PG,PSMDB,PXC images to K3D test cluster to speedup tests execution.
-
-.PHONY: prepare-env
-prepare-env: init deploy-monitoring create-test-users k3d-upload-images ## Prepare environment for running tests.
 
 ##@ Development
 
@@ -103,11 +111,17 @@ test:               ## Run all tests.
   	set -xe ;\
 	RAND=$$(echo $${RANDOM} | md5sum | head -c 5 ) ;\
 	export PMM1_IP=$$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')  ;\
+	if [ -z "$${PMM1_IP}" ]; then echo "Cannot get PMM1_IP" ; exit 1 ; fi ;\
 	export PMM2_IP=$$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP') ;\
+	if [ -z "$${PMM2_IP}" ]; then echo "Cannot get PMM2_IP" ; exit 1 ; fi ;\
 	export PMM1_API_KEY=$$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"  --insecure 2>/dev/null | jq -r '.key') ;\
+	if [ -z "$${PMM1_API_KEY}" ]; then echo "Cannot get PMM1_API_KEY" ; exit 1 ; fi ;\
 	export PMM2_API_KEY=$$(curl --request POST https://admin:admin@localhost:8091/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"  --insecure 2>/dev/null | jq -r '.key') ;\
+	if [ -z "$${PMM2_API_KEY}" ]; then echo "Cannot get PMM2_API_KEY" ; exit 1 ; fi ;\
 	export API_TOKEN=$$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token) ;\
+	if [ -z "$${API_TOKEN}" ]; then echo "Cannot get API_TOKEN" ; exit 1 ; fi ;\
 	export API_TOKEN_TEST=$$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token) ;\
+	if [ -z "$${API_TOKEN_TEST}" ]; then echo "Cannot get API_TOKEN_TEST" ; exit 1 ; fi ;\
 	npx playwright test $(TEST) ;\
 	}
 

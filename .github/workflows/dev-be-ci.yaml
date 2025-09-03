@@ -182,6 +182,7 @@ jobs:
         working-directory: api-tests
         run: |
           make deploy-monitoring
+          make port-forward-monitoring
 
       - name: Create test users
         working-directory: api-tests

@@ -13,156 +13,121 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import {expect, test} from '@fixtures'
-import {checkError, testsNs, testPrefix} from './helpers'
+import * as th from "@tests/tests/helpers";
 
-test('add/list/get/delete s3 backup storage success', async ({request}) => {
-    const payload = {
-        type: 's3',
-        name: `${testPrefix()}-backup-storage`,
-        url: 'http://custom-url',
-        description: 'Dev storage',
-        bucketName: 'percona-test-backup-storage',
-        region: 'us-east-2',
-        accessKey: 'sdfs',
-        secretKey: 'sdfsdfsd',
-        allowedNamespaces: [testsNs]
-    },
+test.describe('Backup Storage tests', {tag: ['@backup-storage']}, () => {
+  test('add/list/get/delete s3 backup storage success', async ({request, page}) => {
+    const bsName = th.limitedSuffixedName('bs-s3'),
+      payload = th.getBackupStorageS3Payload(bsName)
 
-     response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
-        data: payload,
-    })
+      try {
+        await test.step('create backup storage', async () => {
+          const created = await th.createBackupStorageWithData(request, payload)
+          expect(created.name).toBe(payload.name)
+          expect(created.bucketName).toBe(payload.bucketName)
+          expect(created.type).toBe(payload.type)
+          expect(created.description).toBe(payload.description)
+        });
 
-    // create
-    await checkError(response)
-    const created = await response.json(),
+        await test.step('list backup storages', async () => {
+          const res = await th.listBackupStorages(request)
+          expect(res.length).toBeGreaterThan(0)
+        });
 
-     name = created.name
+        await test.step('get backup storage', async () => {
+          const res = await th.getBackupStorage(request, bsName)
+          expect(res.name).toBe(payload.name)
+        });
 
-    expect(created.name).toBe(payload.name)
-    expect(created.url).toBe(payload.url)
-    expect(created.bucketName).toBe(payload.bucketName)
-    expect(created.region).toBe(payload.region)
-    expect(created.type).toBe(payload.type)
-    expect(created.description).toBe(payload.description)
+        await test.step('update backup storage', async () => {
+          const updatePayload = {
+            description: 'some description',
+            bucketName: `${payload.bucketName}-upd`,
+            accessKey: 'otherAccessKey',
+            secretKey: 'otherSecret',
+            allowedNamespaces: [th.testsNs]
+          }
 
-    // list
-    const listResponse = await request.get(`/v1/namespaces/${testsNs}/backup-storages`)
+          await expect(async () => {
+            const res = await th.updateBackupStorage(request, bsName, updatePayload)
+            expect(res.bucketName).toBe(updatePayload.bucketName)
+            expect(res.region).toBe(payload.region)
+            expect(res.type).toBe(payload.type)
+            expect(res.description).toBe(updatePayload.description)
+          }).toPass({
+            intervals: [1000],
+            timeout: 30 * 1000,
+          })
+        });
 
-    await checkError(listResponse)
-    const list = await listResponse.json()
+        await test.step('create backup storage already exists', async () => {
+          const createAgain = await th.createBackupStorageWithDataRaw(request, payload)
+          expect(createAgain.status()).toBe(409)
+        });
 
-    expect(list.length).toBeGreaterThan(0)
+        await test.step('delete backup storage', async () => {
+          await th.deleteBackupStorage(page, request, bsName)
+        });
+      } finally {
+        await th.deleteBackupStorage(page, request, bsName)
+      }
+  })
 
-    // get
-    const one = await request.get(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
+  test('add/list/get/delete azure backup storage success', async ({request, page}) => {
+    const bsName = th.limitedSuffixedName('bs-azure'),
+      payload = th.getBackupStorageAzurePayload(bsName)
 
-    await checkError(one)
-    expect((await one.json()).name).toBe(payload.name)
+      try {
+        await test.step('create backup storage', async () => {
+          const created = await th.createBackupStorageWithData(request, payload)
+          expect(created.name).toBe(payload.name)
+          expect(created.bucketName).toBe(payload.bucketName)
+          expect(created.type).toBe(payload.type)
+          expect(created.description).toBe(payload.description)
+        });
 
-    // update
-    const updatePayload = {
-        description: 'some description',
-        bucketName: 'percona-test-backup-storage1',
-        accessKey: 'otherAccessKey',
-        secretKey: 'otherSecret',
-        allowedNamespaces: [testsNs]
-    },
-     updated = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
-        data: updatePayload,
-    })
+        await test.step('list backup storages', async () => {
+          const res = await th.listBackupStorages(request)
+          expect(res.length).toBeGreaterThan(0)
+        });
 
-    await checkError(updated)
-    const result = await updated.json()
+        await test.step('get backup storage', async () => {
+          const res = await th.getBackupStorage(request, bsName)
+          expect(res.name).toBe(payload.name)
+        });
 
-    expect(result.bucketName).toBe(updatePayload.bucketName)
-    expect(result.region).toBe(created.region)
-    expect(result.type).toBe(created.type)
-    expect(result.description).toBe(updatePayload.description)
+        await test.step('update backup storage', async () => {
+          const updatePayload = {
+            description: 'some description',
+            bucketName: `${payload.bucketName}-upd`,
+          }
 
-    // backup storage already exists
-    const createAgain = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
-        data: payload,
-    })
+          await expect(async () => {
+            const res = await th.updateBackupStorage(request, bsName, updatePayload)
+            expect(res.bucketName).toBe(updatePayload.bucketName)
+            expect(res.region).toBe(payload.region)
+            expect(res.type).toBe(payload.type)
+            expect(res.description).toBe(updatePayload.description)
+          }).toPass({
+            intervals: [1000],
+            timeout: 30 * 1000,
+          })
+        });
 
-    expect(createAgain.status()).toBe(409)
+        await test.step('create backup storage already exists', async () => {
+          const createAgain = await th.createBackupStorageWithDataRaw(request, payload)
+          expect(createAgain.status()).toBe(409)
+        });
 
-    // delete
-    const deleted = await request.delete(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
+        await test.step('delete backup storage', async () => {
+          await th.deleteBackupStorage(page, request, bsName)
+        });
+      } finally {
+        await th.deleteBackupStorage(page, request, bsName)
+      }
+  })
 
-    await checkError(deleted)
-})
-
-test('add/list/get/delete azure backup storage success', async ({request}) => {
-    const payload = {
-        type: 'azure',
-        name: 'backup-storage-azure',
-        description: 'Dev storage',
-        bucketName: 'percona-test-backup-storage',
-        accessKey: 'sdfs',
-        secretKey: 'sdfsdfsd',
-        allowedNamespaces: [testsNs]
-    },
-
-     response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
-        data: payload,
-    })
-
-    // create
-    await checkError(response)
-    const created = await response.json(),
-
-     name = created.name
-
-    expect(created.name).toBe(payload.name)
-    expect(created.bucketName).toBe(payload.bucketName)
-    expect(created.type).toBe(payload.type)
-    expect(created.description).toBe(payload.description)
-
-    // list
-    const listResponse = await request.get(`/v1/namespaces/${testsNs}/backup-storages`)
-
-    await checkError(listResponse)
-    const list = await listResponse.json()
-
-    expect(list.length).toBeGreaterThan(0)
-
-    // get
-    const one = await request.get(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
-
-    await checkError(one)
-    expect((await one.json()).name).toBe(payload.name)
-
-    // update
-    const updatePayload = {
-        description: 'some description',
-        bucketName: 'percona-test-backup-storage1',
-    },
-     updated = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
-        data: updatePayload,
-    })
-
-    await checkError(updated)
-    const result = await updated.json()
-
-    expect(result.bucketName).toBe(updatePayload.bucketName)
-    expect(result.region).toBe(created.region)
-    expect(result.type).toBe(created.type)
-    expect(result.description).toBe(updatePayload.description)
-
-    // backup storage already exists
-    const createAgain = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
-        data: payload,
-    })
-
-    expect(createAgain.status()).toBe(409)
-
-    // delete
-    const deleted = await request.delete(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
-
-    await checkError(deleted)
-})
-
-test('create backup storage failures', async ({request}) => {
+  test('create backup storage failures', async ({request}) => {
     const testCases = [
         {
             payload: {},
@@ -171,7 +136,7 @@ test('create backup storage failures', async ({request}) => {
         {
             payload: {
                 type: 's3',
-                name: 'backup-storage',
+                name: th.limitedSuffixedName('bs-create-fail-secretKey'),
                 bucketName: 'percona-test-backup-storage',
                 region: 'us-east-2',
                 accessKey: 'ssdssd',
@@ -186,129 +151,124 @@ test('create backup storage failures', async ({request}) => {
                 region: 'us-west-2',
                 accessKey: 'ssdssd',
                 secretKey: 'ssdssdssdssd',
-                allowedNamespaces: [testsNs]
+                allowedNamespaces: [th.testsNs]
             },
             errorText: '\'name\' is not RFC 1035 compatible',
         },
         {
             payload: {
                 type: 's3',
-                name: 'backup',
+                name: th.limitedSuffixedName('bs-create-fail-url'),
                 bucketName: 'percona-test-backup-storage',
                 url: 'not-valid-url',
                 region: 'us-east-2',
                 accessKey: 'ssdssd',
                 secretKey: 'ssdssdssdssd',
-                allowedNamespaces: [testsNs]
+                allowedNamespaces: [th.testsNs]
             },
             errorText: '\'url\' is an invalid URL',
         },
         {
             payload: {
                 type: 's3',
-                name: 'missing-region',
+                name: th.limitedSuffixedName('bs-create-fail-region'),
                 bucketName: 'invalid',
                 accessKey: 'ssdssd',
                 secretKey: 'ssdssdssdssd',
-                allowedNamespaces: [testsNs]
+                allowedNamespaces: [th.testsNs]
             },
             errorText: 'region is required',
         },
         {
             payload: {
                 type: 'gcs',
-                name: 'invalid',
+                name: th.limitedSuffixedName('bs-create-fail-type'),
                 region: 'us-east-2',
                 bucketName: 'invalid',
                 accessKey: 'ssdssd',
                 secretKey: 'ssdssdssdssd',
-                allowedNamespaces: [testsNs]
+                allowedNamespaces: [th.testsNs]
             },
             errorText: '"/type": value is not one of the allowed values',
         },
     ]
 
     for (const testCase of testCases) {
-        const response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
-            data: testCase.payload,
-        })
+      const response = await th.createBackupStorageWithDataRaw(request, testCase.payload)
 
-        expect(response.status()).toBe(400)
-        expect((await response.json()).message).toMatch(testCase.errorText)
+      expect(response.status()).toBe(400)
+      expect((await response.json()).message).toMatch(testCase.errorText)
     }
-})
+  })
 
-test('update backup storage failures', async ({request}) => {
-    const createPayload = {
+  test('update backup storage failures', async ({request, page}) => {
+    const name= th.limitedSuffixedName('bs-upd-fail'),
+      createPayload = {
         type: 's3',
-        name: 'backup-storage-2',
-        bucketName: 'percona-test-backup-storage',
+        name: name,
+        bucketName: `${name}-bucket`,
         region: 'us-east-2',
         accessKey: 'sdfsdfs',
         secretKey: 'lkdfslsldfka',
-        allowedNamespaces: [testsNs]
-    },
-     response = await request.post(`/v1/namespaces/${testsNs}/backup-storages`, {
-        data: createPayload,
-    })
+        allowedNamespaces: [th.testsNs]
+      }
 
-    await checkError(response)
-    const created = await response.json(),
+      try {
+        await test.step('create backup storage', async () => {
+          await th.createBackupStorageWithData(request, createPayload)
+        });
 
-     name = created.name,
-
-     testCases = [
-        {
+        const testCases = [
+          {
             payload: {
-                url: '-asldf;asdfk;sadf',
+              url: '-asldf;asdfk;sadf',
             },
             errorText: '\'url\' is an invalid URL',
-        },
-        {
+          },
+          {
             payload: {
-                bucket: '-asldf;asdfk;sadf',
+              bucket: '-asldf;asdfk;sadf',
             },
             errorText: 'request body has an error: doesn\'t match schema #/components/schemas/UpdateBackupStorageParams: property "bucket" is unsupported',
-        },
-    ]
+          },
+        ]
 
-    for (const testCase of testCases) {
-        const response = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
-            data: testCase.payload,
-        })
+        await test.step('update backup storage', async () => {
+          for (const testCase of testCases) {
+            await expect(async () => {
+              const response = await th.updateBackupStorageRaw(request, name, testCase.payload)
+              expect(response.status()).toBe(400)
+              expect((await response.json()).message).toMatch(testCase.errorText)
+            }).toPass({
+              intervals: [1000],
+              timeout: 30 * 1000,
+            })
+          }
+        });
+      } finally {
+        await th.deleteBackupStorage(page, request, name)
+      }
+  })
 
-        expect((await response.json()).message).toMatch(testCase.errorText)
-        expect(response.status()).toBe(400)
-    }
-
-    const deleted = await request.delete(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
-
-    await checkError(deleted)
-})
-
-test('update: backup storage not found', async ({request}) => {
-    const name = 'some-storage',
-
-     response = await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {
-        data: {
-            bucketName: 's3',
-        },
-    })
-
-    expect(response.status()).toBe(404)
-})
-
-test('delete: backup storage not found', async ({request}) => {
-    const name = 'backup-storage',
-
-     response = await request.delete(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
+  test('update: backup storage not found', async ({request}) => {
+    const name = th.limitedSuffixedName('bs-non-existent'),
+      data =  { bucketName: 's3' },
+      response = await th.updateBackupStorageRaw(request, name, data)
 
     expect(response.status()).toBe(404)
-})
+  })
 
-test('get: backup storage not found', async ({request}) => {
-    const name = 'backup-storage',
-     response = await request.get(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
+  test('delete: backup storage not found', async ({request}) => {
+    const name = th.limitedSuffixedName('bs-non-existent'),
+      response = await th.deleteBackupStorageRaw(request, name)
 
     expect(response.status()).toBe(404)
-})
+  })
+
+  test('get: backup storage not found', async ({request}) => {
+    const name = th.limitedSuffixedName('bs-non-existent'),
+      response = await th.getBackupStorageRaw(request, name)
+
+    expect(response.status()).toBe(404)
+  })
+});
