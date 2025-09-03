@@ -3,7 +3,6 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { FieldError, useFieldArray, useFormContext } from 'react-hook-form';
 import TextInput from '../text';
-import { useState } from 'react';
 
 interface MultipleTextInputProps {
   fieldName: string;
@@ -15,6 +14,7 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
     formState: { errors },
     getValues,
     setValue,
+    trigger,
   } = useFormContext();
 
   const { fields, append, remove } = useFieldArray({
@@ -26,35 +26,34 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[key];
 
-  const [isLastLineEmpty, setIsLastLineEmpty] = useState(false);
+  const shouldDisableButtons = () => {
+    const values = getValues(fieldName);
+    const fieldErrors = errors?.[fieldName];
+
+    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+      return true;
+    }
+
+    const hasEmptyFields = values.some(
+      (item: { key: string; value: string }) => !item.key || !item.value
+    );
+    if (hasEmptyFields) {
+      return true;
+    }
+
+    const keys = values
+      .map((item: { key: string; value: string }) => item.key)
+      .filter(Boolean);
+    const uniqueKeys = new Set(keys);
+    if (keys.length !== uniqueKeys.size) {
+      return true;
+    }
+
+    return false;
+  };
 
   const handleAdd = () => {
     append({ key: '', value: '' });
-    setIsLastLineEmpty(true);
-  };
-
-  const checkIfLastLineEmpty = (value: string, field: 'key' | 'value') => {
-    const values = getValues(fieldName);
-    if (
-      value === '' ||
-      values[values.length - 1][field === 'key' ? 'value' : 'key'] === ''
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  const handleOnChange = async (
-    value: string,
-    __: number,
-    field: 'key' | 'value'
-  ) => {
-    const lastLineEmpty = checkIfLastLineEmpty(value, field);
-
-    setIsLastLineEmpty(lastLineEmpty);
-
-    return value;
   };
 
   return (
@@ -91,8 +90,8 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
                 width: '100%',
                 mt: 0,
               },
-              onChange: (e) => {
-                handleOnChange(e.target.value, index, 'key');
+              onChange: () => {
+                trigger();
               },
             }}
           />
@@ -108,8 +107,8 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
                 width: '100%',
                 mt: 0,
               },
-              onChange: (e) => {
-                handleOnChange(e.target.value, index, 'value');
+              onChange: () => {
+                trigger();
               },
             }}
           />
@@ -123,6 +122,7 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
               } else {
                 remove(index);
               }
+              trigger();
             }}
           >
             <DeleteOutlineOutlinedIcon />
@@ -134,7 +134,7 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
         variant="text"
         size="small"
         startIcon={<AddIcon />}
-        disabled={isLastLineEmpty || !!errors?.[fieldName]}
+        disabled={shouldDisableButtons()}
         onClick={handleAdd}
       >
         Add new
