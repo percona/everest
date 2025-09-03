@@ -117,18 +117,28 @@ export const AdvancedConfigurationForm = ({
   };
 
   const isEksDefault = useMemo(
-    () => clusterInfo?.clusterType && clusterInfo?.clusterType === 'eks',
+    () => clusterInfo?.clusterType && clusterInfo?.clusterType === 'generic',
     [clusterInfo?.clusterType]
   );
 
   const selectOptions: LoadBalancerConfig[] = loadBalancerConfigs?.items ?? [];
 
+  const eksDefaultConfig: LoadBalancerConfig | undefined = useMemo(
+    () =>
+      loadBalancerConfigs?.items.find(
+        (config) => config.metadata.name === 'eks-default'
+      ),
+    [loadBalancerConfigs?.items]
+  );
+
   const selectDefaultValue = useMemo(
     () =>
       isEksDefault
-        ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
+        ? eksDefaultConfig
+          ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
+          : EMPTY_LOAD_BALACNER_CONFIGURATION
         : EMPTY_LOAD_BALACNER_CONFIGURATION,
-    [isEksDefault]
+    [eksDefaultConfig, isEksDefault]
   );
 
   useEffect(() => {
