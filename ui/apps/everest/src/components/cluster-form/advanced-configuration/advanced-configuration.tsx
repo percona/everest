@@ -117,7 +117,7 @@ export const AdvancedConfigurationForm = ({
   };
 
   const isEksDefault = useMemo(
-    () => clusterInfo?.clusterType && clusterInfo?.clusterType === 'generic',
+    () => clusterInfo?.clusterType && clusterInfo?.clusterType === 'eks',
     [clusterInfo?.clusterType]
   );
 
