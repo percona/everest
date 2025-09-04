@@ -1,6 +1,7 @@
-import { Switch, Checkbox } from '@mui/material';
+import { Checkbox } from '@mui/material';
 import { TextInput } from '@percona/ui-lib';
 import { OpenAPIObject } from './types';
+import { z } from 'zod';
 
 export const zodRuleMap: Record<string, string> = {
   min: 'min',
@@ -19,11 +20,32 @@ export const zodRuleMap: Record<string, string> = {
 
 export const muiComponentMap: Record<string, React.ElementType> = {
   Number: TextInput,
-  Switch: Switch,
+  Switch: TextInput,
   Checkbox: Checkbox,
   TextArea: TextInput,
   StorageClassSelect: TextInput,
   Toggle: TextInput,
+};
+
+export const UI_TYPE_DEFAULT_VALUE: Record<string, unknown> = {
+  Number: 10,
+  Switch: false,
+  Checkbox: false,
+  Toggle: false,
+  TextArea: 'lorem ipsum',
+  Input: '',
+  StorageClassSelect: 'lorem ipsum',
+  SecretSelector: '',
+  String: '',
+};
+
+export const ZOD_SCHEMA_MAP: Record<string, z.ZodTypeAny> = {
+  Number: z.number(),
+  String: z.string().min(5),
+  TextArea: z.string().min(5),
+  Input: z.string(),
+  Switch: z.boolean(),
+  Checkbox: z.boolean(),
 };
 
 export const openApiObj: OpenAPIObject = {
@@ -43,6 +65,7 @@ export const openApiObj: OpenAPIObject = {
         params: {
           label: 'Replicas',
           placeholder: '',
+          default: '9999',
         },
       },
       storage: {

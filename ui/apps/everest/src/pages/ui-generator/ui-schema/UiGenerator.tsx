@@ -2,6 +2,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Button,
   MenuItem,
   Stack,
@@ -12,17 +13,21 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
-import { OpenAPIFields, OpenAPIObject, ComponentProperties } from './types';
+import {
+  OpenAPIFields,
+  OpenAPIObject,
+  ComponentProperties,
+  OpenAPIObjectProperties,
+} from './types';
 import { SelectInput } from '@percona/ui-lib';
 import React from 'react';
 import { buildZodSchema, getDefaultValues } from './utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { muiComponentMap, openApiObj } from './constants';
-import { z } from 'zod';
 
 const parseOpenAPIObject = (openApiObj: OpenAPIObject): OpenAPIFields => {
   const fields = {
-    global: { properties: {} },
+    global: {},
     components: {},
     topology: {},
   };
@@ -33,16 +38,14 @@ const parseOpenAPIObject = (openApiObj: OpenAPIObject): OpenAPIFields => {
 
   if (openApiObj) {
     const globalSchema = openApiObj.global;
-    fields.global.properties = globalSchema || {};
+    fields.global = globalSchema || {};
 
     if (openApiObj.components) {
       Object.entries(openApiObj.components).forEach(
         ([componentName, componentSchema]) => {
-          fields.components[componentName] = {
-            name: componentName,
-            properties: {
-              ...(componentSchema || {}),
-            },
+          fields.components = {
+            ...fields.components,
+            ...{ [componentName]: componentSchema || {} },
           };
         }
       );
@@ -62,7 +65,7 @@ const OpenApiUiComponent = ({
   subParameters,
 }: {
   name: string;
-  params: ComponentProperties;
+  params: OpenAPIObjectProperties;
   uiType: string;
   subParameters?: unknown;
 }) => {
@@ -70,51 +73,38 @@ const OpenApiUiComponent = ({
   const errors = methods?.formState?.errors || {};
   const error = errors[name]?.message as string | undefined;
 
-  if (uiType === 'Group') {
-    {
-      Object.entries(subParameters as Record<string, ComponentProperties>).map(
-        ([groupName, groupProperties]) => {
-          return (
-            <Accordion key={groupName}>
-              <AccordionSummary>
-                <Typography variant="h6">{groupName}</Typography>
-              </AccordionSummary>
-              <AccordionDetails
-                style={{ display: 'flex', flexDirection: 'column' }}
-              >
-                {Object.entries(
-                  groupProperties as Record<string, ComponentProperties>
-                ).map(([subGroupName, subGroupProperties]) => (
-                  <OpenApiUiComponent
-                    key={subGroupName}
-                    name={subGroupName}
-                    params={subGroupProperties.params || {}}
-                    uiType={subGroupProperties.uiType!}
-                    subParameters={subGroupProperties.subParameters}
-                  />
-                ))}
-              </AccordionDetails>
-            </Accordion>
-          );
-        }
-      );
-    }
-  }
   const Component = muiComponentMap[uiType];
   if (!Component) return null;
 
   return (
-    <>
-      {React.createElement(Component, {
-        label: name,
-        name: name,
-        error: !!error,
-        style: { minWidth: 240 },
-        ...params,
-      })}
-      {error && <Typography>{error}</Typography>}
-      {/* {params.badge!! && <Typography>{params.badge}</Typography>} */}
-    </>
+    <Box>
+      <Box display="flex" alignItems="center">
+        {React.createElement(Component, {
+          label: name,
+          name: name,
+          error: !!error,
+          style: { minWidth: 240 },
+          ...params,
+        })}
+        {params.badge && (
+          <Typography
+            sx={{
+              ml: 1,
+              display: 'flex',
+              alignItems: 'center',
+              marginTop: '24px',
+            }}
+          >
+            {params.badge}
+          </Typography>
+        )}
+      </Box>
+      {error && (
+        <Typography color="error" sx={{ mt: 1 }}>
+          {error}
+        </Typography>
+      )}
+    </Box>
   );
 };
 
@@ -149,7 +139,7 @@ function renderComponentGroup({
     />
   );
 
-  if (isTopLevel) {
+  if (isGroup || isTopLevel) {
     return (
       <Accordion key={fieldName}>
         <AccordionSummary>
@@ -183,11 +173,10 @@ export const UIGeneratorNew = () => {
     selectedData = topology[selectedTopology];
     parent = `topology.${selectedTopology}`;
   } else if (activeStep === 1) {
-    selectedData = global.properties;
+    selectedData = global;
     parent = 'global.params';
   } else if (activeStep > 1) {
-    selectedData =
-      components[Object.keys(components)[activeStep - 2]].properties;
+    selectedData = components[Object.keys(components)[activeStep - 2]];
     parent = `components.${Object.keys(components)[activeStep - 2]}`;
   }
 
@@ -203,33 +192,14 @@ export const UIGeneratorNew = () => {
   );
 
   const schema = buildZodSchema(groupedComponents, parent);
-  console.log('🚀 ~ UIGeneratorNew ~ schema:', schema.shape);
 
-  const defaultValues = getDefaultValues(
-    groupedComponents,
-    Object.keys(topology),
-    parent
-  );
-  console.log('🚀 ~ UIGeneratorNew ~ defaultValues:', defaultValues);
+  const defaultValues = getDefaultValues(fields);
 
   const methods = useForm({
     mode: 'onChange',
-    // resolver: zodResolver(schema),
     resolver: async (data, context, options) => {
       const customResolver = zodResolver(schema);
       const result = await customResolver(data, context, options);
-      // if (Object.keys(result.errors).length > 0) {
-      //   setStepsWithErrors((prev) => {
-      //     if (!prev.includes(activeStep)) {
-      //       return [...prev, activeStep];
-      //     }
-      //     return prev;
-      //   });
-      // } else {
-      //   setStepsWithErrors((prev) =>
-      //     prev.filter((step) => step !== activeStep)
-      //   );
-      // }
       return result;
     },
     defaultValues,
@@ -259,7 +229,7 @@ export const UIGeneratorNew = () => {
                     <MenuItem
                       value={topKey}
                       key={topKey}
-                      onClick={() => setSelectedTopology(topKey)}
+                      onClick={() => setSelectedTopology(topKey)} //TODO: set defaults for topology after selection
                     >
                       {topKey}
                     </MenuItem>
@@ -271,7 +241,7 @@ export const UIGeneratorNew = () => {
                       ([groupName, groupProperties]) => {
                         return renderComponentGroup({
                           name: groupName,
-                          properties: groupProperties,
+                          properties: groupProperties as ComponentProperties,
                           isTopLevel: true,
                         });
                       }
@@ -282,11 +252,18 @@ export const UIGeneratorNew = () => {
             ) : (
               Object.entries(groupedComponents).map(
                 ([groupName, groupProperties]) => {
-                  return renderComponentGroup({
-                    name: `${parent}.${groupName}`,
-                    properties: groupProperties,
-                    isTopLevel: true,
-                  });
+                  if (
+                    typeof groupProperties === 'object' &&
+                    groupProperties !== null &&
+                    'uiType' in groupProperties
+                  ) {
+                    return renderComponentGroup({
+                      name: `${parent}.${groupName}`,
+                      properties: groupProperties,
+                      isTopLevel: true,
+                    });
+                  }
+                  return null;
                 }
               )
             )}

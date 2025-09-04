@@ -43,17 +43,7 @@ export type Field = {
 } & OpenAPIObjectProperties;
 
 export type OpenAPIFields = {
-  global: {
-    properties: { [key: string]: ComponentProperties };
-  };
-  components: {
-    [key: string]: {
-      properties: { [key: string]: ComponentProperties };
-    };
-  };
-  topology: {
-    [key: string]: {
-      properties: { [key: string]: ComponentProperties };
-    };
-  };
+  global: { [componentName: string]: OpenAPIObjectProperties };
+  components: { [componentName: string]: OpenAPIObjectProperties };
+  topology: { [componentName: string]: OpenAPIObjectProperties };
 };

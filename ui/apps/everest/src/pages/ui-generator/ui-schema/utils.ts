@@ -1,56 +1,46 @@
 import { z } from 'zod';
-import { ComponentProperties } from './types';
-import { zodRuleMap } from './constants';
-
-export const zodSchemaMap: Record<string, z.ZodTypeAny> = {
-  Number: z.number(),
-  String: z.string().min(5),
-  TextArea: z.string().min(5),
-  Input: z.string(),
-  Switch: z.boolean(),
-  Checkbox: z.boolean(),
-};
+import { OpenAPIFields } from './types';
+import { UI_TYPE_DEFAULT_VALUE, ZOD_SCHEMA_MAP, zodRuleMap } from './constants';
 
 export const getDefaultValues = (
-  fields: Record<string, ComponentProperties>,
-  topologyKeys: string[],
-  parentKey?: string
+  fields: OpenAPIFields
 ): Record<string, unknown> => {
-  const defaults: Record<string, unknown> = {};
-  const defaultValueMap: Record<string, unknown> = {
-    Number: 10,
-    Switch: false,
-    Checkbox: false,
-    Toggle: false,
-    TextArea: '',
-    Input: '',
-    StorageClassSelect: '',
-    SecretSelector: '',
-    String: '',
-    Hidden: '',
+  const buildDefaults = (obj: Record<string, any>): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value.uiType === 'Group' && value.subParameters) {
+        result[key] = buildDefaults(value.subParameters);
+      } else {
+        if (value.params?.default !== undefined) {
+          result[key] = value.params.default;
+        } else {
+          result[key] = value.uiType
+            ? (UI_TYPE_DEFAULT_VALUE[value.uiType] ?? '')
+            : '';
+        }
+      }
+    });
+    return result;
   };
 
-  Object.entries(fields).forEach(([key, value]) => {
-    if (value.uiType === 'Group' && value.subParameters) {
-      defaults[key] = getDefaultValues(value.subParameters, topologyKeys);
-    } else {
-      if (value.params?.default !== undefined) {
-        defaults[key] = value.params.default;
-      } else {
-        defaults[key] = value.uiType
-          ? (defaultValueMap[value.uiType] ?? '')
-          : '';
-      }
-    }
-  });
+  const defaults: Record<string, any> = {};
 
-  if (parentKey) {
-    const keys = parentKey.split('.');
-    let nested = defaults;
-    for (let i = keys.length - 1; i >= 0; i--) {
-      nested = { [keys[i]]: nested };
-    }
-    return nested;
+  if (fields.global) {
+    defaults.global = {
+      params: buildDefaults(fields.global.properties || {}),
+    };
+  }
+
+  if (fields.components) {
+    defaults.components = {};
+    Object.entries(fields.components).forEach(([compName, compValue]) => {
+      defaults.components[compName] = buildDefaults(compValue.properties || {});
+    });
+  }
+
+  if (fields.topology) {
+    defaults.topology = Object.keys(fields.topology)[0];
+    defaults.topology = buildDefaults(fields.topology.properties || {});
   }
 
   return defaults;
@@ -65,7 +55,7 @@ export const buildZodSchema = (fields: Record<string, any>, parentKey = '') => {
     if (value.uiType === 'Group' && value.subParameters) {
       fieldSchema = buildZodSchema(value.subParameters);
     } else {
-      fieldSchema = zodSchemaMap[value.uiType] ?? z.any();
+      fieldSchema = ZOD_SCHEMA_MAP[value.uiType] ?? z.any();
       if (value.validation) {
         Object.entries(value.validation).forEach(([rule, ruleValue]) => {
           const zodMethod = zodRuleMap[rule];
@@ -97,8 +87,6 @@ export const buildZodSchema = (fields: Record<string, any>, parentKey = '') => {
       schema = z.object({ [parentKey]: schema });
     }
   }
-
-  console.log('schema@buildZodSchema', schema.shape);
 
   return schema;
 };
