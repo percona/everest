@@ -42,7 +42,10 @@ const defaultTimeOptions: ScheduleTimeOptions = {
   minute: '05',
 };
 
-export const addFirstScheduleInDBWizard = async (page: Page) => {
+export const addFirstScheduleInDBWizard = async (
+  page: Page,
+  backupStorage?: string
+) => {
   const bucketNamespacesMap = getBucketNamespacesMap();
   // checking that we haven't schedules
   await expect(
@@ -51,9 +54,15 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
 
   // creating schedule with schedule modal form dialog
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page, defaultTimeOptions, undefined, true, '1');
+  await fillScheduleModalForm(
+    page,
+    defaultTimeOptions,
+    '1',
+    undefined,
+    backupStorage
+  );
   await page.getByTestId('form-dialog-create').click();
-  // checking created schedule in dbWiard schedules list
+  // checking created schedule in dbWizard schedules list
   await expect(
     page.getByTestId('editable-item').getByText('Monthly on day 10 at 1:05 AM')
   ).toBeVisible();
@@ -64,9 +73,15 @@ export const addFirstScheduleInDBWizard = async (page: Page) => {
       .getByText('Namespace: ', { exact: false })
       .innerText()
   ).split('Namespace: ')[1];
-  const matchingBucketNamespace = bucketNamespacesMap.find((b) =>
-    b[1].includes(namespace)
-  )[0];
+
+  let matchingBucketNamespace: string;
+  if (backupStorage === 'testFirst' || backupStorage === undefined) {
+    matchingBucketNamespace = bucketNamespacesMap.find((b) =>
+      b[1].includes(namespace)
+    )[0];
+  } else {
+    matchingBucketNamespace = backupStorage;
+  }
 
   if (await checkDbTypeisVisibleInPreview(page, DbType.Mongo)) {
     expect(
@@ -82,7 +97,7 @@ export const addScheduleInDbWizard = async (
   timeOptions: ScheduleTimeOptions = defaultTimeOptions
 ) => {
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page, timeOptions, undefined, true, '1');
+  await fillScheduleModalForm(page, timeOptions, '1', undefined, 'testFirst');
   await page.getByTestId('form-dialog-create').click();
 };
 
@@ -139,12 +154,16 @@ const createScheduleFromTimeOptions = async (
   }
 };
 
+// Behaviour of backupStorage parameter is following:
+// undefined - we don't change or test storage option
+// 'testFirst' - tests the storage option, whichever is first in the combobox
+// 'any_other_value' - sets and tests the storage option to desired storage location
 export const fillScheduleModalForm = async (
   page: Page,
   timeOptions: ScheduleTimeOptions = defaultTimeOptions,
-  scheduleName: string,
-  testStorageOption: boolean = true,
-  retention: string
+  retention: string,
+  scheduleName?: string,
+  backupStorage?: string
 ) => {
   const bucketNamespacesMap = getBucketNamespacesMap();
   // TODO can be customizable
@@ -159,11 +178,15 @@ export const fillScheduleModalForm = async (
 
   const storageLocationField = page.getByTestId('text-input-storage-location');
   await expect(storageLocationField).not.toBeEmpty();
-  if (testStorageOption) {
+  if (backupStorage === 'testFirst') {
     await storageLocationField.click();
 
     const storageOptions = page.getByRole('option');
     await storageOptions.first().click();
+  } else if (backupStorage !== undefined) {
+    await storageLocationField.click();
+
+    await page.getByRole('option', { name: backupStorage }).click();
   }
 
   const retentionCopiesField = page.getByTestId('text-input-retention-copies');
