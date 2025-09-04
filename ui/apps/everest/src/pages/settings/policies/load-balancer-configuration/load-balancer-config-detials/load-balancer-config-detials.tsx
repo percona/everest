@@ -57,26 +57,16 @@ const LoadBalancerConfigDetails = () => {
     `${configName}`
   );
   const [isSaved, setIsSaved] = useState(true);
-  const [annotationsArray, setAnnotationsArray] = useState<
-    Record<string, string>[]
-  >([]);
-  const { data: config, refetch: refetchConfig } = useLoadBalancerConfig(
-    configName,
-    {
-      refetchInterval: 3000,
-    }
-  );
-  const methods = useForm({
+  const { data: config, refetch: refetchConfig } =
+    useLoadBalancerConfig(configName);
+  const methods = useForm<{
+    annotations: {
+      key: string;
+      value: string;
+    }[];
+  }>({
     defaultValues: {
-      annotations:
-        annotationsArray.length > 0
-          ? annotationsArray
-          : [
-              {
-                key: '',
-                value: '',
-              },
-            ],
+      annotations: [],
     },
     mode: 'onChange',
     resolver: zodResolver(
@@ -104,7 +94,7 @@ const LoadBalancerConfigDetails = () => {
 
           Object.entries(duplicateIndexes).forEach(([, indexes]) => {
             if (indexes.length >= 2) {
-              indexes.slice(1).forEach((index) => {
+              indexes.forEach((index) => {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
                   path: ['annotations', index, 'key'],
@@ -116,13 +106,14 @@ const LoadBalancerConfigDetails = () => {
         })
     ),
   });
-  const { mutate: updateAnnotations } = useUpdateEntityWithConflictRetry(
-    ['load-balancer-config', configName],
-    (newConfig) => updateLoadBalancerConfigFn(configName, newConfig),
-    config?.metadata.generation || 0,
-    refetchConfig,
-    (_, newData) => newData
-  );
+  const { mutate: updateAnnotations, isPending } =
+    useUpdateEntityWithConflictRetry(
+      ['load-balancer-config', configName],
+      (newConfig) => updateLoadBalancerConfigFn(configName, newConfig),
+      config?.metadata.generation || 0,
+      refetchConfig,
+      (_, newData) => newData
+    );
 
   const isDefault = config?.metadata.finalizers?.includes(
     EVEREST_READ_ONLY_FINALIZER
@@ -131,8 +122,9 @@ const LoadBalancerConfigDetails = () => {
   useEffect(() => {
     if (config && config.spec.annotations) {
       const newAnnotationsArray = convertConfigToFormValues(config);
-      setAnnotationsArray(newAnnotationsArray);
       methods.setValue('annotations', newAnnotationsArray);
+    } else {
+      methods.setValue('annotations', []);
     }
   }, [config, methods]);
 
@@ -185,7 +177,7 @@ const LoadBalancerConfigDetails = () => {
     });
   }, [config, methods, updateAnnotations, configName]);
 
-  if (!config) {
+  if (!config || isPending) {
     return <LoadingPageSkeleton />;
   }
 
