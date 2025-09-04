@@ -43,7 +43,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   DbWizardFormFields,
   EKS_DEFAULT_LOAD_BALANCER_CONFIG,
-  EMPTY_LOAD_BALACNER_CONFIGURATION,
+  EMPTY_LOAD_BALANCER_CONFIGURATION,
   EVEREST_READ_ONLY_FINALIZER,
 } from 'consts';
 import { FormCard } from 'components/form-card';
@@ -117,8 +117,13 @@ export const AdvancedConfigurationForm = ({
   };
 
   const isEksDefault = useMemo(
-    () => clusterInfo?.clusterType && clusterInfo?.clusterType === 'eks',
-    [clusterInfo?.clusterType]
+    () =>
+      clusterInfo?.clusterType &&
+      clusterInfo?.clusterType === 'eks' &&
+      loadBalancerConfigs?.items.find(
+        (config) => config.metadata.name === EKS_DEFAULT_LOAD_BALANCER_CONFIG
+      ),
+    [clusterInfo?.clusterType, loadBalancerConfigs?.items]
   );
 
   const selectOptions: LoadBalancerConfig[] = loadBalancerConfigs?.items ?? [];
@@ -127,8 +132,10 @@ export const AdvancedConfigurationForm = ({
     () =>
       isEksDefault
         ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
-        : EMPTY_LOAD_BALACNER_CONFIGURATION,
-    [isEksDefault]
+        : (loadBalancerConfigs?.items ?? []).length > 0
+          ? loadBalancerConfigs?.items[0].metadata.name
+          : EMPTY_LOAD_BALANCER_CONFIGURATION,
+    [isEksDefault, loadBalancerConfigs?.items]
   );
 
   useEffect(() => {
@@ -145,7 +152,7 @@ export const AdvancedConfigurationForm = ({
       AdvancedConfigurationFields.loadBalancerConfigName
     );
 
-    if (configName === EMPTY_LOAD_BALACNER_CONFIGURATION || !configName) {
+    if (configName === EMPTY_LOAD_BALANCER_CONFIGURATION || !configName) {
       return;
     }
 
@@ -159,7 +166,7 @@ export const AdvancedConfigurationForm = ({
   };
 
   const noConfig =
-    loadBalancerConfigValue === EMPTY_LOAD_BALACNER_CONFIGURATION;
+    loadBalancerConfigValue === EMPTY_LOAD_BALANCER_CONFIGURATION;
 
   // setting the storage class default value
   useEffect(() => {

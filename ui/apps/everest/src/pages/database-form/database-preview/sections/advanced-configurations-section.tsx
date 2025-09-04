@@ -1,7 +1,7 @@
 import { PreviewContentText } from '../preview-section';
 import { AdvancedConfigurationType } from '../../database-form-schema.ts';
 import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types.ts';
-import { EMPTY_LOAD_BALACNER_CONFIGURATION } from 'consts.ts';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts.ts';
 
 export const AdvancedConfigurationsPreviewSection = ({
   exposureMethod,
@@ -23,7 +23,7 @@ export const AdvancedConfigurationsPreviewSection = ({
       />
       {isExternalAccessEnabled && (
         <PreviewContentText
-          text={`Config name: ${loadBalancerConfigName ?? EMPTY_LOAD_BALACNER_CONFIGURATION}`}
+          text={`Config name: ${loadBalancerConfigName ?? EMPTY_LOAD_BALANCER_CONFIGURATION}`}
         />
       )}
       {engineParametersEnabled && engineParameters && (

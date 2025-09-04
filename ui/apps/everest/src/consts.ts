@@ -96,4 +96,4 @@ export const DbWizardFormFields = {
 
 export const EKS_DEFAULT_LOAD_BALANCER_CONFIG = 'eks-default';
 
-export const EMPTY_LOAD_BALACNER_CONFIGURATION = '- No configuration -';
+export const EMPTY_LOAD_BALANCER_CONFIGURATION = '- No configuration -';

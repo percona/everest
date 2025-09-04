@@ -35,7 +35,7 @@ import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
 import { Path, UseFormGetFieldState } from 'react-hook-form';
 import cronConverter from './cron-converter';
 import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
-import { EMPTY_LOAD_BALACNER_CONFIGURATION } from 'consts';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -765,7 +765,7 @@ export const changeDbClusterAdvancedConfig = (
       expose: {
         loadBalancerConfigName:
           (exposureMethod === ExposureMethod.LoadBalancer &&
-            loadBalancerConfigName !== EMPTY_LOAD_BALACNER_CONFIGURATION &&
+            loadBalancerConfigName !== EMPTY_LOAD_BALANCER_CONFIGURATION &&
             loadBalancerConfigName) ||
           undefined,
         type:
