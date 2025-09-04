@@ -121,7 +121,7 @@ export const AdvancedConfigurationForm = ({
       clusterInfo?.clusterType &&
       clusterInfo?.clusterType === 'eks' &&
       loadBalancerConfigs?.items.find(
-        (config) => config.metadata.name === 'eks-default'
+        (config) => config.metadata.name === EKS_DEFAULT_LOAD_BALANCER_CONFIG
       ),
     [clusterInfo?.clusterType, loadBalancerConfigs?.items]
   );
@@ -132,8 +132,10 @@ export const AdvancedConfigurationForm = ({
     () =>
       isEksDefault
         ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
-        : EMPTY_LOAD_BALANCER_CONFIGURATION,
-    [isEksDefault]
+        : (loadBalancerConfigs?.items ?? []).length > 0
+          ? loadBalancerConfigs?.items[0].metadata.name
+          : EMPTY_LOAD_BALANCER_CONFIGURATION,
+    [isEksDefault, loadBalancerConfigs?.items]
   );
 
   useEffect(() => {
