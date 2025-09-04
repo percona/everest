@@ -115,9 +115,9 @@ test.describe(
           await fillScheduleModalForm(
             page,
             timeOption1,
+            '0',
             'first-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
         });
@@ -137,9 +137,9 @@ test.describe(
           await fillScheduleModalForm(
             page,
             timeOption2,
+            '0',
             'second-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
         });
@@ -200,9 +200,9 @@ test.describe(
         await fillScheduleModalForm(
           page,
           timeOption,
+          '0',
           'third-schedule',
-          false,
-          '0'
+          undefined
         );
         await page.getByTestId('form-dialog-create').click();
 
@@ -289,9 +289,9 @@ test.describe(
           await fillScheduleModalForm(
             page,
             timeOption,
+            '0',
             'third-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
 

@@ -30,7 +30,7 @@ import {
   populateAdvancedConfig,
   goToLastStepByStepAndSubmit,
 } from '@e2e/utils/db-wizard';
-import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { EVEREST_CI_NAMESPACES, getBucketNamespacesMap } from '@e2e/constants';
 import {
   waitForStatus,
   waitForDelete,
@@ -57,6 +57,7 @@ type pitrTime = {
 };
 
 let token: string;
+let backupStorage: string;
 let pitrRestoreTime: pitrTime = {
   day: '',
   month: '',
@@ -103,6 +104,33 @@ const zephyrMap: Record<string, string> = {
   'restore-newdb-postgresql': 'T127',
 };
 
+function getBackupStorage(): string {
+  const bucketNamespacesMap = getBucketNamespacesMap();
+
+  // Check if map includes ["everest-testing","everest-ui"]
+  const hasEverestTesting = bucketNamespacesMap.some(
+    ([bucket, ns]) => bucket === 'everest-testing' && ns === 'everest-ui'
+  );
+
+  if (
+    process.env.EVEREST_S3_ACCESS_KEY &&
+    process.env.EVEREST_S3_SECRET_KEY &&
+    hasEverestTesting
+  ) {
+    backupStorage = 'everest-testing';
+    console.log(
+      `AWS credentials present and EVEREST_BUCKETS_NAMESPACES_MAP includes ["everest-testing","everest-ui"], so using bucket ${backupStorage}`
+    );
+  } else {
+    backupStorage = 'bucket-1';
+    console.log(
+      `AWS credentials missing or EVEREST_BUCKETS_NAMESPACES_MAP does not include ["everest-testing","everest-ui"], so using MinIO bucket ${backupStorage}`
+    );
+  }
+
+  return backupStorage;
+}
+
 [
   { db: 'psmdb', size: 3 },
   { db: 'pxc', size: 3 },
@@ -133,6 +161,8 @@ const zephyrMap: Record<string, string> = {
           request
         );
         storageClasses = storageClassNames;
+
+        backupStorage = await getBackupStorage();
       });
 
       test(`Cluster creation [${db} size ${size}]`, async ({
@@ -170,7 +200,7 @@ const zephyrMap: Record<string, string> = {
         });
 
         await test.step('Populate backups, enable PITR', async () => {
-          await addFirstScheduleInDBWizard(page);
+          await addFirstScheduleInDBWizard(page, backupStorage);
           const pitrCheckbox = page
             .getByTestId('switch-input-pitr-enabled')
             .getByRole('checkbox');
@@ -185,8 +215,12 @@ const zephyrMap: Record<string, string> = {
               );
               await expect(pitrStorageLocation).toBeVisible();
               await expect(pitrStorageLocation).not.toBeEmpty();
+              await pitrStorageLocation.click();
+              await page.getByRole('option', { name: backupStorage }).click();
             } else {
-              await expect(page.getByText('Storage: bucket-1')).toHaveCount(2);
+              await expect(
+                page.getByText(`Storage: ${backupStorage}`)
+              ).toHaveCount(2);
             }
           }
 

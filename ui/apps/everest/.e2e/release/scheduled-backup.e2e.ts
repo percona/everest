@@ -204,9 +204,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await fillScheduleModalForm(
             page,
             timeOption1,
+            '0',
             'first-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
         });
@@ -226,9 +226,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await fillScheduleModalForm(
             page,
             timeOption2,
+            '0',
             'second-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
         });
