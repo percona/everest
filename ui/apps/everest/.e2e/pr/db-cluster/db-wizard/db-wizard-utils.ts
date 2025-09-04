@@ -44,7 +44,7 @@ const defaultTimeOptions: ScheduleTimeOptions = {
 
 export const addFirstScheduleInDBWizard = async (
   page: Page,
-  backupStorage: string
+  backupStorage?: string
 ) => {
   const bucketNamespacesMap = getBucketNamespacesMap();
   // checking that we haven't schedules
@@ -57,9 +57,9 @@ export const addFirstScheduleInDBWizard = async (
   await fillScheduleModalForm(
     page,
     defaultTimeOptions,
+    '1',
     undefined,
-    backupStorage,
-    '1'
+    backupStorage
   );
   await page.getByTestId('form-dialog-create').click();
   // checking created schedule in dbWizard schedules list
@@ -97,7 +97,7 @@ export const addScheduleInDbWizard = async (
   timeOptions: ScheduleTimeOptions = defaultTimeOptions
 ) => {
   await openCreateScheduleDialogFromDBWizard(page);
-  await fillScheduleModalForm(page, timeOptions, undefined, 'testFirst', '1');
+  await fillScheduleModalForm(page, timeOptions, '1', undefined, 'testFirst');
   await page.getByTestId('form-dialog-create').click();
 };
 
@@ -161,9 +161,9 @@ const createScheduleFromTimeOptions = async (
 export const fillScheduleModalForm = async (
   page: Page,
   timeOptions: ScheduleTimeOptions = defaultTimeOptions,
-  scheduleName: string,
-  backupStorage: string,
-  retention: string
+  retention: string,
+  scheduleName?: string,
+  backupStorage?: string
 ) => {
   const bucketNamespacesMap = getBucketNamespacesMap();
   // TODO can be customizable

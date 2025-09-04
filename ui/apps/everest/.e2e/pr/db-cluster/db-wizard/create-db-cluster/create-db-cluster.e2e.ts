@@ -373,7 +373,7 @@ test.describe('DB Cluster creation', () => {
     await addFirstScheduleInDBWizard(page, 'testFirst');
     await openCreateScheduleDialogFromDBWizard(page);
     await expect(page.getByTestId('same-schedule-warning')).not.toBeVisible();
-    await fillScheduleModalForm(page, undefined, undefined, undefined, '1');
+    await fillScheduleModalForm(page, undefined, '1', undefined, undefined);
     await expect(page.getByTestId('same-schedule-warning')).toBeVisible();
   });
 
