@@ -2,7 +2,7 @@ import { DbType } from '@percona/types';
 import { dbTypeToProxyType } from '@percona/utils';
 import { CUSTOM_NR_UNITS_INPUT_VALUE } from 'components/cluster-form';
 import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
-import { EMPTY_LOAD_BALACNER_CONFIGURATION } from 'consts';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 import { DbWizardType } from 'pages/database-form/database-form-schema';
 import {
   DataSource,
@@ -41,7 +41,7 @@ export const getProxySpec = (
     return {
       expose: getExposteConfig(
         exposureMethod === ExposureMethod.LoadBalancer,
-        loadBalancerConfigName !== EMPTY_LOAD_BALACNER_CONFIGURATION
+        loadBalancerConfigName !== EMPTY_LOAD_BALANCER_CONFIGURATION
           ? loadBalancerConfigName
           : '',
         sourceRanges
@@ -64,7 +64,7 @@ export const getProxySpec = (
     },
     expose: getExposteConfig(
       exposureMethod === ExposureMethod.LoadBalancer,
-      loadBalancerConfigName !== EMPTY_LOAD_BALACNER_CONFIGURATION
+      loadBalancerConfigName !== EMPTY_LOAD_BALANCER_CONFIGURATION
         ? loadBalancerConfigName
         : '',
       sourceRanges

@@ -27,7 +27,7 @@ import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useRBACPermissions } from 'hooks/rbac';
 import { isProxy, shouldDbActionsBeBlocked } from 'utils/db';
 import { DbErrors } from './db-errors/db-errors';
-import { EMPTY_LOAD_BALACNER_CONFIGURATION } from 'consts';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -112,7 +112,7 @@ export const ClusterOverview = () => {
             isProxy(dbCluster.spec.proxy)
               ? dbCluster.spec.proxy.expose.type === ProxyExposeType.external
                 ? dbCluster.spec.proxy.expose.loadBalancerConfigName ||
-                  EMPTY_LOAD_BALACNER_CONFIGURATION
+                  EMPTY_LOAD_BALANCER_CONFIGURATION
                 : ''
               : ''
           }

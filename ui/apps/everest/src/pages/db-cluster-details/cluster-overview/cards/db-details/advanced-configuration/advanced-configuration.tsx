@@ -28,7 +28,7 @@ import {
 } from 'utils/db';
 import { Link } from 'react-router-dom';
 import { useRBACPermissions } from 'hooks/rbac';
-import { EMPTY_LOAD_BALACNER_CONFIGURATION } from 'consts';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -149,7 +149,7 @@ export const AdvancedConfiguration = ({
         content={
           loadBalancerConfig ? (
             canReadPolicy &&
-            loadBalancerConfig !== EMPTY_LOAD_BALACNER_CONFIGURATION ? (
+            loadBalancerConfig !== EMPTY_LOAD_BALANCER_CONFIGURATION ? (
               <Link
                 to={`/settings/policies/load-balancer-configuration/${loadBalancerConfig}`}
               >
