@@ -6,17 +6,23 @@ import TextInput from '../text';
 
 interface MultipleTextInputProps {
   fieldName: string;
+  onRemove?: (nrOfFields: number) => void;
+  onChange?: (
+    nrOfFields: number,
+    index: number,
+    field: 'key' | 'value'
+  ) => void;
 }
 
-const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
+const MultipleTextInput = ({
+  fieldName,
+  onRemove,
+  onChange,
+}: MultipleTextInputProps) => {
   const {
     control,
     formState: { errors },
-    getValues,
-    setValue,
-    trigger,
   } = useFormContext();
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: fieldName,
@@ -26,34 +32,22 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[key];
 
-  const shouldDisableButtons = () => {
-    const values = getValues(fieldName);
-    const fieldErrors = errors?.[fieldName];
-
-    if (fieldErrors && Object.keys(fieldErrors).length > 0) {
-      return true;
-    }
-
-    const hasEmptyFields = values.some(
-      (item: { key: string; value: string }) => !item.key || !item.value
-    );
-    if (hasEmptyFields) {
-      return true;
-    }
-
-    const keys = values
-      .map((item: { key: string; value: string }) => item.key)
-      .filter(Boolean);
-    const uniqueKeys = new Set(keys);
-    if (keys.length !== uniqueKeys.size) {
-      return true;
-    }
-
-    return false;
-  };
-
   const handleAdd = () => {
     append({ key: '', value: '' });
+  };
+
+  const handleOnChange = async (
+    value: string,
+    index: number,
+    field: 'key' | 'value'
+  ) => {
+    onChange?.(fields.length, index, field);
+    return value;
+  };
+
+  const handleOnRemove = (index: number) => {
+    remove(index);
+    onRemove?.(fields.length);
   };
 
   return (
@@ -90,8 +84,8 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
                 width: '100%',
                 mt: 0,
               },
-              onChange: () => {
-                trigger();
+              onChange: (e) => {
+                handleOnChange(e.target.value, index, 'key');
               },
             }}
           />
@@ -107,22 +101,14 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
                 width: '100%',
                 mt: 0,
               },
-              onChange: () => {
-                trigger();
+              onChange: (e) => {
+                handleOnChange(e.target.value, index, 'value');
               },
             }}
           />
           <IconButton
             onClick={() => {
-              const values = getValues(fieldName);
-
-              if (values.length === 1) {
-                setValue(`${fieldName}.${index}.key`, '');
-                setValue(`${fieldName}.${index}.value`, '');
-              } else {
-                remove(index);
-              }
-              trigger();
+              handleOnRemove(index);
             }}
           >
             <DeleteOutlineOutlinedIcon />
@@ -134,7 +120,6 @@ const MultipleTextInput = ({ fieldName }: MultipleTextInputProps) => {
         variant="text"
         size="small"
         startIcon={<AddIcon />}
-        disabled={shouldDisableButtons()}
         onClick={handleAdd}
       >
         Add new
