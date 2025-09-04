@@ -23,6 +23,7 @@ import {
 import { Messages } from './messages';
 import {
   AdvancedConfigurationFields,
+  AllowedFieldsToInitiallyLoadDefaults,
   ExposureMethod,
 } from './advanced-configuration.types';
 import { useFormContext } from 'react-hook-form';
@@ -59,17 +60,15 @@ import LoadBalancerDialog from './load-balancer.dialog';
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
   loadingDefaultsForEdition?: boolean;
-  setDefaultsOnLoad?: boolean;
   automaticallyTogglePodSchedulingPolicySwitch?: boolean;
-  allowStorageClassChange?: boolean;
+  allowedFieldsToInitiallyLoadDefaults?: AllowedFieldsToInitiallyLoadDefaults[];
 }
 
 export const AdvancedConfigurationForm = ({
   dbType,
   loadingDefaultsForEdition,
-  setDefaultsOnLoad = false,
   automaticallyTogglePodSchedulingPolicySwitch = false,
-  allowStorageClassChange = false,
+  allowedFieldsToInitiallyLoadDefaults = [],
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues, trigger } =
     useFormContext();
@@ -98,10 +97,6 @@ export const AdvancedConfigurationForm = ({
     useLoadBalancerConfigs('load-balancer-configs', dbTypeToDbEngine(dbType), {
       refetchInterval: 10000,
     });
-
-  const loadBalancerConfigValue = watch(
-    AdvancedConfigurationFields.loadBalancerConfigName
-  );
 
   const handleOnPolicyInfoClick = () => {
     const policyName = getValues<string>(
@@ -139,13 +134,23 @@ export const AdvancedConfigurationForm = ({
   );
 
   useEffect(() => {
-    if (!loadBalancerConfigValue && isEksDefault !== undefined) {
+    if (
+      allowedFieldsToInitiallyLoadDefaults.includes('loadBalancerConfigName') &&
+      !getValues(AdvancedConfigurationFields.loadBalancerConfigName) &&
+      isEksDefault !== undefined
+    ) {
       setValue(
         AdvancedConfigurationFields.loadBalancerConfigName,
         selectDefaultValue
       );
     }
-  }, [isEksDefault, loadBalancerConfigValue, selectDefaultValue, setValue]);
+  }, [
+    isEksDefault,
+    allowedFieldsToInitiallyLoadDefaults,
+    getValues,
+    selectDefaultValue,
+    setValue,
+  ]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
     const configName = getValues<string>(
@@ -166,7 +171,8 @@ export const AdvancedConfigurationForm = ({
   };
 
   const noConfig =
-    loadBalancerConfigValue === EMPTY_LOAD_BALANCER_CONFIGURATION;
+    getValues(AdvancedConfigurationFields.loadBalancerConfigName) ===
+    EMPTY_LOAD_BALANCER_CONFIGURATION;
 
   // setting the storage class default value
   useEffect(() => {
@@ -175,8 +181,9 @@ export const AdvancedConfigurationForm = ({
     );
 
     if (
-      setDefaultsOnLoad &&
-      allowStorageClassChange &&
+      allowedFieldsToInitiallyLoadDefaults.includes(
+        AdvancedConfigurationFields.storageClass
+      ) &&
       !storageClassTouched &&
       clusterInfo?.storageClassNames &&
       clusterInfo.storageClassNames.length > 0
@@ -189,8 +196,7 @@ export const AdvancedConfigurationForm = ({
     }
   }, [
     clusterInfo,
-    setDefaultsOnLoad,
-    allowStorageClassChange,
+    allowedFieldsToInitiallyLoadDefaults,
     getFieldState,
     setValue,
   ]);
@@ -212,7 +218,12 @@ export const AdvancedConfigurationForm = ({
       policy.metadata.finalizers.includes(EVEREST_READ_ONLY_FINALIZER)
     );
 
-    if (setDefaultsOnLoad && !policyTouched) {
+    if (
+      allowedFieldsToInitiallyLoadDefaults.includes(
+        AdvancedConfigurationFields.podSchedulingPolicy
+      ) &&
+      !policyTouched
+    ) {
       setValue(
         AdvancedConfigurationFields.podSchedulingPolicy,
         defaultPolicy ? defaultPolicy.metadata.name : policies[0].metadata.name
@@ -229,7 +240,7 @@ export const AdvancedConfigurationForm = ({
   }, [
     policies,
     setValue,
-    setDefaultsOnLoad,
+    allowedFieldsToInitiallyLoadDefaults,
     automaticallyTogglePodSchedulingPolicySwitch,
     getFieldState,
   ]);
@@ -263,12 +274,15 @@ export const AdvancedConfigurationForm = ({
             name={AdvancedConfigurationFields.storageClass}
             loading={clusterInfoLoading}
             options={clusterInfo?.storageClassNames || []}
-            disabled={!allowStorageClassChange || loadingDefaultsForEdition}
+            disabled={
+              !allowedFieldsToInitiallyLoadDefaults.includes('storageClass') ||
+              loadingDefaultsForEdition
+            }
             textFieldProps={{
               placeholder: Messages.placeholders.storageClass,
             }}
             tooltipText={
-              allowStorageClassChange
+              allowedFieldsToInitiallyLoadDefaults.includes('storageClass')
                 ? undefined
                 : Messages.tooltipTexts.storageClass
             }
@@ -389,17 +403,6 @@ export const AdvancedConfigurationForm = ({
                             width: SELECT_WIDTH,
                             mt: 0,
                             textAlign: 'left',
-                          },
-                        }}
-                        selectFieldProps={{
-                          value: loadBalancerConfigValue ?? selectDefaultValue,
-                          onChange: (e) => {
-                            {
-                              setValue(
-                                AdvancedConfigurationFields.loadBalancerConfigName,
-                                e.target.value
-                              );
-                            }
                           },
                         }}
                       >
