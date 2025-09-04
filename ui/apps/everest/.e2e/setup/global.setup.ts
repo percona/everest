@@ -23,6 +23,10 @@ const {
   EVEREST_LOCATION_SECRET_KEY,
   EVEREST_LOCATION_REGION,
   EVEREST_LOCATION_URL,
+  EVEREST_S3_ACCESS_KEY,
+  EVEREST_S3_SECRET_KEY,
+  EVEREST_S3_REGION,
+  EVEREST_S3_URL,
   MONITORING_URL,
   MONITORING_USER,
   MONITORING_PASSWORD,
@@ -75,28 +79,45 @@ setup('Backup storages', async ({ request }) => {
   const promises: Promise<any>[] = [];
   // This has a nested array structure, in the form of
   // [
-  //   ['bucket1', ['namespace1', 'namespace2']],
-  //   ['bucket2', ['namespace3']],
+  //   ['bucket1', 'namespace1'],
+  //   ['bucket2', 'namespace2'],
   // ]
   const bucketNamespacesMap = getBucketNamespacesMap();
 
   bucketNamespacesMap.forEach(async ([bucket, namespace]) => {
+    const isEverestTesting = bucket === 'everest-testing';
+    const data = isEverestTesting
+      ? {
+          name: bucket,
+          description: 'CI test S3 bucket',
+          type: 's3',
+          bucketName: bucket,
+          secretKey: EVEREST_S3_SECRET_KEY,
+          accessKey: EVEREST_S3_ACCESS_KEY,
+          allowedNamespaces: [],
+          url: EVEREST_S3_URL,
+          region: EVEREST_S3_REGION,
+          verifyTLS: true,
+          forcePathStyle: false,
+        }
+      : {
+          name: bucket,
+          description: 'CI test bucket',
+          type: 's3',
+          bucketName: bucket,
+          secretKey: EVEREST_LOCATION_SECRET_KEY,
+          accessKey: EVEREST_LOCATION_ACCESS_KEY,
+          allowedNamespaces: [],
+          url: EVEREST_LOCATION_URL,
+          region: EVEREST_LOCATION_REGION,
+          verifyTLS: false,
+          forcePathStyle: true,
+        };
+
     promises.push(
       doBackupCall(() =>
         request.post(`/v1/namespaces/${namespace}/backup-storages/`, {
-          data: {
-            name: bucket,
-            description: 'CI test bucket',
-            type: 's3',
-            bucketName: bucket,
-            secretKey: EVEREST_LOCATION_SECRET_KEY,
-            accessKey: EVEREST_LOCATION_ACCESS_KEY,
-            allowedNamespaces: [],
-            url: EVEREST_LOCATION_URL,
-            region: EVEREST_LOCATION_REGION,
-            verifyTLS: false,
-            forcePathStyle: true,
-          },
+          data,
           headers: {
             Authorization: `Bearer ${token}`,
           },
