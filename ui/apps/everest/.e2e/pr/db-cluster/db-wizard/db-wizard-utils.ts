@@ -154,6 +154,10 @@ const createScheduleFromTimeOptions = async (
   }
 };
 
+// Behaviour of backupStorage parameter is following:
+// undefined - we don't change or test storage option
+// 'testFirst' - tests the storage option, whichever is first in the combobox
+// 'any_other_value' - sets and tests the storage option to desired storage location
 export const fillScheduleModalForm = async (
   page: Page,
   timeOptions: ScheduleTimeOptions = defaultTimeOptions,
