@@ -25,6 +25,8 @@ import { Messages } from './edit-advanced-configuration.messages';
 import { dbEngineToDbType } from '@percona/utils';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils';
 import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
+import { AllowedFieldsToInitiallyLoadDefaults } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { useMemo } from 'react';
 
 export const AdvancedConfigurationEditModal = ({
   open,
@@ -58,6 +60,17 @@ export const AdvancedConfigurationEditModal = ({
     });
   };
 
+  const allowedFieldsToInitiallyLoadDefaults: AllowedFieldsToInitiallyLoadDefaults[] =
+    useMemo(() => {
+      const result: AllowedFieldsToInitiallyLoadDefaults[] = [
+        'loadBalancerConfigName',
+      ];
+      if (!dbCluster?.spec.podSchedulingPolicyName) {
+        result.push('podSchedulingPolicy');
+      }
+      return result;
+    }, [dbCluster?.spec.podSchedulingPolicyName]);
+
   return (
     <FormDialog
       dataTestId="edit-advanced-configuration"
@@ -73,8 +86,9 @@ export const AdvancedConfigurationEditModal = ({
     >
       <AdvancedConfigurationForm
         dbType={dbEngineToDbType(dbCluster?.spec?.engine?.type)}
-        allowStorageClassChange={false}
-        setDefaultsOnLoad={!dbCluster.spec.podSchedulingPolicyName}
+        allowedFieldsToInitiallyLoadDefaults={
+          allowedFieldsToInitiallyLoadDefaults
+        }
       />
     </FormDialog>
   );

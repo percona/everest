@@ -28,3 +28,8 @@ export enum ExposureMethod {
   ClusterIP = 'Cluster IP',
   LoadBalancer = 'Load balancer',
 }
+
+export type AllowedFieldsToInitiallyLoadDefaults =
+  | 'storageClass'
+  | 'podSchedulingPolicy'
+  | 'loadBalancerConfigName';

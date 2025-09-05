@@ -20,6 +20,7 @@ import {
   ExposureMethod,
 } from './advanced-configuration.types';
 import { AdvancedConfigurationFormType } from './advanced-configuration-schema';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
   let dynamicText = '';
@@ -62,7 +63,8 @@ export const advancedConfigurationModalDefaultValues = (
     [AdvancedConfigurationFields.podSchedulingPolicy]:
       dbCluster?.spec.podSchedulingPolicyName,
     [AdvancedConfigurationFields.loadBalancerConfigName]:
-      dbCluster?.spec.proxy.expose.loadBalancerConfigName,
+      dbCluster?.spec.proxy.expose.loadBalancerConfigName ||
+      EMPTY_LOAD_BALANCER_CONFIGURATION,
     [AdvancedConfigurationFields.exposureMethod]:
       dbCluster?.spec?.proxy.expose.type === ProxyExposeType.external
         ? ExposureMethod.LoadBalancer
