@@ -28,7 +28,7 @@ export const backupsStepCheck = async (page: Page) => {
 
   await expect(enabledPitrCheckbox).not.toBeChecked();
 
-  await addFirstScheduleInDBWizard(page);
+  await addFirstScheduleInDBWizard(page, 'testFirst');
 
   await expect(
     page.getByText('Point-in-time Recovery', { exact: true })
