@@ -47,10 +47,10 @@ create-test-users: ## Create test users and add everest_ci user to admin role.
 k3d-upload-pg-images: ## Pre-upload Postgresql images to K3D test  cluster to speedup tests execution.
 	$(info Uploading PG images to K3D test cluster)
 	@{ \
-	pg_engine_image=$$(kubectl -n everest get dbengine/percona-postgresql-operator -ojson | jq -r '.status.availableVersions.engine[.status.availableVersions.engine | keys | .[-1]].imagePath') ;\
-	pg_proxy_image=$$(kubectl -n everest get dbengine/percona-postgresql-operator -ojson | jq -r '.status.availableVersions.proxy.pgbouncer[.status.availableVersions.proxy.pgbouncer | keys | .[-1]].imagePath') ;\
-	pg_backup_image=$$(kubectl -n everest get dbengine/percona-postgresql-operator -ojson | jq -r '.status.availableVersions.backup[.status.availableVersions.backup | keys | .[-1]].imagePath') ;\
-	pg_operator_image=$$(kubectl -n everest get deploy/percona-postgresql-operator -o json | jq -r '.spec.template.spec.containers[] | select (.name = "operator").image') ;\
+	pg_engine_image=$$(kubectl -n everest get dbengine/percona-postgresql-operator -ojson | jq -r '[.status.availableVersions.engine[] | select(.status == "recommended").imagePath][-1] ') ;\
+	pg_proxy_image=$$(kubectl -n everest get dbengine/percona-postgresql-operator -ojson | jq -r '[.status.availableVersions.proxy.pgbouncer[] | select(.status == "recommended").imagePath][-1] ') ;\
+	pg_backup_image=$$(kubectl -n everest get dbengine/percona-postgresql-operator -ojson | jq -r '[.status.availableVersions.backup[] | select(.status == "recommended").imagePath][-1] ') ;\
+	pg_operator_image=$$(kubectl -n everest get deploy/percona-postgresql-operator -o json | jq -r '.spec.template.spec.containers[] | select (.name == "operator").image') ;\
 	docker pull -q $${pg_engine_image} ;\
 	docker pull -q $${pg_proxy_image} ;\
 	docker pull -q $${pg_backup_image} ;\
@@ -62,9 +62,9 @@ k3d-upload-pg-images: ## Pre-upload Postgresql images to K3D test  cluster to sp
 k3d-upload-psmdb-images: ## Pre-upload PSMDB images to K3D test  cluster to speedup tests execution.
 	$(info Uploading PSMDB images to K3D test cluster)
 	@{ \
-	psmdb_engine_image=$$(kubectl -n everest get dbengine/percona-server-mongodb-operator -ojson | jq -r '.status.availableVersions.engine[.status.availableVersions.engine | keys | .[-1]].imagePath') ;\
-	psmdb_backup_image=$$(kubectl -n everest get dbengine/percona-server-mongodb-operator -ojson | jq -r '.status.availableVersions.backup[.status.availableVersions.backup | keys | .[-1]].imagePath') ;\
-	psmdb_operator_image=$$(kubectl -n everest get deploy/percona-server-mongodb-operator -o json | jq -r '.spec.template.spec.containers[] | select (.name = "percona-server-mongodb-operator").image') ;\
+	psmdb_engine_image=$$(kubectl -n everest get dbengine/percona-server-mongodb-operator -ojson | jq -r '[.status.availableVersions.engine[] | select(.status == "recommended").imagePath][-1] ') ;\
+	psmdb_backup_image=$$(kubectl -n everest get dbengine/percona-server-mongodb-operator -ojson | jq -r '[.status.availableVersions.backup[] | select(.status == "recommended").imagePath][-1] ') ;\
+	psmdb_operator_image=$$(kubectl -n everest get deploy/percona-server-mongodb-operator -o json | jq -r '.spec.template.spec.containers[] | select (.name == "percona-server-mongodb-operator").image') ;\
 	docker pull -q $${psmdb_engine_image} ;\
 	docker pull -q $${psmdb_backup_image}  ;\
 	docker pull -q $${psmdb_operator_image}  ;\
@@ -75,10 +75,10 @@ k3d-upload-psmdb-images: ## Pre-upload PSMDB images to K3D test  cluster to spee
 k3d-upload-pxc-images: ## Pre-upload PXC images to K3D test cluster to speedup tests execution.
 	$(info Uploading PXC images to K3D test cluster)
 	@{ \
-	pxc_engine_image=$$(kubectl -n everest get dbengine/percona-xtradb-cluster-operator -ojson | jq -r '.status.availableVersions.engine[.status.availableVersions.engine | keys | .[-1]].imagePath') ;\
-	pxc_proxy_image=$$(kubectl -n everest get dbengine/percona-xtradb-cluster-operator -ojson | jq -r '.status.availableVersions.proxy.haproxy[.status.availableVersions.proxy.haproxy | keys | .[-1]].imagePath') ;\
-	pxc_backup_image=$$(kubectl -n everest get dbengine/percona-xtradb-cluster-operator -ojson | jq -r '.status.availableVersions.backup[.status.availableVersions.backup | keys | .[-1]].imagePath') ;\
-	pxc_operator_image=$$(kubectl -n everest get deploy/percona-xtradb-cluster-operator -o json | jq -r '.spec.template.spec.containers[] | select (.name = "percona-xtradb-cluster-operator").image') ;\
+	pxc_engine_image=$$(kubectl -n everest get dbengine/percona-xtradb-cluster-operator -ojson | jq -r '[.status.availableVersions.engine[] | select(.status == "recommended").imagePath][-1] ') ;\
+	pxc_proxy_image=$$(kubectl -n everest get dbengine/percona-xtradb-cluster-operator -ojson | jq -r '[.status.availableVersions.proxy.haproxy[] | select(.status == "recommended").imagePath][-1] ') ;\
+	pxc_backup_image=$$(kubectl -n everest get dbengine/percona-xtradb-cluster-operator -ojson | jq -r '[.status.availableVersions.backup[] | select(.status == "recommended").imagePath][-1] ') ;\
+	pxc_operator_image=$$(kubectl -n everest get deploy/percona-xtradb-cluster-operator -o json | jq -r '.spec.template.spec.containers[] | select (.name == "percona-xtradb-cluster-operator").image') ;\
 	pmm_client_image=percona/pmm-client:2 ;\
 	docker pull -q $${pxc_engine_image} ;\
 	docker pull -q $${pxc_proxy_image} ;\

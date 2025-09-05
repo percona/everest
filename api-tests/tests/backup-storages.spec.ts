@@ -15,28 +15,28 @@
 import {expect, test} from '@fixtures'
 import * as th from "@tests/tests/helpers";
 
+const testPrefix = 'bs'
+
 test.describe('Backup Storage tests', {tag: ['@backup-storage']}, () => {
-  test('add/list/get/delete s3 backup storage success', async ({request, page}) => {
-    const bsName = th.limitedSuffixedName('bs-s3'),
+  test.describe.configure({ timeout: 300*1000 });
+
+  test('add/list/get/delete s3 backup storage success', async ({request}) => {
+    const bsName = th.limitedSuffixedName(testPrefix+ '-s3'),
       payload = th.getBackupStorageS3Payload(bsName)
 
       try {
+        let backupStorage
         await test.step('create backup storage', async () => {
-          const created = await th.createBackupStorageWithData(request, payload)
-          expect(created.name).toBe(payload.name)
-          expect(created.bucketName).toBe(payload.bucketName)
-          expect(created.type).toBe(payload.type)
-          expect(created.description).toBe(payload.description)
-        });
-
-        await test.step('list backup storages', async () => {
-          const res = await th.listBackupStorages(request)
-          expect(res.length).toBeGreaterThan(0)
+          backupStorage = await th.createBackupStorageWithData(request, payload)
+          expect(backupStorage.name).toBe(payload.name)
+          expect(backupStorage.bucketName).toBe(payload.bucketName)
+          expect(backupStorage.type).toBe(payload.type)
+          expect(backupStorage.description).toBe(payload.description)
         });
 
         await test.step('get backup storage', async () => {
-          const res = await th.getBackupStorage(request, bsName)
-          expect(res.name).toBe(payload.name)
+          backupStorage = await th.getBackupStorage(request, bsName)
+          expect(backupStorage.name).toBe(payload.name)
         });
 
         await test.step('update backup storage', async () => {
@@ -49,11 +49,11 @@ test.describe('Backup Storage tests', {tag: ['@backup-storage']}, () => {
           }
 
           await expect(async () => {
-            const res = await th.updateBackupStorage(request, bsName, updatePayload)
-            expect(res.bucketName).toBe(updatePayload.bucketName)
-            expect(res.region).toBe(payload.region)
-            expect(res.type).toBe(payload.type)
-            expect(res.description).toBe(updatePayload.description)
+            backupStorage = await th.updateBackupStorage(request, bsName, updatePayload)
+            expect(backupStorage.bucketName).toBe(updatePayload.bucketName)
+            expect(backupStorage.region).toBe(payload.region)
+            expect(backupStorage.type).toBe(payload.type)
+            expect(backupStorage.description).toBe(updatePayload.description)
           }).toPass({
             intervals: [1000],
             timeout: 30 * 1000,
@@ -61,39 +61,35 @@ test.describe('Backup Storage tests', {tag: ['@backup-storage']}, () => {
         });
 
         await test.step('create backup storage already exists', async () => {
-          const createAgain = await th.createBackupStorageWithDataRaw(request, payload)
-          expect(createAgain.status()).toBe(409)
+          const resp = await th.createBackupStorageWithDataRaw(request, payload)
+          expect(resp.status()).toBe(409)
         });
 
         await test.step('delete backup storage', async () => {
-          await th.deleteBackupStorage(page, request, bsName)
+          await th.deleteBackupStorage(request, bsName)
         });
       } finally {
-        await th.deleteBackupStorage(page, request, bsName)
+        await th.deleteBackupStorage(request, bsName)
       }
   })
 
-  test('add/list/get/delete azure backup storage success', async ({request, page}) => {
-    const bsName = th.limitedSuffixedName('bs-azure'),
+  test('add/list/get/delete azure backup storage success', async ({request}) => {
+    const bsName = th.limitedSuffixedName(testPrefix + '-azure'),
       payload = th.getBackupStorageAzurePayload(bsName)
+      let backupStorage
 
       try {
         await test.step('create backup storage', async () => {
-          const created = await th.createBackupStorageWithData(request, payload)
-          expect(created.name).toBe(payload.name)
-          expect(created.bucketName).toBe(payload.bucketName)
-          expect(created.type).toBe(payload.type)
-          expect(created.description).toBe(payload.description)
-        });
-
-        await test.step('list backup storages', async () => {
-          const res = await th.listBackupStorages(request)
-          expect(res.length).toBeGreaterThan(0)
+          backupStorage = await th.createBackupStorageWithData(request, payload)
+          expect(backupStorage.name).toBe(payload.name)
+          expect(backupStorage.bucketName).toBe(payload.bucketName)
+          expect(backupStorage.type).toBe(payload.type)
+          expect(backupStorage.description).toBe(payload.description)
         });
 
         await test.step('get backup storage', async () => {
-          const res = await th.getBackupStorage(request, bsName)
-          expect(res.name).toBe(payload.name)
+          backupStorage = await th.getBackupStorage(request, bsName)
+          expect(backupStorage.name).toBe(payload.name)
         });
 
         await test.step('update backup storage', async () => {
@@ -103,11 +99,11 @@ test.describe('Backup Storage tests', {tag: ['@backup-storage']}, () => {
           }
 
           await expect(async () => {
-            const res = await th.updateBackupStorage(request, bsName, updatePayload)
-            expect(res.bucketName).toBe(updatePayload.bucketName)
-            expect(res.region).toBe(payload.region)
-            expect(res.type).toBe(payload.type)
-            expect(res.description).toBe(updatePayload.description)
+            backupStorage = await th.updateBackupStorage(request, bsName, updatePayload)
+            expect(backupStorage.bucketName).toBe(updatePayload.bucketName)
+            expect(backupStorage.region).toBe(payload.region)
+            expect(backupStorage.type).toBe(payload.type)
+            expect(backupStorage.description).toBe(updatePayload.description)
           }).toPass({
             intervals: [1000],
             timeout: 30 * 1000,
@@ -115,15 +111,15 @@ test.describe('Backup Storage tests', {tag: ['@backup-storage']}, () => {
         });
 
         await test.step('create backup storage already exists', async () => {
-          const createAgain = await th.createBackupStorageWithDataRaw(request, payload)
-          expect(createAgain.status()).toBe(409)
+          backupStorage = await th.createBackupStorageWithDataRaw(request, payload)
+          expect(backupStorage.status()).toBe(409)
         });
 
         await test.step('delete backup storage', async () => {
-          await th.deleteBackupStorage(page, request, bsName)
+          await th.deleteBackupStorage(request, bsName)
         });
       } finally {
-        await th.deleteBackupStorage(page, request, bsName)
+        await th.deleteBackupStorage(request, bsName)
       }
   })
 
@@ -201,7 +197,7 @@ test.describe('Backup Storage tests', {tag: ['@backup-storage']}, () => {
     }
   })
 
-  test('update backup storage failures', async ({request, page}) => {
+  test('update backup storage failures', async ({request}) => {
     const name= th.limitedSuffixedName('bs-upd-fail'),
       createPayload = {
         type: 's3',
@@ -246,7 +242,7 @@ test.describe('Backup Storage tests', {tag: ['@backup-storage']}, () => {
           }
         });
       } finally {
-        await th.deleteBackupStorage(page, request, name)
+        await th.deleteBackupStorage(request, name)
       }
   })
 

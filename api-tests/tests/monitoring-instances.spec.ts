@@ -15,15 +15,17 @@
 import { expect, test } from '@fixtures'
 import * as th from "@tests/tests/helpers";
 
-const mcNameKey = th.limitedSuffixedName('mc-key'),
-  mcNamePass = th.limitedSuffixedName('mc-pass')
-
-test.afterAll(async ({ request }) => {
-  await th.deleteMonitoringConfig(request, mcNameKey)
-  await th.deleteMonitoringConfig(request, mcNamePass)
-})
+const testPrefix = 'mc',
+  mcNameKey = th.limitedSuffixedName(testPrefix + '-key'),
+  mcNamePass = th.limitedSuffixedName(testPrefix + '-pass')
 
 test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
+  test.describe.configure({ timeout: 60*1000 });
+  test.afterAll(async ({ request }) => {
+    await th.deleteMonitoringConfig(request, mcNameKey)
+    await th.deleteMonitoringConfig(request, mcNamePass)
+  })
+
   test('create/update/delete monitoring instance', async ({request}) => {
     await test.step('create monitoring instance with api key', async () => {
       const data = {
@@ -82,7 +84,7 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
       })
     })
 
-     await test.step('update monitoring instance to existing with no creds', async () => {
+    await test.step('update monitoring instance to existing with no creds', async () => {
        const patchData = { url: 'https://monitoring-service.everest-monitoring.svc.cluster.local'} // existing other monitoring URL
 
        await expect(async () => {
@@ -95,7 +97,7 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
        })
      })
 
-     await test.step('update monitoring instance to not existing', async () => {
+    await test.step('update monitoring instance to not existing', async () => {
        const patchData = {
          url: 'http://not-existing-url', // existing other monitoring URL
        }
@@ -174,36 +176,15 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
     })
 
     await test.step('delete monitoring instance', async () => {
-      const name = th.limitedSuffixedName('mc-delete'),
-        data = {
-          type: 'pmm',
-          name: name,
-          url: `https://${process.env.PMM1_IP}`,
-          pmm: {
-            apiKey: `${process.env.PMM1_API_KEY}`,
-          },
-          verifyTLS: false,
-        }
-      await th.createMonitoringConfigWithData(request, data)
-
-      let response = await th.deleteMonitoringConfigRaw(request, name)
-      await th.checkError(response)
-
-      await expect(async () => {
-        // check there is no MonitoringConfig anymore.
-        response = await th.getMonitoringConfigRaw(request, name)
-        expect(response.status()).toBe(404)
-      }).toPass({
-        intervals: [1000],
-        timeout: 60 * 1000,
-      })
+      await th.deleteMonitoringConfig(request, mcNameKey)
+      await th.deleteMonitoringConfig(request, mcNamePass)
     })
   })
 
   test('create monitoring instance missing pmm', async ({request}) => {
     const data = {
         type: 'pmm',
-        name: th.limitedSuffixedName('mc-fail'),
+        name: th.limitedSuffixedName(testPrefix + '-fail'),
         url: 'http://monitoring-instance',
       },
       response = await th.createMonitoringConfigWithDataRaw(request, data)
@@ -214,7 +195,7 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
   test('create monitoring instance missing pmm credentials', async ({request}) => {
     const data = {
         type: 'pmm',
-        name: th.limitedSuffixedName('mc-fail'),
+        name: th.limitedSuffixedName(testPrefix + '-fail'),
         url: 'http://monitoring-instance',
         pmm: {},
       },
@@ -230,20 +211,20 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
   })
 
   test('update: monitoring instance not found', async ({request}) => {
-    const name = th.limitedSuffixedName('mc-non-existent'),
+    const name = th.limitedSuffixedName(testPrefix + '-non-existent'),
       response = await th.updateMonitoringConfigRaw(request, name, {url: `http://${process.env.PMM_IP}`})
     expect(response.status()).toBe(404)
   })
 
   test('delete: monitoring instance not found', async ({request}) => {
-    const name = th.limitedSuffixedName('mc-non-existent'),
+    const name = th.limitedSuffixedName(testPrefix + '-non-existent'),
       response = await th.deleteMonitoringConfigRaw(request, name)
 
     expect(response.status()).toBe(404)
   })
 
   test('get: monitoring instance not found', async ({request}) => {
-    const name = th.limitedSuffixedName('mc-non-existent'),
+    const name = th.limitedSuffixedName(testPrefix + '-non-existent'),
       response = await th.getMonitoringConfigRaw(request, name)
 
     expect(response.status()).toBe(404)

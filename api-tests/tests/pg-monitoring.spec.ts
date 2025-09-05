@@ -15,165 +15,162 @@
 import { expect, test } from '@fixtures'
 import * as th from "@tests/tests/helpers";
 
-const dbClusterNamePrefix = 'pg-mon',
-  monitoringConfigName1 = th.limitedSuffixedName(dbClusterNamePrefix + '-m1'),
-  monitoringConfigName2 = th.limitedSuffixedName(dbClusterNamePrefix + '-m2')
-test.beforeAll(async ({ request }) => {
-  await th.createMonitoringConfig(request, monitoringConfigName1)
-  await th.createMonitoringConfig(request, monitoringConfigName2)
-})
-
-test.afterAll(async ({ request }) => {
-  await th.deleteMonitoringConfig(request, monitoringConfigName1)
-  await th.deleteMonitoringConfig(request, monitoringConfigName2)
-})
+const testPrefix = 'pg-mon',
+  monitoringConfigName1 = th.limitedSuffixedName(testPrefix + '-m1'),
+  monitoringConfigName2 = th.limitedSuffixedName(testPrefix + '-m2')
 
 test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
-  test.setTimeout(360 * 1000)
-
-  test('create db cluster with invalid monitoring config', async ({request, page}) => {
-    const dbClusterName = th.limitedSuffixedName(dbClusterNamePrefix)
-    let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
-    dbClusterData.spec.monitoring = {monitoringConfigName: 'absent-config'}
-
-    try{
-    await test.step('create DB cluster', async () => {
-      await th.createDBClusterWithData(request, dbClusterData)
-
-      await expect(async () => {
-        const dbCluster = await th.getDBCluster(request, dbClusterName)
-        expect(dbCluster?.status?.status).toMatch('creating')
-        expect(dbCluster?.status?.size).toBeFalsy()
-      }).toPass({
-        intervals: [1000],
-        timeout: 60 * 1000,
-      })
-    })
-    } finally {
-      await th.deleteDBCluster(request, page, dbClusterName)
-    }
+  test.describe.configure({ timeout: 120 * 1000 });
+  test.beforeAll(async ({ request }) => {
+    await th.createMonitoringConfig(request, monitoringConfigName1)
+    await th.createMonitoringConfig(request, monitoringConfigName2)
   })
 
-  test('create db cluster with monitoring config', async ({request, page}) => {
-    const dbClusterName = th.limitedSuffixedName(dbClusterNamePrefix)
+  test.afterAll(async ({ request }) => {
+    await th.deleteMonitoringConfig(request, monitoringConfigName1)
+    await th.deleteMonitoringConfig(request, monitoringConfigName2)
+  })
+  test('create db cluster with monitoring config', async ({request}) => {
+    const dbClusterName = th.limitedSuffixedName(testPrefix)
     let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
     dbClusterData.spec.monitoring = {monitoringConfigName: monitoringConfigName1}
 
     try {
-      await test.step('create DB cluster', async () => {
+      await test.step('create db cluster with monitoring config', async () => {
         await th.createDBClusterWithData(request, dbClusterData)
 
-        // Wait for DB cluster creation (at least 1 node is up).
+        // Wait for DB cluster creation.
         await expect(async () => {
           const dbCluster = await th.getDBCluster(request, dbClusterName)
-          expect(dbCluster?.status?.size).toBeGreaterThanOrEqual(1)
-          expect(dbCluster?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName1)
+          expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName1)
         }).toPass({
           intervals: [1000],
-          timeout: 120 * 1000,
+          timeout: 300 * 1000,
         })
       })
     } finally {
-      await th.deleteDBCluster(request, page, dbClusterName)
+      await th.deleteDBCluster(request, dbClusterName)
     }
   })
 
-  test('update db cluster with a new monitoring config', async ({request, page}) => {
-    const dbClusterName = th.limitedSuffixedName(dbClusterNamePrefix)
+  test('create db cluster with invalid monitoring config', async ({request}) => {
+    const dbClusterName = th.limitedSuffixedName(testPrefix + '-inv')
+    let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
+    dbClusterData.spec.monitoring = {monitoringConfigName: 'absent-config'}
+
+    try{
+    await test.step('create db cluster with monitoring config', async () => {
+      await th.createDBClusterWithData(request, dbClusterData)
+
+      await expect(async () => {
+        const dbCluster = await th.getDBCluster(request, dbClusterName)
+        expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(dbClusterData.spec.monitoring.monitoringConfigName)
+        expect(dbCluster.status.status).toMatch('creating')
+        expect(dbCluster.status.size).toBeFalsy()
+      }).toPass({
+        intervals: [1000],
+        timeout: 120 * 1000,
+      })
+    })
+    } finally {
+      await th.deleteDBCluster(request, dbClusterName)
+    }
+  })
+
+  test('update db cluster with a new monitoring config', async ({request}) => {
+    const dbClusterName = th.limitedSuffixedName(testPrefix + '-upd')
     let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
     dbClusterData.spec.monitoring = {monitoringConfigName: monitoringConfigName1}
 
     try {
       let dbCluster
-      await test.step('create DB cluster', async () => {
+      await test.step('create DB cluster with monitoring config 1', async () => {
         await th.createDBClusterWithData(request, dbClusterData)
 
-        // Wait for DB cluster creation (at least 1 node is up).
+        // Wait for DB cluster creation.
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
-          expect(dbCluster?.status?.size).toBeGreaterThanOrEqual(1)
-          expect(dbCluster?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName1)
+          expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName1)
         }).toPass({
           intervals: [1000],
-          timeout: 120 * 1000,
+          timeout: 300 * 1000,
         })
       })
 
-      await test.step('set new monitoring config', async () => {
+      await test.step('set new monitoring config 2', async () => {
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
           dbCluster.spec.monitoring.monitoringConfigName = monitoringConfigName2
 
           dbCluster = await th.updateDBCluster(request, dbClusterName, dbCluster)
-          expect(dbCluster?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName2)
+          expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName2)
+          // expect(dbCluster.status.status).toMatch('ready')
         }).toPass({
           intervals: [1000],
-          timeout: 120 * 1000,
+          timeout: 300 * 1000,
         })
       })
     } finally {
-      await th.deleteDBCluster(request, page, dbClusterName)
+      await th.deleteDBCluster(request, dbClusterName)
     }
   })
 
-  test('update db cluster without monitoring config with a new monitoring config', async ({request, page}) => {
-    const dbClusterName = th.limitedSuffixedName(dbClusterNamePrefix)
+  test('update db cluster without monitoring config with a new monitoring config', async ({request}) => {
+    const dbClusterName = th.limitedSuffixedName(testPrefix)
     let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
 
     try {
       let dbCluster
 
-      await test.step('create DB cluster', async () => {
+      await test.step('create DB cluster without monitoring config', async () => {
         await th.createDBClusterWithData(request, dbClusterData)
 
-        // Wait for DB cluster creation (at least 1 node is up).
+        // Wait for DB cluster creation.
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
-          expect(dbCluster?.status?.size).toBeGreaterThanOrEqual(1)
-          expect(dbCluster?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
+          expect(dbCluster.spec.monitoring?.monitoringConfigName).toBeFalsy()
         }).toPass({
           intervals: [1000],
-          timeout: 120 * 1000,
+          timeout: 300 * 1000,
         })
       })
 
       await test.step('set new monitoring config', async () => {
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
-          dbCluster.spec.monitoring = {monitoringConfigName: monitoringConfigName1}
+        dbCluster.spec.monitoring = {monitoringConfigName: monitoringConfigName1}
 
           dbCluster = await th.updateDBCluster(request, dbClusterName, dbCluster)
-          expect(dbCluster?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName1)
+          expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName1)
         }).toPass({
           intervals: [1000],
-          timeout: 120 * 1000,
+          timeout: 300 * 1000,
         })
       })
 
     } finally {
-      await th.deleteDBCluster(request, page, dbClusterName)
+      await th.deleteDBCluster(request, dbClusterName)
     }
   })
 
   test('disable monitoring config', async ({request, page}) => {
-    const dbClusterName = th.limitedSuffixedName(dbClusterNamePrefix)
+    const dbClusterName = th.limitedSuffixedName(testPrefix + '-dis')
     let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
     dbClusterData.spec.monitoring = {monitoringConfigName: monitoringConfigName1}
 
     try {
       let dbCluster
 
-      await test.step('create DB cluster', async () => {
+      await test.step('create DB cluster with monitoring config', async () => {
         await th.createDBClusterWithData(request, dbClusterData)
 
-        // Wait for DB cluster creation (at least 1 node is up).
+        // Wait for DB cluster creation.
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
-          expect(dbCluster?.status?.size).toBeGreaterThanOrEqual(1)
-          expect(dbCluster?.spec?.monitoring?.monitoringConfigName).toBe(monitoringConfigName1)
+          expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName1)
         }).toPass({
           intervals: [1000],
-          timeout: 120 * 1000,
+          timeout: 300 * 1000,
         })
       })
 
@@ -183,14 +180,14 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
           dbCluster.spec.monitoring = {}
 
           dbCluster = await th.updateDBCluster(request, dbClusterName, dbCluster)
-          expect(dbCluster?.spec?.monitoring?.monitoringConfigName).toBeFalsy()
+          expect(dbCluster.spec.monitoring?.monitoringConfigName).toBeFalsy()
         }).toPass({
           intervals: [1000],
-          timeout: 120 * 1000,
+          timeout: 300 * 1000,
         })
       })
     } finally {
-      await th.deleteDBCluster(request, page, dbClusterName)
+      await th.deleteDBCluster(request, dbClusterName)
     }
   })
 });

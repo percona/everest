@@ -1,7 +1,5 @@
 import {expect} from '@playwright/test'
-import {execSync} from 'child_process';
 import {CliHelper} from '../helpers/cliHelper'
-import {req} from "agent-base";
 
 export const testsNs = 'everest'
 
@@ -32,8 +30,19 @@ export const checkError = async (response) => {
   expect(response.ok()).toBeTruthy()
 }
 
+// Checks whether the passed resource is marked for deletion(metadata.deletionTimestamp)
+// or checks for '404 Not Found' response from server that means that resource has been deleted
+// from K8S.
+export const checkResourceDeletion = async (apiResp) => {
+  if (apiResp.status() === 200) {
+    expect((await apiResp.json()).metadata['deletionTimestamp']).not.toBe('');
+  } else {
+    expect(apiResp.status()).toBe(404)
+  }
+}
+
 // --------------------- DB Cluster helpers -----------------------------------------------
-// returns DBCluster object for creating 1-node PG cluster
+// Returns DBCluster object for creating 1-node PG cluster
 export const getPGClusterDataSimple = (name: string) => {
   const  data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -46,7 +55,7 @@ export const getPGClusterDataSimple = (name: string) => {
         type: 'postgresql',
         replicas: 1,
         storage: {
-          size: '1G',
+          size: '1Gi',
         },
         resources: {
           cpu: '1',
@@ -65,7 +74,7 @@ export const getPGClusterDataSimple = (name: string) => {
   return JSON.parse(JSON.stringify(data))
 }
 
-// returns DBCluster object for creating 1-node PSMDB cluster
+// Returns DBCluster object for creating 1-node PSMDB cluster
 export const getPSMDBClusterDataSimple = (name: string) => {
   let data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -74,11 +83,16 @@ export const getPSMDBClusterDataSimple = (name: string) => {
       name: name,
     },
     spec: {
+      backup: {
+        pitr: {
+          enabled: false,
+        },
+      },
       engine: {
         type: 'psmdb',
         replicas: 1,
         storage: {
-          size: '1G',
+          size: '1Gi',
         },
         resources: {
           cpu: '1',
@@ -92,12 +106,19 @@ export const getPSMDBClusterDataSimple = (name: string) => {
           type: 'internal',
         },
       },
-    },
+      sharding: {
+        configServer: {
+          replicas: 1,
+        },
+        enabled: false,
+        shards: 2,
+      },
+    }
   }
   return JSON.parse(JSON.stringify(data))
 }
 
-// returns DBCluster object for creating 1-node PXC cluster
+// Returns DBCluster object for creating 1-node PXC cluster
 export const getPXCClusterDataSimple = (name: string) => {
   let data = {
     apiVersion: 'everest.percona.com/v1alpha1',
@@ -111,7 +132,7 @@ export const getPXCClusterDataSimple = (name: string) => {
         replicas: 1,
         config: '[mysqld]\nwsrep_provider_options="debug=1;gcache.size=1G"\n',
         storage: {
-          size: '1G',
+          size: '1Gi',
         },
         resources: {
           cpu: '1',
@@ -130,57 +151,31 @@ export const getPXCClusterDataSimple = (name: string) => {
   return JSON.parse(JSON.stringify(data))
 }
 
+// Creates a simple 1-node PG cluster and returns DB creation response (JSON)
 export const createDBCluster = async (request, name) => {
-  const data = {
-    apiVersion: 'everest.percona.com/v1alpha1',
-    kind: 'DatabaseCluster',
-    metadata: {
-      name: name,
-      namespace: testsNs,
-    },
-    spec: {
-      engine: {
-        type: 'postgresql',
-        replicas: 1,
-        storage: {
-          size: '1G',
-        },
-        resources: {
-          cpu: '1',
-          memory: '1G',
-        },
-      },
-      proxy: {
-        type: 'pgbouncer',
-        replicas: 1,
-        expose: {
-          type: 'internal',
-        },
-      },
-    },
-  },
-   createResp = await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
-  await checkError(createResp)
+  const data = getPGClusterDataSimple(name)
+  return await createDBClusterWithData(request, data)
 }
 
 // Creates DB cluster with provided data as body.
 // Expects successful creation.
 export const createDBClusterWithData = async (request, data) => {
   const createResp = await createDBClusterWithDataRaw(request, data)
-  expect(createResp.ok()).toBeTruthy()
+  await checkError(createResp)
+  return (await createResp.json())
 }
 
 // Creates DB cluster with provided data as body.
-// Returns raw response object without any checks.
+// Returns raw response object without any checks or parsing.
 export const createDBClusterWithDataRaw = async (request, data) => {
   return await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
 }
 
 export const getDBCluster = async (request, name) => {
-  const dbClusterResp = await getDBClusterRaw(request, name)
-  await checkError(dbClusterResp)
+  const response = await getDBClusterRaw(request, name)
+  await checkError(response)
   // expect(dbClusterResp.ok()).toBeTruthy()
-  return (await dbClusterResp.json())
+  return (await response.json())
 }
 
 export const getDBClusterRaw = async (request, name) => {
@@ -188,56 +183,27 @@ export const getDBClusterRaw = async (request, name) => {
 }
 
 export const updateDBCluster = async (request, name, updateData) => {
-  const updateResp = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data: updateData })
-  await checkError(updateResp)
-  // expect(updateResp.status()).toBe(200)
-  return (await updateResp.json())
+  const response = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data: updateData })
+  await checkError(response)
+  return (await response.json())
 }
 
-export const deleteDBCluster = async (request, page, name) => {
-  await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
-
-  for (let i = 0; i < 100; i++) {
-    const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
-
-    if (cluster.status() === 404) {
-      return;
-    }
-
-    // const data = await cluster.json()
-
-    // const engineType = data.spec.engine.type === 'postgresql' ? 'pg' : data.spec.engine.type
-    // // remove finalizers but ignore errors, e.g. if the object is already deleted
-    // const command = `kubectl patch --namespace ${testsNs} ${engineType} ${name} --type='merge' -p '{"metadata":{"finalizers":null}}' | true`;
-    // const output = execSync(command).toString();
-
-    await page.waitForTimeout(1000)
-  }
+export const deleteDBCluster = async (request, name) => {
+  // Wait for deletion mark.
+  await expect(async () => {
+    await deleteDBClusterRaw(request, name)
+    const res = await getDBClusterRaw(request, name)
+    await checkResourceDeletion(res)
+  }).toPass({
+    intervals: [1000],
+    timeout: 60 * 1000,
+  })
 }
 
-export const checkClusterDeletion = async (cluster) => {
-  if (cluster.status() === 200) {
-    expect((await cluster.json()).metadata['deletionTimestamp']).not.toBe('');
-  } else {
-    expect(cluster.status()).toBe(404)
-  }
+export const deleteDBClusterRaw = async (request,  name) => {
+  return await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
 }
 
-export const waitClusterDeletion = async (request, page, clusterName) => {
-  for (let i = 0; i < 100; i++) {
-    const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-
-    if (cluster.status() === 404) {
-      break;
-    }
-
-    await page.waitForTimeout(1000)
-  }
-
-  const cluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-
-  expect(cluster.status()).toBe(404)
-}
 // --------------------- Backup Storage helpers -----------------------------------------
 export const getBackupStorageS3Payload = (bsName: string) => {
   const payload = {
@@ -269,14 +235,13 @@ export const getBackupStorageAzurePayload = (bsName: string) => {
 }
 
 export const createBackupStorageS3 = async (request, name) => {
-  const payload = getBackupStorageS3Payload(name),
-    response = await createBackupStorageWithData(request, payload)
-  return (await response.json())
+  const payload = getBackupStorageS3Payload(name)
+  return await createBackupStorageWithData(request, payload)
 }
 
 export const createBackupStorageWithData = async (request, data) => {
   const response = await createBackupStorageWithDataRaw(request, data)
-  expect(response.ok()).toBeTruthy()
+  await checkError(response)
   return (await response.json())
 }
 
@@ -305,31 +270,25 @@ export const listBackupStoragesRaw = async (request) => {
 }
 
 export const updateBackupStorage = async (request, name, data) => {
-  const resp = await updateBackupStorageRaw(request, name, data)
-  expect(resp.ok()).toBeTruthy()
-  return (await resp.json())
+  const response = await updateBackupStorageRaw(request, name, data)
+  await checkError(response)
+  return (await response.json())
 }
 
 export const updateBackupStorageRaw = async (request, name, data) => {
   return await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {data: data})
 }
 
-export const deleteBackupStorage = async (page, request, name) => {
-  let res
-  for (let i = 0; i < 100; i++) {
-    res = await deleteBackupStorageRaw(request, name)
-    if (res.status() === 404) {
-      return;
-    }
-
-    if (res.ok()) {
-        break;
-    }
-
-    await page.waitForTimeout(1000)
-  }
-
-  await checkError(res)
+export const deleteBackupStorage = async (request, name) => {
+  // Wait for deletion mark.
+  await expect(async () => {
+    await deleteBackupStorageRaw(request, name)
+    const res = await getBackupStorageRaw(request, name)
+    await checkResourceDeletion(res)
+  }).toPass({
+    intervals: [1000],
+    timeout: 60 * 1000,
+  })
 }
 
 export const deleteBackupStorageRaw = async (request, name) => {
@@ -338,7 +297,7 @@ export const deleteBackupStorageRaw = async (request, name) => {
 
 // --------------------- DB Backup helpers -----------------------------------------------
 
-export const createBackup = async (request,  clusterName, backupName, storageName) => {
+export const createDBClusterBackup = async (request, dbClusterName, backupName, storageName) => {
   const payloadBackup = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseClusterBackup',
@@ -346,51 +305,123 @@ export const createBackup = async (request,  clusterName, backupName, storageNam
       name: backupName,
     },
     spec: {
-      dbClusterName: clusterName,
+      dbClusterName: dbClusterName,
       backupStorageName: storageName,
     },
-  },
+  }
+  return await createDBClusterBackupWithData(request, payloadBackup)
+}
 
-   responseBackup = await request.post(`/v1/namespaces/${testsNs}/database-cluster-backups`, {
-    data: payloadBackup,
+export const createDBClusterBackupWithData = async (request, data) => {
+  const response = await createDBClusterBackupWithDataRaw(request, data)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const createDBClusterBackupWithDataRaw = async (request, data) => {
+  return await request.post(`/v1/namespaces/${testsNs}/database-cluster-backups`, { data })
+}
+
+export const getDBClusterBackup = async (request, name) => {
+  const response = await getDBClusterBackupRaw(request, name)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const getDBClusterBackupRaw = async (request, name) => {
+  return await request.get(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+}
+
+export const listDBClusterBackups = async (request, dbClusterName) => {
+  const response = await listDBClusterBackupsRaw(request, dbClusterName)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const listDBClusterBackupsRaw = async (request, dbClusterName) => {
+  return await request.get(`/v1/namespaces/${testsNs}/database-clusters/${dbClusterName}/backups`)
+}
+
+export const deleteDBClusterBackup = async (request, name) => {
+  let res = await deleteDBClusterBackupRaw(request, name)
+
+  // Wait for deletion mark.
+  await expect(async () => {
+    res = await getDBClusterBackupRaw(request, name)
+    await checkResourceDeletion(res)
+  }).toPass({
+    intervals: [1000],
+    timeout: 30 * 1000,
   })
-
-  await checkError(responseBackup)
 }
 
-export const deleteBackup = async (page, request, name) => {
-  const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+export const deleteDBClusterBackupRaw = async (request, name) => {
+  return await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+}
 
-  checkError(res)
-  for (let i = 0; i < 100; i++) {
-    const bkp = await request.get(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
-
-    if (bkp.status() === 404) {
-      return;
-    }
-
-    // remove finalizers.
-    const data = await bkp.json()
-
-    data.metadata.finalizers = null
-    await request.put(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`, { data })
-
-    await page.waitForTimeout(1000)
+// --------------------- DB Restore helpers -----------------------------------------------
+export const createDBClusterRestore = async (request, restoreName, dbClusterName, backupName) => {
+  const payload = {
+    apiVersion: 'everest.percona.com/v1alpha1',
+    kind: 'DatabaseClusterRestore',
+    metadata: {
+      name: restoreName,
+    },
+    spec: {
+      dataSource: {
+        dbClusterBackupName: backupName,
+      },
+      dbClusterName: dbClusterName,
+    },
   }
+  return await createDBClusterRestoreWithData(request, payload)
 }
 
-export const deleteRestore = async (request, restoreName) => {
-  const res = await request.delete(`/v1/namespaces/${testsNs}/database-cluster-restores/${restoreName}`)
-
-  await checkError(res)
+export const createDBClusterRestoreWithData = async (request, data) => {
+  const response = await createDBClusterRestoreWithDataRaw(request, data)
+  await checkError(response)
+  return (await response.json())
 }
 
-export const checkObjectDeletion = async (obj) => {
-  if (obj.status() === 200) {
-    expect((await obj.json()).metadata['deletionTimestamp']).not.toBe('');
-  } else {
-    expect(obj.status()).toBe(404)
-  }
+export const createDBClusterRestoreWithDataRaw = async (request, data) => {
+  return await request.post(`/v1/namespaces/${testsNs}/database-cluster-restores`, { data })
+}
+
+export const getDBClusterRestore = async (request, name) => {
+  const response = await getDBClusterRestoreRaw(request, name)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const getDBClusterRestoreRaw = async (request, name) => {
+  return await request.get(`/v1/namespaces/${testsNs}/database-cluster-restores/${name}`)
+}
+
+export const listDBClusterRestores = async (request, dbClusterName) => {
+  const response = await listDBClusterRestoresRaw(request, dbClusterName)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const listDBClusterRestoresRaw = async (request, dbClusterName) => {
+  return await request.get(`/v1/namespaces/${testsNs}/database-clusters/${dbClusterName}/restores`)
+}
+
+export const deleteDBClusterRestore = async (request, name) => {
+  let res = await deleteDBClusterRestoreRaw(request, name)
+
+  // Wait for deletion mark.
+  await expect(async () => {
+    res = await getDBClusterRestoreRaw(request, name)
+    await checkResourceDeletion(res)
+  }).toPass({
+    intervals: [1000],
+    timeout: 30 * 1000,
+  })
+}
+
+export const deleteDBClusterRestoreRaw = async (request, name) => {
+  return await request.delete(`/v1/namespaces/${testsNs}/database-cluster-restores/${name}`)
 }
 
 // --------------------- Monitoring Config helpers ---------------------------------------
@@ -403,16 +434,14 @@ export const createMonitoringConfig = async (request, name) => {
       apiKey: `${process.env.PMM1_API_KEY}`,
     },
     verifyTLS: false,
-  },
-   res = await createMonitoringConfigWithDataRaw(request, miData)
-
-  expect(res.ok()).toBeTruthy()
+  }
+  return  await createMonitoringConfigWithDataRaw(request, miData)
 }
 
 export const createMonitoringConfigWithData = async (request, data) => {
-  const res = await createMonitoringConfigWithDataRaw(request, data)
-  expect(res.ok()).toBeTruthy()
-  return (await res.json())
+  const response = await createMonitoringConfigWithDataRaw(request, data)
+  await checkError(response)
+  return (await response.json())
 }
 
 export const createMonitoringConfigWithDataRaw = async (request, data) => {
@@ -420,9 +449,9 @@ export const createMonitoringConfigWithDataRaw = async (request, data) => {
 }
 
 export const getMonitoringConfig = async (request, name) => {
-  const resp = await getMonitoringConfigRaw(request, name)
-  await checkError(resp)
-  return (await resp.json())
+  const response = await getMonitoringConfigRaw(request, name)
+  await checkError(response)
+  return (await response.json())
 }
 
 export const getMonitoringConfigRaw = async (request, name) => {
@@ -430,10 +459,9 @@ export const getMonitoringConfigRaw = async (request, name) => {
 }
 
 export const updateMonitoringConfig = async (request, name, data) => {
-  const resp = await updateMonitoringConfigRaw(request, name, data)
-  // await checkError(resp)
-  expect(resp.ok()).toBeTruthy()
-  return (await resp.json())
+  const response = await updateMonitoringConfigRaw(request, name, data)
+  await checkError(response)
+  return (await response.json())
 }
 
 export const updateMonitoringConfigRaw = async (request, name, data) => {
@@ -441,23 +469,71 @@ export const updateMonitoringConfigRaw = async (request, name, data) => {
 }
 
 export const deleteMonitoringConfig = async (request, name) => {
-  const res = await deleteMonitoringConfigRaw(request, name)
-
-  if (res.status() === 404) {
-    return;
-  }
-
-  await checkError(res)
+  // Wait for deletion mark.
+  await expect(async () => {
+    await deleteMonitoringConfigRaw(request, name)
+    const res = await getMonitoringConfigRaw(request, name)
+    await checkResourceDeletion(res)
+  }).toPass({
+    intervals: [1000],
+    timeout: 300 * 1000,
+  })
 }
 
 export const deleteMonitoringConfigRaw = async (request, name) => {
   return await request.delete(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
 }
 
-// --------------------- Dat Importer helpers -----------------------------------------------
+// --------------------- DB Engine helpers -----------------------------------------------
+export const getPSMDBEngineRecommendedVersion = async (request) => {
+  const response = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`)
+  await checkError(response)
+
+  const availableVersions = (await response.json()).status.availableVersions.engine
+  let recommendedVersion
+
+  for (const k in availableVersions) {
+    if (availableVersions[k].status === 'recommended') {
+      recommendedVersion = k
+    }
+  }
+
+  expect(recommendedVersion).not.toBe('')
+  return recommendedVersion
+}
+// --------------------- Data Importer helpers -----------------------------------------------
 export const createDataImporter = async (cli: CliHelper) => {
   let dataImporterPath = 'testdata/dataimporter.yaml'
   await cli.exec(`kubectl apply -f ${dataImporterPath} || true`)
-  const out = await cli.execSilent(`kubectl get dataimporters`)
-  out.outContains("test-data-importer")
+
+  await expect(async () => {
+    const out = await cli.execSilent(`kubectl get dataimporters`)
+    await out.outContains("test-data-importer")
+  }).toPass({
+    intervals: [1000],
+    timeout: 30 * 1000,
+  })
+}
+
+export const deleteDataImporter = async (cli: CliHelper) => {
+  let dataImporterPath = 'testdata/dataimporter.yaml'
+  await cli.exec(`kubectl delete -f ${dataImporterPath} || true`)
+
+  await expect(async () => {
+    const out = await cli.execSilent(`kubectl get dataimporters`)
+    await out.outNotContains(["test-data-importer"])
+  }).toPass({
+    intervals: [2000],
+    timeout: 30 * 1000,
+  })
+}
+
+export const getDataImportJobs = async (request, dbClusterName) => {
+  const response = await getDataImportJobsRaw(request, dbClusterName)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const getDataImportJobsRaw = async (request, dbClusterName) => {
+  return await request.get(`/v1/namespaces/${testsNs}/database-clusters/${dbClusterName}/data-import-jobs`)
 }
