@@ -226,6 +226,13 @@ func (h *rbacHandler) enforceDBClusterRead(ctx context.Context, db *everestv1alp
 	if err := h.enforce(ctx, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
 		return err
 	}
+
+	if lbcName := db.Spec.Proxy.Expose.LoadBalancerConfigName; lbcName != "" {
+		if err := h.enforce(ctx, rbac.ResourceLoadBalancerConfigs, rbac.ActionRead, lbcName); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

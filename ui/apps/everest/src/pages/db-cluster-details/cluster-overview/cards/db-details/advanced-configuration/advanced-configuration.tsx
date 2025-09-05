@@ -28,6 +28,7 @@ import {
 } from 'utils/db';
 import { Link } from 'react-router-dom';
 import { useRBACPermissions } from 'hooks/rbac';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -35,6 +36,7 @@ export const AdvancedConfiguration = ({
   parameters,
   storageClass,
   podSchedulingPolicy,
+  loadBalancerConfig,
 }: AdvancedConfigurationOverviewCardProps) => {
   const {
     canUpdateDb,
@@ -66,23 +68,25 @@ export const AdvancedConfiguration = ({
     canUpdateDb && !shouldDbActionsBeBlocked(dbCluster?.status?.status);
 
   const handleSubmit = async ({
-    externalAccess,
     sourceRanges,
     engineParametersEnabled,
     engineParameters,
     podSchedulingPolicyEnabled,
     podSchedulingPolicy,
+    exposureMethod,
+    loadBalancerConfigName,
   }: AdvancedConfigurationFormType) => {
     setUpdating(true);
     updateCluster(
       changeDbClusterAdvancedConfig(
         dbCluster!,
         engineParametersEnabled,
-        externalAccess,
+        exposureMethod,
         engineParameters,
         sourceRanges,
         podSchedulingPolicyEnabled,
-        podSchedulingPolicy
+        podSchedulingPolicy,
+        loadBalancerConfigName
       )
     );
   };
@@ -128,12 +132,31 @@ export const AdvancedConfiguration = ({
           podSchedulingPolicy ? (
             canReadPolicy ? (
               <Link
-                to={`/settings/pod-scheduling-policies/${podSchedulingPolicy}`}
+                to={`/settings/policies/pod-scheduling/${podSchedulingPolicy}`}
               >
                 {podSchedulingPolicy}
               </Link>
             ) : (
               podSchedulingPolicy
+            )
+          ) : (
+            Messages.fields.disabled
+          )
+        }
+      />
+      <OverviewSectionRow
+        label={Messages.fields.loadBalancerConfig}
+        content={
+          loadBalancerConfig ? (
+            canReadPolicy &&
+            loadBalancerConfig !== EMPTY_LOAD_BALANCER_CONFIGURATION ? (
+              <Link
+                to={`/settings/policies/load-balancer-configuration/${loadBalancerConfig}`}
+              >
+                {loadBalancerConfig}
+              </Link>
+            ) : (
+              loadBalancerConfig
             )
           ) : (
             Messages.fields.disabled
