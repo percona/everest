@@ -56,7 +56,7 @@ const LoadBalancerConfigDetails = () => {
     'load-balancer-configs',
     `${configName}`
   );
-  const [isSaved, setIsSaved] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
   const { data: config, refetch: refetchConfig } =
     useLoadBalancerConfig(configName);
   const methods = useForm<{

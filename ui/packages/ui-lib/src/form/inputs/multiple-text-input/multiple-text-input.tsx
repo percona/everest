@@ -3,6 +3,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { FieldError, useFieldArray, useFormContext } from 'react-hook-form';
 import TextInput from '../text';
+import { useCallback, useEffect, useMemo } from 'react';
 
 interface MultipleTextInputProps {
   fieldName: string;
@@ -35,6 +36,12 @@ const MultipleTextInput = ({
   const handleAdd = () => {
     append({ key: '', value: '' });
   };
+
+  useEffect(() => {
+    if (fields.length === 0) {
+      handleAdd();
+    }
+  }, [fields]);
 
   const handleOnChange = async (
     value: string,
