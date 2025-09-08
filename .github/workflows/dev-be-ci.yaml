@@ -178,22 +178,6 @@ jobs:
         run: |
           make ci-init
 
-#      - name: Deploy PMM instances into K3D test cluster
-#        working-directory: api-tests
-#        run: |
-#          make deploy-monitoring
-#          make port-forward-monitoring
-#
-#      - name: Create test users
-#        working-directory: api-tests
-#        run: |
-#          make create-test-users
-#
-#      - name: Pre-upload PG,PSMDB,PXC images to K3D test cluster
-#        working-directory: api-tests
-#        run: |
-#          make k3d-upload-images
-
       - name: Run integration tests
         working-directory: api-tests
         shell: bash
@@ -201,18 +185,13 @@ jobs:
         run: |
           make test
 
-      # Enable Tmate debug ssh session on demand
-      - name: Setup tmate session
+      - name: Run debug commands on failure
         if: ${{ failure() }}
-        uses: percona/gh-action-action-tmate@v3
-
-#      - name: Run debug commands on failure
-#        if: ${{ failure() }}
-#        run: |
-#          kubectl -n everest-system describe pods
-#          kubectl -n everest-monitoring describe pods
-#          kubectl -n everest describe pods
-#          kubectl -n everest-system logs deploy/everest-server
+        run: |
+          kubectl -n everest-system describe pods
+          kubectl -n everest-monitoring describe pods
+          kubectl -n everest describe pods
+          kubectl -n everest-system logs deploy/everest-server
 
   integration_tests_cli:
     name: CLI Integration Tests

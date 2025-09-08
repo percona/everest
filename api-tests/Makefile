@@ -14,6 +14,8 @@ init:     ## Install tests dependencies.
 	npm ci
 	PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx playwright install
 
+# NOTE: API tests do not wait for DB clusters to be ready.
+# The only exception is pg-data-importer test, so that only PG images are pre-uploaded to K3D cluster.
 CI_INIT_DEPS := init deploy-monitoring create-test-users
 CI_INIT_DEPS += k3d-upload-pg-images port-forward-monitoring
 .PHONY: ci-init
