@@ -43,7 +43,7 @@ jobs:
           cd ui
           pnpm build-storybook
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: "ui/packages/ui-lib/storybook-static"
       - name: Deploy to GitHub Pages
