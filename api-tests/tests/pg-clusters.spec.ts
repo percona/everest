@@ -13,250 +13,126 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { test, expect } from '@fixtures'
-import {checkError, deleteDBCluster, testsNs} from '@tests/tests/helpers';
+import * as th from "@tests/tests/helpers";
 
-let recommendedVersion
+const testPrefix = 'pg'
 
-test.setTimeout(120 * 1000)
+test.describe('PG cluster tests', {tag: ['@pg']}, () => {
+  test.describe.configure({ timeout: 120 * 1000 });
 
-test.beforeAll(async ({ request }) => {
-  const engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-postgresql-operator`),
-   availableVersions = (await engineResponse.json()).status.availableVersions.engine
+  test('create/scale/expose/delete single node pg cluster', async ({request}) => {
+    const dbClusterName = th.limitedSuffixedName(testPrefix + '-sin')
+    let dbClusterPayload = th.getPGClusterDataSimple(dbClusterName)
+    let dbCluster
 
-  for (const k in availableVersions) {
-    if (availableVersions[k].status === 'recommended') {
-      recommendedVersion = k
+    try {
+      await test.step('create DB cluster', async () => {
+        await th.createDBClusterWithData(request, dbClusterPayload)
+
+        await expect(async () => {
+          dbCluster = await th.getDBCluster(request, dbClusterName)
+          expect(dbCluster.spec).toMatchObject(dbClusterPayload.spec)
+        }).toPass({
+          intervals: [1000],
+          timeout: 30 * 1000,
+        })
+      })
+
+      await test.step('scale up DB cluster (engine=2, proxy=2)', async () => {
+        await expect(async () => {
+          const dbEngineReplicas = 2
+          const dbProxyReplicas = 2
+          dbCluster = await th.getDBCluster(request, dbClusterName)
+          dbCluster.spec.engine.replicas = dbEngineReplicas
+          dbCluster.spec.proxy.replicas = dbProxyReplicas
+
+          dbCluster = await th.updateDBCluster(request, dbClusterName, dbCluster)
+          expect(dbCluster.spec.engine.replicas).toBe(dbEngineReplicas)
+          expect(dbCluster.spec.proxy.replicas).toBe(dbProxyReplicas)
+        }).toPass({
+          intervals: [1000],
+          timeout: 30 * 1000,
+        })
+      })
+
+      await test.step('expose DB cluster', async () => {
+        await expect(async () => {
+          dbCluster = await th.getDBCluster(request, dbClusterName)
+          dbCluster.spec.proxy.expose.type = 'external'
+
+          dbCluster = await th.updateDBCluster(request, dbClusterName, dbCluster)
+          expect(dbCluster.spec.proxy.expose.type).toMatch('external')
+        }).toPass({
+          intervals: [1000],
+          timeout: 30 * 1000,
+        })
+      })
+
+      await test.step('delete DB cluster', async () => {
+        await th.deleteDBCluster(request, dbClusterName)
+      });
+
+    } finally {
+      await th.deleteDBCluster(request, dbClusterName)
     }
-  }
-
-  expect(recommendedVersion).not.toBe('')
-})
-
-test('create/edit/delete single node pg cluster', async ({ request, page }) => {
-  const clusterName = 'test-pg-cluster',
-   pgPayload = {
-    apiVersion: 'everest.percona.com/v1alpha1',
-    kind: 'DatabaseCluster',
-    metadata: {
-      name: clusterName,
-      namespace: testsNs,
-    },
-    spec: {
-      engine: {
-        type: 'postgresql',
-        replicas: 1,
-        version: recommendedVersion,
-        storage: {
-          size: '25G',
-        },
-        resources: {
-          cpu: '1',
-          memory: '1G',
-        },
-      },
-      proxy: {
-        type: 'pgbouncer', // HAProxy is the default option. However using proxySQL is available
-        replicas: 1,
-        expose: {
-          type: 'internal',
-        },
-      },
-    },
-  }
-
-  await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
-    data: pgPayload,
   })
-  for (let i = 0; i < 30; i++) {
-    await page.waitForTimeout(2000)
 
-    const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
+  test('create/scale/expose/delete multi node pg cluster', async ({request}) => {
+    const dbClusterName = th.limitedSuffixedName(testPrefix + '-mul')
+    let dbClusterPayload = th.getPGClusterDataSimple(dbClusterName)
+    dbClusterPayload.spec.engine.replicas = 3
+    dbClusterPayload.spec.proxy.replicas = 3
+    let dbCluster
 
-    await checkError(pgCluster)
+    try {
+      await test.step('create DB cluster(engine=3, proxy=3)', async () => {
+        await th.createDBClusterWithData(request, dbClusterPayload)
 
-    const result = (await pgCluster.json())
+        await expect(async () => {
+          dbCluster = await th.getDBCluster(request, dbClusterName)
+          expect(dbCluster.spec).toMatchObject(dbClusterPayload.spec)
+        }).toPass({
+          intervals: [1000],
+          timeout: 30 * 1000,
+        })
+      })
 
-    if (typeof result.status === 'undefined' || typeof result.status.size === 'undefined') {
-      continue
+      await test.step('scale up DB cluster(engine=4, proxy=4)', async () => {
+        await expect(async () => {
+          const dbEngineReplicas = 4
+          const dbProxyReplicas = 4
+          dbCluster = await th.getDBCluster(request, dbClusterName)
+          dbCluster.spec.engine.replicas = dbEngineReplicas
+          dbCluster.spec.proxy.replicas = dbProxyReplicas
+
+          dbCluster = await th.updateDBCluster(request, dbClusterName, dbCluster)
+          expect(dbCluster.spec.engine.replicas).toBe(dbEngineReplicas)
+          expect(dbCluster.spec.proxy.replicas).toBe(dbProxyReplicas)
+        }).toPass({
+          intervals: [1000],
+          timeout: 30 * 1000,
+        })
+      })
+
+      await test.step('expose DB cluster', async () => {
+        await expect(async () => {
+          dbCluster = await th.getDBCluster(request, dbClusterName)
+          dbCluster.spec.proxy.expose.type = 'external'
+
+          dbCluster = await th.updateDBCluster(request, dbClusterName, dbCluster)
+          expect(dbCluster.spec.proxy.expose.type).toMatch('external')
+        }).toPass({
+          intervals: [1000],
+          timeout: 30 * 1000,
+        })
+      })
+
+      await test.step('delete DB cluster', async () => {
+        await th.deleteDBCluster(request, dbClusterName)
+      });
+
+    } finally {
+      await th.deleteDBCluster(request, dbClusterName)
     }
-
-    expect(result.metadata.name).toBe(clusterName)
-    expect(result.spec).toMatchObject(pgPayload.spec)
-    expect(result.status.size).toBe(2)
-
-    // pgPayload should be overriden because kubernetes adds data into metadata field
-    // and uses metadata.generation during updation. It returns 422 HTTP status code if this field is not present
-    //
-    // kubectl under the hood merges everything hence the UX is seemless
-    pgPayload.spec = result.spec
-    pgPayload.metadata = result.metadata
-    break
-  }
-
-  pgPayload.spec.engine.replicas = 3
-
-  // Update PG cluster
-  expect(pgPayload.metadata['resourceVersion']).toBeDefined()
-
-  const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
-    data: pgPayload,
   })
-
-  await checkError(updatedPGCluster)
-
-  const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-
-  await checkError(pgCluster)
-
-  expect((await updatedPGCluster.json()).spec.clusterSize).toBe(pgPayload.spec.clusterSize)
-
-  await deleteDBCluster(request, page, clusterName)
-})
-
-test('expose pg cluster after creation', async ({ request, page }) => {
-  const clusterName = 'exposed-pg-cluster',
-   pgPayload = {
-    apiVersion: 'everest.percona.com/v1alpha1',
-    kind: 'DatabaseCluster',
-    metadata: {
-      name: clusterName,
-      namespace: testsNs,
-    },
-    spec: {
-      engine: {
-        type: 'postgresql',
-        replicas: 1,
-        version: recommendedVersion,
-        storage: {
-          size: '25G',
-        },
-        resources: {
-          cpu: '1',
-          memory: '1G',
-        },
-      },
-      proxy: {
-        type: 'pgbouncer', // HAProxy is the default option. However using proxySQL is available
-        replicas: 1,
-        expose: {
-          type: 'internal',
-        },
-      },
-    },
-  }
-
-  await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
-    data: pgPayload,
-  })
-  for (let i = 0; i < 30; i++) {
-    await page.waitForTimeout(2000)
-
-    const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-
-    await checkError(pgCluster)
-
-    const result = (await pgCluster.json())
-
-    if (typeof result.status === 'undefined' || typeof result.status.size === 'undefined') {
-      continue
-    }
-
-    expect(result.metadata.name).toBe(clusterName)
-    expect(result.spec).toMatchObject(pgPayload.spec)
-    expect(result.status.size).toBe(2)
-
-    pgPayload.spec = result.spec
-    pgPayload.metadata = result.metadata
-    break
-  }
-
-  pgPayload.spec.proxy.expose.type = 'external'
-
-  // Update PG cluster
-  expect(pgPayload.metadata['resourceVersion']).toBeDefined()
-
-  const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
-    data: pgPayload,
-  })
-
-  await checkError(updatedPGCluster)
-
-  const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-
-  await checkError(pgCluster)
-
-  expect((await updatedPGCluster.json()).spec.proxy.expose.type).toBe('external')
-
-  await deleteDBCluster(request, page, clusterName)
-})
-
-test('expose pg cluster on EKS to the public internet and scale up', async ({ request, page }) => {
-  const clusterName = 'eks-pg-cluster',
-   pgPayload = {
-    apiVersion: 'everest.percona.com/v1alpha1',
-    kind: 'DatabaseCluster',
-    metadata: {
-      name: clusterName,
-      namespace: testsNs,
-    },
-    spec: {
-      engine: {
-        type: 'postgresql',
-        replicas: 3,
-        version: recommendedVersion,
-        storage: {
-          size: '25G',
-        },
-        resources: {
-          cpu: '1',
-          memory: '1G',
-        },
-      },
-      proxy: {
-        type: 'pgbouncer', // HAProxy is the default option. However using proxySQL is available
-        replicas: 3,
-        expose: {
-          type: 'external', // FIXME: Add internetfacing once it'll be implemented
-        },
-      },
-    },
-  }
-
-  await request.post(`/v1/namespaces/${testsNs}/database-clusters`, {
-    data: pgPayload,
-  })
-  for (let i = 0; i < 30; i++) {
-    await page.waitForTimeout(2000)
-
-    const pgCluster = await request.get(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`)
-
-    await checkError(pgCluster)
-
-    const result = (await pgCluster.json())
-
-    if (typeof result.status === 'undefined' || typeof result.status.size === 'undefined') {
-      continue
-    }
-
-    expect(result.metadata.name).toBe(clusterName)
-    expect(result.spec).toMatchObject(pgPayload.spec)
-    expect(result.status.size).toBe(6)
-
-    pgPayload.spec = result.spec
-    pgPayload.metadata = result.metadata
-    break
-  }
-
-  pgPayload.spec.engine.replicas = 5
-
-  // Update PG cluster
-  expect(pgPayload.metadata['resourceVersion']).toBeDefined()
-
-  const updatedPGCluster = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${clusterName}`, {
-    data: pgPayload,
-  })
-
-  await checkError(updatedPGCluster)
-
-  await deleteDBCluster(request, page, clusterName)
-})
+});
