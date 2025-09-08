@@ -164,18 +164,32 @@ const LoadBalancerConfigDetails = () => {
       }
     });
 
-    updateAnnotations({
-      metadata: config?.metadata || {
-        name: configName,
-        resourceVersion: config?.metadata.resourceVersion || '',
-        finalizers: config?.metadata.finalizers || [],
-        generation: config?.metadata.generation || 0,
+    updateAnnotations(
+      {
+        metadata: config?.metadata || {
+          name: configName,
+          resourceVersion: config?.metadata.resourceVersion || '',
+          finalizers: config?.metadata.finalizers || [],
+          generation: config?.metadata.generation || 0,
+        },
+        spec: {
+          annotations: res,
+        },
       },
-      spec: {
-        annotations: res,
-      },
-    });
-  }, [config, methods, updateAnnotations, configName]);
+      {
+        onSuccess: () => {
+          navigate(
+            `/settings/policies/load-balancer-configuration/${config?.metadata.name}`,
+            {
+              state: {
+                createdConfig: false,
+              },
+            }
+          );
+        },
+      }
+    );
+  }, [methods, updateAnnotations, config?.metadata, configName, navigate]);
 
   if (!config || isPending) {
     return <LoadingPageSkeleton />;

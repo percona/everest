@@ -51,7 +51,14 @@ const LoadBalancerConfigurationList = () => {
         queryClient.invalidateQueries({
           queryKey: ['load-balancer-configs'],
         });
-        navigate(`/settings/policies/load-balancer-configuration/${data.name}`);
+        navigate(
+          `/settings/policies/load-balancer-configuration/${data.name}`,
+          {
+            state: {
+              createdConfig: true,
+            },
+          }
+        );
       },
     });
   };
@@ -102,7 +109,12 @@ const LoadBalancerConfigurationList = () => {
         enableRowHoverAction
         rowHoverAction={(row) =>
           navigate(
-            `/settings/policies/load-balancer-configuration/${row.original.metadata?.name}`
+            `/settings/policies/load-balancer-configuration/${row.original.metadata?.name}`,
+            {
+              state: {
+                createdConfig: false,
+              },
+            }
           )
         }
         renderTopToolbarCustomActions={() =>

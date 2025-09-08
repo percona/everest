@@ -3,6 +3,7 @@ import { MultipleTextInput } from '@percona/ui-lib';
 import LoadingPageSkeleton from 'components/loading-page-skeleton/LoadingPageSkeleton';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import { useFormContext } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 
 interface ConfigDetailsProps {
   config: LoadBalancerConfig;
@@ -12,6 +13,8 @@ interface ConfigDetailsProps {
 
 const ConfigDetails = ({ config, isSaved, isDefault }: ConfigDetailsProps) => {
   const { trigger, getValues } = useFormContext();
+
+  const { state } = useLocation();
 
   if (!config) {
     return <LoadingPageSkeleton />;
@@ -35,7 +38,7 @@ const ConfigDetails = ({ config, isSaved, isDefault }: ConfigDetailsProps) => {
 
   return (
     <>
-      {isSaved || isDefault ? (
+      {!state.createdConfig && (isSaved || isDefault) ? (
         <LoadBalancerTable config={config} />
       ) : (
         <MultipleTextInput
