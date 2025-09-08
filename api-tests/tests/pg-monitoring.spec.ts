@@ -21,6 +21,7 @@ const testPrefix = 'pg-mon',
 
 test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
   test.describe.configure({ timeout: 120 * 1000 });
+
   test.beforeAll(async ({ request }) => {
     await th.createMonitoringConfig(request, monitoringConfigName1)
     await th.createMonitoringConfig(request, monitoringConfigName2)
@@ -30,6 +31,7 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
     await th.deleteMonitoringConfig(request, monitoringConfigName1)
     await th.deleteMonitoringConfig(request, monitoringConfigName2)
   })
+
   test('create db cluster with monitoring config', async ({request}) => {
     const dbClusterName = th.limitedSuffixedName(testPrefix)
     let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
@@ -39,7 +41,6 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
       await test.step('create db cluster with monitoring config', async () => {
         await th.createDBClusterWithData(request, dbClusterData)
 
-        // Wait for DB cluster creation.
         await expect(async () => {
           const dbCluster = await th.getDBCluster(request, dbClusterName)
           expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName1)
@@ -87,7 +88,6 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
       await test.step('create DB cluster with monitoring config 1', async () => {
         await th.createDBClusterWithData(request, dbClusterData)
 
-        // Wait for DB cluster creation.
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
           expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName1)
@@ -104,7 +104,6 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
 
           dbCluster = await th.updateDBCluster(request, dbClusterName, dbCluster)
           expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName2)
-          // expect(dbCluster.status.status).toMatch('ready')
         }).toPass({
           intervals: [1000],
           timeout: 300 * 1000,
@@ -116,8 +115,8 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
   })
 
   test('update db cluster without monitoring config with a new monitoring config', async ({request}) => {
-    const dbClusterName = th.limitedSuffixedName(testPrefix)
-    let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
+    const dbClusterName = th.limitedSuffixedName(testPrefix),
+      dbClusterData = th.getPGClusterDataSimple(dbClusterName)
 
     try {
       let dbCluster
@@ -125,7 +124,6 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
       await test.step('create DB cluster without monitoring config', async () => {
         await th.createDBClusterWithData(request, dbClusterData)
 
-        // Wait for DB cluster creation.
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
           expect(dbCluster.spec.monitoring?.monitoringConfigName).toBeFalsy()
@@ -153,7 +151,7 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
     }
   })
 
-  test('disable monitoring config', async ({request, page}) => {
+  test('disable monitoring config', async ({request}) => {
     const dbClusterName = th.limitedSuffixedName(testPrefix + '-dis')
     let dbClusterData = th.getPGClusterDataSimple(dbClusterName)
     dbClusterData.spec.monitoring = {monitoringConfigName: monitoringConfigName1}
@@ -164,7 +162,6 @@ test.describe('PG monitoring tests', {tag: ['@pg', '@monitoring']}, () => {
       await test.step('create DB cluster with monitoring config', async () => {
         await th.createDBClusterWithData(request, dbClusterData)
 
-        // Wait for DB cluster creation.
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
           expect(dbCluster.spec.monitoring.monitoringConfigName).toBe(monitoringConfigName1)

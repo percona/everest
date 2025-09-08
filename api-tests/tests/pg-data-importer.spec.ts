@@ -19,6 +19,7 @@ const testPrefix = 'pg-di'
 
 test.describe('PG data importer tests', {tag: ['@pg', '@data-importer']}, () => {
   test.describe.configure({timeout: 360 * 1000, mode: 'default'});
+
   test.beforeAll(async ({ cli }) => {
     await th.createDataImporter(cli)
   })

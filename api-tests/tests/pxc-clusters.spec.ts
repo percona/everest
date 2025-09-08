@@ -89,7 +89,6 @@ test.describe('PXC cluster tests', {tag: ['@pxc']}, () => {
       await test.step('create DB cluster(engine=3, proxy=3)', async () => {
         await th.createDBClusterWithData(request, dbClusterPayload)
 
-        // Wait for DB cluster creation.
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterName)
           expect(dbCluster.spec).toMatchObject(dbClusterPayload.spec)

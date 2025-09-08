@@ -21,6 +21,7 @@ const testPrefix = 'mc',
 
 test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
   test.describe.configure({ timeout: 60*1000 });
+
   test.afterAll(async ({ request }) => {
     await th.deleteMonitoringConfig(request, mcNameKey)
     await th.deleteMonitoringConfig(request, mcNamePass)

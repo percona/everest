@@ -15,7 +15,7 @@ init:     ## Install tests dependencies.
 	PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx playwright install
 
 CI_INIT_DEPS := init deploy-monitoring create-test-users
-CI_INIT_DEPS += k3d-upload-images port-forward-monitoring
+CI_INIT_DEPS += k3d-upload-pg-images port-forward-monitoring
 .PHONY: ci-init
 ci-init: $(CI_INIT_DEPS) 	## Prepare environment for running tests.
 
@@ -118,9 +118,9 @@ test:               ## Run all tests.
 	if [ -z "$${PMM1_API_KEY}" ]; then echo "Cannot get PMM1_API_KEY" ; exit 1 ; fi ;\
 	export PMM2_API_KEY=$$(curl --request POST https://admin:admin@localhost:8091/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"  --insecure 2>/dev/null | jq -r '.key') ;\
 	if [ -z "$${PMM2_API_KEY}" ]; then echo "Cannot get PMM2_API_KEY" ; exit 1 ; fi ;\
-	export API_TOKEN=$$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token) ;\
+	export API_TOKEN=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token) ;\
 	if [ -z "$${API_TOKEN}" ]; then echo "Cannot get API_TOKEN" ; exit 1 ; fi ;\
-	export API_TOKEN_TEST=$$(curl --location -s 'localhost:8080/v1/session' --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token) ;\
+	export API_TOKEN_TEST=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token) ;\
 	if [ -z "$${API_TOKEN_TEST}" ]; then echo "Cannot get API_TOKEN_TEST" ; exit 1 ; fi ;\
 	npx playwright test $(TEST) ;\
 	}

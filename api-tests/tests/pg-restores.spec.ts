@@ -20,6 +20,7 @@ const testPrefix = 'pg-res',
 
 test.describe('PG backup restore tests', {tag: ['@pg', '@restore']}, () => {
   test.describe.configure({ timeout: 120 * 1000 });
+
   test.beforeAll(async ({ request }) => {
     await th.createBackupStorageS3(request, bsName)
   })
