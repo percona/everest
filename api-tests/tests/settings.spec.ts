@@ -15,8 +15,10 @@
 import { test } from '@fixtures'
 import {checkError} from '@tests/tests/helpers';
 
-test('get settings endpoint', async ({ request, cli }) => {
-  const settings = await request.get('/v1/settings')
+test.describe('Everest settings tests', {tag: ['@settings']}, () => {
+  test('get settings endpoint', async ({request}) => {
+    const settings = await request.get('/v1/settings')
 
-  await checkError(settings)
-})
+    await checkError(settings)
+  })
+});
