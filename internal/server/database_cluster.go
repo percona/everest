@@ -46,7 +46,7 @@ func (e *EverestServer) CreateDatabaseCluster(c echo.Context, namespace string) 
 
 	result, err := e.handler.CreateDatabaseCluster(c.Request().Context(), dbc)
 	if err != nil {
-		e.l.Errorf("CreateDatabaseCluster failed: %w", err)
+		e.l.Errorf("CreateDatabaseCluster failed: %v", err)
 		return err
 	}
 
@@ -56,7 +56,7 @@ func (e *EverestServer) CreateDatabaseCluster(c echo.Context, namespace string) 
 		defer cancel()
 
 		if err := e.collectMetrics(ctx, *e.config); err != nil {
-			e.l.Errorf("Could not send metrics: %s", err)
+			e.l.Errorf("Could not send metrics: %v", err)
 		}
 	}()
 	return c.JSON(http.StatusCreated, result)
@@ -66,7 +66,7 @@ func (e *EverestServer) CreateDatabaseCluster(c echo.Context, namespace string) 
 func (e *EverestServer) ListDatabaseClusters(ctx echo.Context, namespace string) error {
 	list, err := e.handler.ListDatabaseClusters(ctx.Request().Context(), namespace)
 	if err != nil {
-		e.l.Errorf("ListDatabaseClusters failed: %w", err)
+		e.l.Errorf("ListDatabaseClusters failed: %v", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, list)
@@ -79,7 +79,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 	params api.DeleteDatabaseClusterParams,
 ) error {
 	if err := e.handler.DeleteDatabaseCluster(c.Request().Context(), namespace, name, &params); err != nil {
-		e.l.Errorf("DeleteDatabaseCluster failed: %w", err)
+		e.l.Errorf("DeleteDatabaseCluster failed: %v", err)
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -89,7 +89,7 @@ func (e *EverestServer) DeleteDatabaseCluster(
 func (e *EverestServer) GetDatabaseCluster(c echo.Context, namespace, name string) error {
 	result, err := e.handler.GetDatabaseCluster(c.Request().Context(), namespace, name)
 	if err != nil {
-		e.l.Errorf("GetDatabaseCluster failed: %w", err)
+		e.l.Errorf("GetDatabaseCluster failed: %v", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -99,7 +99,7 @@ func (e *EverestServer) GetDatabaseCluster(c echo.Context, namespace, name strin
 func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, namespace, name string) error {
 	result, err := e.handler.GetDatabaseClusterComponents(c.Request().Context(), namespace, name)
 	if err != nil {
-		e.l.Errorf("GetDatabaseClusterComponents failed: %w", err)
+		e.l.Errorf("GetDatabaseClusterComponents failed: %v", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -118,7 +118,7 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 
 	result, err := e.handler.UpdateDatabaseCluster(ctx.Request().Context(), dbc)
 	if err != nil {
-		e.l.Errorf("UpdateDatabaseCluster failed: %w", err)
+		e.l.Errorf("UpdateDatabaseCluster failed: %v", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -128,7 +128,7 @@ func (e *EverestServer) UpdateDatabaseCluster(ctx echo.Context, namespace, name 
 func (e *EverestServer) GetDatabaseClusterCredentials(c echo.Context, namespace, name string) error {
 	result, err := e.handler.GetDatabaseClusterCredentials(c.Request().Context(), namespace, name)
 	if err != nil {
-		e.l.Errorf("GetDatabaseClusterCredentials failed: %w", err)
+		e.l.Errorf("GetDatabaseClusterCredentials failed: %v", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -138,7 +138,7 @@ func (e *EverestServer) GetDatabaseClusterCredentials(c echo.Context, namespace,
 func (e *EverestServer) GetDatabaseClusterPitr(c echo.Context, namespace, name string) error {
 	result, err := e.handler.GetDatabaseClusterPitr(c.Request().Context(), namespace, name)
 	if err != nil {
-		e.l.Errorf("GetDatabaseClusterPitr failed: %w", err)
+		e.l.Errorf("GetDatabaseClusterPitr failed: %v", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, result)
@@ -166,7 +166,7 @@ func (e *EverestServer) CreateDatabaseClusterSecret(
 	}
 	result, err := e.handler.CreateDatabaseClusterSecret(c.Request().Context(), namespace, dbName, secret)
 	if err != nil {
-		e.l.Errorf("CreateDatabaseClusterSecret failed: %w", err)
+		e.l.Errorf("CreateDatabaseClusterSecret failed: %v", err)
 		return err
 	}
 	return c.JSON(http.StatusCreated, result)
