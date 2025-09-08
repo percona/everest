@@ -29,7 +29,7 @@ func (e *EverestServer) ListBackupStorages(c echo.Context, namespace string) err
 	ctx := c.Request().Context()
 	list, err := e.handler.ListBackupStorages(ctx, namespace)
 	if err != nil {
-		e.l.Errorf("ListBackupStorages failed: %w", err)
+		e.l.Errorf("ListBackupStorages failed: %v", err)
 		return err
 	}
 
@@ -51,7 +51,7 @@ func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) er
 	}
 	result, err := e.handler.CreateBackupStorage(ctx, namespace, &req)
 	if err != nil {
-		e.l.Errorf("CreateBackupStorage failed: %w", err)
+		e.l.Errorf("CreateBackupStorage failed: %v", err)
 		return err
 	}
 	out := &api.BackupStorage{}
@@ -63,7 +63,7 @@ func (e *EverestServer) CreateBackupStorage(c echo.Context, namespace string) er
 func (e *EverestServer) DeleteBackupStorage(c echo.Context, namespace, name string) error {
 	ctx := c.Request().Context()
 	if err := e.handler.DeleteBackupStorage(ctx, namespace, name); err != nil {
-		e.l.Errorf("DeleteBackupStorage failed: %w", err)
+		e.l.Errorf("DeleteBackupStorage failed: %v", err)
 		return err
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -74,7 +74,7 @@ func (e *EverestServer) GetBackupStorage(c echo.Context, namespace, name string)
 	ctx := c.Request().Context()
 	result, err := e.handler.GetBackupStorage(ctx, namespace, name)
 	if err != nil {
-		e.l.Errorf("GetBackupStorage failed: %w", err)
+		e.l.Errorf("GetBackupStorage failed: %v", err)
 		return err
 	}
 
@@ -92,7 +92,7 @@ func (e *EverestServer) UpdateBackupStorage(c echo.Context, namespace, name stri
 	}
 	result, err := e.handler.UpdateBackupStorage(ctx, namespace, name, &req)
 	if err != nil {
-		e.l.Errorf("UpdateBackupStorage failed: %w", err)
+		e.l.Errorf("UpdateBackupStorage failed: %v", err)
 		return err
 	}
 	out := &api.BackupStorage{}

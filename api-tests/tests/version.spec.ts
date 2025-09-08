@@ -15,17 +15,16 @@
 import { expect, test } from '@fixtures'
 import {checkError} from '@tests/tests/helpers';
 
-test('version endpoint', async ({ request, cli }) => {
-  const version = await request.get('/v1/version')
+test.describe('Everest version tests', {tag: ['@version']}, () => {
+  test('version endpoint', async ({ request, cli }) => {
+    const version = await request.get('/v1/version')
+    await checkError(version)
 
-  await checkError(version)
+    const versionJSON = await version.json(),
+    gitVersion = await cli.exec('git rev-parse --short HEAD')
+    await gitVersion.assertSuccess()
 
-  const versionJSON = await version.json(),
-
-   gitVersion = await cli.exec('git rev-parse --short HEAD')
-
-  await gitVersion.assertSuccess()
-
-  expect(versionJSON.projectName).toEqual('Everest API Server')
-  expect(versionJSON.version).toEqual('v0.0.0-' + gitVersion.getStdOutLines()[0])
-})
+    expect(versionJSON.projectName).toEqual('Everest API Server')
+    expect(versionJSON.version).toEqual('v0.0.0-' + gitVersion.getStdOutLines()[0])
+  })
+});
