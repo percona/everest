@@ -1,3 +1,4 @@
+---
 apiVersion: everest.percona.com/v1alpha1
 kind: DataImporter
 metadata:
@@ -11,4 +12,4 @@ spec:
   - psmdb
   jobSpec:
     image: "busybox"
-    command: ["/bin/sh", "-c", "sleep 30 && cat \"$0\""]
+    command: ["/bin/sh", "-c", "sleep 10 && cat \"$0\""]
