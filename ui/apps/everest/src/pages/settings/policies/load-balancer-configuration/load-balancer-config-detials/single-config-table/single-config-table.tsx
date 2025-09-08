@@ -38,7 +38,7 @@ const ConfigDetails = ({ config, isSaved, isDefault }: ConfigDetailsProps) => {
 
   return (
     <>
-      {!state.createdConfig && (isSaved || isDefault) ? (
+      {!state.createdConfig || isDefault ? (
         <LoadBalancerTable config={config} />
       ) : (
         <MultipleTextInput
