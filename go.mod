@@ -1,6 +1,6 @@
 module github.com/percona/everest
 
-go 1.24.5
+go 1.25.1
 
 require (
 	github.com/AlekSi/pointer v1.2.0
@@ -28,8 +28,8 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.33.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20250825090528-28c57f677232
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250825065733-8ccf8eedc0b7
+	github.com/percona/everest-operator v0.6.0-dev1.0.20250908085733-47ec7799e09d
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20250908105349-cff8ea938bd9
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
