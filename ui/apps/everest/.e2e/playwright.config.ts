@@ -49,6 +49,7 @@ export default defineConfig({
     ['github'],
     ['list'],
     ['html', { open: 'never', outputFolder: './playwright-report' }],
+    ['json', { outputFile: './playwright-report/report.json' }],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -67,9 +68,33 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'session-setup',
+      testDir: './setup',
+      testMatch: /session-setup\.ts$/,
+    },
+    {
+      name: 'session',
+      testDir: './release/session',
+      dependencies: ['session-setup'],
+      use: {
+        storageState: path.join(__dirname, 'sessionUser.json'),
+      },
+    },
+    {
+      name: 'session-teardown',
+      testDir: './teardown',
+      testMatch: /session-teardown\.ts$/,
+      dependencies: ['session'],
+      use: {
+        storageState: path.join(__dirname, 'sessionUser.json'),
+      },
+    },
+    {
       name: 'auth',
       testDir: './setup',
       testMatch: /auth.setup\.ts/,
+      dependencies:
+        process.env.IGNORE_SESSION_TESTS === 'true' ? [] : ['session-teardown'],
     },
     {
       name: 'setup',
@@ -133,13 +158,48 @@ export default defineConfig({
       ],
     },
     {
+      name: 'release-rbac-setup',
+      testDir: './setup',
+      testMatch: /rbac.setup\.ts/,
+      use: {
+        storageState: STORAGE_STATE_FILE,
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'release-rbac',
+      use: {
+        browserName: 'chromium',
+        channel: 'chrome',
+        storageState: STORAGE_STATE_FILE,
+      },
+      testDir: './release/rbac',
+      dependencies: ['setup', 'release-rbac-setup'],
+    },
+    {
+      name: 'release-rbac-teardown',
+      testDir: './teardown',
+      testMatch: /rbac\.teardown\.ts/,
+      use: {
+        storageState: STORAGE_STATE_FILE,
+      },
+      dependencies: ['release-rbac'],
+    },
+    {
       name: 'release',
       use: {
         storageState: STORAGE_STATE_FILE,
         actionTimeout: 10000,
       },
       testDir: 'release',
-      dependencies: ['setup'],
+      testIgnore: ['release/rbac/*', 'release/session/*'],
+      dependencies: [
+        'setup',
+        ...(process.env.IGNORE_RBAC_TESTS &&
+        process.env.IGNORE_RBAC_TESTS !== 'false'
+          ? []
+          : ['release-rbac', 'release-rbac-teardown']),
+      ],
     },
     {
       name: 'upgrade',

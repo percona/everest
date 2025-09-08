@@ -1,5 +1,5 @@
 import { expect, Page, test } from '@playwright/test';
-import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
+import { moveBack, moveForward, submitWizard } from '@e2e/utils/db-wizard';
 import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
@@ -217,7 +217,20 @@ test.describe('Create rules', () => {
     await page
       .getByTestId('switch-input-pod-scheduling-policy-enabled')
       .getByRole('checkbox')
+      .uncheck();
+
+    await moveBack(page);
+    await moveForward(page);
+
+    await expect(
+      page.getByTestId('switch-input-pod-scheduling-policy-enabled')
+    ).not.toBeChecked();
+
+    await page
+      .getByTestId('switch-input-pod-scheduling-policy-enabled')
+      .getByRole('checkbox')
       .check();
+
     await page.getByTestId('select-pod-scheduling-policy-button').click();
     await expect(
       page.getByRole('option', { name: PSMDB_POLICY_NAME, exact: true })

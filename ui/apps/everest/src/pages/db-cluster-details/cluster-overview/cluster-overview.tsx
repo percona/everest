@@ -49,10 +49,11 @@ export const ClusterOverview = () => {
     }
   );
   const schedules = dbCluster?.spec.backup?.schedules || [];
+  const isStatusReady = dbCluster?.status?.status === 'ready';
 
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
-      enabled: !!dbClusterName && canRead,
+      enabled: !!dbClusterName && canRead && isStatusReady,
     });
 
   if (!dbCluster) {
@@ -102,7 +103,7 @@ export const ClusterOverview = () => {
             isProxy(dbCluster.spec.proxy) &&
             dbCluster.spec.proxy.expose.type === ProxyExposeType.external
           }
-          monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
+          monitoring={dbCluster?.spec.monitoring?.monitoringConfigName}
           parameters={!!dbCluster?.spec.engine.config}
           storageClass={dbCluster?.spec.engine.storage.class!}
           podSchedulingPolicy={dbCluster?.spec.podSchedulingPolicyName}

@@ -219,44 +219,9 @@ jobs:
             exit 1
           fi
 
-      - name: Catalog - update veneer file
-        run: |
-          cd everest-catalog/tools
-
           # configure userdata for commits
           git config --global user.email "everest-ci@percona.com"
           git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-          if [[ $IS_RC == 1 ]]; then
-            go run . \
-              --veneer-file ../veneer/everest-operator.yaml \
-              --channel fast-v0  \
-              --new-version ${{ env.VERSION }} 
-          else
-            go run . \
-              --veneer-file ../veneer/everest-operator.yaml \
-              --channel stable-v0 \
-              --new-version ${{ env.VERSION }} 
-                      
-            go run . \
-              --veneer-file ../veneer/everest-operator.yaml \
-              --channel fast-v0 \
-              --new-version ${{ env.VERSION }} 
-          fi
-
-          cd ..
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.44.0/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
-
-          # Check if veneer has the new version listed
-          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
-            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            exit 1
-          fi
-
-          git commit -am "CI: add version ${{ env.VERSION }}"
-          git push origin $BRANCH_NAME
 
           git tag $GH_TAG
           git push origin $GH_TAG

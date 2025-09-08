@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"path"
 	"slices"
+	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -436,6 +437,14 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 			err = &echo.HTTPError{
 				Code: http.StatusNotFound,
 			}
+		case k8serrors.IsForbidden(err):
+			statusError := &k8serrors.StatusError{}
+			if errors.As(err, &statusError) {
+				err = &echo.HTTPError{
+					Code:    int(statusError.Status().Code),
+					Message: trimWebhookErrorText(statusError.Status().Message),
+				}
+			}
 		case k8serrors.IsAlreadyExists(err),
 			k8serrors.IsConflict(err):
 			err = &echo.HTTPError{
@@ -460,6 +469,11 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
+}
+
+func trimWebhookErrorText(fullText string) string {
+	webhookPrefix := `admission webhook "vmonitoringconfig-v1alpha1.everest.percona.com" denied the request: `
+	return strings.TrimPrefix(fullText, webhookPrefix)
 }
 
 // createSessionManagerClient creates a k8s client for a session manager.

@@ -5,7 +5,7 @@ const {
   FB_BUILD,
 } = process.env;
 
-type BucketsNamespaceMap = [string, string[]][];
+type BucketsNamespaceMap = [string, string][];
 
 export const STORAGE_STATE_FILE = 'user.json';
 

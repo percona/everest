@@ -31,7 +31,7 @@ const DiagramNode = ({
           borderRadius: '4px',
           borderColor: 'divider',
           p: 2,
-          height: `${height}px`,
+          minHeight: `${height}px`,
           width: `${width}px`,
         }}
       >
