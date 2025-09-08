@@ -1,0 +1,47 @@
+---
+name: 'Install Kubernetes Tools'
+inputs:
+  tools-path:
+    description: 'Tools path to install binaries'
+    required: false
+    default: '/opt/tools/bin'
+  install-kubectl:
+    description: 'Install Kubectl'
+    required: false
+    default: false
+  kubectl-version:
+    description: 'Kubectl version to install'
+    required: false
+    default: '1.29.5'
+  install-k3d:
+    description: 'Install K3D'
+    required: false
+    default: false
+  k3d-version:
+    description: 'K3D version to install'
+    required: false
+    default: '5.8.3'
+runs:
+  using: "composite"
+  steps:
+    - name: Install TOOLS_PATH
+      run: |
+        mkdir -p ${{ inputs.tools-path }}
+        echo ${{ inputs.tools-path }} >> $GITHUB_PATH
+      shell: bash
+
+    - name: Install Kubectl
+      if: ${{ inputs.install-kubectl == 'true' }}
+      run: |
+        curl -s -L -o ${{ inputs.tools-path }}/kubectl https://dl.k8s.io/release/v${{ inputs.kubectl-version }}/bin/linux/amd64/kubectl 
+        chmod +x ${{ inputs.tools-path }}/kubectl
+        kubectl version --client --output=yaml
+      shell: bash
+
+    - name: Install K3D
+      if: ${{ inputs.install-k3d == 'true' }}
+      run: |
+        curl -s -L -o ${{ inputs.tools-path }}/k3d https://github.com/k3d-io/k3d/releases/download/v${{ inputs.k3d-version }}/k3d-linux-amd64
+        chmod +x ${{ inputs.tools-path }}/k3d
+        k3d version
+      shell: bash
