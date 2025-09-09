@@ -37,7 +37,7 @@ jobs:
           EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
 
       - name: Set up Go release
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
