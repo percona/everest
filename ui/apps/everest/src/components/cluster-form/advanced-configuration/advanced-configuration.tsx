@@ -62,6 +62,7 @@ interface AdvancedConfigurationFormProps {
   loadingDefaultsForEdition?: boolean;
   automaticallyTogglePodSchedulingPolicySwitch?: boolean;
   allowedFieldsToInitiallyLoadDefaults?: AllowedFieldsToInitiallyLoadDefaults[];
+  editMode?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
@@ -69,6 +70,7 @@ export const AdvancedConfigurationForm = ({
   loadingDefaultsForEdition,
   automaticallyTogglePodSchedulingPolicySwitch = false,
   allowedFieldsToInitiallyLoadDefaults = [],
+  editMode = false,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues, trigger } =
     useFormContext();
@@ -121,7 +123,10 @@ export const AdvancedConfigurationForm = ({
     [clusterInfo?.clusterType, loadBalancerConfigs?.items]
   );
 
-  const selectOptions: LoadBalancerConfig[] = loadBalancerConfigs?.items ?? [];
+  const selectOptions: LoadBalancerConfig[] = [
+    emtpyConfig,
+    ...(loadBalancerConfigs?.items ?? []),
+  ];
 
   const selectDefaultValue = useMemo(
     () =>
@@ -406,14 +411,34 @@ export const AdvancedConfigurationForm = ({
                           },
                         }}
                       >
-                        {[emtpyConfig, ...selectOptions].map((config) => (
-                          <MenuItem
-                            value={config.metadata.name}
-                            key={config.metadata.name}
-                          >
-                            {config.metadata.name}
-                          </MenuItem>
-                        ))}
+                        {selectOptions.map((config) =>
+                          editMode &&
+                          config.metadata.name ===
+                            EMPTY_LOAD_BALANCER_CONFIGURATION ? (
+                            <Tooltip
+                              title={Messages.tooltipTexts.limitations}
+                              placement="right"
+                              arrow
+                            >
+                              <span>
+                                <MenuItem
+                                  value={config.metadata.name}
+                                  key={config.metadata.name}
+                                  disabled
+                                >
+                                  {config.metadata.name}
+                                </MenuItem>
+                              </span>
+                            </Tooltip>
+                          ) : (
+                            <MenuItem
+                              value={config.metadata.name}
+                              key={config.metadata.name}
+                            >
+                              {config.metadata.name}
+                            </MenuItem>
+                          )
+                        )}
                       </SelectInput>
                       {!!loadBalancerConfigs?.items.length && (
                         <Tooltip

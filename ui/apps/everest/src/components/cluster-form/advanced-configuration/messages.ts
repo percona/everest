@@ -75,5 +75,6 @@ export const Messages = {
     noPolicies:
       'Seems like you don’t have permission to read any pod scheduling policy.',
     noConfig: 'No configurations to display',
+    limitations: 'Check limitations in the documentation',
   },
 };
