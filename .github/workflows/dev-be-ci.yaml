@@ -128,45 +128,8 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      - name: Install Kubernetes tools
-        uses: ./.github/actions/install-kubernetes-tools
-        with:
-          install-kubectl: true
-          install-k3d: true
-
-      - name: Adjust GitHub worker node
-        uses: ./.github/actions/adjust-github-node
-        with:
-          adjust-host-for-k3d: true
-          mount-docker-data: true
-
-      - name: Run K3D test cluster
-        run: |
-          make k3d-cluster-up
-
-      - name: Build Everest API Server binary
-        run: |
-          make build-debug
-
-      - name: Build Everest API server docker image
-        run: |
-          make docker-build
-
-      - name: Upload Everest API server image to K3D test cluster
-        run: |
-          make k3d-upload-server-image
-
-      - name: Build Everest operator docker image
-        run: |
-          make docker-build-operator
-
-      - name: Upload Everest operator image to K3D test cluster
-        run: |
-          make k3d-upload-operator-image
-
-      - name: Build Everest CLI binary
-        run: |
-          make build-cli-debug
+      - name: Setup K8S
+        uses: ./.github/actions/setup-k8s
 
       - name: Deploy Everest to K3D test cluster
         timeout-minutes: 10

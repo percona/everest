@@ -32,19 +32,8 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      # https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
-      # https://minikube.sigs.k8s.io/docs/drivers/docker/
-      - name: Configure minikube
-        working-directory: cli-tests
-        run: |
-          minikube delete --all --purge
-          rm -rf ~/.minikube
-          minikube config set cpus 2
-          minikube start
-
-      - name: Build CLI binary
-        run: |
-          make build-cli
+      - name: Setup K8S
+        uses: ./.github/actions/setup-k8s
 
       - name: Init ${{ env.MAKE_TARGET }} integration tests
         working-directory: cli-tests
