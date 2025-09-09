@@ -11,7 +11,7 @@ interface ConfigDetailsProps {
   isDefault?: boolean;
 }
 
-const ConfigDetails = ({ config, isSaved, isDefault }: ConfigDetailsProps) => {
+const ConfigDetails = ({ config, isDefault }: ConfigDetailsProps) => {
   const { trigger, getValues } = useFormContext();
 
   const { state } = useLocation();

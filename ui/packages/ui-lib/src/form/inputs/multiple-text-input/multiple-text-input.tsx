@@ -37,12 +37,6 @@ const MultipleTextInput = ({
     append({ key: '', value: '' });
   };
 
-  useEffect(() => {
-    if (fields.length === 0) {
-      handleAdd();
-    }
-  }, [fields]);
-
   const handleOnChange = async (
     value: string,
     index: number,
