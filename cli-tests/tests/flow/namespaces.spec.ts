@@ -15,6 +15,13 @@
 import { test, expect } from '@fixtures';
 
 test.describe('Everest CLI install', async () => {
+  test.beforeEach(async ({ cli }) => {
+    await cli.execute('docker-compose -f quickstart.yml up -d --force-recreate --renew-anon-volumes');
+    await cli.execute('minikube delete');
+    await cli.execute('minikube start');
+    // await cli.execute('minikube start --apiserver-name=host.docker.internal');
+  });
+
   test('install everest and db-namespaces separately', async ({ page, cli, request }) => {
     const verifyOperators = async (namespace: string, operators: string[]) => {
       await test.step('verify installed operators', async () => {
