@@ -7,7 +7,7 @@ ENTRYPOINT ["./manager"]
 
 # Build the Delve debuger
 FROM golang:1.25-alpine AS delve
-RUN go install github.com/go-delve/delve/cmd/dlv@v1.24.0
+RUN go install github.com/go-delve/delve/cmd/dlv@v1.25.2
 RUN chmod +x /go/bin/dlv
 
 # Build the image with debuger
