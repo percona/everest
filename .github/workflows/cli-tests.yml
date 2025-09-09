@@ -57,6 +57,11 @@ jobs:
         run: |
           make ${{ env.MAKE_TARGET }}
 
+    # Enable Tmate debug ssh session on demand
+      - name: Setup tmate session
+        uses: percona/gh-action-action-tmate@v3
+        if: ${{ always() }}
+
       - name: Collect logs from backend
         if: ${{ always() && steps.cli-tests.outcome != 'success' }}
         working-directory: cli-tests
