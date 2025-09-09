@@ -51,7 +51,14 @@ const LoadBalancerConfigurationList = () => {
         queryClient.invalidateQueries({
           queryKey: ['load-balancer-configs'],
         });
-        navigate(`/settings/policies/load-balancer-configuration/${data.name}`);
+        navigate(
+          `/settings/policies/load-balancer-configuration/${data.name}`,
+          {
+            state: {
+              creation: true,
+            },
+          }
+        );
       },
     });
   };
