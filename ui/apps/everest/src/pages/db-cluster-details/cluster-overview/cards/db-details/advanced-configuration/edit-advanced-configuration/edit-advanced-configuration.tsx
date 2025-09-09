@@ -27,6 +27,7 @@ import { advancedConfigurationModalDefaultValues } from 'components/cluster-form
 import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 import { AllowedFieldsToInitiallyLoadDefaults } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 import { useMemo } from 'react';
+import { ProxyExposeType } from 'shared-types/dbCluster.types';
 
 export const AdvancedConfigurationEditModal = ({
   open,
@@ -89,7 +90,10 @@ export const AdvancedConfigurationEditModal = ({
         allowedFieldsToInitiallyLoadDefaults={
           allowedFieldsToInitiallyLoadDefaults
         }
-        editMode
+        disableNoConfig={
+          dbCluster.spec.proxy.expose.type === ProxyExposeType.external &&
+          dbCluster.spec.proxy.expose.loadBalancerConfigName !== undefined
+        }
       />
     </FormDialog>
   );
