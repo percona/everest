@@ -89,6 +89,7 @@ export const AdvancedConfigurationEditModal = ({
         allowedFieldsToInitiallyLoadDefaults={
           allowedFieldsToInitiallyLoadDefaults
         }
+        editMode
       />
     </FormDialog>
   );
