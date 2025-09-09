@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useMatch, useNavigate } from 'react-router-dom';
+import { useLocation, useMatch, useNavigate } from 'react-router-dom';
 import ConfigDetails from './single-config-table';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { Box, Button, Typography } from '@mui/material';
@@ -37,6 +37,9 @@ const convertConfigToFormValues = (config: LoadBalancerConfig) => {
 };
 
 const LoadBalancerConfigDetails = () => {
+  const { state } = useLocation();
+  const isCreateRedirect = state?.creation;
+
   const navigate = useNavigate();
 
   const match = useMatch(
@@ -56,7 +59,7 @@ const LoadBalancerConfigDetails = () => {
     'load-balancer-configs',
     `${configName}`
   );
-  const [isSaved, setIsSaved] = useState(true);
+  const [isSaved, setIsSaved] = useState(!isCreateRedirect);
   const { data: config, refetch: refetchConfig } =
     useLoadBalancerConfig(configName);
   const methods = useForm<{
