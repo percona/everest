@@ -122,10 +122,11 @@ export const AdvancedConfigurationForm = ({
     () =>
       clusterType &&
       clusterType === 'eks' &&
+      !lbConfigName &&
       loadBalancerConfigs?.items.some(
         (config) => config.metadata.name === EKS_DEFAULT_LOAD_BALANCER_CONFIG
       ),
-    [clusterType, loadBalancerConfigs?.items]
+    [clusterType, lbConfigName, loadBalancerConfigs?.items]
   );
 
   const selectOptions: LoadBalancerConfig[] = [
@@ -143,8 +144,8 @@ export const AdvancedConfigurationForm = ({
 
   useEffect(() => {
     if (
-      allowedFieldsToInitiallyLoadDefaults.includes('loadBalancerConfigName') &&
-      !getValues(AdvancedConfigurationFields.loadBalancerConfigName)
+      !lbConfigName &&
+      allowedFieldsToInitiallyLoadDefaults.includes('loadBalancerConfigName')
     ) {
       setValue(
         AdvancedConfigurationFields.loadBalancerConfigName,
@@ -154,6 +155,7 @@ export const AdvancedConfigurationForm = ({
   }, [
     allowedFieldsToInitiallyLoadDefaults,
     getValues,
+    lbConfigName,
     selectDefaultValue,
     setValue,
   ]);
