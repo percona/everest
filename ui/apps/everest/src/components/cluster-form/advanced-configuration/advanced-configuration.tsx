@@ -62,7 +62,7 @@ interface AdvancedConfigurationFormProps {
   loadingDefaultsForEdition?: boolean;
   automaticallyTogglePodSchedulingPolicySwitch?: boolean;
   allowedFieldsToInitiallyLoadDefaults?: AllowedFieldsToInitiallyLoadDefaults[];
-  editMode?: boolean;
+  disableNoConfig?: boolean;
 }
 
 export const AdvancedConfigurationForm = ({
@@ -70,7 +70,7 @@ export const AdvancedConfigurationForm = ({
   loadingDefaultsForEdition,
   automaticallyTogglePodSchedulingPolicySwitch = false,
   allowedFieldsToInitiallyLoadDefaults = [],
-  editMode = false,
+  disableNoConfig = false,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues, trigger } =
     useFormContext();
@@ -93,6 +93,8 @@ export const AdvancedConfigurationForm = ({
       refetchInterval: 2000,
     });
 
+  const clusterType = clusterInfo?.clusterType;
+
   const exposureMethods = Object.values(ExposureMethod);
 
   const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
@@ -112,15 +114,19 @@ export const AdvancedConfigurationForm = ({
       setPolicyDialogOpen(true);
     }
   };
+  const lbConfigName = getValues(
+    AdvancedConfigurationFields.loadBalancerConfigName
+  );
 
   const isEksDefault = useMemo(
     () =>
-      clusterInfo?.clusterType &&
-      clusterInfo?.clusterType === 'eks' &&
-      loadBalancerConfigs?.items.find(
+      clusterType &&
+      clusterType === 'eks' &&
+      !lbConfigName &&
+      loadBalancerConfigs?.items.some(
         (config) => config.metadata.name === EKS_DEFAULT_LOAD_BALANCER_CONFIG
       ),
-    [clusterInfo?.clusterType, loadBalancerConfigs?.items]
+    [clusterType, lbConfigName, loadBalancerConfigs?.items]
   );
 
   const selectOptions: LoadBalancerConfig[] = [
@@ -132,17 +138,14 @@ export const AdvancedConfigurationForm = ({
     () =>
       isEksDefault
         ? EKS_DEFAULT_LOAD_BALANCER_CONFIG
-        : (loadBalancerConfigs?.items ?? []).length > 0
-          ? loadBalancerConfigs?.items[0].metadata.name
-          : EMPTY_LOAD_BALANCER_CONFIGURATION,
-    [isEksDefault, loadBalancerConfigs?.items]
+        : EMPTY_LOAD_BALANCER_CONFIGURATION,
+    [isEksDefault]
   );
 
   useEffect(() => {
     if (
-      allowedFieldsToInitiallyLoadDefaults.includes('loadBalancerConfigName') &&
-      !getValues(AdvancedConfigurationFields.loadBalancerConfigName) &&
-      isEksDefault !== undefined
+      !lbConfigName &&
+      allowedFieldsToInitiallyLoadDefaults.includes('loadBalancerConfigName')
     ) {
       setValue(
         AdvancedConfigurationFields.loadBalancerConfigName,
@@ -150,9 +153,9 @@ export const AdvancedConfigurationForm = ({
       );
     }
   }, [
-    isEksDefault,
     allowedFieldsToInitiallyLoadDefaults,
     getValues,
+    lbConfigName,
     selectDefaultValue,
     setValue,
   ]);
@@ -412,7 +415,7 @@ export const AdvancedConfigurationForm = ({
                         }}
                       >
                         {selectOptions.map((config) =>
-                          editMode &&
+                          disableNoConfig &&
                           config.metadata.name ===
                             EMPTY_LOAD_BALANCER_CONFIGURATION ? (
                             <Tooltip
