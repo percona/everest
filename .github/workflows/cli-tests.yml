@@ -72,11 +72,6 @@ jobs:
         run: |
           make build-cli-debug
 
-      - name: Deploy Everest to K3D test cluster
-        timeout-minutes: 10
-        run: |
-          make deploy
-
       - name: Init ${{ env.MAKE_TARGET }} integration tests
         working-directory: cli-tests
         run: |
