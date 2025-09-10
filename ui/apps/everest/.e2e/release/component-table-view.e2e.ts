@@ -49,13 +49,11 @@ async function verifyComponentsForDb(
     db,
     clusterName,
     size,
-    type,
     overrides = {},
   }: {
     db: string;
     clusterName: string;
     size: number;
-    type: string;
     /** optional overrides for per-env differences */
     overrides?: Partial<Expectations>;
   }
@@ -84,6 +82,7 @@ async function verifyComponentsForDb(
       containersProxy: [],
     }),
   };
+  const types = ['db', 'proxy'];
 
   const base = defaultsByDb[db](clusterName);
   const exp: Expectations = { ...base, ...overrides };
@@ -94,97 +93,104 @@ async function verifyComponentsForDb(
   await page.getByRole('button', { name: 'Expand all' }).click();
 
   // we use this check also to wait until all rows are expanded
-  const expNumberRunning = size + (size * exp.containers.length + (size + (exp.containersProxy.some ? size * exp.containersProxy.length : 0)));
+  const expNumberRunning = size + (size * exp.containers.length + (exp.containersProxy.length > 0 ? size + (size * exp.containersProxy.length) : 0));
   const numberRunning = await page.getByText('Running', { exact: true }).count();
   expect(numberRunning).toEqual(expNumberRunning);
 
   // Only pick real data rows (skip detail-panel spacer rows)
   const rows = table.locator('tbody tr:not(.Mui-TableBodyCell-DetailPanel)');
 
-  const startOfName = type === 'db'
-    ? exp.nameStartsWith
-    : `${clusterName}-${exp.expectedTypeProxy}-`;
+  for (const type of types) {
+    if (type === 'proxy' && !exp.expectedTypeProxy) {
+      // Skip proxy checks if DB does not have proxy
+      continue;
+    }
 
-  // Filter rows where Name (3rd cell) starts with the desired prefix
-  const targetRows = rows.filter({
-    has: page.locator(`td:nth-child(3):text-matches("^${escapeRegex(startOfName)}")`),
-  });
+    const startOfName = type === 'db'
+      ? exp.nameStartsWith
+      : `${clusterName}-${exp.expectedTypeProxy}-`;
 
-  const count = await targetRows.count();
-  expect(
-    count,
-    `Expected ${size} rows for ${db} with name starting '${exp.nameStartsWith}', got ${count}`
-  ).toEqual(size);
+    // Filter rows where Name (3rd cell) starts with the desired prefix
+    const targetRows = rows.filter({
+      has: page.locator(`td:nth-child(3):text-matches("^${escapeRegex(startOfName)}")`),
+    });
 
-  for (let i = 0; i < count; i++) {
-    const row = targetRows.nth(i);
+    const count = await targetRows.count();
+    expect(
+      count,
+      `Expected ${size} rows for ${db} with name starting '${exp.nameStartsWith}', got ${count}`
+    ).toEqual(size);
 
-    const statusCell   = row.locator('td').nth(0);
-    const readyCell    = row.locator('td').nth(1);
-    const nameCell     = row.locator('td').nth(2);
-    const typeCell     = row.locator('td').nth(3);
-    //const ageCell      = row.locator('td').nth(4);
-    const restartsCell = row.locator('td').nth(5);
+    for (let i = 0; i < count; i++) {
+      const row = targetRows.nth(i);
 
-    // Status
-    await expect(statusCell.getByTestId('status')).toContainText('Running');
+      const statusCell   = row.locator('td').nth(0);
+      const readyCell    = row.locator('td').nth(1);
+      const nameCell     = row.locator('td').nth(2);
+      const typeCell     = row.locator('td').nth(3);
+      //const ageCell      = row.locator('td').nth(4);
+      const restartsCell = row.locator('td').nth(5);
 
-    // Ready
-    const expReady = type === 'db'
-    ? exp.containers.length + '/'+ exp.containers.length
-    : exp.containersProxy.length + '/' + exp.containersProxy.length;
-    await expect(readyCell.getByTestId('component-ready-status')).toHaveText(expReady);
+      // Status
+      await expect(statusCell.getByTestId('status')).toContainText('Running');
 
-    // Name prefix (pod suffix is variable)
-    await expect(nameCell).toHaveText(new RegExp(`^${escapeRegex(startOfName)}`));
+      // Ready
+      const expReady = type === 'db'
+      ? exp.containers.length + '/'+ exp.containers.length
+      : exp.containersProxy.length + '/' + exp.containersProxy.length;
+      await expect(readyCell.getByTestId('component-ready-status')).toHaveText(expReady);
 
-    // Type
-    const expType = type === 'db'
-    ? exp.expectedType
-    : exp.expectedTypeProxy;
-    await expect(typeCell).toHaveText(expType);
+      // Name prefix (pod suffix is variable)
+      await expect(nameCell).toHaveText(new RegExp(`^${escapeRegex(startOfName)}`));
 
-    // Age: non-empty
-    // Age only shows after 1 minute and you need to reload page so for now we will not wait for this
-    // await expect(ageCell).not.toBeEmpty();
+      // Type
+      const expType = type === 'db'
+      ? exp.expectedType
+      : exp.expectedTypeProxy;
+      await expect(typeCell).toHaveText(expType);
 
-    // Restarts
-    const restartCount = parseInt(await restartsCell.textContent(), 10);
-    expect(Number.isNaN(restartCount)).toBeFalsy();
-    expect(restartCount).toBeGreaterThanOrEqual(0);
-    expect(restartCount).toBeLessThanOrEqual(3);
+      // Age: non-empty
+      // Age only shows after 1 minute and you need to reload page so for now we will not wait for this
+      // await expect(ageCell).not.toBeEmpty();
 
-    // === Detail row checks ===
-    // The detail row is immediately after this main row in the DOM.
-    const detailRow = row.locator('xpath=following-sibling::tr[1][contains(@class,"Mui-TableBodyCell-DetailPanel")]');
-    const containerRows = detailRow.locator('tbody tr');
-
-    const containerCount = await containerRows.count();
-    const expContainerCount = type === 'db'
-    ? exp.containers.length
-    : exp.containersProxy.length;
-    expect(containerCount, 'Expected at least one container row in detail panel').toEqual(expContainerCount);
-
-    for (let j = 0; j < expContainerCount; j++) {
-      const containerRow      = containerRows.nth(j);
-      const containerStatus   = containerRow.locator('td').nth(0);
-      const containerReady    = containerRow.locator('td').nth(1);
-      const containerName     = containerRow.locator('td').nth(2);
-      const containerType     = containerRow.locator('td').nth(3);
-      const containerRestarts = containerRow.locator('td').nth(5);
-
-      await expect(containerStatus).toContainText('Running');
-      await expect(containerReady).toHaveText('true');
-      const expContainerNames = type === 'db'
-      ? exp.containers
-      : exp.containersProxy;
-      const text = await containerName.textContent();
-      expect(expContainerNames).toContain(text?.trim());
-      await expect(containerType).toBeEmpty();
-      const restartCount = parseInt(await containerRestarts.textContent(), 10);
+      // Restarts
+      const restartCount = parseInt(await restartsCell.textContent(), 10);
       expect(Number.isNaN(restartCount)).toBeFalsy();
       expect(restartCount).toBeGreaterThanOrEqual(0);
       expect(restartCount).toBeLessThanOrEqual(3);
+
+      // === Detail row checks ===
+      // The detail row is immediately after this main row in the DOM.
+      const detailRow = row.locator('xpath=following-sibling::tr[1][contains(@class,"Mui-TableBodyCell-DetailPanel")]');
+      const containerRows = detailRow.locator('tbody tr');
+
+      const containerCount = await containerRows.count();
+      const expContainerCount = type === 'db'
+      ? exp.containers.length
+      : exp.containersProxy.length;
+      expect(containerCount, 'Expected at least one container row in detail panel').toEqual(expContainerCount);
+
+      for (let j = 0; j < expContainerCount; j++) {
+        const containerRow      = containerRows.nth(j);
+        const containerStatus   = containerRow.locator('td').nth(0);
+        const containerReady    = containerRow.locator('td').nth(1);
+        const containerName     = containerRow.locator('td').nth(2);
+        const containerType     = containerRow.locator('td').nth(3);
+        const containerRestarts = containerRow.locator('td').nth(5);
+
+        await expect(containerStatus).toContainText('Running');
+        await expect(containerReady).toHaveText('true');
+        const expContainerNames = type === 'db'
+        ? exp.containers
+        : exp.containersProxy;
+        const text = await containerName.textContent();
+        expect(expContainerNames).toContain(text?.trim());
+        await expect(containerType).toBeEmpty();
+        const restartCount = parseInt(await containerRestarts.textContent(), 10);
+        expect(Number.isNaN(restartCount)).toBeFalsy();
+        expect(restartCount).toBeGreaterThanOrEqual(0);
+        expect(restartCount).toBeLessThanOrEqual(3);
+      }
     }
   }
 }
@@ -284,7 +290,7 @@ function escapeRegex(s: string) {
       }
     });
 
-    test('Test DB pods have expected values', async ({ page }) => {
+    test('Test pods and containers have expected values', async ({ page }) => {
       await page.goto('/databases');
       await findDbAndClickRow(page, clusterName);
       await page.getByTestId('components').click();
@@ -293,24 +299,7 @@ function escapeRegex(s: string) {
       await verifyComponentsForDb(page, {
         db: `${db}`,
         clusterName: `${clusterName}`,
-        size: size,
-        type: 'db'
-      });
-    });
-
-    test('Test Proxy pods have expected values', async ({ page }) => {
-      test.skip(db === 'psmdb', 'psmdb does not have proxy in replica');
-
-      await page.goto('/databases');
-      await findDbAndClickRow(page, clusterName);
-      await page.getByTestId('components').click();
-      await page.getByTestId('switch-input-table-view').click();
-
-      await verifyComponentsForDb(page, {
-        db: `${db}`,
-        clusterName: `${clusterName}`,
-        size: size,
-        type: 'proxy'
+        size: size
       });
     });
 
