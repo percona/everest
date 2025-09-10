@@ -106,7 +106,7 @@ async function verifyComponentsForDb(
 
     // Filter rows where Name (3rd cell) starts with the desired prefix
     const targetRows = rows.filter({
-      has: page.locator(`td:nth-child(3):text-matches("^${escapeRegex(startOfName)}")`),
+      has: page.locator(`td:nth-child(3):text-matches("^${startOfName}")`),
     });
 
     const count = await targetRows.count();
@@ -135,7 +135,7 @@ async function verifyComponentsForDb(
       await expect(readyCell.getByTestId('component-ready-status')).toHaveText(expReady);
 
       // Name prefix (pod suffix is variable)
-      await expect(nameCell).toHaveText(new RegExp(`^${escapeRegex(startOfName)}`));
+      await expect(nameCell).toHaveText(new RegExp(`^${startOfName}`));
 
       // Type
       const expType = type === 'db'
@@ -187,11 +187,6 @@ async function verifyComponentsForDb(
       }
     }
   }
-}
-
-// Small helper to safely inline user strings in regexes
-function escapeRegex(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 
