@@ -144,6 +144,7 @@ jobs:
           self: Merge Gatekeeper
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
-          timeout: 600
+          # Some tests take a long time
+          timeout: 1800
           ignored: "license/snyk (Percona Github Org), security/snyk (Percona Github Org)"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}

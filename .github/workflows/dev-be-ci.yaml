@@ -255,7 +255,7 @@ jobs:
       make_target: ${{ matrix.make_target }}
 
   merge-gatekeeper:
-    needs: [ test, check, integration_tests_api, integration_tests_flows, integration_tests_cli]
+    needs: [test, check, integration_tests_api, integration_tests_flows, integration_tests_cli]
     name: Merge Gatekeeper
     if: ${{ always() }}
     runs-on: ubuntu-latest
@@ -266,6 +266,7 @@ jobs:
           self: Merge Gatekeeper
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 45
-          timeout: 600
+          # Some tests take a long time
+          timeout: 1800
           ignored: "license/snyk (Percona Everest), security/snyk (Percona Everest)"
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
