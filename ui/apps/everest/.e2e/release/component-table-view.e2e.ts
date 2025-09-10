@@ -14,7 +14,10 @@
 // limitations under the License.
 
 import { expect, test, Page } from '@playwright/test';
-import { findDbAndClickRow, deleteDbCluster } from '@e2e/utils/db-clusters-list';
+import {
+  findDbAndClickRow,
+  deleteDbCluster,
+} from '@e2e/utils/db-clusters-list';
 import {
   moveForward,
   submitWizard,
@@ -59,7 +62,12 @@ async function verifyComponentsForDb(
     postgresql: (cluster) => ({
       expectedType: 'pg',
       nameStartsWith: `${cluster}-instance1`,
-      containers: ['database', 'pgbackrest', 'pgbackrest-config', 'replication-cert-copy'],
+      containers: [
+        'database',
+        'pgbackrest',
+        'pgbackrest-config',
+        'replication-cert-copy',
+      ],
       expectedTypeProxy: 'pgbouncer',
       containersProxy: ['pgbouncer', 'pgbouncer-config'],
     }),
@@ -73,7 +81,7 @@ async function verifyComponentsForDb(
     psmdb: (cluster) => ({
       expectedType: 'mongod',
       nameStartsWith: `${cluster}-rs0-`,
-      containers: ['backup-agent','mongod'],
+      containers: ['backup-agent', 'mongod'],
       expectedTypeProxy: '',
       containersProxy: [],
     }),
@@ -87,8 +95,15 @@ async function verifyComponentsForDb(
   await page.getByRole('button', { name: 'Expand all' }).click();
 
   // we use this check also to wait until all rows are expanded
-  const expNumberRunning = size + (size * exp.containers.length + (exp.containersProxy.length > 0 ? size + (size * exp.containersProxy.length) : 0));
-  const numberRunning = await page.getByText('Running', { exact: true }).count();
+  const expNumberRunning =
+    size +
+    (size * exp.containers.length +
+      (exp.containersProxy.length > 0
+        ? size + size * exp.containersProxy.length
+        : 0));
+  const numberRunning = await page
+    .getByText('Running', { exact: true })
+    .count();
   expect(numberRunning).toEqual(expNumberRunning);
 
   // Only pick real data rows (skip detail-panel spacer rows)
@@ -100,9 +115,10 @@ async function verifyComponentsForDb(
       continue;
     }
 
-    const startOfName = type === 'db'
-      ? exp.nameStartsWith
-      : `${clusterName}-${exp.expectedTypeProxy}-`;
+    const startOfName =
+      type === 'db'
+        ? exp.nameStartsWith
+        : `${clusterName}-${exp.expectedTypeProxy}-`;
 
     // Filter rows where Name (3rd cell) starts with the desired prefix
     const targetRows = rows.filter({
@@ -118,10 +134,10 @@ async function verifyComponentsForDb(
     for (let i = 0; i < count; i++) {
       const row = targetRows.nth(i);
 
-      const statusCell   = row.locator('td').nth(0);
-      const readyCell    = row.locator('td').nth(1);
-      const nameCell     = row.locator('td').nth(2);
-      const typeCell     = row.locator('td').nth(3);
+      const statusCell = row.locator('td').nth(0);
+      const readyCell = row.locator('td').nth(1);
+      const nameCell = row.locator('td').nth(2);
+      const typeCell = row.locator('td').nth(3);
       //const ageCell      = row.locator('td').nth(4);
       const restartsCell = row.locator('td').nth(5);
 
@@ -129,18 +145,19 @@ async function verifyComponentsForDb(
       await expect(statusCell.getByTestId('status')).toContainText('Running');
 
       // Ready
-      const expReady = type === 'db'
-      ? exp.containers.length + '/'+ exp.containers.length
-      : exp.containersProxy.length + '/' + exp.containersProxy.length;
-      await expect(readyCell.getByTestId('component-ready-status')).toHaveText(expReady);
+      const expReady =
+        type === 'db'
+          ? exp.containers.length + '/' + exp.containers.length
+          : exp.containersProxy.length + '/' + exp.containersProxy.length;
+      await expect(readyCell.getByTestId('component-ready-status')).toHaveText(
+        expReady
+      );
 
       // Name prefix (pod suffix is variable)
       await expect(nameCell).toHaveText(new RegExp(`^${startOfName}`));
 
       // Type
-      const expType = type === 'db'
-      ? exp.expectedType
-      : exp.expectedTypeProxy;
+      const expType = type === 'db' ? exp.expectedType : exp.expectedTypeProxy;
       await expect(typeCell).toHaveText(expType);
 
       // Age: non-empty
@@ -155,32 +172,38 @@ async function verifyComponentsForDb(
 
       // === Detail row checks ===
       // The detail row is immediately after this main row in the DOM.
-      const detailRow = row.locator('xpath=following-sibling::tr[1][contains(@class,"Mui-TableBodyCell-DetailPanel")]');
+      const detailRow = row.locator(
+        'xpath=following-sibling::tr[1][contains(@class,"Mui-TableBodyCell-DetailPanel")]'
+      );
       const containerRows = detailRow.locator('tbody tr');
 
       const containerCount = await containerRows.count();
-      const expContainerCount = type === 'db'
-      ? exp.containers.length
-      : exp.containersProxy.length;
-      expect(containerCount, 'Expected at least one container row in detail panel').toEqual(expContainerCount);
+      const expContainerCount =
+        type === 'db' ? exp.containers.length : exp.containersProxy.length;
+      expect(
+        containerCount,
+        'Expected at least one container row in detail panel'
+      ).toEqual(expContainerCount);
 
       for (let j = 0; j < expContainerCount; j++) {
-        const containerRow      = containerRows.nth(j);
-        const containerStatus   = containerRow.locator('td').nth(0);
-        const containerReady    = containerRow.locator('td').nth(1);
-        const containerName     = containerRow.locator('td').nth(2);
-        const containerType     = containerRow.locator('td').nth(3);
+        const containerRow = containerRows.nth(j);
+        const containerStatus = containerRow.locator('td').nth(0);
+        const containerReady = containerRow.locator('td').nth(1);
+        const containerName = containerRow.locator('td').nth(2);
+        const containerType = containerRow.locator('td').nth(3);
         const containerRestarts = containerRow.locator('td').nth(5);
 
         await expect(containerStatus).toContainText('Running');
         await expect(containerReady).toHaveText('true');
-        const expContainerNames = type === 'db'
-        ? exp.containers
-        : exp.containersProxy;
+        const expContainerNames =
+          type === 'db' ? exp.containers : exp.containersProxy;
         const text = await containerName.textContent();
         expect(expContainerNames).toContain(text?.trim());
         await expect(containerType).toBeEmpty();
-        const restartCount = parseInt(await containerRestarts.textContent(), 10);
+        const restartCount = parseInt(
+          await containerRestarts.textContent(),
+          10
+        );
         expect(Number.isNaN(restartCount)).toBeFalsy();
         expect(restartCount).toBeGreaterThanOrEqual(0);
         expect(restartCount).toBeLessThanOrEqual(3);
@@ -188,7 +211,6 @@ async function verifyComponentsForDb(
     }
   }
 }
-
 
 [
   { db: 'psmdb', size: 3 },
@@ -274,7 +296,14 @@ async function verifyComponentsForDb(
       await expect(table.getByRole('columnheader')).toHaveCount(7);
 
       // Assert presence of required headers by accessible name
-      for (const name of ['Status', 'Ready', 'Name', 'Type', 'Age', 'Restarts']) {
+      for (const name of [
+        'Status',
+        'Ready',
+        'Name',
+        'Type',
+        'Age',
+        'Restarts',
+      ]) {
         await expect(table.getByRole('columnheader', { name })).toBeVisible();
       }
     });
@@ -288,7 +317,7 @@ async function verifyComponentsForDb(
       await verifyComponentsForDb(page, {
         db: `${db}`,
         clusterName: `${clusterName}`,
-        size: size
+        size: size,
       });
     });
 
@@ -297,6 +326,5 @@ async function verifyComponentsForDb(
       await waitForStatus(page, clusterName, 'Deleting', 15000);
       await waitForDelete(page, clusterName, 240000);
     });
-    }
-  );
+  });
 });
