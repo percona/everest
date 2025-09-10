@@ -16,13 +16,6 @@ import { test } from '@fixtures';
 import { faker } from '@faker-js/faker';
 
 test.describe('Everest CLI install', async () => {
-  test.beforeEach(async ({ cli }) => {
-    await cli.execute('docker-compose -f quickstart.yml up -d --force-recreate --renew-anon-volumes');
-    await cli.execute('minikube delete');
-    await cli.execute('minikube start');
-    // await cli.execute('minikube start --apiserver-name=host.docker.internal');
-  });
-
   test('install only mongodb-operator', async ({ page, cli, request }) => {
     const verifyClusterResources = async () => {
       await test.step('verify installed operators in k8s', async () => {
