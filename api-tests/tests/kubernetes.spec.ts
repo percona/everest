@@ -15,29 +15,31 @@
 import { test, expect } from '@fixtures'
 import {checkError} from '@tests/tests/helpers';
 
-test('get resource usage', async ({ request }) => {
-  const r = await request.get(`/v1/resources`),
-   resources = await r.json()
+test.describe('K8S cluster tests', {tag: ['@k8s']}, () => {
+  test('get resource usage', async ({ request }) => {
+    const r = await request.get(`/v1/resources`),
+     resources = await r.json()
 
-  await checkError(r)
+    await checkError(r)
 
-  expect(resources).toBeTruthy()
+    expect(resources).toBeTruthy()
 
-  expect(resources?.capacity).toBeTruthy()
-  expect(resources?.available).toBeTruthy()
-})
+    expect(resources?.capacity).toBeTruthy()
+    expect(resources?.available).toBeTruthy()
+  })
 
-test('get cluster info', async ({ request }) => {
-  const r = await request.get(`/v1/cluster-info`),
-   info = await r.json()
+  test('get cluster info', async ({ request }) => {
+    const r = await request.get(`/v1/cluster-info`),
+     info = await r.json()
 
-  await checkError(r)
+    await checkError(r)
 
-  expect(info).toBeTruthy()
+    expect(info).toBeTruthy()
 
-  expect(info?.clusterType).toBeTruthy()
-  expect(info?.storageClassNames).toBeTruthy()
-  expect(info?.storageClassNames).toHaveLength(1)
-  expect(info?.storageClasses).toBeTruthy()
-  expect(info?.storageClasses).toHaveLength(1)
-})
+    expect(info?.clusterType).toBeTruthy()
+    expect(info?.storageClassNames).toBeTruthy()
+    expect(info?.storageClassNames).toHaveLength(1)
+    expect(info?.storageClasses).toBeTruthy()
+    expect(info?.storageClasses).toHaveLength(1)
+  })
+});
