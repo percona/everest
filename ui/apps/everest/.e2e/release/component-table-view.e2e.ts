@@ -49,16 +49,12 @@ async function verifyComponentsForDb(
     db,
     clusterName,
     size,
-    overrides = {},
   }: {
     db: string;
     clusterName: string;
     size: number;
-    /** optional overrides for per-env differences */
-    overrides?: Partial<Expectations>;
   }
 ) {
-  // Sensible defaults per DB. Override if your env differs.
   const defaultsByDb: Record<string, (cluster: string) => Expectations> = {
     postgresql: (cluster) => ({
       expectedType: 'pg',
@@ -83,9 +79,7 @@ async function verifyComponentsForDb(
     }),
   };
   const types = ['db', 'proxy'];
-
-  const base = defaultsByDb[db](clusterName);
-  const exp: Expectations = { ...base, ...overrides };
+  const exp: Expectations = defaultsByDb[db](clusterName);
 
   const table = page.getByTestId(`${clusterName}-components`);
   await page.waitForLoadState('networkidle');
