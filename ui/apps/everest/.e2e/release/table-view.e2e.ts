@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { expect, test } from '@playwright/test';
+import { expect, test, Page } from '@playwright/test';
+import { findDbAndClickRow, deleteDbCluster } from '@e2e/utils/db-clusters-list';
 import {
   moveForward,
   submitWizard,
@@ -29,17 +30,160 @@ import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
 let token: string;
 
+type Expectations = {
+  /** text in Type column */
+  expectedType: string;
+  /** text in Ready column */
+  expectedReady: string;
+  /** prefix used to match Name column (pod suffix is variable) */
+  nameStartsWith: string;
+  /** names of containers we expect to see in expanded view */
+  containers: string[];
+  /** text in Restarts column */
+  restarts: string;
+  /** does it have proxy */
+  hasProxy: boolean;
+  /** number of ready containers for proxy */
+  expectedReadyProxy: string;
+  /** type of proxy */
+  expectedTypeProxy: string;
+  /** names of containers we expect to see in expanded view for proxy */
+  containersProxy: string[];
+};
+
+async function verifyComponentsForDb(
+  page: Page,
+  {
+    db,
+    clusterName,
+    size,
+    type,
+    overrides = {},
+  }: {
+    db: string;
+    clusterName: string;
+    size: number;
+    type: string;
+    /** optional overrides for per-env differences */
+    overrides?: Partial<Expectations>;
+  }
+) {
+  // Sensible defaults per DB. Override if your env differs.
+  const defaultsByDb: Record<string, (cluster: string) => Expectations> = {
+    postgresql: (cluster) => ({
+      expectedType: 'pg',
+      expectedReady: '4/4',
+      nameStartsWith: `${cluster}-instance1`,
+      containers: ['database', 'pgbackrest', 'pgbackrest-config', 'replication-cert-copy'],
+      restarts: '0',
+      hasProxy: true,
+      expectedReadyProxy: '2/2',
+      expectedTypeProxy: 'pgbouncer',
+      containersProxy: ['pgbouncer', 'pgbouncer-config'],
+    }),
+    pxc: (cluster) => ({
+      expectedType: 'pxc',
+      expectedReady: '1/1',
+      nameStartsWith: `${cluster}-pxc-`,
+      containers: ['pxc'],
+      restarts: '0',
+      hasProxy: true,
+      expectedReadyProxy: '2/2',
+      expectedTypeProxy: 'haproxy',
+      containersProxy: ['haproxy', 'pxc-monit'],
+    }),
+    psmdb: (cluster) => ({
+      expectedType: 'mongod',
+      expectedReady: '2/2',
+      nameStartsWith: `${cluster}-rs0-`,
+      containers: ['backup-agent'],
+      restarts: '0',
+      hasProxy: false,
+      expectedReadyProxy: '',
+      expectedTypeProxy: '',
+      containersProxy: [],
+    }),
+  };
+
+  const base = defaultsByDb[db](clusterName);
+  const exp: Expectations = { ...base, ...overrides };
+
+  const table = page.getByTestId(`${clusterName}-components`);
+  await page.waitForLoadState('networkidle');
+  await expect(table).toBeVisible();
+
+  // Only pick real data rows (skip detail-panel spacer rows)
+  const rows = table.locator('tbody tr:not(.Mui-TableBodyCell-DetailPanel)');
+
+  const startOfName = type === 'db'
+    ? exp.nameStartsWith
+    : `${clusterName}-${exp.expectedTypeProxy}-`;
+
+  // Filter rows where Name (3rd cell) starts with the desired prefix
+  const targetRows = rows.filter({
+    has: page.locator(`td:nth-child(3):text-matches("^${escapeRegex(startOfName)}")`),
+  });
+
+  const count = await targetRows.count();
+  expect(
+    count,
+    `Expected ${size} rows for ${db} with name starting '${exp.nameStartsWith}', got ${count}`
+  ).toEqual(size);
+
+  console.log('count: ', count);
+  for (let i = 0; i < count; i++) {
+    const row = targetRows.nth(i);
+
+    const statusCell   = row.locator('td').nth(0);
+    const readyCell    = row.locator('td').nth(1);
+    const nameCell     = row.locator('td').nth(2);
+    const typeCell     = row.locator('td').nth(3);
+    const ageCell      = row.locator('td').nth(4);
+    const restartsCell = row.locator('td').nth(5);
+
+    // Status
+    await expect(statusCell.getByTestId('status')).toContainText('Running');
+
+    // Ready
+    const expReady = type === 'db'
+    ? exp.expectedReady
+    : exp.expectedReadyProxy;
+    await expect(readyCell.getByTestId('component-ready-status')).toHaveText(expReady);
+
+    // Name prefix (pod suffix is variable)
+    await expect(nameCell).toHaveText(new RegExp(`^${escapeRegex(startOfName)}`));
+
+    // Type
+    const expType = type === 'db'
+    ? exp.expectedType
+    : exp.expectedTypeProxy;
+    await expect(typeCell).toHaveText(expType);
+
+    // Age: non-empty
+    // Age only shows after 1 minute so for now we will not wait for this
+    // await expect(ageCell).not.toBeEmpty();
+
+    // Restarts
+    await expect(restartsCell).toHaveText(exp.restarts);
+  }
+}
+
+// Small helper to safely inline user strings in regexes
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+
 [
   { db: 'psmdb', size: 3 },
   { db: 'pxc', size: 3 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
-  // TODO: test needs fixing - EVEREST-2241
-  test.describe.skip(`DB Table View [${db} size ${size}]`, () => {
+  test.describe(`DB Table View [${db} size ${size}]`, () => {
     test.skip(!shouldExecuteDBCombination(db, size));
     test.describe.configure({ timeout: 720000 });
 
-    const clusterName = `${db}-${size}-table-view`;
+    const clusterName = `${db}-${size}-view`;
     const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
     let storageClasses: string[] = [];
 
@@ -100,36 +244,60 @@ let token: string;
       });
     });
 
-    test('Table view displays the created cluster', async ({ page }) => {
+    test('Test headers contain proper columns', async ({ page }) => {
       await page.goto('/databases');
-      const row = page.getByTestId(`db-cluster-${clusterName}`);
-      await expect(row).toBeVisible();
-      await expect(row).toContainText(clusterName);
-      await expect(row).toContainText('Up');
-      await expect(row).toContainText('3'); // Node count
-      // Add more assertions for table columns if needed
+      await findDbAndClickRow(page, clusterName);
+      await page.getByTestId('components').click();
+      await page.getByTestId('switch-input-table-view').click();
+
+      const table = page.getByTestId(`${clusterName}-components`);
+      await expect(table).toBeVisible({ timeout: 5000 });
+
+      // --- 1) Headers ---
+      // Assert we have exactly 7 column headers (including the expand column)
+      await expect(table.getByRole('columnheader')).toHaveCount(7);
+
+      // Assert presence of required headers by accessible name
+      for (const name of ['Status', 'Ready', 'Name', 'Type', 'Age', 'Restarts']) {
+        await expect(table.getByRole('columnheader', { name })).toBeVisible();
+      }
+    });
+
+    test('Test DB pods have expected values', async ({ page }) => {
+      await page.goto('/databases');
+      await findDbAndClickRow(page, clusterName);
+      await page.getByTestId('components').click();
+      await page.getByTestId('switch-input-table-view').click();
+
+      await verifyComponentsForDb(page, {
+        db: `${db}`,
+        clusterName: `${clusterName}`,
+        size: size,
+        type: 'db'
+      });
+    });
+
+    test('Test Proxy pods have expected values', async ({ page }) => {
+      test.skip(db === 'psmdb', 'psmdb does not have proxy in replica');
+
+      await page.goto('/databases');
+      await findDbAndClickRow(page, clusterName);
+      await page.getByTestId('components').click();
+      await page.getByTestId('switch-input-table-view').click();
+
+      await verifyComponentsForDb(page, {
+        db: `${db}`,
+        clusterName: `${clusterName}`,
+        size: size,
+        type: 'proxy'
+      });
     });
 
     test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
-      await page.goto('/databases');
-      await page.getByTestId(`delete-db-cluster-button-${clusterName}`).click();
-      await page.getByTestId('confirm-delete-db-cluster').click();
+      await deleteDbCluster(page, clusterName);
       await waitForStatus(page, clusterName, 'Deleting', 15000);
       await waitForDelete(page, clusterName, 240000);
     });
-  });
-});
-
-// TODO: test needs fixing - EVEREST-2241
-test.skip('Switch between table view and diagram view', async ({ page }) => {
-  await page.goto('/databases/components');
-
-  const tableViewSwitch = page
-    .getByTestId('switch-input-table-view')
-    .getByRole('checkbox');
-  if (await tableViewSwitch.isChecked()) {
-    await expect(page.getByTestId('components-table-view')).toBeVisible();
-  } else {
-    await expect(page.getByTestId('components-diagram-view')).toBeVisible();
-  }
+    }
+  );
 });
