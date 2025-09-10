@@ -63,7 +63,7 @@ jobs:
       - name: Build Everest operator docker image
         run: |
           make docker-build-operator
-          
+
       - name: Upload Everest operator image to K3D test cluster
         run: |
           make k3d-upload-operator-image
