@@ -247,6 +247,10 @@ export const populateAdvancedConfig = async (
   await combobox.waitFor({ state: 'visible', timeout: 5000 });
   await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
 
+  const policyInput = page.getByTestId('select-input-pod-scheduling-policy');
+  await policyInput.waitFor({ state: 'visible', timeout: 5000 });
+  await expect(policyInput).toHaveValue(/.+/, { timeout: 5000 });
+
   // policy is already enabled by default
   if (!enablePodSchedulingPolicy) {
     await page
