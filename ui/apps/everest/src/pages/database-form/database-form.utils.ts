@@ -52,6 +52,7 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   [DbWizardFormFields.podSchedulingPolicyEnabled]: false,
   [DbWizardFormFields.podSchedulingPolicy]: '',
   [DbWizardFormFields.exposureMethod]: ExposureMethod.ClusterIP,
+  [DbWizardFormFields.loadBalancerConfigName]: '',
   [DbWizardFormFields.engineParametersEnabled]: false,
   [DbWizardFormFields.engineParameters]: '',
   [DbWizardFormFields.monitoring]: false,

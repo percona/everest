@@ -78,6 +78,9 @@ export const AdvancedConfigurationForm = ({
   const selectedPolicy = useRef<PodSchedulingPolicy>();
   const [loadBalancerConfigDialogOpen, setLoadBalancerConfigDialogOpen] =
     useState(false);
+  const initialLbConfigName = useRef(
+    getValues(AdvancedConfigurationFields.loadBalancerConfigName)
+  );
   const selectedLoadBalancerConfig = useRef<
     LoadBalancerConfig | null | undefined
   >(null);
@@ -114,19 +117,16 @@ export const AdvancedConfigurationForm = ({
       setPolicyDialogOpen(true);
     }
   };
-  const lbConfigName = getValues(
-    AdvancedConfigurationFields.loadBalancerConfigName
-  );
 
   const isEksDefault = useMemo(
     () =>
       clusterType &&
       clusterType === 'eks' &&
-      !lbConfigName &&
+      !initialLbConfigName.current &&
       loadBalancerConfigs?.items.some(
         (config) => config.metadata.name === EKS_DEFAULT_LOAD_BALANCER_CONFIG
       ),
-    [clusterType, lbConfigName, loadBalancerConfigs?.items]
+    [clusterType, loadBalancerConfigs?.items]
   );
 
   const selectOptions: LoadBalancerConfig[] = [
@@ -144,7 +144,7 @@ export const AdvancedConfigurationForm = ({
 
   useEffect(() => {
     if (
-      !lbConfigName &&
+      !initialLbConfigName.current &&
       allowedFieldsToInitiallyLoadDefaults.includes('loadBalancerConfigName')
     ) {
       setValue(
@@ -155,7 +155,6 @@ export const AdvancedConfigurationForm = ({
   }, [
     allowedFieldsToInitiallyLoadDefaults,
     getValues,
-    lbConfigName,
     selectDefaultValue,
     setValue,
   ]);
