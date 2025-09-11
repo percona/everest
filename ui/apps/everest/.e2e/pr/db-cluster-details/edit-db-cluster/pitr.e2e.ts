@@ -19,6 +19,7 @@ import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { storageLocationAutocompleteEmptyValidationCheck } from '@e2e/utils/db-wizard';
 import { getBucketNamespacesMap } from '@e2e/constants';
 import { waitForInitializingState } from '@e2e/utils/table';
+import { removeFinalizersFromDB } from '@e2e/utils/kubernetes';
 
 const openPitrEditModal = async (page: Page) => {
   const editResourcesButton = page.getByTestId('edit-pitr-button');
@@ -180,6 +181,7 @@ test.describe.serial('MongoDb PITR editing', async () => {
 
   test.afterAll(async ({ request }) => {
     await deleteDbClusterFn(request, psmdbName);
+    await removeFinalizersFromDB('psmdb', psmdbName, 'everest-ui');
   });
 
   test.beforeEach(async ({ page }) => {
