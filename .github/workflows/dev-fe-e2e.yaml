@@ -58,6 +58,7 @@ jobs:
         with:
           cpus: 4
           memory: 12g
+          kubernetes-version: v1.32.8
           addons: registry
           insecure-registry: "localhost:5000"
 
@@ -198,7 +199,11 @@ jobs:
           SESSION_PASS: "session1234"
         run: |
           cd ui
-          pnpm --filter "@percona/everest" e2e
+          pnpm --filter "@percona/everest" e2e --project=pr db-cluster-details/edit-db-cluster/pitr.e2e.ts multinamespaces/storage-location.e2e.ts
+
+      - name: "Setup tmate debug ssh session"
+        uses: "percona/gh-action-action-tmate@v3"
+        if: ${{ always() }}
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
