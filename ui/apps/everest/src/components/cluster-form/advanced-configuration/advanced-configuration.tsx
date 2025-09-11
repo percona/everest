@@ -201,9 +201,9 @@ export const AdvancedConfigurationForm = ({
             minHeight={'50px'}
           >
             <Typography variant="caption" maxWidth="60%">
-              {Messages.cards.policies.description}
+              {!!policiesEnabled && Messages.cards.policies.description}
             </Typography>
-            {!!policiesEnabled && (
+            {!!policiesEnabled && policies.length && (
               <Box display="flex" ml="auto" alignItems="center">
                 <SelectInput
                   name={AdvancedConfigurationFields.podSchedulingPolicy}
@@ -224,11 +224,11 @@ export const AdvancedConfigurationForm = ({
                     </MenuItem>
                   ))}
                 </SelectInput>
-                {!!policies.length && (
+                {
                   <IconButton onClick={handleOnPolicyInfoClick}>
                     <InfoIcon sx={{ width: '20px' }} />
                   </IconButton>
-                )}
+                }
               </Box>
             )}
           </Box>
