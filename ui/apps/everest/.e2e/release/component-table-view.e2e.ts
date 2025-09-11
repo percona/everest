@@ -33,6 +33,8 @@ import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
 let token: string;
 
+test.describe.configure({ retries: 0 });
+
 type Expectations = {
   /** text in Type column */
   expectedType: string;
