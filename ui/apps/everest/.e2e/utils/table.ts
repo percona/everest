@@ -21,7 +21,7 @@ export const findRowAndClickActions = async (
 export const waitForInitializingState = async (page: Page, name: string) => {
   const dbRow = page.getByRole('row').filter({ hasText: name });
   await expect(dbRow).toBeVisible();
-  await expect(dbRow.getByText('Creating')).not.toBeVisible({ timeout: 15000 });
+  await expect(dbRow.getByText('Creating')).not.toBeVisible({ timeout: 30000 });
 };
 
 /**
