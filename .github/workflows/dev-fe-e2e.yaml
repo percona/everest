@@ -59,6 +59,7 @@ jobs:
           cpus: 4
           memory: 12g
           addons: registry
+          kubernetes-version: v1.32.8
           insecure-registry: "localhost:5000"
 
       - name: Expose local registry
