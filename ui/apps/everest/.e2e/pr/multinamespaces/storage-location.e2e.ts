@@ -36,11 +36,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
         dbName: pgDbName,
         dbType: 'postgresql',
         numberOfNodes: '1',
-        cpu: 0.6,
-        memory: 1,
-        disk: 5,
-        proxyCpu: 0.5,
-        proxyMemory: 0.8,
       },
       EVEREST_CI_NAMESPACES.PG_ONLY
     );
@@ -51,11 +46,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
         dbName: pxcDbName,
         dbType: 'mysql',
         numberOfNodes: '1',
-        cpu: 0.6,
-        memory: 1,
-        disk: 5,
-        proxyCpu: 0.5,
-        proxyMemory: 0.8,
         backup: {
           enabled: false,
         },
@@ -64,10 +54,10 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     );
   });
 
-  // test.afterAll(async ({ request }) => {
-  //   await deleteDbClusterFn(request, pgDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
-  //   await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
-  // });
+  test.afterAll(async ({ request }) => {
+    await deleteDbClusterFn(request, pgDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
+    await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
+  });
 
   test('Backup Storage autocomplete in DB Wizard has only backup storages in selected namespace', async ({
     page,

@@ -61,7 +61,6 @@ jobs:
           cpus: 4
           memory: 12g
           addons: registry
-          kubernetes-version: v1.32.8
           insecure-registry: "localhost:5000"
 
       - name: Expose local registry
@@ -201,13 +200,7 @@ jobs:
           SESSION_PASS: "session1234"
         run: |
           cd ui
-          export IGNORE_RBAC_TESTS=true
-          export IGNORE_SESSION_TESTS=true
-          pnpm --filter "@percona/everest" e2e multinamespaces/storage-location.e2e.ts
-
-      - name: "Setup tmate debug ssh session"
-        uses: "percona/gh-action-action-tmate@v3"
-        if: ${{ always() }}
+          pnpm --filter "@percona/everest" e2e
 
       - name: Run debug commands on failure
         if: ${{ failure() }}
