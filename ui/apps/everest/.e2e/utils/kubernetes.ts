@@ -104,7 +104,9 @@ export const removeFinalizersFromDB = async (
     const command = `kubectl patch ${resourceType} ${resourceName} -n ${namespace} --type=json -p='[{"op": "remove", "path": "/metadata/finalizers"}]'`;
     execSync(command);
   } catch (error) {
-    console.error(`Error removing finalizers from ${resourceType} ${resourceName}: ${error}`);
+    console.error(
+      `Error removing finalizers from ${resourceType} ${resourceName}: ${error}`
+    );
     throw error;
   }
 };
