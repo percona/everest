@@ -1,6 +1,8 @@
 import { APIRequestContext, expect, Page } from '@playwright/test';
 import { getTokenFromLocalStorage } from './localStorage';
 
+export const POD_SCHEDULING_POLICIES_URL = '/settings/policies/pod-scheduling';
+
 export const createPodSchedulingPolicy = async (
   request: APIRequestContext,
   name: string,
@@ -58,7 +60,7 @@ export const createPodSchedulingPolicyWithValues = async (
 ) => {
   const matchingPolicyType =
     dbType === 'psmdb' ? 'MongoDB' : dbType === 'pxc' ? 'MySQL' : 'PostgreSQL';
-  await page.goto('/settings/pod-scheduling-policies');
+  await page.goto(POD_SCHEDULING_POLICIES_URL);
   await page.getByTestId('add-policy').waitFor();
   await page.getByTestId('add-policy').click();
   await page.getByTestId('text-input-name').fill(policyName);
@@ -81,7 +83,7 @@ export const createRuleForPodSchedulingPolicyWithValues = async (
   operator?: 'In' | 'NotIn' | 'Exists' | 'DoesNotExist',
   values?: string
 ) => {
-  await page.goto('/settings/pod-scheduling-policies');
+  await page.goto(POD_SCHEDULING_POLICIES_URL);
   await page.getByRole('table').waitFor();
   await page
     .locator('.MuiTableRow-root')

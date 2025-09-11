@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
@@ -167,7 +166,6 @@ func TestConnectionURL(t *testing.T) {
 	t.Parallel()
 	type testCase struct {
 		name string
-		objs []ctrlclient.Object
 		db   everestv1alpha1.DatabaseCluster
 		user,
 		password,
@@ -177,139 +175,34 @@ func TestConnectionURL(t *testing.T) {
 	cases := []testCase{
 		{
 			name: "non-sharded psmdb 1 node",
-			objs: []ctrlclient.Object{
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-0",
-						Namespace: "ns-1",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-0"},
-				},
-			},
 			db: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "psmdb-try",
 					Namespace: "ns-1",
 				},
 				Spec:   everestv1alpha1.DatabaseClusterSpec{Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB}},
-				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0.ns-1.svc.cluster.local", Port: 27017},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0-0.mongodb-56u-rs0.ns-1.svc.cluster.local:27017", Port: 27017},
 			},
 			user:     "databaseAdmin",
 			password: "azoE4FwvDRVycH83CO",
-			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.ns-1.svc.cluster.local:27017",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-56u-rs0-0.mongodb-56u-rs0.ns-1.svc.cluster.local:27017",
 		},
 		{
-			name: "non-sharded psmdb, 3 node, external access disabled",
-			objs: []ctrlclient.Object{
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-0",
-						Namespace: "ns-2",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-0"},
-				},
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-1",
-						Namespace: "ns-2",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-1"},
-				},
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-2",
-						Namespace: "ns-2",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-2"},
-				},
-			},
+			name: "non-sharded psmdb, 3 node",
 			db: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "psmdb-try",
 					Namespace: "ns-2",
 				},
 				Spec:   everestv1alpha1.DatabaseClusterSpec{Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB}},
-				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0.ns-2.svc.cluster.local", Port: 27017},
+				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "mongodb-56u-rs0-0.mongodb-56u-rs0.ns-2.svc.cluster.local:27017,mongodb-56u-rs0-1.mongodb-56u-rs0.ns-2.svc.cluster.local:27017,mongodb-56u-rs0-2.mongodb-56u-rs0.ns-2.svc.cluster.local:27017", Port: 27017},
 			},
 			user:     "databaseAdmin",
 			password: "azoE4FwvDRVycH83CO",
-			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-try-rs0-0.mongodb-56u-rs0.ns-2.svc.cluster.local:27017,mongodb-try-rs0-1.mongodb-56u-rs0.ns-2.svc.cluster.local:27017,mongodb-try-rs0-2.mongodb-56u-rs0.ns-2.svc.cluster.local:27017",
-		},
-		{
-			name: "non-sharded psmdb, 3 node, external access enabled",
-			objs: []ctrlclient.Object{
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-0",
-						Namespace: "ns-3",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-0"},
-				},
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-1",
-						Namespace: "ns-3",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-1"},
-				},
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-2",
-						Namespace: "ns-3",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-2"},
-				},
-			},
-			db: everestv1alpha1.DatabaseCluster{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "psmdb-try",
-					Namespace: "ns-3",
-				},
-				Spec: everestv1alpha1.DatabaseClusterSpec{
-					Engine: everestv1alpha1.Engine{Type: everestv1alpha1.DatabaseEnginePSMDB},
-					Proxy:  everestv1alpha1.Proxy{Expose: everestv1alpha1.Expose{Type: "external"}},
-				},
-				Status: everestv1alpha1.DatabaseClusterStatus{Hostname: "34.34.163.11:27017,34.79.177.123:27017,35.195.153.1:27017", Port: 27017},
-			},
-			user:     "databaseAdmin",
-			password: "azoE4FwvDRVycH83CO",
-			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@34.34.163.11:27017,34.79.177.123:27017,35.195.153.1:27017",
+			expected: "mongodb://databaseAdmin:azoE4FwvDRVycH83CO@mongodb-56u-rs0-0.mongodb-56u-rs0.ns-2.svc.cluster.local:27017,mongodb-56u-rs0-1.mongodb-56u-rs0.ns-2.svc.cluster.local:27017,mongodb-56u-rs0-2.mongodb-56u-rs0.ns-2.svc.cluster.local:27017",
 		},
 		{
 			name: "sharded psmdb, 3 node, external access enabled",
-			objs: []ctrlclient.Object{
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-0",
-						Namespace: "ns-4",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-0"},
-				},
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-1",
-						Namespace: "ns-4",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-1"},
-				},
-				&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "mongodb-try-rs0-2",
-						Namespace: "ns-4",
-						Labels:    map[string]string{"app.kubernetes.io/instance": "psmdb-try", "app.kubernetes.io/component": "mongod"},
-					},
-					Spec: corev1.PodSpec{Hostname: "mongodb-try-rs0-2"},
-				},
-			},
 			db: everestv1alpha1.DatabaseCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "psmdb-try",
@@ -392,7 +285,6 @@ func TestConnectionURL(t *testing.T) {
 			t.Parallel()
 			mockClient := fakeclient.NewClientBuilder().
 				WithScheme(kubernetes.CreateScheme()).
-				WithObjects(tc.objs...).
 				WithObjects(&tc.db)
 			k := kubernetes.NewEmpty(zap.NewNop().Sugar()).WithKubernetesClient(mockClient.Build())
 			h := &k8sHandler{kubeConnector: k}
