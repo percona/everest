@@ -64,10 +64,10 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
     );
   });
 
-  // test.afterAll(async ({ request }) => {
-  //   await deleteDbClusterFn(request, pgDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
-  //   await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
-  // });
+  test.afterAll(async ({ request }) => {
+    await deleteDbClusterFn(request, pgDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
+    await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
+  });
 
   test('Backup Storage autocomplete in DB Wizard has only backup storages in selected namespace', async ({
     page,
