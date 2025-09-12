@@ -74,3 +74,6 @@ export { default as ActionableLabeledContent } from './actionable-labeled-conten
 
 export * from './code-copy-block';
 export { default as CodeCopyBlock } from './code-copy-block';
+
+export * from './accordion';
+export { default as CustomAccordionSummary } from './accordion/accordion-summary';

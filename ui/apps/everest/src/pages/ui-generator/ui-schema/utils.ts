@@ -27,20 +27,20 @@ export const getDefaultValues = (
 
   if (fields.global) {
     defaults.global = {
-      params: buildDefaults(fields.global.properties || {}),
+      params: buildDefaults(fields.global || {}),
     };
   }
 
   if (fields.components) {
     defaults.components = {};
     Object.entries(fields.components).forEach(([compName, compValue]) => {
-      defaults.components[compName] = buildDefaults(compValue.properties || {});
+      defaults.components[compName] = buildDefaults(compValue || {});
     });
   }
 
   if (fields.topology) {
     defaults.topology = Object.keys(fields.topology)[0];
-    defaults.topology = buildDefaults(fields.topology.properties || {});
+    defaults.topology = buildDefaults(fields.topology || {});
   }
 
   return defaults;

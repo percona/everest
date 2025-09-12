@@ -1,9 +1,9 @@
 import {
   Accordion,
   AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
+  InputAdornment,
   MenuItem,
   Stack,
   Step,
@@ -19,7 +19,7 @@ import {
   ComponentProperties,
   OpenAPIObjectProperties,
 } from './types';
-import { SelectInput } from '@percona/ui-lib';
+import { CustomAccordionSummary, SelectInput } from '@percona/ui-lib';
 import React from 'react';
 import { buildZodSchema, getDefaultValues } from './utils';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -62,12 +62,10 @@ const OpenApiUiComponent = ({
   name,
   uiType,
   params,
-  subParameters,
 }: {
   name: string;
   params: OpenAPIObjectProperties;
   uiType: string;
-  subParameters?: unknown;
 }) => {
   const methods = useFormContext();
   const errors = methods?.formState?.errors || {};
@@ -76,6 +74,8 @@ const OpenApiUiComponent = ({
   const Component = muiComponentMap[uiType];
   if (!Component) return null;
 
+  const { badge, ...restParams } = params || {};
+
   return (
     <Box>
       <Box display="flex" alignItems="center">
@@ -83,21 +83,21 @@ const OpenApiUiComponent = ({
           label: name,
           name: name,
           error: !!error,
-          style: { minWidth: 240 },
-          ...params,
+          style: { width: 240 },
+          textFieldProps: {
+            sx: { width: 240 },
+            ...(badge
+              ? {
+                  InputProps: {
+                    endAdornment: (
+                      <InputAdornment position="end">{badge}</InputAdornment>
+                    ),
+                  },
+                }
+              : {}),
+            ...restParams,
+          },
         })}
-        {params.badge && (
-          <Typography
-            sx={{
-              ml: 1,
-              display: 'flex',
-              alignItems: 'center',
-              marginTop: '24px',
-            }}
-          >
-            {params.badge}
-          </Typography>
-        )}
       </Box>
       {error && (
         <Typography color="error" sx={{ mt: 1 }}>
@@ -117,12 +117,40 @@ function renderComponentGroup({
   properties: ComponentProperties;
   parentName?: string;
   isTopLevel?: boolean;
+  stackDirection?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
 }): React.ReactNode {
   const fieldName = name;
   const label = properties.params?.label || properties.label || name;
   const isGroup = properties.uiType === 'Group' && properties.subParameters;
   const children = isGroup ? (
     Object.entries(properties.subParameters!).map(([subName, subProps]) => {
+      const isSubGroup = subProps?.uiType === 'Group' && !isTopLevel;
+      if (isSubGroup) {
+        return (
+          <Box
+            key={subName}
+            sx={{
+              flexBasis: '100%',
+              display: 'flex',
+            }}
+          >
+            <Box
+              key={subName}
+              sx={{
+                display: 'block',
+                maxWidth: 'fit-content',
+              }}
+              id="diana"
+            >
+              {renderComponentGroup({
+                name: `${fieldName}.${subName}`,
+                properties: subProps,
+                parentName: fieldName,
+              })}
+            </Box>
+          </Box>
+        );
+      }
       return renderComponentGroup({
         name: `${fieldName}.${subName}`,
         properties: subProps,
@@ -134,25 +162,51 @@ function renderComponentGroup({
       key={fieldName}
       name={fieldName}
       uiType={properties.uiType!}
-      subParameters={properties.subParameters}
       params={properties.params || {}}
     />
   );
 
-  if (isGroup || isTopLevel) {
+  const shouldRenderAccordion = isTopLevel || (isGroup && isTopLevel);
+  if (shouldRenderAccordion) {
     return (
-      <Accordion key={fieldName}>
-        <AccordionSummary>
-          <Typography variant="h6">{label}</Typography>
-        </AccordionSummary>
+      <Accordion key={fieldName} defaultExpanded>
+        <CustomAccordionSummary title={label} />
         <AccordionDetails style={{ display: 'flex', flexDirection: 'column' }}>
           {children}
         </AccordionDetails>
       </Accordion>
     );
+  } else if (isGroup) {
+    return (
+      <Box
+        sx={{
+          border: '1px solid #2C323E40',
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '15px',
+          margin: '5px',
+          width: '100%',
+        }}
+      >
+        <Typography sx={{ fontWeight: '600', color: '#303642' }}>
+          {label}
+        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
+    );
   }
 
-  return <>{children}</>;
+  return <Box>{children}</Box>;
 }
 
 export const UIGeneratorNew = () => {
