@@ -13,6 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/*
+ * Verifies DB components in the "Components → Table View".
+ *
+ * Checks:
+ * - Pods and proxies are listed with correct Status, Ready, Name, Type, Age, and Restarts columns.
+ * - Each pod/proxy row expands to show containers in a detail panel.
+ * - Containers in detail panels have expected names, are Running, Ready, and have valid restart counts.
+ *
+ * Preconditions:
+ * - The test navigates to the cluster details page.
+ * - The "Components" tab and "Table view" are selected by the test.
+ * - Database clusters are created as part of the test flow.
+ */
+
 import { expect, test, Page } from '@playwright/test';
 import {
   findDbAndClickRow,
