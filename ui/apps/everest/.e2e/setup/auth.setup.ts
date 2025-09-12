@@ -14,18 +14,20 @@
 // limitations under the License.
 
 import { test as setup } from '@playwright/test';
-import { login } from '@e2e/utils/user';
+import { loginCIUser } from '@e2e/utils/user';
 
-setup('Login', async ({ page }) => {
-  await login(page);
-  await page.evaluate(() => {
-    // This is a dummy token
-    localStorage.setItem(
-      'everestToken',
-      'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldmVyZXN0IiwiaWF0IjoxNzM5NDU2NjU1LCJleHAiOjE3NzA5OTI2NTUsImF1ZCI6Ind3dy5leGFtcGxlLmNvbSIsInN1YiI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJHaXZlbk5hbWUiOiJKb2hubnkiLCJTdXJuYW1lIjoiUm9ja2V0IiwiRW1haWwiOiJqcm9ja2V0QGV4YW1wbGUuY29tIiwiUm9sZSI6WyJNYW5hZ2VyIiwiUHJvamVjdCBBZG1pbmlzdHJhdG9yIl19.NKJwQE1KY9srM9bZPZxL3zd_563ugnELMPFal9lFf78'
-    );
+setup.describe.serial('Auth setup', () => {
+  setup('Login', async ({ page }) => {
+    await loginCIUser(page);
+    await page.evaluate(() => {
+      // This is a dummy token
+      localStorage.setItem(
+        'everestToken',
+        'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldmVyZXN0IiwiaWF0IjoxNzM5NDU2NjU1LCJleHAiOjE3NzA5OTI2NTUsImF1ZCI6Ind3dy5leGFtcGxlLmNvbSIsInN1YiI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJHaXZlbk5hbWUiOiJKb2hubnkiLCJTdXJuYW1lIjoiUm9ja2V0IiwiRW1haWwiOiJqcm9ja2V0QGV4YW1wbGUuY29tIiwiUm9sZSI6WyJNYW5hZ2VyIiwiUHJvamVjdCBBZG1pbmlzdHJhdG9yIl19.NKJwQE1KY9srM9bZPZxL3zd_563ugnELMPFal9lFf78'
+      );
+    });
+    // Wait for the user to be logged out and end up in login page again
+    await page.waitForURL(/login/);
+    await loginCIUser(page);
   });
-  // Wait for the user to be logged out and end up in login page again
-  await page.waitForURL(/login/);
-  await login(page);
 });

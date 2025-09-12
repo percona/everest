@@ -90,7 +90,7 @@ More about PNPM filtering: https://pnpm.io/filtering
       operators:
         - pg
 
-    - name: everest-ui
+    - name: everest
       backupStorages:
         - bucket-1
         - bucket-5
@@ -104,7 +104,7 @@ More about PNPM filtering: https://pnpm.io/filtering
 - On `apps/everest/.e2e/.env`, set:
 
   ```
-  EVEREST_BUCKETS_NAMESPACES_MAP='[["bucket-1","everest-ui"],["bucket-2","psmdb-only"],["bucket-3","pxc-only"],["bucket-4","pg-only"],["bucket-5","everest-ui"]]'
+  EVEREST_BUCKETS_NAMESPACES_MAP='[["bucket-1","everest"],["bucket-2","psmdb-only"],["bucket-3","pxc-only"],["bucket-4","pg-only"],["bucket-5","everest"]]'
   ```
 
 - To set a MinIO storage on your k8s cluster: `kubectl apply -f <repo-root>/.github/minio.conf.yaml` and set:

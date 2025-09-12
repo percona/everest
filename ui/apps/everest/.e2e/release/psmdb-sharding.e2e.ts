@@ -213,12 +213,12 @@ test.describe(
         for (let i = 0; i < size; i++) {
           await checkDBMetrics(
             'node_boot_time_seconds',
-            `everest-ui-${clusterName}-${replica}-${i}`,
+            `everest-${clusterName}-${replica}-${i}`,
             'admin:admin'
           );
           await checkDBMetrics(
             'mongodb_connections',
-            `everest-ui-${clusterName}-${replica}-${i}`,
+            `everest-${clusterName}-${replica}-${i}`,
             'admin:admin'
           );
         }
@@ -228,7 +228,7 @@ test.describe(
       for (let i = 0; i < 2; i++) {
         await checkDBMetrics(
           'node_boot_time_seconds',
-          `everest-ui-${clusterName}-mongos-${i}`,
+          `everest-${clusterName}-mongos-${i}`,
           'admin:admin'
         );
       }
@@ -243,7 +243,7 @@ test.describe(
       for (const replica of replicas) {
         await checkQAN(
           'mongodb',
-          `everest-ui-${clusterName}-${replica}-0`,
+          `everest-${clusterName}-${replica}-0`,
           'admin:admin'
         );
       }

@@ -11,7 +11,7 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ## Location to install binaries to
-LOCALBIN := $(shell pwd)/bin
+LOCALBIN := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
@@ -144,7 +144,7 @@ test-cover:             ## Run unit tests and collect per-package coverage infor
 test-crosscover:        ## Run unit tests and collect cross-package coverage information.
 	CGO_ENABLED=1 go test -race -timeout=10m -count=1 -coverprofile=crosscover.out -covermode=atomic -p=1 -coverpkg=./... ./...
 
-##@ Deployment
+##@ Deployment management
 
 # This target builds the docker image for Everest operator from the commit referenced in go.mod.
 # Docker image will be tagged with the same tag as Everest API server image (IMAGE_TAG).
@@ -162,6 +162,7 @@ docker-build-operator:
 	make docker-build IMG=$(EVEREST_OPERATOR_IMG) ;\
 	}
 
+DB_NAMESPACES = everest
 .PHONY: deploy
 deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	$(info Deploying Everest ($(IMAGE_OWNER):$(IMAGE_TAG)) into K8S cluster using everestctl)
@@ -173,9 +174,10 @@ deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	--operator.postgresql=true \
 	--operator.mysql=true \
 	--skip-wizard \
-	--namespaces everest \
+	--namespaces $(DB_NAMESPACES) \
 	--helm.set server.image=$(IMAGE_OWNER) \
 	--helm.set server.apiRequestsRateLimit=200 \
+	--helm.set server.sessionRequestsRateLimit=200 \
 	--helm.set versionMetadataURL=https://check-dev.percona.com \
 	--helm.set server.initialAdminPassword=admin
 	$(MAKE) port-forward
@@ -184,12 +186,42 @@ DEPLOY_ALL_DEPS := docker-build k3d-upload-server-image
 DEPLOY_ALL_DEPS += docker-build-operator k3d-upload-operator-image
 DEPLOY_ALL_DEPS += build-cli-debug deploy
 .PHONY: deploy-all
-deploy-all: $(DEPLOY_ALL_DEPS) ## Build and deploy Everest and its dependencies to K3D test cluster.
+deploy-all: $(DEPLOY_ALL_DEPS) ## Helper to build Everest and its dependencies and deploy to K3D test cluster.
 
 .PHONY: undeploy-cli
 undeploy: build-cli-debug ## Undeploy Everest from K8S cluster using Everest CLI.
 	$(info Uninstalling Everest from K8S cluster using everestctl)
 	$(LOCALBIN)/everestctl uninstall -y -f -v
+
+#DB_NAMESPACES = ''
+.PHONY: add-pg-namespaces
+add-pg-namespaces: ## Add PostgreSQL namespace to Everest using Everest CLI(usage: DB_NAMESPACES=ns-1,ns-2 make add-pg-namespaces).
+	$(info Adding PostgreSQL namespaces=${DB_NAMESPACE} to Everest using everestctl)
+	$(LOCALBIN)/everestctl namespaces add $(DB_NAMESPACES) -v \
+	--operator.mongodb=false \
+	--operator.postgresql=true \
+	--operator.mysql=false \
+	--skip-wizard
+
+#DB_NAMESPACES = ''
+.PHONY: add-psmdb-namespaces
+add-psmdb-namespaces: ## Add PSMDB namespace to Everest using Everest CLI(usage: DB_NAMESPACES=ns-1,ns-2 make add-psmdb-namespaces).
+	$(info Adding PSMDB namespaces=${DB_NAMESPACE} to Everest using everestctl)
+	$(LOCALBIN)/everestctl namespaces add $(DB_NAMESPACES) -v \
+	--operator.mongodb=true \
+	--operator.postgresql=false \
+	--operator.mysql=false \
+	--skip-wizard
+
+#DB_NAMESPACES = ''
+.PHONY: add-pxc-namespaces
+add-pxc-namespaces: ## Add PXC namespace to Everest using Everest CLI(usage: DB_NAMESPACES=ns-1,ns-2 make add-pxc-namespaces).
+	$(info Adding PXC namespaces=${DB_NAMESPACE} to Everest using everestctl)
+	$(LOCALBIN)/everestctl namespaces add $(DB_NAMESPACES) -v \
+	--operator.mongodb=false \
+	--operator.postgresql=false \
+	--operator.mysql=true \
+	--skip-wizard
 
 .PHONY: port-forward
 port-forward:

@@ -14,10 +14,11 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { loginSessionUser, logout } from '../../utils/user';
-import { getSessionToken } from '../../utils/localStorage';
+import { loginSessionUser, logoutSessionUser } from '@e2e/utils/user';
+import { getSessionTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { execSync } from 'child_process';
-import { getCliPath } from '../../utils/session-cli';
+import { getCliPath } from '@e2e/utils/session-cli';
+import { SESSION_USER_STORAGE_STATE_FILE, TIMEOUTS } from '@e2e/constants';
 
 const USER = process.env.SESSION_USER!;
 
@@ -25,7 +26,7 @@ const cliPath = getCliPath();
 
 // ——————————————————————————————————————————————————
 // check API response for valid and invalid tokens
-async function expectAuthorized(request, token: string) {
+async function expectAuthenticated(request, token: string) {
   const res = await request.get('/v1/version', {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -34,7 +35,7 @@ async function expectAuthorized(request, token: string) {
   expect(body).toHaveProperty('version');
 }
 
-async function expectUnauthorized(request, token: string) {
+async function expectUnauthenticated(request, token: string) {
   const res = await request.get('/v1/version', {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -43,87 +44,93 @@ async function expectUnauthorized(request, token: string) {
   expect(body.message).toMatch(/invalid token|invalid or expired jwt/i);
 }
 // ——————————————————————————————————————————————————
+test.slow();
 
-test('T191 - Verify token invalidity after user logout from Everest UI - Everest user', async ({
-  page,
-  request,
-}) => {
-  const token = await getSessionToken();
-
-  await test.step('Token works before logout', () =>
-    expectAuthorized(request, token));
-
-  await test.step('Perform UI logout', () => logout(page));
-
-  await test.step('Token invalid after logout', () =>
-    expectUnauthorized(request, token));
-});
-
-test('T190 - Verify user is logged out and token is invalidated after updating user password', async ({
-  page,
-  request,
-}) => {
+test.describe.serial('Session', () => {
   let token: string;
 
-  await test.step('Login as session user', async () => {
-    await loginSessionUser(page, true);
-    token = await getSessionToken();
-    expect(token).toBeTruthy();
+  test.beforeEach(async ({ page }) => {
+    await test.step('Login as session user', async () => {
+      await loginSessionUser(page);
+      token = await getSessionTokenFromLocalStorage();
+      expect(token).toBeTruthy();
+    });
   });
 
-  await test.step('Token works before logout', () =>
-    expectAuthorized(request, token));
+  test.afterEach(async ({ page }) => {
+    await page.evaluate(() => localStorage.clear());
+    await page.evaluate(() => sessionStorage.clear());
+    await page
+      .context()
+      .storageState({ path: SESSION_USER_STORAGE_STATE_FILE });
+  });
 
-  await test.step('Update user password and verify UI logout', async () => {
-    // Confirm user is logged in
-    await expect(page.getByTestId('user-appbar-button')).toBeVisible();
+  test('T191 - Verify token invalidity after user logout from Everest UI - Everest user', async ({
+    page,
+    request,
+  }) => {
+    await test.step('Token works before logout', async () =>
+      expectAuthenticated(request, token));
 
-    // Update user password via CLI
-    execSync(
-      `go run ${cliPath} accounts set-password -u ${USER} -p ${process.env.SESSION_PASS}`,
-      {
+    await test.step('Perform UI logout', async () => logoutSessionUser(page));
+
+    await test.step('Verify token is invalid after logout', async () =>
+      expectUnauthenticated(request, token));
+  });
+
+  test('T190 - Verify user is logged out and token is invalidated after updating user password', async ({
+    page,
+    request,
+  }) => {
+    await test.step('Token works before password update', async () =>
+      expectAuthenticated(request, token));
+
+    await test.step('Update user password', async () => {
+      // Update user password via CLI
+      execSync(`${cliPath} accounts set-password -u ${USER} -p newPass12345`, {
         stdio: 'inherit',
-      }
-    );
-
-    // After password update, UI should auto-logout
-    await page.waitForURL('**/login', { timeout: 10000 });
-    await expect(page.getByTestId('login-button')).toBeVisible();
-  });
-
-  await test.step('Token invalid after logout', () =>
-    expectUnauthorized(request, token));
-});
-
-test('T189 - Verify user is logged out and token is invalidated after user deletion', async ({
-  page,
-  request,
-}) => {
-  let token: string;
-
-  await test.step('Login as session user', async () => {
-    await loginSessionUser(page, true);
-    token = await getSessionToken();
-    expect(token).toBeTruthy();
-  });
-
-  await test.step('Token works before logout', () =>
-    expectAuthorized(request, token));
-
-  await test.step('Delete user and verify UI logout', async () => {
-    // Confirm user is logged in
-    await expect(page.getByTestId('user-appbar-button')).toBeVisible();
-
-    // Delete user via CLI
-    execSync(`go run ${cliPath} accounts delete -u ${USER}`, {
-      stdio: 'inherit',
+      });
     });
 
-    // After delete, UI should auto-logout
-    await page.waitForURL('**/login', { timeout: 10000 });
-    await expect(page.getByTestId('login-button')).toBeVisible();
+    await test.step('Verify UI logout', async () => {
+      // After password update, UI should auto-logout
+      await page.waitForURL('/login', { timeout: TIMEOUTS.ThirtySeconds });
+    });
+
+    await test.step('Verify token is invalid after logout', async () =>
+      expectUnauthenticated(request, token));
+
+    await test.step('Restore user password', async () => {
+      // Update user password via CLI
+      execSync(
+        `${cliPath} accounts set-password -u ${USER} -p ${process.env.SESSION_PASS}`,
+        {
+          stdio: 'inherit',
+        }
+      );
+    });
   });
 
-  await test.step('Token invalid after logout', () =>
-    expectUnauthorized(request, token));
+  test('T189 - Verify user is logged out and token is invalidated after user deletion', async ({
+    page,
+    request,
+  }) => {
+    await test.step('Token works before user deletion', async () =>
+      expectAuthenticated(request, token));
+
+    await test.step('Delete user', async () => {
+      // Delete user via CLI
+      execSync(`${cliPath} accounts delete -u ${USER}`, {
+        stdio: 'inherit',
+      });
+    });
+
+    await test.step('Verify UI logout', async () => {
+      // After delete, UI should auto-logout
+      await page.waitForURL('/login', { timeout: TIMEOUTS.ThirtySeconds });
+    });
+
+    await test.step('Verify token is invalid after logout', async () =>
+      expectUnauthenticated(request, token));
+  });
 });

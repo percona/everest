@@ -538,7 +538,7 @@ test.describe(
       await test.step('Check restart status', async () => {
         await page.goto('/databases');
         await waitForStatus(page, secondClusterName, 'Initializing', 30000);
-        await deleteAllK8sPVCs('everest-ui');
+        await deleteAllK8sPVCs('everest');
         await waitForStatus(page, secondClusterName, 'Up', 600000);
       });
 

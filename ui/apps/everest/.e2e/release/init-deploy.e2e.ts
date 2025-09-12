@@ -248,7 +248,7 @@ const zephyrMap: Record<string, string> = {
         let resource = await getK8sResource(
           'svc',
           `${resourceName}`,
-          'everest-ui'
+          'everest'
         );
         expect(resource?.spec.type).toBe('LoadBalancer');
       });
@@ -301,12 +301,12 @@ const zephyrMap: Record<string, string> = {
               for (let i = 0; i < size; i++) {
                 await checkDBMetrics(
                   'node_boot_time_seconds',
-                  `everest-ui-${clusterName}-rs0-${i}`,
+                  `everest-${clusterName}-rs0-${i}`,
                   'admin:admin'
                 );
                 await checkDBMetrics(
                   'mongodb_connections',
-                  `everest-ui-${clusterName}-rs0-${i}`,
+                  `everest-${clusterName}-rs0-${i}`,
                   'admin:admin'
                 );
               }
@@ -321,12 +321,12 @@ const zephyrMap: Record<string, string> = {
                     case 'pxc': {
                       await checkDBMetrics(
                         'node_boot_time_seconds',
-                        `everest-ui-${clusterName}-${nodeType}-${i}`,
+                        `everest-${clusterName}-${nodeType}-${i}`,
                         'admin:admin'
                       );
                       await checkDBMetrics(
                         'mysql_global_status_uptime',
-                        `everest-ui-${clusterName}-${nodeType}-${i}`,
+                        `everest-${clusterName}-${nodeType}-${i}`,
                         'admin:admin'
                       );
                       break;
@@ -334,12 +334,12 @@ const zephyrMap: Record<string, string> = {
                     case 'haproxy': {
                       await checkDBMetrics(
                         'haproxy_backend_status',
-                        `everest-ui-${clusterName}-${nodeType}-${i}`,
+                        `everest-${clusterName}-${nodeType}-${i}`,
                         'admin:admin'
                       );
                       await checkDBMetrics(
                         'haproxy_backend_active_servers',
-                        `everest-ui-${clusterName}-${nodeType}-${i}`,
+                        `everest-${clusterName}-${nodeType}-${i}`,
                         'admin:admin'
                       );
                       break;
@@ -354,12 +354,12 @@ const zephyrMap: Record<string, string> = {
               for (let i = 0; i < size; i++) {
                 await checkDBMetrics(
                   'node_boot_time_seconds',
-                  `everest-ui-${pgSts[i]}-0`,
+                  `everest-${pgSts[i]}-0`,
                   'admin:admin'
                 );
                 await checkDBMetrics(
                   'pg_postmaster_uptime_seconds',
-                  `everest-ui-${pgSts[i]}-0`,
+                  `everest-${pgSts[i]}-0`,
                   'admin:admin'
                 );
               }
@@ -377,7 +377,7 @@ const zephyrMap: Record<string, string> = {
               // for PSMDB we see QAN only for the first node (primary)
               await checkQAN(
                 'mongodb',
-                `everest-ui-${clusterName}-rs0-0`,
+                `everest-${clusterName}-rs0-0`,
                 'admin:admin'
               );
               break;
@@ -386,7 +386,7 @@ const zephyrMap: Record<string, string> = {
               for (let i = 0; i < size; i++) {
                 await checkQAN(
                   'mysql',
-                  `everest-ui-${clusterName}-pxc-${i}`,
+                  `everest-${clusterName}-pxc-${i}`,
                   'admin:admin'
                 );
               }
@@ -397,7 +397,7 @@ const zephyrMap: Record<string, string> = {
               for (let i = 0; i < size; i++) {
                 await checkQAN(
                   'postgresql',
-                  `everest-ui-${pgSts[i]}-0`,
+                  `everest-${pgSts[i]}-0`,
                   'admin:admin'
                 );
               }
@@ -559,7 +559,7 @@ const zephyrMap: Record<string, string> = {
           const resource = await getK8sResource(
             'svc',
             `${resourceName}`,
-            'everest-ui'
+            'everest'
           );
           expect(resource?.spec.type).toBe('LoadBalancer');
           expect(resource?.spec.loadBalancerSourceRanges).toEqual([

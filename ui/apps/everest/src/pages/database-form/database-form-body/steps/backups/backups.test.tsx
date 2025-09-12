@@ -165,7 +165,7 @@ describe('BackupsStep', () => {
           description: 'bs-tds-1',
           forcePathStyle: false,
           name: 'bs-tds-1',
-          namespace: 'everest-ui',
+          namespace: 'everest',
           region: 'us-east-1',
           type: 's3',
           url: 'https://minio.minio.svc.cluster.local',

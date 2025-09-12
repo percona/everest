@@ -1,3 +1,4 @@
+.auth
 tests-out
 .env
 user.json

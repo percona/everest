@@ -1,3 +1,6 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
+
 const {
   EVEREST_BUCKETS_NAMESPACES_MAP,
   EVEREST_DIR,
@@ -7,10 +10,19 @@ const {
 
 type BucketsNamespaceMap = [string, string][];
 
-export const STORAGE_STATE_FILE = 'user.json';
+export const CI_USER_STORAGE_STATE_FILE = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '.auth/',
+  'ci_user.json'
+);
+export const SESSION_USER_STORAGE_STATE_FILE = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '.auth/',
+  'session_user.json'
+);
 
 export enum EVEREST_CI_NAMESPACES {
-  EVEREST_UI = 'everest-ui',
+  EVEREST_UI = 'everest',
   PSMDB_ONLY = 'psmdb-only',
   PXC_ONLY = 'pxc-only',
   PG_ONLY = 'pg-only',

@@ -13,11 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test as setup, expect, APIResponse } from '@playwright/test';
+import { test as setup } from '@playwright/test';
 import 'dotenv/config';
 import { getTokenFromLocalStorage } from '../utils/localStorage';
-import { getBucketNamespacesMap } from '../constants';
+import { doBackupCall } from '../utils/request';
+import {
+  CI_USER_STORAGE_STATE_FILE,
+  getBucketNamespacesMap,
+} from '../constants';
 import { saveOldRBACPermissions } from '@e2e/utils/rbac-cmd-line';
+
 const {
   EVEREST_LOCATION_ACCESS_KEY,
   EVEREST_LOCATION_SECRET_KEY,
@@ -32,174 +37,133 @@ const {
   MONITORING_PASSWORD,
 } = process.env;
 
-const doBackupCall = async (fn: () => Promise<APIResponse>, retries = 3) => {
-  if (retries === 0) {
-    return Promise.reject();
-  }
+setup.describe.serial('Global setup', () => {
+  // setup('Login', async ({ page }) => {
+  //   await login(page);
+  //   await page.evaluate(() => {
+  //     // This is a dummy token
+  //     localStorage.setItem(
+  //       'everestToken',
+  //       'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldmVyZXN0IiwiaWF0IjoxNzM5NDU2NjU1LCJleHAiOjE3NzA5OTI2NTUsImF1ZCI6Ind3dy5leGFtcGxlLmNvbSIsInN1YiI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJHaXZlbk5hbWUiOiJKb2hubnkiLCJTdXJuYW1lIjoiUm9ja2V0IiwiRW1haWwiOiJqcm9ja2V0QGV4YW1wbGUuY29tIiwiUm9sZSI6WyJNYW5hZ2VyIiwiUHJvamVjdCBBZG1pbmlzdHJhdG9yIl19.NKJwQE1KY9srM9bZPZxL3zd_563ugnELMPFal9lFf78'
+  //     );
+  //   });
+  //   // Wait for the user to be logged out and end up in login page again
+  //   await page.waitForURL(/login/);
+  //   await login(page);
+  // });
 
-  try {
-    const response = await fn();
-    const statusText = await response.json();
-    const ok = response.ok();
+  // setup('Close modal permanently', async ({ page }) => {
+  //   // await page.goto('/');
+  //   // await expect(page.getByTestId('lets-go-button')).toBeVisible();
+  //   // await page.getByTestId('lets-go-button').click();
+  //   // await page.context().storageState({ path: STORAGE_STATE_FILE });
+  //
+  //   try {
+  //     await page.goto('/');
+  //     const letsGoButton = page.getByTestId('lets-go-button');
+  //     if (await letsGoButton.isVisible({ timeout: 3000 })) {
+  //       await letsGoButton.click();
+  //     }
+  //   } catch {
+  //     // Modal not visible, skip
+  //   }
+  //   await page.context().storageState({ path: STORAGE_STATE_FILE });
+  // });
 
-    if (ok) {
-      return Promise.resolve();
-    }
-
-    if (
-      response.status() === 409 ||
-      (response.status() === 400 &&
-        statusText?.message &&
-        statusText?.message.includes('same url'))
-    ) {
-      return Promise.resolve();
-    }
-
-    if (response.status() !== 201 && response.status() !== 200) {
-      return Promise.reject();
-    }
-
-    if (statusText && statusText.message) {
-      if (statusText.message.includes('Could not read')) {
-        if (retries > 0) {
-          return doBackupCall(fn, retries - 1);
-        }
-      } else {
-        return Promise.resolve();
-      }
-    }
-    return Promise.reject();
-  } catch (error) {
-    return Promise.reject();
-  }
-};
-
-setup('Backup storages', async ({ request }) => {
-  const token = await getTokenFromLocalStorage();
-  const promises: Promise<any>[] = [];
-  // This has a nested array structure, in the form of
-  // [
-  //   ['bucket1', 'namespace1'],
-  //   ['bucket2', 'namespace2'],
-  // ]
-  const bucketNamespacesMap = getBucketNamespacesMap();
-
-  bucketNamespacesMap.forEach(async ([bucket, namespace]) => {
-    const isEverestTesting = bucket === 'everest-testing';
-    const data = isEverestTesting
-      ? {
-          name: bucket,
-          description: 'CI test S3 bucket',
-          type: 's3',
-          bucketName: bucket,
-          secretKey: EVEREST_S3_SECRET_KEY,
-          accessKey: EVEREST_S3_ACCESS_KEY,
-          allowedNamespaces: [],
-          url: EVEREST_S3_URL,
-          region: EVEREST_S3_REGION,
-          verifyTLS: true,
-          forcePathStyle: false,
-        }
-      : {
-          name: bucket,
-          description: 'CI test bucket',
-          type: 's3',
-          bucketName: bucket,
-          secretKey: EVEREST_LOCATION_SECRET_KEY,
-          accessKey: EVEREST_LOCATION_ACCESS_KEY,
-          allowedNamespaces: [],
-          url: EVEREST_LOCATION_URL,
-          region: EVEREST_LOCATION_REGION,
-          verifyTLS: false,
-          forcePathStyle: true,
-        };
-
-    promises.push(
-      doBackupCall(() =>
-        request.post(`/v1/namespaces/${namespace}/backup-storages/`, {
-          data,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      )
-    );
-  });
-
-  // STORAGE_NAMES.forEach(async (storage) => {
-  //   promises.push(
-  //     doBackupCall(() =>
-  //       request.post('/v1/backup-storages/', {
-  //         data: {
-  //           name: storage,
+  // setup('Backup storages', async ({ request }) => {
+  //   const token = await getTokenFromLocalStorage();
+  //   const promises: Promise<any>[] = [];
+  //   // This has a nested array structure, in the form of
+  //   // [
+  //   //   ['bucket1', 'namespace1'],
+  //   //   ['bucket2', 'namespace2'],
+  //   // ]
+  //   const bucketNamespacesMap = getBucketNamespacesMap();
+  //
+  //   bucketNamespacesMap.forEach(async ([bucket, namespace]) => {
+  //     const isEverestTesting = bucket === 'everest-testing';
+  //     const data = isEverestTesting
+  //       ? {
+  //           name: bucket,
+  //           description: 'CI test S3 bucket',
+  //           type: 's3',
+  //           bucketName: bucket,
+  //           secretKey: EVEREST_S3_SECRET_KEY,
+  //           accessKey: EVEREST_S3_ACCESS_KEY,
+  //           allowedNamespaces: [],
+  //           url: EVEREST_S3_URL,
+  //           region: EVEREST_S3_REGION,
+  //           verifyTLS: true,
+  //           forcePathStyle: false,
+  //         }
+  //       : {
+  //           name: bucket,
   //           description: 'CI test bucket',
   //           type: 's3',
-  //           bucketName: EVEREST_LOCATION_BUCKET_NAME,
+  //           bucketName: bucket,
   //           secretKey: EVEREST_LOCATION_SECRET_KEY,
   //           accessKey: EVEREST_LOCATION_ACCESS_KEY,
-  //           allowedNamespaces: [namespaces[0]],
+  //           allowedNamespaces: [],
   //           url: EVEREST_LOCATION_URL,
   //           region: EVEREST_LOCATION_REGION,
   //           verifyTLS: false,
   //           forcePathStyle: true,
-  //         },
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       })
-  //     )
-  //   );
+  //         };
+  //
+  //     promises.push(
+  //       doBackupCall(() =>
+  //         request.post(`/v1/namespaces/${namespace}/backup-storages/`, {
+  //           data,
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         })
+  //       )
+  //     );
+  //   });
+  //   await Promise.all(promises);
   // });
 
-  await Promise.all(promises);
-});
-
-setup('Monitoring endpoints', async ({ request }) => {
-  const token = await getTokenFromLocalStorage();
-  const bucketNamespacesMap = getBucketNamespacesMap();
-  const allNamespaces = Array.from(
-    new Set(bucketNamespacesMap.map(([, namespaces]) => namespaces).flat())
-  );
-  const promises: Promise<any>[] = [];
-
-  // For the sake of simplicity, we will create a monitoring endpoint for all namespaces in the buckets we defined
-  for (const [idx, namespace] of allNamespaces.entries()) {
-    promises.push(
-      doBackupCall(() =>
-        request.post(`/v1/namespaces/${namespace}/monitoring-instances`, {
-          data: {
-            name: `e2e-endpoint-${idx}`,
-            type: 'pmm',
-            url: MONITORING_URL,
-            allowedNamespaces: [],
-            verifyTLS: false,
-            pmm: {
-              user: MONITORING_USER,
-              password: MONITORING_PASSWORD,
-            },
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      )
+  setup('Monitoring endpoints', async ({ request }) => {
+    const token = await getTokenFromLocalStorage();
+    const bucketNamespacesMap = getBucketNamespacesMap();
+    const allNamespaces = Array.from(
+      new Set(bucketNamespacesMap.map(([, namespaces]) => namespaces).flat())
     );
-  }
-  await Promise.all(promises);
-});
+    const promises: Promise<any>[] = [];
 
-setup('Close modal permanently', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByTestId('lets-go-button')).toBeVisible();
-  await page.getByTestId('lets-go-button').click();
-  await page.context().storageState({ path: 'user.json' });
-});
+    // For the sake of simplicity, we will create a monitoring endpoint for all namespaces in the buckets we defined
+    for (const [idx, namespace] of allNamespaces.entries()) {
+      promises.push(
+        doBackupCall(() =>
+          request.post(`/v1/namespaces/${namespace}/monitoring-instances`, {
+            data: {
+              name: `e2e-endpoint-${idx}`,
+              type: 'pmm',
+              url: MONITORING_URL,
+              allowedNamespaces: [],
+              verifyTLS: false,
+              pmm: {
+                user: MONITORING_USER,
+                password: MONITORING_PASSWORD,
+              },
+            },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        )
+      );
+    }
+    await Promise.all(promises);
+  });
 
-setup('Save old RBAC permissions', async ({ request }) => {
-  await saveOldRBACPermissions();
-});
+  setup('Save old RBAC permissions', async ({ request }) => {
+    await saveOldRBACPermissions();
+  });
 
-// setup('Monitoring setup', async ({ request }) => {
-//   await createMonitoringInstance(request, testMonitoringName);
-//   await createMonitoringInstance(request, testMonitoringName2);
-// });
+  // setup('Monitoring setup', async ({ request }) => {
+  //   await createMonitoringInstance(request, testMonitoringName);
+  //   await createMonitoringInstance(request, testMonitoringName2);
+  // });
+});

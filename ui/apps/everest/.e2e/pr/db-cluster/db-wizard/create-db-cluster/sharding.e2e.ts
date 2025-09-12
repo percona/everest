@@ -146,7 +146,7 @@ test.describe('Sharding (psmdb)', () => {
 
     await deleteDbCluster(page, dbName);
     // TODO: This function should be removed after fix for: https://perconadev.atlassian.net/browse/K8SPSMDB-1208
-    await patchPSMDBFinalizers('sharding-psmdb', 'everest-ui');
+    await patchPSMDBFinalizers('sharding-psmdb', 'everest');
     await waitForDelete(page, dbName, 60000);
   });
 

@@ -4,7 +4,7 @@ import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
-import { STORAGE_STATE_FILE } from '@e2e/constants';
+import { CI_USER_STORAGE_STATE_FILE } from '@e2e/constants';
 
 type AffinityRuleFormArgs = {
   component?: 'DB Node' | 'Proxy' | 'Router' | 'PG Bouncer' | 'Config Server';
@@ -72,7 +72,7 @@ const DB_CLUSTER_NAME = 'policy-test-cluster';
 
 test.beforeAll(async ({ browser, request }) => {
   const context = await browser.newContext({
-    storageState: STORAGE_STATE_FILE,
+    storageState: CI_USER_STORAGE_STATE_FILE,
   });
   const page = await context.newPage();
   await page.goto('/settings/pod-scheduling-policies');

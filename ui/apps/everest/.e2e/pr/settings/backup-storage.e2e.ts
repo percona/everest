@@ -35,7 +35,7 @@ test.describe.serial('Backup storage', () => {
     await page.getByTestId('text-input-description').fill('test-description');
 
     await page.getByTestId('text-input-namespace').click();
-    await page.getByRole('option', { name: 'everest-ui' }).click();
+    await page.getByRole('option', { name: 'everest' }).click();
     await expect(page.getByTestId('select-input-type')).toHaveValue('s3');
     await page.getByTestId('text-input-bucket-name').fill('bucket-6');
     await page.getByTestId('text-input-region').fill(EVEREST_LOCATION_REGION);

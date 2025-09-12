@@ -1,29 +1,26 @@
 import { chromium } from '@playwright/test';
-import { STORAGE_STATE_FILE } from '../constants';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import {
+  CI_USER_STORAGE_STATE_FILE,
+  SESSION_USER_STORAGE_STATE_FILE,
+} from '../constants';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export const getTokenFromLocalStorage = async () => {
-  const browser = await chromium.launch();
-  const storageStateContext = await browser.newContext({
-    storageState: STORAGE_STATE_FILE,
-  });
-  const origins = (await storageStateContext.storageState()).origins;
-  storageStateContext.close();
-  return origins[0].localStorage.find((item) => item.name === 'everestToken')
-    .value;
-};
-
-export const getSessionToken = async () => {
+const getTokenFromStorageFile = async (storageFile: string) => {
   const browser = await chromium.launch();
   const context = await browser.newContext({
-    storageState: path.join(__dirname, '..', 'sessionUser.json'),
+    storageState: storageFile,
   });
   const origins = (await context.storageState()).origins;
   await context.close();
+  await browser.close();
 
   return origins[0].localStorage.find((item) => item.name === 'everestToken')
     ?.value;
+};
+
+export const getTokenFromLocalStorage = async () => {
+  return await getTokenFromStorageFile(CI_USER_STORAGE_STATE_FILE);
+};
+
+export const getSessionTokenFromLocalStorage = async () => {
+  return await getTokenFromStorageFile(SESSION_USER_STORAGE_STATE_FILE);
 };

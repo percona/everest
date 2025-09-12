@@ -1,5 +1,5 @@
 namespaces:
-  - name: everest-ui
+  - name: everest
     operators:
       - pxc
       - psmdb
