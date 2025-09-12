@@ -36,6 +36,11 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
         dbName: pgDbName,
         dbType: 'postgresql',
         numberOfNodes: '1',
+        cpu: 0.6,
+        memory: 1,
+        disk: 5,
+        proxyCpu: 0.5,
+        proxyMemory: 0.8,
       },
       EVEREST_CI_NAMESPACES.PG_ONLY
     );
@@ -46,6 +51,11 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
         dbName: pxcDbName,
         dbType: 'mysql',
         numberOfNodes: '1',
+        cpu: 0.6,
+        memory: 1,
+        disk: 5,
+        proxyCpu: 0.5,
+        proxyMemory: 0.8,
         backup: {
           enabled: false,
         },
