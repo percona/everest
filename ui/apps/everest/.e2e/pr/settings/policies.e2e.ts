@@ -75,7 +75,7 @@ test.beforeAll(async ({ browser, request }) => {
     storageState: STORAGE_STATE_FILE,
   });
   const page = await context.newPage();
-  await page.goto('/settings/pod-scheduling-policies');
+  await page.goto(POD_SCHEDULING_POLICIES_URL);
   await page.getByTestId('add-policy').click();
   await page.getByTestId('text-input-name').fill(PG_POLICY_NAME);
   await page.getByTestId('select-type-button').click();
@@ -99,6 +99,8 @@ test.beforeAll(async ({ browser, request }) => {
   });
 });
 
+export const POD_SCHEDULING_POLICIES_URL = '/settings/policies/pod-scheduling';
+
 test.afterAll(async ({ request }) => {
   await deleteDbClusterFn(request, DB_CLUSTER_NAME);
   const promises = [
@@ -121,7 +123,7 @@ test.afterAll(async ({ request }) => {
 
 test.describe('Create rules', () => {
   test('Create rules for PG', async ({ page }) => {
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await page.getByRole('table').waitFor();
     await page
       .locator('.MuiTableRow-root')
@@ -152,7 +154,7 @@ test.describe('Create rules', () => {
   });
 
   test('Create rules for Mongo', async ({ page }) => {
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await page.getByRole('table').waitFor();
     await page
       .locator('.MuiTableRow-root')
@@ -183,7 +185,7 @@ test.describe('Create rules', () => {
   });
 
   test('Edit rules', async ({ page }) => {
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await page.getByRole('table').waitFor();
     await page
       .locator('.MuiTableRow-root')

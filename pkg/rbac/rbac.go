@@ -52,6 +52,7 @@ const (
 	ResourceDatabaseClusterCredentials = "database-cluster-credentials"
 	ResourceDatabaseClusterRestores    = "database-cluster-restores"
 	ResourceDatabaseEngines            = "database-engines"
+	ResourceLoadBalancerConfigs        = "load-balancer-configs"
 	ResourceMonitoringInstances        = "monitoring-instances"
 	ResourceNamespaces                 = "namespaces"
 	ResourcePodSchedulingPolicies      = "pod-scheduling-policies"
@@ -63,6 +64,7 @@ const (
 var GlobalResources = []string{
 	ResourceNamespaces,
 	ResourcePodSchedulingPolicies,
+	ResourceLoadBalancerConfigs,
 	ResourceDataImporters,
 }
 

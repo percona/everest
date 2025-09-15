@@ -5,7 +5,6 @@ import {
   DbClusterStatus,
   ManageableSchedules,
   Proxy,
-  ProxyExposeConfig,
   ProxyExposeType,
   Schedule,
 } from 'shared-types/dbCluster.types';
@@ -35,6 +34,8 @@ import { dbEngineToDbType } from '@percona/utils';
 import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
 import { Path, UseFormGetFieldState } from 'react-hook-form';
 import cronConverter from './cron-converter';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -107,10 +108,9 @@ export const someErrorInStateFields = <T extends Record<string, unknown>>(
   return fields.some((field) => fieldStateGetter(field)?.error);
 };
 
-export const isProxy = (proxy: Proxy | ProxyExposeConfig): proxy is Proxy => {
-  return proxy && typeof (proxy as Proxy).expose === 'object';
+export const isProxy = (proxy: Proxy): boolean => {
+  return proxy && typeof proxy.expose === 'object';
 };
-
 export const transformSchedulesIntoManageableSchedules = async (
   schedules: Schedule[],
   namespace: string,
@@ -743,11 +743,12 @@ export const changeDbClusterCrd = (
 export const changeDbClusterAdvancedConfig = (
   dbCluster: DbCluster,
   engineParametersEnabled = false,
-  externalAccess = false,
+  exposureMethod: ExposureMethod,
   engineParameters = '',
   sourceRanges?: Array<{ sourceRange?: string }>,
   podSchedulingPolicyEnabled = false,
-  podSchedulingPolicy = ''
+  podSchedulingPolicy = '',
+  loadBalancerConfigName = ''
 ) => ({
   ...dbCluster,
   spec: {
@@ -762,10 +763,16 @@ export const changeDbClusterAdvancedConfig = (
     proxy: {
       ...dbCluster.spec.proxy,
       expose: {
-        type: externalAccess
-          ? ProxyExposeType.external
-          : ProxyExposeType.internal,
-        ...(!!externalAccess &&
+        loadBalancerConfigName:
+          (exposureMethod === ExposureMethod.LoadBalancer &&
+            loadBalancerConfigName !== EMPTY_LOAD_BALANCER_CONFIGURATION &&
+            loadBalancerConfigName) ||
+          undefined,
+        type:
+          exposureMethod === ExposureMethod.LoadBalancer
+            ? ProxyExposeType.external
+            : ProxyExposeType.internal,
+        ...(exposureMethod === ExposureMethod.LoadBalancer &&
           sourceRanges && {
             ipSourceRanges: sourceRanges.flatMap((source) =>
               source.sourceRange ? [source.sourceRange] : []
@@ -840,13 +847,18 @@ export const changeDbClusterResources = (
       dbEngineToDbType(dbCluster.spec.engine.type),
       newResources.numberOfProxies.toString(),
       '',
-      (dbCluster.spec.proxy as Proxy).expose.type === 'external',
+      dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+        ? ExposureMethod.LoadBalancer
+        : ExposureMethod.ClusterIP,
       newResources.proxyCpu,
       newResources.proxyMemory,
       !!sharding,
       ((dbCluster.spec.proxy as Proxy).expose.ipSourceRanges || []).map(
         (sourceRange) => ({ sourceRange })
-      )
+      ),
+      dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+        ? dbCluster.spec.proxy.expose.loadBalancerConfigName
+        : undefined
     ),
     ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
       sharding && {
