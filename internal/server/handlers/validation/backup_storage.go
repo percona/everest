@@ -25,9 +25,10 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest-operator/utils"
+	operatorUtils "github.com/percona/everest-operator/utils"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
-	"github.com/percona/everest/pkg/utils"
 )
 
 const (
@@ -88,7 +89,7 @@ func (h *validateHandler) DeleteBackupStorage(ctx context.Context, namespace, na
 		return err
 	}
 
-	if h.isEverestObjectInUse(bs) {
+	if operatorUtils.IsEverestObjectInUse(bs) {
 		// backup storage is used by some DB cluster
 		return errors.Join(ErrInvalidRequest, errDeleteInUseBackupStorage(namespace, name))
 	}
@@ -337,7 +338,7 @@ func (h *validateHandler) validateUpdateBackupStorageRequest(
 	existing *everestv1alpha1.BackupStorage,
 	secret *corev1.Secret,
 ) error {
-	if h.isEverestObjectInUse(existing) && basicStorageParamsAreChanged(existing, params) {
+	if operatorUtils.IsEverestObjectInUse(existing) && basicStorageParamsAreChanged(existing, params) {
 		return errEditInUseBackupStorage(existing.GetNamespace(), existing.GetName())
 	}
 
@@ -351,7 +352,7 @@ func (h *validateHandler) validateUpdateBackupStorageRequest(
 
 	url := &existing.Spec.EndpointURL
 	if params.Url != nil {
-		if ok := utils.ValidateURL(*params.Url); !ok {
+		if ok := operatorUtils.ValidateURL(*params.Url); !ok {
 			err := ErrInvalidURL("url")
 			return err
 		}

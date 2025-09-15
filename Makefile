@@ -177,7 +177,8 @@ deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	--helm.set server.image=$(IMAGE_OWNER) \
 	--helm.set server.apiRequestsRateLimit=200 \
 	--helm.set versionMetadataURL=https://check-dev.percona.com \
-	--helm.set server.initialAdminPassword=admin
+	--helm.set server.initialAdminPassword=admin \
+	--helm.set operator.init=false
 	$(MAKE) port-forward
 
 DEPLOY_ALL_DEPS := docker-build k3d-upload-server-image
