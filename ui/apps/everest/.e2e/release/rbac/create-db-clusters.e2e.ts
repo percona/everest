@@ -261,7 +261,7 @@ test.describe(
     }) => {
       await setRBACPermissionsK8S([
         ['namespaces', 'read', '*'],
-        ['pod-scheduling-policies', 'read', `${namespace2}/*`],
+        ['pod-scheduling-policies', 'read', '*'],
         ['database-engines', 'read', '*/*'],
         ['database-clusters', 'read', `${namespace2}/*`],
         ['database-clusters', 'create', `${namespace2}/*`],
