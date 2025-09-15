@@ -42,6 +42,7 @@ export const DbDetails = ({
   parameters,
   storageClass,
   podSchedulingPolicy,
+  loadBalancerConfig,
 }: DatabaseDetailsOverviewCardProps) => {
   const { data: monitoringInstances } =
     useMonitoringInstancesForNamespace(namespace);
@@ -95,6 +96,7 @@ export const DbDetails = ({
           parameters={parameters}
           storageClass={storageClass}
           podSchedulingPolicy={podSchedulingPolicy}
+          loadBalancerConfig={loadBalancerConfig}
         />
       </Stack>
     </OverviewCard>

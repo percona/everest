@@ -16,9 +16,9 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	operatorUtils "github.com/percona/everest-operator/utils"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/utils"
 )
 
 const (
@@ -185,7 +185,7 @@ func validateSharding(dbc *everestv1alpha1.DatabaseCluster) error {
 }
 
 func validateCreateDatabaseClusterRequest(dbc *everestv1alpha1.DatabaseCluster) error {
-	return utils.ValidateEverestResourceName(dbc.GetName(), "metadata.name")
+	return operatorUtils.ValidateEverestResourceName(dbc.GetName(), "metadata.name")
 }
 
 func validateEngine(databaseCluster *everestv1alpha1.DatabaseCluster, engine *everestv1alpha1.DatabaseEngine) error {

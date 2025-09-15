@@ -26,9 +26,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/strings/slices"
 
+	operatorUtils "github.com/percona/everest-operator/utils"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/utils"
 )
 
 // ParseNamespaceNames parses a comma-separated namespaces string.
@@ -67,7 +67,7 @@ func validateNamespaceNames(nsList []string) error {
 			return ErrNamespaceReserved(ns)
 		}
 
-		if err := utils.ValidateRFC1035(ns, "namespace name"); err != nil {
+		if err := operatorUtils.ValidateRFC1035(ns, "namespace name"); err != nil {
 			return err
 		}
 	}

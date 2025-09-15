@@ -21,6 +21,9 @@ import { BackupStatus } from 'shared-types/backups.types';
 export const IP_REGEX =
   /^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$/;
 
+export const LOAD_BALANCER_ANNOTATION_REGEX =
+  /^(?:(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\/)?([a-z0-9](?:[a-z0-9_.-]{0,61}[a-z0-9])?)$/;
+
 export const INVALID_SOURCE_RANGE_ERROR = 'Invalid IP address range';
 export const DUPLICATE_SOURCE_RANGE_ERROR =
   'Duplicate entry. This IP and netmask combination already exists.';
@@ -90,3 +93,7 @@ export const DbWizardFormFields = {
   ...DBVersionFields,
   ...AdvancedConfigurationFields,
 };
+
+export const EKS_DEFAULT_LOAD_BALANCER_CONFIG = 'eks-default';
+
+export const EMPTY_LOAD_BALANCER_CONFIGURATION = '- No configuration -';
