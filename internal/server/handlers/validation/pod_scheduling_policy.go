@@ -25,9 +25,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	operatorUtils "github.com/percona/everest-operator/utils"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/utils"
 )
 
 var (
@@ -124,7 +124,7 @@ func (h *validateHandler) GetPodSchedulingPolicy(ctx context.Context, name strin
 }
 
 func (h *validateHandler) validatePSPCR(psp *everestv1alpha1.PodSchedulingPolicy) error {
-	if err := utils.ValidateRFC1035(psp.GetName(), "metadata.name"); err != nil {
+	if err := operatorUtils.ValidateRFC1035(psp.GetName(), "metadata.name"); err != nil {
 		return err
 	}
 
@@ -200,7 +200,7 @@ func (h *validateHandler) validatePSPOnUpdate(ctx context.Context, newPsp *evere
 		return err
 	}
 
-	if h.isEverestReadOnlyObject(oldPsp) {
+	if operatorUtils.IsEverestReadOnlyObject(oldPsp) {
 		// default policy update is not allowed
 		return errUpdateDefaultPSP(newPsp.GetName())
 	}
@@ -219,12 +219,12 @@ func (h *validateHandler) validatePSPOnDelete(ctx context.Context, pspName strin
 		return err
 	}
 
-	if h.isEverestReadOnlyObject(psp) {
+	if operatorUtils.IsEverestReadOnlyObject(psp) {
 		// default policy deletion is not allowed
 		return errDeleteDefaultPSP(psp.GetName())
 	}
 
-	if h.isEverestObjectInUse(psp) {
+	if operatorUtils.IsEverestObjectInUse(psp) {
 		// policy is used by some DB cluster
 		return errDeleteInUsePSP(psp.GetName())
 	}

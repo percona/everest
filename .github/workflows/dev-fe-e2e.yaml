@@ -22,7 +22,7 @@ jobs:
       PMM_HELM_VER: "1.3.21"
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
@@ -119,7 +119,8 @@ jobs:
           --skip-db-namespace \
           --helm.set server.image=localhost:5000/perconalab/everest \
           --helm.set server.apiRequestsRateLimit=200 \
-          --helm.set versionMetadataURL=https://check-dev.percona.com
+          --helm.set versionMetadataURL=https://check-dev.percona.com \
+          --helm.set operator.init=false
 
       - name: Add everest-ui namespace
         shell: bash
