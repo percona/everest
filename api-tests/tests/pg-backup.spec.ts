@@ -104,7 +104,7 @@ test.describe('PG cluster backup tests', {tag: ['@pg', '@backup']}, () => {
           },
         }
         const response = await th.createDBClusterBackupWithDataRaw(request, payloadBackup)
-        expect(response.status()).toBe(500)
+        expect(response.status()).toBe(422)
         expect(await response.text()).toContain('metadata.name: Required value: name or generateName is required')
       });
     } finally {

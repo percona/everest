@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/url"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -284,12 +283,7 @@ func (h *k8sHandler) connectionURL(ctx context.Context, db *everestv1alpha1.Data
 	case everestv1alpha1.DatabaseEnginePXC:
 		url = queryEscapedURL("jdbc:mysql", user, password, defaultHost)
 	case everestv1alpha1.DatabaseEnginePSMDB:
-		hosts, err := psmdbHosts(ctx, db, h.kubeConnector.ListPods)
-		if err != nil {
-			h.log.Error(err)
-			return nil
-		}
-		url = queryEscapedURL("mongodb", user, password, hosts)
+		url = queryEscapedURL("mongodb", user, password, psmdbHosts(ctx, db, h.kubeConnector.ListPods))
 	case everestv1alpha1.DatabaseEnginePostgresql:
 		url = queryEscapedURL("postgres", user, password, defaultHost)
 	}
@@ -307,33 +301,13 @@ func psmdbHosts(
 	ctx context.Context,
 	db *everestv1alpha1.DatabaseCluster,
 	getPods func(ctx context.Context, opts ...ctrlclient.ListOption) (*corev1.PodList, error),
-) (string, error) {
+) string {
 	// for sharded clusters use a single entry point (mongos)
 	if db.Spec.Sharding != nil && db.Spec.Sharding.Enabled {
-		return net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port)), nil
-	}
-	// for non-sharded exposed clusters the host field contains all the needed information about hosts
-	if db.Spec.Proxy.Expose.Type == everestv1alpha1.ExposeTypeExternal {
-		return db.Status.Hostname, nil
+		return net.JoinHostPort(db.Status.Hostname, fmt.Sprint(db.Status.Port))
 	}
 
-	// for non-sharded internal clusters use a list of comma-separated host:port pairs from each node
-	pods, err := getPods(ctx,
-		ctrlclient.InNamespace(db.GetNamespace()),
-		ctrlclient.MatchingLabels{
-			"app.kubernetes.io/instance":  db.GetName(),
-			"app.kubernetes.io/component": "mongod",
-		},
-	)
-	if err != nil {
-		return "", err
-	}
-	const maxHosts = 5
-	hostPorts := make([]string, 0, maxHosts)
-	for _, pod := range pods.Items {
-		hostPorts = append(hostPorts, net.JoinHostPort(fmt.Sprintf("%s.%s", pod.Spec.Hostname, db.Status.Hostname), fmt.Sprint(db.Status.Port)))
-	}
-	return strings.Join(hostPorts, ","), nil
+	return db.Status.Hostname
 }
 
 func latestSuccessfulBackup(backups []everestv1alpha1.DatabaseClusterBackup) *everestv1alpha1.DatabaseClusterBackup {

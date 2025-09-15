@@ -1,26 +1,39 @@
 import { PreviewContentText } from '../preview-section';
 import { AdvancedConfigurationType } from '../../database-form-schema.ts';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types.ts';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts.ts';
 
 export const AdvancedConfigurationsPreviewSection = ({
-  externalAccess,
+  exposureMethod,
+  loadBalancerConfigName,
   engineParametersEnabled,
   engineParameters,
   storageClass,
   podSchedulingPolicyEnabled,
   podSchedulingPolicy,
-}: AdvancedConfigurationType) => (
-  <>
-    <PreviewContentText text={`Storage class: ${storageClass ?? ''}`} />
-    <PreviewContentText
-      text={`External access ${externalAccess ? 'enabled' : 'disabled'}`}
-    />
-    {engineParametersEnabled && engineParameters && (
-      <PreviewContentText text="Database engine parameters set" />
-    )}
-    {podSchedulingPolicyEnabled && podSchedulingPolicy && (
+}: AdvancedConfigurationType) => {
+  const isExternalAccessEnabled =
+    exposureMethod === ExposureMethod.LoadBalancer;
+
+  return (
+    <>
+      <PreviewContentText text={`Storage class: ${storageClass ?? ''}`} />
       <PreviewContentText
-        text={`Pod scheduling policy: ${podSchedulingPolicy}`}
+        text={`Ext. access: ${isExternalAccessEnabled ? 'enabled' : 'disabled'}`}
       />
-    )}
-  </>
-);
+      {isExternalAccessEnabled && (
+        <PreviewContentText
+          text={`Config name: ${loadBalancerConfigName ?? EMPTY_LOAD_BALANCER_CONFIGURATION}`}
+        />
+      )}
+      {engineParametersEnabled && engineParameters && (
+        <PreviewContentText text="Database engine parameters set" />
+      )}
+      {podSchedulingPolicyEnabled && podSchedulingPolicy && (
+        <PreviewContentText
+          text={`Pod scheduling policy: ${podSchedulingPolicy}`}
+        />
+      )}
+    </>
+  );
+};

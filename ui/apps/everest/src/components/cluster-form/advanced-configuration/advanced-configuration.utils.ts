@@ -15,9 +15,12 @@
 
 import { DbType } from '@percona/types';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
-import { AdvancedConfigurationFields } from './advanced-configuration.types';
+import {
+  AdvancedConfigurationFields,
+  ExposureMethod,
+} from './advanced-configuration.types';
 import { AdvancedConfigurationFormType } from './advanced-configuration-schema';
-import { isProxy } from 'utils/db';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
   let dynamicText = '';
@@ -43,18 +46,12 @@ export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
 export const advancedConfigurationModalDefaultValues = (
   dbCluster: DbCluster
 ): AdvancedConfigurationFormType => {
-  const sourceRangesSource = isProxy(dbCluster?.spec?.proxy)
-    ? dbCluster?.spec?.proxy?.expose.ipSourceRanges
-    : dbCluster?.spec?.proxy.ipSourceRanges;
+  const sourceRangesSource = dbCluster?.spec?.proxy.expose.ipSourceRanges;
+  const lbConfigName = dbCluster?.spec.proxy.expose.loadBalancerConfigName;
 
   return {
     [AdvancedConfigurationFields.storageClass]:
       dbCluster?.spec?.engine?.storage?.class || null,
-    [AdvancedConfigurationFields.externalAccess]: isProxy(
-      dbCluster?.spec?.proxy
-    )
-      ? dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.external
-      : dbCluster?.spec?.proxy.type === ProxyExposeType.external,
     [AdvancedConfigurationFields.engineParametersEnabled]:
       !!dbCluster?.spec?.engine?.config,
     [AdvancedConfigurationFields.engineParameters]:
@@ -66,5 +63,13 @@ export const advancedConfigurationModalDefaultValues = (
       !!dbCluster?.spec.podSchedulingPolicyName,
     [AdvancedConfigurationFields.podSchedulingPolicy]:
       dbCluster?.spec.podSchedulingPolicyName,
+    [AdvancedConfigurationFields.loadBalancerConfigName]:
+      dbCluster?.spec?.proxy.expose.type === ProxyExposeType.external
+        ? lbConfigName || EMPTY_LOAD_BALANCER_CONFIGURATION
+        : '',
+    [AdvancedConfigurationFields.exposureMethod]:
+      dbCluster?.spec?.proxy.expose.type === ProxyExposeType.external
+        ? ExposureMethod.LoadBalancer
+        : ExposureMethod.ClusterIP,
   };
 };

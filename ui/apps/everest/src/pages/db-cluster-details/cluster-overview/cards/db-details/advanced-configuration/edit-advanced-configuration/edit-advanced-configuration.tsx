@@ -24,6 +24,10 @@ import {
 import { Messages } from './edit-advanced-configuration.messages';
 import { dbEngineToDbType } from '@percona/utils';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
+import { AllowedFieldsToInitiallyLoadDefaults } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { useMemo } from 'react';
+import { ProxyExposeType } from 'shared-types/dbCluster.types';
 
 export const AdvancedConfigurationEditModal = ({
   open,
@@ -33,24 +37,40 @@ export const AdvancedConfigurationEditModal = ({
   submitting,
 }: AdvancedConfigurationModalProps) => {
   const onSubmit: SubmitHandler<AdvancedConfigurationFormType> = ({
-    externalAccess,
+    exposureMethod,
     engineParametersEnabled,
     engineParameters,
     sourceRanges,
     storageClass,
     podSchedulingPolicyEnabled,
     podSchedulingPolicy,
+    loadBalancerConfigName,
   }) => {
     handleSubmitModal({
-      externalAccess,
       engineParametersEnabled,
       engineParameters,
       sourceRanges,
       storageClass,
       podSchedulingPolicyEnabled,
       podSchedulingPolicy,
+      exposureMethod,
+      loadBalancerConfigName:
+        loadBalancerConfigName !== EMPTY_LOAD_BALANCER_CONFIGURATION
+          ? loadBalancerConfigName
+          : '',
     });
   };
+
+  const allowedFieldsToInitiallyLoadDefaults: AllowedFieldsToInitiallyLoadDefaults[] =
+    useMemo(() => {
+      const result: AllowedFieldsToInitiallyLoadDefaults[] = [
+        'loadBalancerConfigName',
+      ];
+      if (!dbCluster?.spec.podSchedulingPolicyName) {
+        result.push('podSchedulingPolicy');
+      }
+      return result;
+    }, [dbCluster?.spec.podSchedulingPolicyName]);
 
   return (
     <FormDialog
@@ -67,8 +87,13 @@ export const AdvancedConfigurationEditModal = ({
     >
       <AdvancedConfigurationForm
         dbType={dbEngineToDbType(dbCluster?.spec?.engine?.type)}
-        allowStorageClassChange={false}
-        setDefaultsOnLoad={!dbCluster.spec.podSchedulingPolicyName}
+        allowedFieldsToInitiallyLoadDefaults={
+          allowedFieldsToInitiallyLoadDefaults
+        }
+        disableNoConfig={
+          dbCluster.spec.proxy.expose.type === ProxyExposeType.external &&
+          dbCluster.spec.proxy.expose.loadBalancerConfigName !== undefined
+        }
       />
     </FormDialog>
   );

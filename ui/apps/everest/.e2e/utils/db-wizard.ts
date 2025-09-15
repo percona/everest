@@ -261,10 +261,10 @@ export const populateAdvancedConfig = async (
   }
 
   if (externalAccess) {
-    await page
-      .getByTestId('switch-input-external-access')
-      .getByRole('checkbox')
-      .check();
+    await page.getByTestId('select-input-exposure-method').waitFor();
+    await page.getByTestId('select-exposure-method-button').click();
+    await page.getByRole('option', { name: 'Load balancer' }).click();
+
     if (externalAccessSourceRange != '') {
       await page
         .getByTestId('text-input-source-ranges.0.source-range')

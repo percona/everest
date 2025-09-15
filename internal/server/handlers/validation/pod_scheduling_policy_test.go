@@ -32,9 +32,9 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	operatorUtils "github.com/percona/everest-operator/utils"
 	"github.com/percona/everest/internal/server/handlers/k8s"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/utils"
 )
 
 func getDefaultPXCPolicy() *everestv1alpha1.PodSchedulingPolicy {
@@ -92,7 +92,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					Name: "",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+			wantErr: errors.Join(ErrInvalidRequest, operatorUtils.ErrNameNotRFC1035Compatible("metadata.name")),
 		},
 		{
 			name: "name starts with -",
@@ -101,7 +101,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					Name: "-rstrst",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+			wantErr: errors.Join(ErrInvalidRequest, operatorUtils.ErrNameNotRFC1035Compatible("metadata.name")),
 		},
 		{
 			name: "name ends with -",
@@ -110,7 +110,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					Name: "rstrst-",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+			wantErr: errors.Join(ErrInvalidRequest, operatorUtils.ErrNameNotRFC1035Compatible("metadata.name")),
 		},
 		{
 			name: "name contains uppercase",
@@ -119,7 +119,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					Name: "AAsdf",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+			wantErr: errors.Join(ErrInvalidRequest, operatorUtils.ErrNameNotRFC1035Compatible("metadata.name")),
 		},
 		{
 			name: "name too long",
@@ -128,7 +128,7 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 					Name: "asldkafaslkdjfalskdfjaslkdjflsakfjdalskfdjaslkfdjaslkfdjsaklfdassksjdfhskdjfskjdfsdfsdflasdkfasdfk",
 				},
 			},
-			wantErr: errors.Join(ErrInvalidRequest, utils.ErrNameNotRFC1035Compatible("metadata.name")),
+			wantErr: errors.Join(ErrInvalidRequest, operatorUtils.ErrNameNotRFC1035Compatible("metadata.name")),
 		},
 		{
 			name: "duplicate name",
