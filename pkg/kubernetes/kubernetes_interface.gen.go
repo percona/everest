@@ -208,6 +208,17 @@ type KubernetesConnector interface {
 	CreatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error)
 	// UpdatePodSchedulingPolicy updates pod scheduling policy.
 	UpdatePodSchedulingPolicy(ctx context.Context, psp *everestv1alpha1.PodSchedulingPolicy) (*everestv1alpha1.PodSchedulingPolicy, error)
+	// ListLoadBalancerConfigs returns a list of load balancer config that matches the criteria.
+	// This method returns a list of full objects (meta and spec).
+	ListLoadBalancerConfigs(ctx context.Context, opts ...ctrlclient.ListOption) (*everestv1alpha1.LoadBalancerConfigList, error)
+	// GetLoadBalancerConfig returns load balancer config(full object) that matches the criteria.
+	GetLoadBalancerConfig(ctx context.Context, key ctrlclient.ObjectKey) (*everestv1alpha1.LoadBalancerConfig, error)
+	// DeleteLoadBalancerConfig deletes load balancer config that matches the criteria.
+	DeleteLoadBalancerConfig(ctx context.Context, obj *everestv1alpha1.LoadBalancerConfig) error
+	// CreateLoadBalancerConfig creates load balancer config.
+	CreateLoadBalancerConfig(ctx context.Context, lbc *everestv1alpha1.LoadBalancerConfig) (*everestv1alpha1.LoadBalancerConfig, error)
+	// UpdateLoadBalancerConfig updates load balancer config.
+	UpdateLoadBalancerConfig(ctx context.Context, lbc *everestv1alpha1.LoadBalancerConfig) (*everestv1alpha1.LoadBalancerConfig, error)
 	// GetAllClusterResources goes through all cluster nodes and sums their allocatable resources.
 	GetAllClusterResources(ctx context.Context, clusterType ClusterType, volumes *corev1.PersistentVolumeList) (uint64, uint64, uint64, error)
 	// GetConsumedCPUAndMemory returns consumed CPU and Memory in given namespace. If namespace

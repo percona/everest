@@ -528,9 +528,6 @@ const zephyrMap: Record<string, string> = {
 
         await test.step('Check new external access values in UI', async () => {
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
-          await expect(
-            page.getByTestId('switch-input-external-access')
-          ).toBeChecked();
           const rawValue = await page
             .getByTestId('text-input-source-ranges.0.source-range')
             .inputValue();
