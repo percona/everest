@@ -62,10 +62,12 @@ const OpenApiUiComponent = ({
   name,
   uiType,
   params,
+  label,
 }: {
   name: string;
   params: OpenAPIObjectProperties;
   uiType: string;
+  label: string;
 }) => {
   const methods = useFormContext();
   const errors = methods?.formState?.errors || {};
@@ -80,7 +82,8 @@ const OpenApiUiComponent = ({
     <Box>
       <Box display="flex" alignItems="center">
         {React.createElement(Component, {
-          label: name,
+          ...restParams,
+          label: label,
           name: name,
           error: !!error,
           style: { width: 240 },
@@ -89,13 +92,13 @@ const OpenApiUiComponent = ({
             ...(badge
               ? {
                   InputProps: {
+                    label: label,
                     endAdornment: (
                       <InputAdornment position="end">{badge}</InputAdornment>
                     ),
                   },
                 }
               : {}),
-            ...restParams,
           },
         })}
       </Box>
@@ -112,57 +115,48 @@ function renderComponentGroup({
   name,
   properties,
   isTopLevel = false,
+  siblings = [],
 }: {
   name: string;
   properties: ComponentProperties;
-  parentName?: string;
   isTopLevel?: boolean;
-  stackDirection?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
+  siblings?: ComponentProperties[];
 }): React.ReactNode {
   const fieldName = name;
   const label = properties.params?.label || properties.label || name;
-  const isGroup = properties.uiType === 'Group' && properties.subParameters;
+  const isGroup = properties.uiType === 'Group' && !!properties.subParameters;
+
+  const hasGroupSibling = siblings.some(
+    (sib) => sib.uiType === 'Group' && !!sib.subParameters
+  );
+
   const children = isGroup ? (
     Object.entries(properties.subParameters!).map(([subName, subProps]) => {
-      const isSubGroup = subProps?.uiType === 'Group' && !isTopLevel;
-      if (isSubGroup) {
-        return (
-          <Box
-            key={subName}
-            sx={{
-              flexBasis: '100%',
-              display: 'flex',
-            }}
-          >
-            <Box
-              key={subName}
-              sx={{
-                display: 'block',
-                maxWidth: 'fit-content',
-              }}
-              id="diana"
-            >
-              {renderComponentGroup({
-                name: `${fieldName}.${subName}`,
-                properties: subProps,
-                parentName: fieldName,
-              })}
-            </Box>
-          </Box>
-        );
-      }
+      const subSiblings = Object.values(properties.subParameters!);
       return renderComponentGroup({
         name: `${fieldName}.${subName}`,
         properties: subProps,
-        parentName: fieldName,
+        siblings: subSiblings,
       });
     })
+  ) : hasGroupSibling || isTopLevel ? (
+    <Box display="flex" alignItems="center" gap={1}>
+      <Typography sx={{ fontWeight: 500, mb: 0 }}>{label}</Typography>
+      <OpenApiUiComponent
+        key={fieldName}
+        name={fieldName}
+        uiType={properties.uiType!}
+        params={properties.params || {}}
+        label=""
+      />
+    </Box>
   ) : (
     <OpenApiUiComponent
       key={fieldName}
       name={fieldName}
       uiType={properties.uiType!}
       params={properties.params || {}}
+      label={label}
     />
   );
 
@@ -293,10 +287,14 @@ export const UIGeneratorNew = () => {
                   <Stack spacing={2} sx={{ mt: 2 }}>
                     {Object.entries(topology[selectedTopology]).map(
                       ([groupName, groupProperties]) => {
+                        const siblings = Object.values(
+                          topology[selectedTopology]
+                        ) as ComponentProperties[];
                         return renderComponentGroup({
                           name: groupName,
                           properties: groupProperties as ComponentProperties,
                           isTopLevel: true,
+                          siblings,
                         });
                       }
                     )}
@@ -311,10 +309,14 @@ export const UIGeneratorNew = () => {
                     groupProperties !== null &&
                     'uiType' in groupProperties
                   ) {
+                    const siblings = Object.values(
+                      groupedComponents
+                    ) as ComponentProperties[];
                     return renderComponentGroup({
                       name: `${parent}.${groupName}`,
                       properties: groupProperties,
                       isTopLevel: true,
+                      siblings,
                     });
                   }
                   return null;
