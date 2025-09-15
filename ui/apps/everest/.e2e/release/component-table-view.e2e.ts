@@ -183,7 +183,10 @@ async function verifyComponentsForDb(
       // await expect(ageCell).not.toBeEmpty();
 
       // Restarts
-      const restartCount = parseInt((await restartsCell.textContent())?.trim() ?? '', 10);
+      const restartCount = parseInt(
+        (await restartsCell.textContent())?.trim() ?? '',
+        10
+      );
       expect(Number.isNaN(restartCount)).toBeFalsy();
       expect(restartCount).toBeGreaterThanOrEqual(0);
       expect(restartCount).toBeLessThanOrEqual(3);
