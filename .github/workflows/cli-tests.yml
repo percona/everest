@@ -21,7 +21,7 @@ jobs:
       MAKE_TARGET: ${{ inputs.make_target }}
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
