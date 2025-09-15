@@ -28,7 +28,7 @@ const PolicyRowActions = ({
         <MenuItem
           key="view"
           onClick={() =>
-            navigate(`/settings/pod-scheduling-policies/${policyName}`)
+            navigate(`/settings/policies/pod-scheduling/${policyName}`)
           }
         >
           <Visibility sx={{ mr: 1 }} />
