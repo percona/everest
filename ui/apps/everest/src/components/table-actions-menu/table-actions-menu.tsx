@@ -17,11 +17,14 @@ import { useState } from 'react';
 import { Box, IconButton, Menu } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { TableActionsMenuProps } from './table-actions-menu.types';
+import { MoreVert } from '@mui/icons-material';
 
 export const TableActionsMenu = ({
   buttonProps,
   menuItems,
   menuProps,
+  isVertical = false,
+  buttonColor,
 }: TableActionsMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -52,8 +55,9 @@ export const TableActionsMenu = ({
             aria-expanded={open ? 'true' : undefined}
             onClick={handleClick}
             {...buttonProps}
+            sx={{ color: buttonColor }}
           >
-            <MoreHorizIcon />
+            {isVertical ? <MoreVert /> : <MoreHorizIcon />}
           </IconButton>
           <Menu
             data-testid="row-actions-menu"

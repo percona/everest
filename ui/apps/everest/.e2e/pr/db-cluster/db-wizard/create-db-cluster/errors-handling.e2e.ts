@@ -58,10 +58,9 @@ test.describe('DB Cluster creation', () => {
     // Advanced Configurations step
     await moveForward(page);
 
-    await page
-      .getByTestId('switch-input-external-access')
-      .getByRole('checkbox')
-      .check();
+    await page.getByTestId('select-input-exposure-method').waitFor();
+    await page.getByTestId('select-exposure-method-button').click();
+    await page.getByRole('option', { name: 'Load balancer' }).click();
     // Introduce an error on advanced configs step: two invalid IPs
     await page
       .getByTestId('text-input-source-ranges.0.source-range')

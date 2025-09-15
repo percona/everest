@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/percona/everest/pkg/utils"
+	operatorUtils "github.com/percona/everest-operator/utils"
 )
 
 func TestParseNamespaceNames(t *testing.T) {
@@ -108,12 +108,12 @@ func TestValidateNamespaces(t *testing.T) {
 		{
 			name:  "empty string",
 			input: []string{""},
-			error: utils.ErrNameNotRFC1035Compatible("namespace name"),
+			error: operatorUtils.ErrNameNotRFC1035Compatible("namespace name"),
 		},
 		{
 			name:  "several empty strings",
 			input: []string{"   ", "   "},
-			error: utils.ErrNameNotRFC1035Compatible("namespace name"),
+			error: operatorUtils.ErrNameNotRFC1035Compatible("namespace name"),
 		},
 		{
 			name:  "correct",
@@ -148,17 +148,17 @@ func TestValidateNamespaces(t *testing.T) {
 		{
 			name:  "name is too long",
 			input: []string{"e1234567890123456789012345678901234567890123456789012345678901234567890", "bbb"},
-			error: utils.ErrNameNotRFC1035Compatible("namespace name"),
+			error: operatorUtils.ErrNameNotRFC1035Compatible("namespace name"),
 		},
 		{
 			name:  "name starts with number",
 			input: []string{"1aaa", "bbb"},
-			error: utils.ErrNameNotRFC1035Compatible("namespace name"),
+			error: operatorUtils.ErrNameNotRFC1035Compatible("namespace name"),
 		},
 		{
 			name:  "name contains special characters",
 			input: []string{"aa12a", "b$s"},
-			error: utils.ErrNameNotRFC1035Compatible("namespace name"),
+			error: operatorUtils.ErrNameNotRFC1035Compatible("namespace name"),
 		},
 	}
 
