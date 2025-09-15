@@ -1,4 +1,4 @@
-RELEASE_VERSION ?= v0.0.0-$(shell git rev-parse --short HEAD)
+RELEASE_VERSION ?= v1.9.0-rc1
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
 
 .PHONY: default
