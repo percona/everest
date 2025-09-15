@@ -106,9 +106,11 @@ async function verifyComponentsForDb(
   const exp: Expectations = defaultsByDb[db](clusterName);
 
   const table = page.getByTestId(`${clusterName}-components`);
-  await page.waitForLoadState('networkidle');
   await expect(table).toBeVisible();
-  await page.getByRole('button', { name: 'Expand all' }).click();
+
+  const expandAllButton = table.getByRole('button', { name: 'Expand all' });
+  await expect(expandAllButton).toBeVisible();
+  await expandAllButton.click();
 
   // we use this check also to wait until all rows are expanded
   const expNumberRunning =
@@ -117,7 +119,7 @@ async function verifyComponentsForDb(
       (exp.containersProxy.length > 0
         ? size + size * exp.containersProxy.length
         : 0));
-  const numberRunning = await page
+  const numberRunning = await table
     .getByText('Running', { exact: true })
     .count();
   expect(numberRunning).toEqual(expNumberRunning);
@@ -181,7 +183,7 @@ async function verifyComponentsForDb(
       // await expect(ageCell).not.toBeEmpty();
 
       // Restarts
-      const restartCount = parseInt(await restartsCell.textContent(), 10);
+      const restartCount = parseInt((await restartsCell.textContent())?.trim() ?? '', 10);
       expect(Number.isNaN(restartCount)).toBeFalsy();
       expect(restartCount).toBeGreaterThanOrEqual(0);
       expect(restartCount).toBeLessThanOrEqual(3);
