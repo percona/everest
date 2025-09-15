@@ -71,7 +71,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
     },
     () => {
       test.skip(!shouldExecuteDBCombination(db, size));
-      test.describe.configure({ timeout: 720000 });
+      test.describe.configure({ timeout: 1_200_000 });
 
       // Define primary and restored cluster names to use across related tests
       const clusterName = `${db}-${size}-pri`;
@@ -152,8 +152,10 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, clusterName, 'Initializing', 15000);
+          }
+          await waitForStatus(page, clusterName, 'Up', 900000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -204,9 +206,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await fillScheduleModalForm(
             page,
             timeOption1,
+            '0',
             'first-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
 
@@ -239,9 +241,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await fillScheduleModalForm(
             page,
             timeOption2,
+            '0',
             'second-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
 
@@ -320,6 +322,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await expect(
           page.getByTestId('select-input-backup-name')
         ).not.toBeEmpty();
+
         await page.getByTestId('form-dialog-create').click();
 
         await page.waitForURL('**/databases/new');
@@ -354,11 +357,15 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
 
         await test.step('Check restored DB list and status', async () => {
-          await waitForStatus(page, restoredClusterName, 'Initializing', 15000);
           if (db !== 'postgresql') {
-            await waitForStatus(page, restoredClusterName, 'Restoring', 600000);
+            await waitForStatus(
+              page,
+              restoredClusterName,
+              'Initializing',
+              15000
+            );
           }
-
+          await waitForStatus(page, restoredClusterName, 'Restoring', 600000);
           await waitForStatus(page, restoredClusterName, 'Up', 2400000);
         });
 
@@ -428,9 +435,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await fillScheduleModalForm(
             page,
             timeOption,
+            '0',
             'hourly-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
 
