@@ -30,6 +30,7 @@ type Handler interface {
 	BackupStorageHandler
 	MonitoringInstanceHandler
 	PodSchedulingPolicyHandler
+	LoadBalancerConfigHandler
 	DataImporterHandler
 	DataImportJobHandler
 
@@ -108,6 +109,15 @@ type PodSchedulingPolicyHandler interface {
 	ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error)
 	DeletePodSchedulingPolicy(ctx context.Context, name string) error
 	GetPodSchedulingPolicy(ctx context.Context, name string) (*everestv1alpha1.PodSchedulingPolicy, error)
+}
+
+// LoadBalancerConfigHandler provides methods for handling operations on load balancer configs.
+type LoadBalancerConfigHandler interface {
+	CreateLoadBalancerConfig(ctx context.Context, psp *everestv1alpha1.LoadBalancerConfig) (*everestv1alpha1.LoadBalancerConfig, error)
+	UpdateLoadBalancerConfig(ctx context.Context, psp *everestv1alpha1.LoadBalancerConfig) (*everestv1alpha1.LoadBalancerConfig, error)
+	ListLoadBalancerConfigs(ctx context.Context) (*everestv1alpha1.LoadBalancerConfigList, error)
+	DeleteLoadBalancerConfig(ctx context.Context, name string) error
+	GetLoadBalancerConfig(ctx context.Context, name string) (*everestv1alpha1.LoadBalancerConfig, error)
 }
 
 // DataImporterHandler provides methods for handling operations on data importers.
