@@ -118,6 +118,16 @@ export const AdvancedConfigurationForm = ({
     }
   };
 
+  const revalidateSourceRanges = () => {
+    const sourceRanges = getValues(AdvancedConfigurationFields.sourceRanges);
+    // @ts-ignore
+    sourceRanges.forEach((range, i) => {
+      if (range.sourceRange) {
+        trigger(`${AdvancedConfigurationFields.sourceRanges}.${i}.sourceRange`);
+      }
+    });
+  };
+
   const isEksDefault = useMemo(
     () =>
       clusterType &&
@@ -186,6 +196,8 @@ export const AdvancedConfigurationForm = ({
     const { isTouched: storageClassTouched } = getFieldState(
       DbWizardFormFields.storageClass
     );
+
+    revalidateSourceRanges();
 
     if (
       allowedFieldsToInitiallyLoadDefaults.includes(
@@ -479,8 +491,11 @@ export const AdvancedConfigurationForm = ({
                         placeholder={Messages.sourceRangePlaceholder}
                         fieldName={AdvancedConfigurationFields.sourceRanges}
                         fieldKey="sourceRange"
-                        label={Messages.cards.sourceRange.title}
-                        handleBlur={handleBlur}
+                        handleBlur={(value, fieldName, hasError) => {
+                          handleBlur(value, fieldName, hasError);
+                          revalidateSourceRanges();
+                        }}
+                        onRemove={revalidateSourceRanges}
                       />
                     </Stack>
                   }
