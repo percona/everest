@@ -8,9 +8,9 @@ import {
   Stack,
   Step,
   StepLabel,
-  Stepper,
   Typography,
 } from '@mui/material';
+import { Stepper } from '@percona/ui-lib';
 import { useState } from 'react';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import {
@@ -21,7 +21,11 @@ import {
 } from './types';
 import { CustomAccordionSummary, SelectInput } from '@percona/ui-lib';
 import React from 'react';
-import { buildZodSchema, getDefaultValues } from './utils';
+import {
+  buildZodSchema,
+  getDefaultValues,
+  useTriggerDependentFields,
+} from './utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { muiComponentMap, openApiObj } from './constants';
 
@@ -239,7 +243,10 @@ export const UIGeneratorNew = () => {
     {} as Record<string, ComponentProperties>
   );
 
-  const schema = buildZodSchema(groupedComponents, parent);
+  const { schema, celDependencyGroups } = buildZodSchema(
+    groupedComponents,
+    parent
+  );
 
   const defaultValues = getDefaultValues(fields);
 
@@ -253,6 +260,10 @@ export const UIGeneratorNew = () => {
     defaultValues,
   });
 
+  // watch all fields that contain dependencies
+  const { trigger, control } = methods;
+  useTriggerDependentFields(celDependencyGroups, control, trigger);
+
   const onSubmit = (data: Record<string, unknown>) => {
     console.log('🚀 ~ onSubmit ~ data:', data);
   };
@@ -261,10 +272,10 @@ export const UIGeneratorNew = () => {
     <>
       <FormProvider {...methods}>
         <div>
-          <Stepper activeStep={activeStep} sx={{ marginBottom: 4 }}>
-            {stepLabels.map((label) => (
-              <Step key={label} completed={false}>
-                <StepLabel>{label}</StepLabel>
+          <Stepper noConnector activeStep={activeStep} sx={{ marginBottom: 4 }}>
+            {stepLabels.map((_, idx) => (
+              <Step key={`step-${idx + 1}`}>
+                <StepLabel />
               </Step>
             ))}
           </Stepper>

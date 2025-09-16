@@ -40,7 +40,11 @@ export const UI_TYPE_DEFAULT_VALUE: Record<string, unknown> = {
 };
 
 export const ZOD_SCHEMA_MAP: Record<string, z.ZodTypeAny> = {
-  Number: z.number(),
+  Number: z.union([z.string().min(1), z.number()]).pipe(
+    z.coerce.number({
+      invalid_type_error: 'Please enter a valid number',
+    })
+  ),
   String: z.string().min(5),
   TextArea: z.string().min(5),
   Input: z.string(),
@@ -58,45 +62,48 @@ export const openApiObj: OpenAPIObject = {
   },
   components: {
     mongod: {
-      replicas: {
-        validation: { min: 1, max: 99 },
-        uiType: 'Number',
-        description: 'Number of replica nodes',
-        params: {
-          label: 'Replicas',
-          placeholder: '',
-          default: '9999',
-        },
-      },
-      storage: {
-        uiType: 'Group',
-        description: 'Storage configuration for the Mongod component',
-        params: {
-          label: 'Storage',
-        },
-        subParameters: {
-          class: {
-            uiType: 'StorageClassSelect',
-            description: 'Storage class for the Mongod component',
-            params: {
-              label: 'Storage Class',
-            },
-          },
-          size: {
-            uiType: 'Number',
-            description: 'Size of the storage',
-            params: {
-              label: 'Size',
-              badge: 'Gi',
-              options: [
-                { label: '10Gi', value: '10Gi' },
-                { label: '20Gi', value: '20Gi' },
-                { label: '30Gi', value: '30Gi' },
-              ],
-            },
-          },
-        },
-      },
+      // replicas: {
+      //   validation: {
+      //     min: 1,
+      //     max: 99,
+      //   },
+      //   uiType: 'Number',
+      //   description: 'Number of replica nodes',
+      //   params: {
+      //     label: 'Replicas',
+      //     placeholder: '',
+      //     default: '9999',
+      //   },
+      // },
+      // storage: {
+      //   uiType: 'Group',
+      //   description: 'Storage configuration for the Mongod component',
+      //   params: {
+      //     label: 'Storage',
+      //   },
+      //   subParameters: {
+      //     class: {
+      //       uiType: 'StorageClassSelect',
+      //       description: 'Storage class for the Mongod component',
+      //       params: {
+      //         label: 'Storage Class',
+      //       },
+      //     },
+      //     size: {
+      //       uiType: 'Number',
+      //       description: 'Size of the storage',
+      //       params: {
+      //         label: 'Size',
+      //         badge: 'Gi',
+      //         options: [
+      //           { label: '10Gi', value: '10Gi' },
+      //           { label: '20Gi', value: '20Gi' },
+      //           { label: '30Gi', value: '30Gi' },
+      //         ],
+      //       },
+      //     },
+      //   },
+      // },
       resources: {
         uiType: 'Group',
         label: 'Resource Requests & Limits',
@@ -106,11 +113,47 @@ export const openApiObj: OpenAPIObject = {
             uiType: 'Group',
             label: 'Requests',
             subParameters: {
-              cpu: {
-                uiType: 'Number',
+              cpu_group: {
+                uiType: 'Group',
                 params: {
                   badge: 'Cores',
                   label: 'CPU',
+                },
+                subParameters: {
+                  cpu1: {
+                    uiType: 'Group',
+                    params: {
+                      badge: 'Cores',
+                      label: 'CPU1',
+                    },
+                    description: 'CPU Limits',
+                    subParameters: {
+                      cpu1: {
+                        uiType: 'Number',
+                        params: {
+                          badge: 'Cores',
+                          label: 'CPU1',
+                        },
+                        description: 'CPU Limits',
+                      },
+                      memory1: {
+                        uiType: 'Number',
+                        params: {
+                          badge: 'Gi',
+                          label: 'Memory1',
+                        },
+                        description: 'Memory Requests',
+                      },
+                    },
+                  },
+                  memory1: {
+                    uiType: 'Number',
+                    params: {
+                      badge: 'Gi',
+                      label: 'Memory1',
+                    },
+                    description: 'Memory Requests',
+                  },
                 },
                 description: 'CPU Requests',
               },
@@ -124,6 +167,38 @@ export const openApiObj: OpenAPIObject = {
               },
             },
           },
+          requests1: {
+            uiType: 'Number',
+            label: 'Requests1',
+            validation: {
+              celExpr:
+                'components.mongod.resources.requests1 >= 10 && components.mongod.resources.requests2 < 4',
+            },
+          },
+          requests2: {
+            uiType: 'Number',
+            label: 'Requests2',
+            validation: {
+              celExpr:
+                'components.mongod.resources.limits.cpu >= 10 && components.mongod.resources.requests2 < 4',
+            },
+          },
+          // requests3: {
+          //   uiType: 'Number',
+          //   label: 'Requests2',
+          // },
+          // requests24: {
+          //   uiType: 'Number',
+          //   label: 'Requests2',
+          // },
+          // requests25: {
+          //   uiType: 'Number',
+          //   label: 'Requests2',
+          // },
+          // requests26: {
+          //   uiType: 'Number',
+          //   label: 'Requests2',
+          // },
           limits: {
             uiType: 'Group',
             label: 'Limits',
@@ -148,34 +223,34 @@ export const openApiObj: OpenAPIObject = {
           },
         },
       },
-      config: {
-        uiType: 'TextArea',
-        description: 'Configuration for MongoDB',
-        params: {
-          label: 'MongoDB Configuration',
-        },
-      },
-      service: {
-        uiType: 'Group',
-        params: {
-          label: 'Service settings',
-        },
-        description: 'Configuration for Mongod service',
-        subParameters: {
-          expose: {
-            uiType: 'Switch',
-            params: {
-              label: 'Expose service',
-              options: [
-                { label: 'ClusterIP', value: 'ClusterIP' },
-                { label: 'NodePort', value: 'NodePort' },
-                { label: 'LoadBalancer', value: 'LoadBalancer' },
-              ],
-            },
-            description: 'Expose the Mongod service',
-          },
-        },
-      },
+      // config: {
+      //   uiType: 'TextArea',
+      //   description: 'Configuration for MongoDB',
+      //   params: {
+      //     label: 'MongoDB Configuration',
+      //   },
+      // },
+      // service: {
+      //   uiType: 'Group',
+      //   params: {
+      //     label: 'Service settings',
+      //   },
+      //   description: 'Configuration for Mongod service',
+      //   subParameters: {
+      //     expose: {
+      //       uiType: 'Switch',
+      //       params: {
+      //         label: 'Expose service',
+      //         options: [
+      //           { label: 'ClusterIP', value: 'ClusterIP' },
+      //           { label: 'NodePort', value: 'NodePort' },
+      //           { label: 'LoadBalancer', value: 'LoadBalancer' },
+      //         ],
+      //       },
+      //       description: 'Expose the Mongod service',
+      //     },
+      //   },
+      // },
     },
     backup: {
       replicas: { uiType: 'Hidden' },
@@ -265,12 +340,12 @@ export const openApiObj: OpenAPIObject = {
         },
       },
       serverHost: {
-        uiType: 'Input',
+        uiType: 'Number',
         params: { label: 'PMM Server Host' },
         description: 'PMM Server Host',
       },
       credentialSecretName: {
-        uiType: 'SecretSelector',
+        uiType: 'Number',
         params: { label: 'PMM Credential Secret Name' },
         description: 'PMM Credential Secret Name',
       },
