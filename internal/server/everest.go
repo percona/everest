@@ -40,6 +40,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/percona/everest/api"
@@ -49,7 +50,6 @@ import (
 	rbachandler "github.com/percona/everest/internal/server/handlers/rbac"
 	valhandler "github.com/percona/everest/internal/server/handlers/validation"
 	"github.com/percona/everest/pkg/accounts"
-	"github.com/percona/everest/pkg/certwatcher"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
 	"github.com/percona/everest/pkg/oidc"
@@ -362,16 +362,22 @@ func (e *EverestServer) Start(ctx context.Context) error {
 }
 
 func (e *EverestServer) startHTTPS(ctx context.Context, addr string) error {
-	tlsKeyPath := path.Join(e.config.TLSCertsPath, "tls.key")
-	tlsCertPath := path.Join(e.config.TLSCertsPath, "tls.crt")
-
-	watcher, err := certwatcher.New(e.l, tlsCertPath, tlsKeyPath)
+	// The certwatcher will watch the certificate and key files
+	// and reload the certificate if they change.
+	watcher, err := certwatcher.New(
+		path.Join(e.config.TLSCertsPath, "tls.crt"),
+		path.Join(e.config.TLSCertsPath, "tls.key"),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create cert watcher: %w", err)
 	}
-	if err := watcher.Start(ctx); err != nil {
-		return fmt.Errorf("failed to start cert watcher: %w", err)
-	}
+
+	// blocking operation, run in background.
+	go func() {
+		if err := watcher.Start(ctx); err != nil {
+			e.l.Error(errors.Join(err, errors.New("failed to start cert watcher")))
+		}
+	}()
 
 	e.echo.TLSServer = &http.Server{
 		Addr: addr,
