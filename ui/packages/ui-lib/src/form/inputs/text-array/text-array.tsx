@@ -40,22 +40,11 @@ const TextArray = ({
     control,
     name: fieldName,
   });
-
-  const [isDisabled, setIsDisabled] = useState<boolean>(true);
   const defaultFields: Record<string, string>[] = fields.length ? fields : [];
-  const [changed, setChanged] = useState(false);
   const [fieldAppended, setFieldAppended] = useState(false);
   const error = (index: number): FieldError | undefined =>
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[fieldKey];
-
-  useEffect(() => {
-    const isAnyFieldEmpty = defaultFields.some(
-      (field) => field[fieldKey] === ''
-    );
-
-    setIsDisabled(isAnyFieldEmpty);
-  }, [defaultFields.length, changed]);
 
   useEffect(() => {
     if (fieldAppended) {
@@ -74,10 +63,8 @@ const TextArray = ({
       <ActionableLabeledContent
         label={label}
         actionButtonProps={{
-          disabled: isDisabled,
           dataTestId: 'add-text-input-button',
           onClick: () => {
-            setIsDisabled(true);
             append({
               [fieldKey]: '',
             });
@@ -108,7 +95,6 @@ const TextArray = ({
                     `${fieldName}.${index}.${fieldKey}`
                   );
                   defaultFields[index][fieldKey] = initialFieldValue;
-                  setChanged((prev) => !prev);
                 },
                 onBlur: handleBlur
                   ? (e) => {

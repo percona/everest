@@ -491,8 +491,10 @@ export const AdvancedConfigurationForm = ({
                         placeholder={Messages.sourceRangePlaceholder}
                         fieldName={AdvancedConfigurationFields.sourceRanges}
                         fieldKey="sourceRange"
-                        label={Messages.cards.sourceRange.title}
-                        handleBlur={handleBlur}
+                        handleBlur={(value, fieldName, hasError) => {
+                          handleBlur(value, fieldName, hasError);
+                          revalidateSourceRanges();
+                        }}
                         onRemove={revalidateSourceRanges}
                       />
                     </Stack>
