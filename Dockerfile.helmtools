@@ -1,0 +1,11 @@
+# This image is used to run Everest Helm chart hooks.
+FROM alpine:3.20
+ARG TARGETOS
+ARG TARGETARCH
+
+# Install kubectl
+RUN apk add --no-cache curl \
+    && curl -LO "https://dl.k8s.io/release/v1.33.5/bin/${TARGETOS}/${TARGETARCH}/kubectl" \
+    && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
+    && rm kubectl \
+    && apk del curl
