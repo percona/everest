@@ -1,0 +1,39 @@
+---
+name: Release helmtools Docker image
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag for the image"
+        required: true
+jobs:
+  release:
+     env:
+      IMG_OWNER: percona
+      IMG_NAME: everest-helmtools
+      VERSION: ${{ github.event.inputs.version }}
+
+     runs-on: ubuntu-latest
+     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          repository: percona/everest
+          path: everest
+          token: ${{ secrets.ROBOT_TOKEN }}
+          sparse-checkout: |
+            Dockerfile.helmtools
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/docker-build-push@v6
+        name: Build & push Docker image
+        with:
+          context: everest
+          image: ${{ env.IMG_OWNER }}/${{ env.IMG_NAME }}
+          tags: ${{ env.VERSION }}, latest
+          file: Dockerfile.helmtools
