@@ -1,138 +1,244 @@
 RELEASE_VERSION ?= v0.0.0-$(shell git rev-parse --short HEAD)
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
 
-FLAGS = -X 'github.com/percona/everest/pkg/version.Version=$(RELEASE_VERSION)' \
-	-X 'github.com/percona/everest/pkg/version.FullCommit=$(RELEASE_FULLCOMMIT)' \
+.PHONY: default
+default: help
 
-LD_FLAGS_API = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=Everest API Server'"
-LD_FLAGS_CLI = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'"
-LD_FLAGS_CLI_TEST = -ldflags " $(FLAGS) -X 'github.com/percona/everest/pkg/version.ProjectName=everestctl' \
-										-X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'"
-OS=$(shell go env GOHOSTOS)
-ARCH=$(shell go env GOHOSTARCH)
+##@ General
+
+.PHONY: help
+help: ## Display this help.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ## Location to install binaries to
 LOCALBIN := $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
-.PHONY: default
-default: help
-
-.PHONY: help
-help:                   ## Display this help message
-	@echo "Please use \`make <target>\` where <target> is one of:"
-	@grep '^[a-zA-Z]' $(MAKEFILE_LIST) | \
-		awk -F ':.*?## ' 'NF==2 {printf "  %-26s%s\n", $$1, $$2}'
-
-.PHONY: build
-build: $(LOCALBIN) gen               ## Build binaries
-	go build -v $(LD_FLAGS_API) -o $(LOCALBIN)/everest ./cmd
-
-.PHONY: build-cli
-build-cli: $(LOCALBIN) charts                ## Build binaries
-	go build -tags debug -v $(LD_FLAGS_CLI_TEST) -o $(LOCALBIN)/everestctl ./cmd/cli
-
-.PHONY: release
-release: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
-
-release: build  ## Build release version
-
-.PHONY: rc
-rc: FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check-dev.percona.com' -X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
-
-rc: build  ## Build RC version
-
-.PHONY: release-cli
-release-cli:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl-linux-amd64 ./cmd/cli
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl-linux-arm64 ./cmd/cli
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl-darwin-amd64 ./cmd/cli
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl-darwin-arm64 ./cmd/cli
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -v $(LD_FLAGS_CLI) -o ./dist/everestctl.exe ./cmd/cli
-
-.PHONY: build-debug
-build-debug: $(LOCALBIN)   ## Build binaries
-	CGO_ENABLED=0 go build -tags debug -v $(LD_FLAGS_API) -gcflags=all="-N -l" -o $(LOCALBIN)/everest ./cmd
+##@ Development
 
 .PHONY: gen
-gen: ## Generate code
-	GOOS=$(OS) GOARCH=$(ARCH) go generate ./...
+gen: ## Generate code.
+	go generate ./...
 	$(MAKE) format
 
 .PHONY: format
-format:                 ## Format source code
-	GOOS=$(OS) GOARCH=$(ARCH) go tool gofumpt -l -w .
-	GOOS=$(OS) GOARCH=$(ARCH) go tool goimports -local github.com/percona/everest -l -w .
-	GOOS=$(OS) GOARCH=$(ARCH) go tool gci write --section Standard --section Default --section "Prefix(github.com/percona/everest)" .
+format:                 ## Format source code.
+	go tool gofumpt -l -w .
+	go tool goimports -local github.com/percona/everest -l -w .
+	go tool gci write --skip-generated -s standard -s default -s "prefix(github.com/percona/everest)" .
 
 .PHONY: check
-check:                  ## Run checks/linters for the whole project
+check:                  ## Run checks/linters for the whole project.
 	go tool go-consistent -pedantic ./...
 	LOG_LEVEL=error go tool golangci-lint run
 
+.PHONY: charts
+HELM=go tool helm
+charts:        ## Install Helm dependency charts for Everest CLI.
+	$(HELM) repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
+	$(HELM) repo add vm https://victoriametrics.github.io/helm-charts
+	$(HELM) repo update
+
+##@ Build
+export GOPRIVATE = github.com/percona,github.com/percona-platform,github.com/Percona-Lab
+export GOOS = $(shell go env GOHOSTOS)
+export CGO_ENABLED = 0
+export GOARCH = $(shell go env GOHOSTARCH)
+
+# Everest API server
+SERVER_LD_FLAGS = -X 'github.com/percona/everest/pkg/version.Version=$(RELEASE_VERSION)' \
+	-X 'github.com/percona/everest/pkg/version.FullCommit=$(RELEASE_FULLCOMMIT)' \
+	-X 'github.com/percona/everest/pkg/version.ProjectName=Everest API Server' \
+	-X 'github.com/percona/everest/cmd/config.TelemetryInterval=24h'
+SERVER_BUILD_TAGS =
+SERVER_GC_FLAGS =
+
+# Helper target to build Everest API server binary.
+# CGO_ENABLED, GOOS and GOARCH are set explicitly because Everest API server is running inside a container only.
+.PHONY: build-server
+build-server-helper: GOOS = linux
+build-server-helper: GOARCH = amd64
+build-server-helper: $(LOCALBIN)
+	$(info Building Everest API server for $(GOOS)/$(GOARCH) with CGO_ENABLED=$(CGO_ENABLED))
+	go build -v $(SERVER_BUILD_TAGS) $(SERVER_GC_FLAGS) -ldflags "$(SERVER_LD_FLAGS)" -o $(LOCALBIN)/everest ./cmd
+
+.PHONY: build
+build: SERVER_LD_FLAGS += -s -w
+build: build-server-helper 	## Build Everest API server binary.
+
+.PHONY: build-debug
+build-debug: SERVER_BUILD_TAGS = -tags debug
+build-debug: SERVER_GC_FLAGS = -gcflags=all="-N -l"
+build-debug: build-server-helper	## Build Everest API server binary with debug symbols.
+
+.PHONY: rc
+rc: SERVER_LD_FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check-dev.percona.com'
+rc: build-server-helper	## Build Everest API server RC version.
+
+.PHONY: release
+release: SERVER_LD_FLAGS += -X 'github.com/percona/everest/cmd/config.TelemetryURL=https://check.percona.com'
+release: build-server-helper	## Build Everest API server release version. (Use for building release only!)
+
+# Everest CLI
+CLI_LD_FLAGS = -X 'github.com/percona/everest/pkg/version.Version=$(RELEASE_VERSION)' \
+	-X 'github.com/percona/everest/pkg/version.FullCommit=$(RELEASE_FULLCOMMIT)' \
+	-X 'github.com/percona/everest/pkg/version.ProjectName=everestctl'
+CLI_BUILD_TAGS =
+CLI_GC_FLAGS =
+
+# Helper target to build Everest CLI binary.
+.PHONY: build-cli-helper
+build-cli-helper: $(LOCALBIN) charts
+	$(info Building Everest CLI for $(GOOS)/$(GOARCH) with CGO_ENABLED=$(CGO_ENABLED))
+	go build -v $(CLI_BUILD_TAGS) $(CLI_GC_FLAGS) -ldflags "$(CLI_LD_FLAGS)" -o $(LOCALBIN)/everestctl ./cmd/cli
+
+.PHONY: build-cli
+build-cli: CLI_LD_FLAGS += -s -w
+build-cli: build-cli-helper	## Build Everest CLI binary.
+
+.PHONY: build-cli-debug
+build-cli-debug: CLI_LD_FLAGS += -X 'github.com/percona/everest/pkg/version.EverestChannelOverride=fast-v0'
+build-cli-debug: CLI_BUILD_TAGS = -tags debug
+build-cli-debug: CLI_GC_FLAGS = -gcflags=all="-N -l"
+build-cli-debug: build-cli-helper	## Build Everest CLI binary with debug symbols and development OLM channel.
+
+.PHONY: release-cli
+release-cli: CLI_LD_FLAGS += -s -w
+release-cli: ## Build Everest CLI release versions for different OS and ARCH. (Use for building release only!).
+	GOOS=linux GOARCH=amd64 go build -v -ldflags "$(CLI_LD_FLAGS)" -o ./dist/everestctl-linux-amd64 ./cmd/cli
+	GOOS=linux GOARCH=arm64 go build -v -ldflags "$(CLI_LD_FLAGS)" -o ./dist/everestctl-linux-arm64 ./cmd/cli
+	GOOS=darwin GOARCH=amd64 go build -v -ldflags "$(CLI_LD_FLAGS)" -o ./dist/everestctl-darwin-amd64 ./cmd/cli
+	GOOS=darwin GOARCH=arm64 go build -v -ldflags "$(CLI_LD_FLAGS)" -o ./dist/everestctl-darwin-arm64 ./cmd/cli
+	GOOS=windows GOARCH=amd64 go build -v -ldflags "$(CLI_LD_FLAGS)" -o ./dist/everestctl.exe ./cmd/cli
+
+IMAGE_OWNER ?= perconalab/everest
+IMAGE_TAG ?= 0.0.0
+IMG = $(IMAGE_OWNER):$(IMAGE_TAG)
+
+.PHONY: docker-build
+docker-build: ## Build docker image with Everest API server.
+	docker build -t ${IMG} .
+
+.PHONY: docker-push
+docker-push: ## Push docker image with Everest API server.
+	docker push ${IMG}
+
+.PHONY: clean
+clean:
+	rm -rf $(LOCALBIN)/*
+	rm -rf ./dist/*
+
+##@ Test
+
 .PHONY: test
-test:                   ## Run tests
-	go test -race -timeout=10m ./...
+test:                   ## Run unit tests.
+	CGO_ENABLED=1 go test -race -timeout=10m ./...
 
 .PHONY: test-cover
-test-cover:             ## Run tests and collect per-package coverage information
-	go test -race -timeout=10m -count=1 -coverprofile=cover.out -covermode=atomic ./...
+test-cover:             ## Run unit tests and collect per-package coverage information.
+	CGO_ENABLED=1 go test -race -timeout=10m -count=1 -coverprofile=cover.out -covermode=atomic ./...
 
 .PHONY: test-crosscover
-test-crosscover:        ## Run tests and collect cross-package coverage information
-	go test -race -timeout=10m -count=1 -coverprofile=crosscover.out -covermode=atomic -p=1 -coverpkg=./... ./...
+test-crosscover:        ## Run unit tests and collect cross-package coverage information.
+	CGO_ENABLED=1 go test -race -timeout=10m -count=1 -coverprofile=crosscover.out -covermode=atomic -p=1 -coverpkg=./... ./...
 
-.PHONY: run
-run: build            ## Run binary
-	$(LOCALBIN)/everest
+##@ Deployment
 
-.PHONY: run-debug
-run-debug: build-debug    ## Run binary
-	TELEMETRY_URL=https://check-dev.percona.com \
-	TELEMETRY_INTERVAL=30m \
-	$(LOCALBIN)/everest
+# This target builds the docker image for Everest operator from the commit referenced in go.mod.
+# Docker image will be tagged with the same tag as Everest API server image (IMAGE_TAG).
+EVEREST_OPERATOR_IMG = perconalab/everest-operator:$(IMAGE_TAG)
+.PHONY: docker-build-operator
+docker-build-operator:
+	$(info Building Everest Operator Docker image=$(EVEREST_OPERATOR_IMG))
+	@{ \
+	set -xe ;\
+	operator_commit_id=$(word 3, $(subst -,  ,$(word 2, $(shell go list -m github.com/percona/everest-operator)))) ;\
+	cd $(shell mktemp -d) ;\
+	git clone -q https://github.com/percona/everest-operator.git ;\
+	cd ./everest-operator ;\
+	git reset --hard $${operator_commit_id} ;\
+	make docker-build IMG=$(EVEREST_OPERATOR_IMG) ;\
+	}
 
-.PHONY: run-cli-install
-run-cli-install: build-cli
-	$(LOCALBIN)/everestctl install --disable-telemetry --skip-wizard --namespaces=everest
+.PHONY: deploy
+deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
+	$(info Deploying Everest ($(IMAGE_OWNER):$(IMAGE_TAG)) into K8S cluster using everestctl)
+	$(LOCALBIN)/everestctl install -v \
+	--disable-telemetry \
+	--version=$(IMAGE_TAG) \
+	--version-metadata-url=https://check-dev.percona.com \
+	--operator.mongodb=true \
+	--operator.postgresql=true \
+	--operator.mysql=true \
+	--skip-wizard \
+	--namespaces everest \
+	--helm.set server.image=$(IMAGE_OWNER) \
+	--helm.set server.apiRequestsRateLimit=200 \
+	--helm.set versionMetadataURL=https://check-dev.percona.com \
+	--helm.set server.initialAdminPassword=admin \
+	--helm.set operator.init=false
+	$(MAKE) port-forward
+
+DEPLOY_ALL_DEPS := docker-build k3d-upload-server-image
+DEPLOY_ALL_DEPS += docker-build-operator k3d-upload-operator-image
+DEPLOY_ALL_DEPS += build-cli-debug deploy
+.PHONY: deploy-all
+deploy-all: $(DEPLOY_ALL_DEPS) ## Build and deploy Everest and its dependencies to K3D test cluster.
+
+.PHONY: undeploy-cli
+undeploy: build-cli-debug ## Undeploy Everest from K8S cluster using Everest CLI.
+	$(info Uninstalling Everest from K8S cluster using everestctl)
+	$(LOCALBIN)/everestctl uninstall -y -f -v
+
+.PHONY: port-forward
+port-forward:
+	kubectl port-forward -n everest-system deployment/everest-server 8080:8080 &
+
+.PHONY: k3d-cluster-up
+k3d-cluster-up: ## Create a K8S cluster for testing.
+	$(info Creating K3D cluster for testing)
+	k3d cluster create --config ./dev/k3d_config.yaml
+
+.PHONY: k3d-cluster-up
+k3d-cluster-down: ## Create a K8S cluster for testing.
+	$(info Destroying K3D test cluster)
+	k3d cluster delete --config ./dev/k3d_config.yaml
+
+.PHONY: k3d-cluster-reset
+k3d-cluster-reset: k3d-cluster-down k3d-cluster-up ## Reset the K8S cluster for testing.
+
+.PHONY: k3d-upload-server-image
+k3d-upload-server-image: docker-build ## Upload the Everest API server image to the testing k3d cluster.
+	$(info Uploading Everest API server image=$(IMG) to K3D testing cluster)
+	k3d image import -c everest-server-test -m direct $(IMG)
+
+.PHONY: k3d-upload-operator-image
+k3d-upload-operator-image: ## Upload the Everest operator image to the testing k3d cluster.
+	$(info Uploading Everest operator image=$(EVEREST_OPERATOR_IMG) to K3D testing cluster)
+	k3d image import -c everest-server-test -m direct $(EVEREST_OPERATOR_IMG)
 
 .PHONY: cert
-cert:                   ## Install dev TLS certificates
+cert:                   ## Create dev TLS certificates.
 	mkcert -install
 	mkcert -cert-file=dev-cert.pem -key-file=dev-key.pem everest everest.localhost 127.0.0.1
 
-.PHONY: k8s
-k8s: 					## Create a local minikube cluster
-	minikube start --nodes=3 --cpus=4 --memory=4g --apiserver-names host.docker.internal
-
-.PHONY: k8s-macos
-k8s-macos: k8s          ## Create a local minikube cluster with MacOS specific configuration
-	minikube addons disable storage-provisioner
-	kubectl delete storageclass standard
-	kubectl apply -f ./dev/kubevirt-hostpath-provisioner.yaml
-
-.PHONY: charts
-charts:        ## Install Helm charts
-	GOOS=$(OS) GOARCH=$(ARCH) go tool helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-	GOOS=$(OS) GOARCH=$(ARCH) go tool helm repo add percona https://percona.github.io/percona-helm-charts/
-	GOOS=$(OS) GOARCH=$(ARCH) go tool helm repo add vm https://victoriametrics.github.io/helm-charts
-	GOOS=$(OS) GOARCH=$(ARCH) go tool helm repo update
+##@ GitHub PR
 
 CHART_BRANCH ?= main
 .PHONY: update-dev-chart
-update-dev-chart:
+update-dev-chart: ## Update dependency to Everest Helm chart to the latest version from the specified branch (default main).
 	GOPROXY=direct go get -u -v github.com/percona/percona-helm-charts/charts/everest@${CHART_BRANCH}
 	go mod tidy
 
 EVEREST_OPERATOR_BRANCH ?= main
 .PHONY: update-dev-everest-operator
-update-dev-everest-operator:
+update-dev-everest-operator: ## Update dependency to Everest operator to the latest version from the specified branch (default main).
 	GOPROXY=direct go get -u -v github.com/percona/everest-operator@${EVEREST_OPERATOR_BRANCH}
 	go mod tidy
 
 .PHONY: prepare-pr
-prepare-pr:
-	$(MAKE) gen
+prepare-pr: gen ## Prepare code for pushing to GitHub PR (includes 'update-dev-chart' and 'update-dev-everest-operator' targets).
 	CHART_BRANCH=${CHART_BRANCH} $(MAKE) update-dev-chart
 	EVEREST_OPERATOR_BRANCH=${EVEREST_OPERATOR_BRANCH} $(MAKE) update-dev-everest-operator

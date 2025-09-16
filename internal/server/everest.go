@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"path"
 	"slices"
+	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -433,8 +434,21 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		switch {
 		case errors.As(err, &echoErrTarget):
 		case k8serrors.IsNotFound(err):
-			err = &echo.HTTPError{
-				Code: http.StatusNotFound,
+			statusError := &k8serrors.StatusError{}
+			if errors.As(err, &statusError) {
+				err = &echo.HTTPError{
+					Code:    int(statusError.Status().Code),
+					Message: trimWebhookErrorText(statusError.Status().Message),
+				}
+			}
+		case k8serrors.IsForbidden(err),
+			k8serrors.IsInvalid(err):
+			statusError := &k8serrors.StatusError{}
+			if errors.As(err, &statusError) {
+				err = &echo.HTTPError{
+					Code:    int(statusError.Status().Code),
+					Message: trimWebhookErrorText(statusError.Status().Message),
+				}
 			}
 		case k8serrors.IsAlreadyExists(err),
 			k8serrors.IsConflict(err):
@@ -460,6 +474,13 @@ func everestErrorHandler(next echo.HTTPErrorHandler) echo.HTTPErrorHandler {
 		}
 		next(err, c)
 	}
+}
+
+func trimWebhookErrorText(fullText string) string {
+	monitoringWebhookPrefix := `admission webhook "vmonitoringconfig-v1alpha1.everest.percona.com" denied the request: `
+	loadBalancerConfigWebhookPrefix := `admission webhook "vloadbalancerconfig-v1alpha1.everest.percona.com" denied the request: `
+	dbcWebhookPrefix := `admission webhook "vdatabasecluster-v1alpha1.everest.percona.com" denied the request: `
+	return strings.TrimPrefix(strings.TrimPrefix(strings.TrimPrefix(fullText, loadBalancerConfigWebhookPrefix), monitoringWebhookPrefix), dbcWebhookPrefix)
 }
 
 // createSessionManagerClient creates a k8s client for a session manager.

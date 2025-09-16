@@ -1,5 +1,5 @@
 import { expect, Page, test } from '@playwright/test';
-import { moveForward, submitWizard } from '@e2e/utils/db-wizard';
+import { moveBack, moveForward, submitWizard } from '@e2e/utils/db-wizard';
 import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
@@ -75,7 +75,7 @@ test.beforeAll(async ({ browser, request }) => {
     storageState: STORAGE_STATE_FILE,
   });
   const page = await context.newPage();
-  await page.goto('/settings/pod-scheduling-policies');
+  await page.goto(POD_SCHEDULING_POLICIES_URL);
   await page.getByTestId('add-policy').click();
   await page.getByTestId('text-input-name').fill(PG_POLICY_NAME);
   await page.getByTestId('select-type-button').click();
@@ -99,6 +99,8 @@ test.beforeAll(async ({ browser, request }) => {
   });
 });
 
+export const POD_SCHEDULING_POLICIES_URL = '/settings/policies/pod-scheduling';
+
 test.afterAll(async ({ request }) => {
   await deleteDbClusterFn(request, DB_CLUSTER_NAME);
   const promises = [
@@ -121,7 +123,7 @@ test.afterAll(async ({ request }) => {
 
 test.describe('Create rules', () => {
   test('Create rules for PG', async ({ page }) => {
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await page.getByRole('table').waitFor();
     await page
       .locator('.MuiTableRow-root')
@@ -152,7 +154,7 @@ test.describe('Create rules', () => {
   });
 
   test('Create rules for Mongo', async ({ page }) => {
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await page.getByRole('table').waitFor();
     await page
       .locator('.MuiTableRow-root')
@@ -183,7 +185,7 @@ test.describe('Create rules', () => {
   });
 
   test('Edit rules', async ({ page }) => {
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await page.getByRole('table').waitFor();
     await page
       .locator('.MuiTableRow-root')
@@ -217,7 +219,20 @@ test.describe('Create rules', () => {
     await page
       .getByTestId('switch-input-pod-scheduling-policy-enabled')
       .getByRole('checkbox')
+      .uncheck();
+
+    await moveBack(page);
+    await moveForward(page);
+
+    await expect(
+      page.getByTestId('switch-input-pod-scheduling-policy-enabled')
+    ).not.toBeChecked();
+
+    await page
+      .getByTestId('switch-input-pod-scheduling-policy-enabled')
+      .getByRole('checkbox')
       .check();
+
     await page.getByTestId('select-pod-scheduling-policy-button').click();
     await expect(
       page.getByRole('option', { name: PSMDB_POLICY_NAME, exact: true })

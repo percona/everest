@@ -18,27 +18,27 @@ jobs:
       fail-fast: true
     continue-on-error: false
     runs-on: ubuntu-latest
+    env:
+      PMM_HELM_VER: "1.3.21"
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Set up Go release
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
 
-      # Switch docker data directory to /mnt to have more space for the local Kubernetes cluster
-      - name: Switch docker-daemon data directory to /mnt
-        run: |
-          sudo systemctl stop docker
-          echo '{ "exec-opts": ["native.cgroupdriver=cgroupfs"], "cgroup-parent": "/actions_job", "data-root": "/mnt/docker-data" }' | sudo tee /etc/docker/daemon.json
-          sudo mkdir /mnt/docker-data
-          sudo systemctl start docker
+      - name: Adjust GitHub worker node
+        uses: ./.github/actions/adjust-github-node
+        with:
+          adjust-host-for-k3d: true
+          mount-docker-data: true
 
       # Setup Node
       - uses: pnpm/action-setup@v4
@@ -59,6 +59,7 @@ jobs:
           cpus: 4
           memory: 12g
           addons: registry
+          kubernetes-version: v1.32.8
           insecure-registry: "localhost:5000"
 
       - name: Expose local registry
@@ -76,7 +77,7 @@ jobs:
       - name: Install Helm PMM chart
         shell: bash
         run: |
-          go tool helm install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm
+          go tool helm install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $PMM_HELM_VER
 
       - name: Echo PMM credentials
         shell: bash
@@ -118,7 +119,8 @@ jobs:
           --skip-db-namespace \
           --helm.set server.image=localhost:5000/perconalab/everest \
           --helm.set server.apiRequestsRateLimit=200 \
-          --helm.set versionMetadataURL=https://check-dev.percona.com
+          --helm.set versionMetadataURL=https://check-dev.percona.com \
+          --helm.set operator.init=false
 
       - name: Add everest-ui namespace
         shell: bash
@@ -194,6 +196,8 @@ jobs:
           RBAC_PASSWORD: "rbac-e2e-test"
           MONITORING_USER: "admin"
           MONITORING_PASSWORD: "admin"
+          SESSION_USER: "session"
+          SESSION_PASS: "session1234"
         run: |
           cd ui
           pnpm --filter "@percona/everest" e2e

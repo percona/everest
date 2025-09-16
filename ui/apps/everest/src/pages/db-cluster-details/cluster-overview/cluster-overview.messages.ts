@@ -52,5 +52,7 @@ export const Messages = {
     backupStorages: 'Backup\u00A0storage',
     storageClass: 'Storage class',
     podSchedulingPolicy: 'Pod scheduling policy',
+    exposureMethod: 'Exposure Method',
+    loadBalancerConfig: 'Load balancer config',
   },
 };

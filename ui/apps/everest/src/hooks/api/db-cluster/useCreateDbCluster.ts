@@ -34,12 +34,15 @@ import {
   DataSource,
   DbCluster,
   GetDbClusterCredentialsPayload,
+  ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
 import { getDataSource, getProxySpec } from './utils';
 import { DbType } from '@percona/types';
 import { useRBACPermissions } from 'hooks/rbac';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -124,11 +127,15 @@ const formValuesToPayloadMapping = (
         dbPayload.dbType,
         dbPayload.numberOfProxies,
         dbPayload.customNrOfProxies || '',
-        dbPayload.externalAccess,
+        dbPayload.exposureMethod,
         dbPayload.proxyCpu,
         dbPayload.proxyMemory,
         dbPayload.sharding,
-        dbPayload.sourceRanges || []
+        dbPayload.sourceRanges || [],
+        dbPayload.exposureMethod === ExposureMethod.LoadBalancer ||
+          dbPayload.loadBalancerConfigName === EMPTY_LOAD_BALANCER_CONFIGURATION
+          ? dbPayload.loadBalancerConfigName
+          : undefined
       ),
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
@@ -153,6 +160,16 @@ const formValuesToPayloadMapping = (
         dbPayload.podSchedulingPolicy && {
           podSchedulingPolicyName: dbPayload.podSchedulingPolicy,
         }),
+      ...(!!dbPayload.externalAccess && {
+        spec: {
+          proxy: {
+            expose: {
+              loadBalancerConfigName: dbPayload.loadBalancerConfig,
+              type: ProxyExposeType.external,
+            },
+          },
+        },
+      }),
     },
   };
 

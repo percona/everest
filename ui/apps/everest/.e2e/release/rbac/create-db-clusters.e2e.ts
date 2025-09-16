@@ -69,6 +69,7 @@ test.describe(
       }) => {
         await setRBACPermissionsK8S([
           ['namespaces', 'read', '*'],
+          ['pod-scheduling-policies', 'read', '*'],
           ['database-engines', 'read', '*/*'],
           ['database-clusters', 'read', `*/*`],
           ['database-clusters', 'create', `*/*`],
@@ -114,10 +115,13 @@ test.describe(
     }) => {
       await setRBACPermissionsK8S([
         ['namespaces', 'read', '*'],
+        ['pod-scheduling-policies', 'read', '*'],
         ['database-engines', 'read', '*/*'],
         ['database-clusters', 'read', `${namespace2}/*`],
         ['database-clusters', 'create', `${namespace2}/*`],
       ]);
+
+      await page.reload({ waitUntil: 'networkidle' });
 
       await expect(page.getByText(pxcDb)).not.toBeVisible();
       await expect(page.getByText(psmdbDb)).toBeVisible();
@@ -210,6 +214,7 @@ test.describe(
       }) => {
         await setRBACPermissionsK8S([
           ['namespaces', 'read', '*'],
+          ['pod-scheduling-policies', 'read', '*'],
           ['database-engines', 'read', '*/*'],
           ['database-clusters', 'read', `*/*`],
           ['database-clusters', 'create', `*/*`],
@@ -256,6 +261,7 @@ test.describe(
     }) => {
       await setRBACPermissionsK8S([
         ['namespaces', 'read', '*'],
+        ['pod-scheduling-policies', 'read', '*'],
         ['database-engines', 'read', '*/*'],
         ['database-clusters', 'read', `${namespace2}/*`],
         ['database-clusters', 'create', `${namespace2}/*`],

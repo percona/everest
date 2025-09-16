@@ -26,6 +26,7 @@ import { DbEngineType } from 'shared-types/dbEngines.types';
 import { useRBACPermissions } from 'hooks/rbac';
 import { isProxy, shouldDbActionsBeBlocked } from 'utils/db';
 import { DbErrors } from './db-errors/db-errors';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const ClusterOverview = () => {
   const { dbClusterName, namespace = '' } = useParams();
@@ -40,9 +41,11 @@ export const ClusterOverview = () => {
     `${namespace}/${dbClusterName}`
   );
 
+  const isStatusReady = dbCluster?.status?.status === 'ready';
+
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
-      enabled: !!dbClusterName && canRead,
+      enabled: !!dbClusterName && canRead && isStatusReady,
     });
 
   if (!dbCluster) {
@@ -88,10 +91,18 @@ export const ClusterOverview = () => {
             isProxy(dbCluster.spec.proxy) &&
             dbCluster.spec.proxy.expose.type === ProxyExposeType.external
           }
-          monitoring={dbCluster?.spec.monitoring.monitoringConfigName}
+          monitoring={dbCluster?.spec.monitoring?.monitoringConfigName}
           parameters={!!dbCluster?.spec.engine.config}
           storageClass={dbCluster?.spec.engine.storage.class!}
           podSchedulingPolicy={dbCluster?.spec.podSchedulingPolicyName}
+          loadBalancerConfig={
+            isProxy(dbCluster.spec.proxy)
+              ? dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+                ? dbCluster.spec.proxy.expose.loadBalancerConfigName ||
+                  EMPTY_LOAD_BALANCER_CONFIGURATION
+                : ''
+              : ''
+          }
         />
         <ResourcesDetails
           dbCluster={dbCluster}
