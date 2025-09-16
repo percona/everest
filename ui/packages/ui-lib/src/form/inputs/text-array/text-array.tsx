@@ -34,6 +34,7 @@ const TextArray = ({
     control,
     formState: { errors },
     watch,
+    trigger,
   } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -125,6 +126,7 @@ const TextArray = ({
                       onClick={() => {
                         remove(index);
                         onRemove(index);
+                        trigger(fieldName);
                       }}
                     >
                       <DeleteOutlineOutlinedIcon />

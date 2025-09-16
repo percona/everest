@@ -22,6 +22,8 @@ import AdvancedConfigurationForm from 'components/cluster-form/advanced-configur
 import { StepProps } from 'pages/database-form/database-form.types.ts';
 import { useDatabasePageMode } from 'pages/database-form/useDatabasePageMode.ts';
 import { WizardMode } from 'shared-types/wizard.types.ts';
+import { useMemo } from 'react';
+import { AllowedFieldsToInitiallyLoadDefaults } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 
 export const AdvancedConfigurations = ({
   loadingDefaultsForEdition,
@@ -29,6 +31,17 @@ export const AdvancedConfigurations = ({
   const { watch } = useFormContext();
   const dbType = watch(DbWizardFormFields.dbType);
   const mode = useDatabasePageMode();
+  const allowedFieldsToInitiallyLoadDefaults: AllowedFieldsToInitiallyLoadDefaults[] =
+    useMemo(() => {
+      if (mode === WizardMode.New) {
+        return [
+          'storageClass',
+          'podSchedulingPolicy',
+          'loadBalancerConfigName',
+        ];
+      }
+      return [];
+    }, [mode]);
 
   return (
     <>
@@ -37,9 +50,10 @@ export const AdvancedConfigurations = ({
       <AdvancedConfigurationForm
         dbType={dbType}
         loadingDefaultsForEdition={loadingDefaultsForEdition}
-        setDefaultsOnLoad={mode === WizardMode.New}
         automaticallyTogglePodSchedulingPolicySwitch={mode === WizardMode.New}
-        allowStorageClassChange={mode === WizardMode.New}
+        allowedFieldsToInitiallyLoadDefaults={
+          allowedFieldsToInitiallyLoadDefaults
+        }
       />
     </>
   );
