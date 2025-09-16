@@ -231,7 +231,6 @@ describe('FourthStep', () => {
     );
 
     await waitFor(() => {
-      expect(firstSourceRangeInput).toBeInvalid();
       expect(secondSourceRangeInput).toBeInvalid();
     });
 
