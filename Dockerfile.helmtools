@@ -3,9 +3,11 @@ FROM alpine:3.20
 ARG TARGETOS
 ARG TARGETARCH
 
+ARG KUBECTL_VERSION=v1.33.5
+
 # Install kubectl
 RUN apk add --no-cache curl \
-    && curl -LO "https://dl.k8s.io/release/v1.33.5/bin/${TARGETOS}/${TARGETARCH}/kubectl" \
+    && curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${TARGETOS}/${TARGETARCH}/kubectl" \
     && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
     && rm kubectl \
     && apk del curl

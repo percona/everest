@@ -6,12 +6,17 @@ on:
       version:
         description: "Version tag for the image"
         required: true
+      kubectl_version:
+        description: "Version of kubectl to use"
+        required: false
+        default: "v1.33.5"
 jobs:
   release:
      env:
       IMG_OWNER: percona
       IMG_NAME: everest-helmtools
       VERSION: ${{ github.event.inputs.version }}
+      KUBECTL_VERSION: ${{ github.event.inputs.kubectl_version }}
 
      runs-on: ubuntu-latest
      steps:
@@ -37,3 +42,5 @@ jobs:
           image: ${{ env.IMG_OWNER }}/${{ env.IMG_NAME }}
           tags: ${{ env.VERSION }}, latest
           file: Dockerfile.helmtools
+          build-args: |
+            KUBECTL_VERSION=${{ env.KUBECTL_VERSION }}
