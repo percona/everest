@@ -86,29 +86,41 @@ const OpenApiUiComponent = ({
 
   const { badge, ...restParams } = params || {};
 
+  const options = params.options
+    ? params.options.map((option) => (
+        <MenuItem key={option.value} value={option.value}>
+          {option.label}
+        </MenuItem>
+      ))
+    : undefined;
+
   return (
     <Box>
       <Box display="flex" alignItems="center">
-        {React.createElement(Component, {
-          ...restParams,
-          label: label,
-          name: name,
-          error: !!error,
-          style: { width: 240 },
-          textFieldProps: {
-            sx: { width: 240, ...sx },
-            ...(badge
-              ? {
-                  InputProps: {
-                    label: label,
-                    endAdornment: (
-                      <InputAdornment position="end">{badge}</InputAdornment>
-                    ),
-                  },
-                }
-              : {}),
+        {React.createElement(
+          Component,
+          {
+            ...restParams,
+            label: label,
+            name: name,
+            error: !!error,
+            formControlProps: { sx: { minWidth: '450px', marginTop: '15px' } },
+            textFieldProps: {
+              sx: { width: 240, ...sx },
+              ...(badge
+                ? {
+                    InputProps: {
+                      label: label,
+                      endAdornment: (
+                        <InputAdornment position="end">{badge}</InputAdornment>
+                      ),
+                    },
+                  }
+                : {}),
+            },
           },
-        })}
+          options
+        )}
       </Box>
       {error && (
         <Typography color="error" sx={{ mt: 1 }}>
@@ -181,7 +193,7 @@ function renderComponentGroup({
       uiType={properties.uiType!}
       params={properties.params || {}}
       label={label}
-      sx={{ width: '350px' }}
+      sx={{ width: '350px', height: '70px' }}
     />
   );
 

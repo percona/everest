@@ -42,8 +42,8 @@ export const getDefaultValues = (
   }
 
   if (fields.topology) {
-    defaults.topology = Object.keys(fields.topology)[0];
     defaults.topology = buildDefaults(fields.topology || {});
+    defaults.topology.type = Object.keys(fields.topology)[0];
   }
 
   return defaults;
