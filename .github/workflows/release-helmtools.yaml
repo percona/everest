@@ -35,7 +35,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-        uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v6
         name: Build & push Docker image
         with:
           context: everest
