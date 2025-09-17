@@ -39,8 +39,8 @@ jobs:
         name: Build & push Docker image
         with:
           context: everest
-          image: ${{ env.IMG_OWNER }}/${{ env.IMG_NAME }}
-          tags: ${{ env.VERSION }}, latest
-          file: Dockerfile.helmtools
+          push: true
+          tags: ${{ env.IMG_OWNER }}/${{ env.IMG_NAME }}:${{ env.VERSION }}
+          file: everest/Dockerfile.helmtools
           build-args: |
             KUBECTL_VERSION=${{ env.KUBECTL_VERSION }}
