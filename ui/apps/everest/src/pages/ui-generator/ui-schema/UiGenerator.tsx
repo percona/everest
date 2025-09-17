@@ -28,6 +28,8 @@ import {
 } from './utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { muiComponentMap, openApiObj } from './constants';
+import { DatabaseSummary } from './summary/db-summary';
+import DatabaseFormStepControllers from 'pages/database-form/database-form-body/DatabaseFormStepControllers';
 
 const parseOpenAPIObject = (openApiObj: OpenAPIObject): OpenAPIFields => {
   const fields = {
@@ -67,11 +69,13 @@ const OpenApiUiComponent = ({
   uiType,
   params,
   label,
+  sx,
 }: {
   name: string;
   params: OpenAPIObjectProperties;
   uiType: string;
   label: string;
+  sx?: object;
 }) => {
   const methods = useFormContext();
   const errors = methods?.formState?.errors || {};
@@ -92,7 +96,7 @@ const OpenApiUiComponent = ({
           error: !!error,
           style: { width: 240 },
           textFieldProps: {
-            sx: { width: 240 },
+            sx: { width: 240, ...sx },
             ...(badge
               ? {
                   InputProps: {
@@ -134,6 +138,8 @@ function renderComponentGroup({
     (sib) => sib.uiType === 'Group' && !!sib.subParameters
   );
 
+  const nestingLevel = fieldName.split('.').length;
+
   const children = isGroup ? (
     Object.entries(properties.subParameters!).map(([subName, subProps]) => {
       const subSiblings = Object.values(properties.subParameters!);
@@ -143,15 +149,29 @@ function renderComponentGroup({
         siblings: subSiblings,
       });
     })
-  ) : hasGroupSibling || isTopLevel ? (
-    <Box display="flex" alignItems="center" gap={1}>
-      <Typography sx={{ fontWeight: 500, mb: 0 }}>{label}</Typography>
+  ) : hasGroupSibling || isTopLevel || nestingLevel <= 4 ? (
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={1}
+      sx={{
+        width: '100%',
+        flex: 1,
+        justifyContent: 'space-between',
+        padding: '0 10px 0 15px',
+        alignItems: 'baseline',
+      }}
+    >
+      <Typography sx={{ fontWeight: '600', color: '#303642' }}>
+        {label}
+      </Typography>
       <OpenApiUiComponent
         key={fieldName}
         name={fieldName}
         uiType={properties.uiType!}
         params={properties.params || {}}
         label=""
+        sx={{ width: '450px' }}
       />
     </Box>
   ) : (
@@ -161,6 +181,7 @@ function renderComponentGroup({
       uiType={properties.uiType!}
       params={properties.params || {}}
       label={label}
+      sx={{ width: '350px' }}
     />
   );
 
@@ -182,9 +203,9 @@ function renderComponentGroup({
           borderRadius: '8px',
           display: 'flex',
           flexDirection: 'column',
-          padding: '15px',
+          padding: '25px',
           margin: '5px',
-          width: '100%',
+          marginTop: '20px',
         }}
       >
         <Typography sx={{ fontWeight: '600', color: '#303642' }}>
@@ -196,6 +217,8 @@ function renderComponentGroup({
             flexDirection: 'row',
             flexWrap: 'wrap',
             gap: 2,
+            padding: '15px',
+            alignItems: 'center',
           }}
         >
           {children}
@@ -264,14 +287,14 @@ export const UIGeneratorNew = () => {
   const { trigger, control } = methods;
   useTriggerDependentFields(celDependencyGroups, control, trigger);
 
-  const onSubmit = (data: Record<string, unknown>) => {
+  const onSubmit = (data: Record<string, unknown>): void => {
     console.log('🚀 ~ onSubmit ~ data:', data);
   };
 
   return (
-    <>
+    <Box sx={{ display: 'flex' }}>
       <FormProvider {...methods}>
-        <div>
+        <Box sx={{ width: '60%' }}>
           <Stepper noConnector activeStep={activeStep} sx={{ marginBottom: 4 }}>
             {stepLabels.map((_, idx) => (
               <Step key={`step-${idx + 1}`}>
@@ -282,8 +305,12 @@ export const UIGeneratorNew = () => {
           <Stack spacing={2} sx={{ marginTop: 2 }}>
             <Typography variant="h5">{stepLabels[activeStep]}</Typography>
             {activeStep === 0 ? (
-              <>
-                <SelectInput name="topology" label="Topology Type">
+              <Box sx={{ width: '100%' }}>
+                <SelectInput
+                  name="topology.type"
+                  label="Topology Type"
+                  selectFieldProps={{ sx: { width: '400px' } }}
+                >
                   {Object.keys(topology).map((topKey) => (
                     <MenuItem
                       value={topKey}
@@ -302,7 +329,7 @@ export const UIGeneratorNew = () => {
                           topology[selectedTopology]
                         ) as ComponentProperties[];
                         return renderComponentGroup({
-                          name: groupName,
+                          name: `topology.${selectedTopology}.${groupName}`,
                           properties: groupProperties as ComponentProperties,
                           isTopLevel: true,
                           siblings,
@@ -311,55 +338,56 @@ export const UIGeneratorNew = () => {
                     )}
                   </Stack>
                 )}
-              </>
+              </Box>
             ) : (
-              Object.entries(groupedComponents).map(
-                ([groupName, groupProperties]) => {
-                  if (
-                    typeof groupProperties === 'object' &&
-                    groupProperties !== null &&
-                    'uiType' in groupProperties
-                  ) {
-                    const siblings = Object.values(
-                      groupedComponents
-                    ) as ComponentProperties[];
-                    return renderComponentGroup({
-                      name: `${parent}.${groupName}`,
-                      properties: groupProperties,
-                      isTopLevel: true,
-                      siblings,
-                    });
+              <Box>
+                {Object.entries(groupedComponents).map(
+                  ([groupName, groupProperties]) => {
+                    if (
+                      typeof groupProperties === 'object' &&
+                      groupProperties !== null &&
+                      'uiType' in groupProperties
+                    ) {
+                      const siblings = Object.values(
+                        groupedComponents
+                      ) as ComponentProperties[];
+                      return renderComponentGroup({
+                        name: `${parent}.${groupName}`,
+                        properties: groupProperties,
+                        isTopLevel: true,
+                        siblings,
+                      });
+                    }
+                    return null;
                   }
-                  return null;
-                }
-              )
+                )}
+              </Box>
             )}
           </Stack>
-          <Stack direction={'row'} spacing={2} sx={{ marginTop: 2 }}>
-            <Button
-              onClick={() => setActiveStep((prev) => prev - 1)}
-              disabled={activeStep === 0}
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={() => setActiveStep((prev) => prev + 1)}
-              disabled={activeStep === stepLabels.length - 1}
-            >
-              Next
-            </Button>
-          </Stack>
-        </div>
-        <Button
-          onClick={() => onSubmit(methods.getValues())}
-          disabled={
-            activeStep !== stepLabels.length - 1
-            // || Object.keys(methods.formState.errors).length > 0
-          }
-        >
-          Submit
-        </Button>
+          <Button
+            onClick={() => onSubmit(methods.getValues())}
+            disabled={
+              activeStep !== stepLabels.length - 1 ||
+              Object.keys(methods.formState.errors).length > 0
+            }
+          >
+            Test Submit
+          </Button>
+          <DatabaseFormStepControllers
+            disableBack={activeStep === 0}
+            disableSubmit={
+              activeStep !== stepLabels.length - 1 ||
+              Object.keys(methods.formState.errors).length > 0
+            }
+            showSubmit={activeStep === stepLabels.length - 1}
+            onPreviousClick={() => setActiveStep((prev) => prev - 1)}
+            onNextClick={() => setActiveStep((prev) => prev + 1)}
+            onSubmit={() => {}}
+            onCancel={() => {}}
+          />
+        </Box>
+        <DatabaseSummary fields={fields} setActiveStep={setActiveStep} />
       </FormProvider>
-    </>
+    </Box>
   );
 };
