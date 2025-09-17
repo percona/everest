@@ -1,5 +1,5 @@
 import { Checkbox } from '@mui/material';
-import { TextInput } from '@percona/ui-lib';
+import { SelectInput, TextInput } from '@percona/ui-lib';
 import { OpenAPIObject } from './types';
 import { z } from 'zod';
 
@@ -25,6 +25,7 @@ export const muiComponentMap: Record<string, React.ElementType> = {
   TextArea: TextInput,
   StorageClassSelect: TextInput,
   Toggle: TextInput,
+  Select: SelectInput,
 };
 
 export const UI_TYPE_DEFAULT_VALUE: Record<string, unknown> = {
@@ -37,6 +38,7 @@ export const UI_TYPE_DEFAULT_VALUE: Record<string, unknown> = {
   StorageClassSelect: 'lorem ipsum',
   SecretSelector: '',
   String: '',
+  Select: '',
 };
 
 export const ZOD_SCHEMA_MAP: Record<string, z.ZodTypeAny> = {
@@ -47,6 +49,7 @@ export const ZOD_SCHEMA_MAP: Record<string, z.ZodTypeAny> = {
   ),
   String: z.string().min(5),
   TextArea: z.string().min(5),
+  Select: z.string(),
   Input: z.string(),
   Switch: z.boolean(),
   Checkbox: z.boolean(),
@@ -62,48 +65,48 @@ export const openApiObj: OpenAPIObject = {
   },
   components: {
     mongod: {
-      // replicas: {
-      //   validation: {
-      //     min: 1,
-      //     max: 99,
-      //   },
-      //   uiType: 'Number',
-      //   description: 'Number of replica nodes',
-      //   params: {
-      //     label: 'Replicas',
-      //     placeholder: '',
-      //     default: '9999',
-      //   },
-      // },
-      // storage: {
-      //   uiType: 'Group',
-      //   description: 'Storage configuration for the Mongod component',
-      //   params: {
-      //     label: 'Storage',
-      //   },
-      //   subParameters: {
-      //     class: {
-      //       uiType: 'StorageClassSelect',
-      //       description: 'Storage class for the Mongod component',
-      //       params: {
-      //         label: 'Storage Class',
-      //       },
-      //     },
-      //     size: {
-      //       uiType: 'Number',
-      //       description: 'Size of the storage',
-      //       params: {
-      //         label: 'Size',
-      //         badge: 'Gi',
-      //         options: [
-      //           { label: '10Gi', value: '10Gi' },
-      //           { label: '20Gi', value: '20Gi' },
-      //           { label: '30Gi', value: '30Gi' },
-      //         ],
-      //       },
-      //     },
-      //   },
-      // },
+      replicas: {
+        validation: {
+          min: 1,
+          max: 99,
+        },
+        uiType: 'Number',
+        description: 'Number of replica nodes',
+        params: {
+          label: 'Replicas',
+          placeholder: '',
+          default: '9999',
+        },
+      },
+      storage: {
+        uiType: 'Group',
+        description: 'Storage configuration for the Mongod component',
+        params: {
+          label: 'Storage',
+        },
+        subParameters: {
+          class: {
+            uiType: 'StorageClassSelect',
+            description: 'Storage class for the Mongod component',
+            params: {
+              label: 'Storage Class',
+            },
+          },
+          size: {
+            uiType: 'Select',
+            description: 'Size of the storage',
+            params: {
+              label: 'Size',
+              badge: 'Gi',
+              options: [
+                { label: '10Gi', value: '10Gi' },
+                { label: '20Gi', value: '20Gi' },
+                { label: '30Gi', value: '30Gi' },
+              ],
+            },
+          },
+        },
+      },
       resources: {
         uiType: 'Group',
         label: 'Resource Requests & Limits',
@@ -114,48 +117,55 @@ export const openApiObj: OpenAPIObject = {
             label: 'Requests',
             subParameters: {
               cpu_group: {
-                uiType: 'Group',
+                uiType: 'Number',
                 params: {
                   badge: 'Cores',
                   label: 'CPU',
                 },
-                subParameters: {
-                  cpu1: {
-                    uiType: 'Group',
-                    params: {
-                      badge: 'Cores',
-                      label: 'CPU1',
-                    },
-                    description: 'CPU Limits',
-                    subParameters: {
-                      cpu1: {
-                        uiType: 'Number',
-                        params: {
-                          badge: 'Cores',
-                          label: 'CPU1',
-                        },
-                        description: 'CPU Limits',
-                      },
-                      memory1: {
-                        uiType: 'Number',
-                        params: {
-                          badge: 'Gi',
-                          label: 'Memory1',
-                        },
-                        description: 'Memory Requests',
-                      },
-                    },
-                  },
-                  memory1: {
-                    uiType: 'Number',
-                    params: {
-                      badge: 'Gi',
-                      label: 'Memory1',
-                    },
-                    description: 'Memory Requests',
-                  },
-                },
-                description: 'CPU Requests',
+                // subParameters: {
+                //   cpu1: {
+                //     uiType: 'Number',
+                //     params: {
+                //       badge: 'Cores',
+                //       label: 'CPU1',
+                //     },
+                //     description: 'CPU Limits',
+                //     // subParameters: {
+                //     // cpu1: {
+                //     //   uiType: 'Number',
+                //     //   params: {
+                //     //     badge: 'Cores',
+                //     //     label: 'CPU1',
+                //     //   },
+                //     //   description: 'CPU Limits',
+                //     // },
+                //     // memory1: {
+                //     //   uiType: 'Number',
+                //     //   params: {
+                //     //     badge: 'Gi',
+                //     //     label: 'Memory1',
+                //     //   },
+                //     //   description: 'Memory Requests',
+                //     // },
+                //     // memory11: {
+                //     //   uiType: 'Number',
+                //     //   params: {
+                //     //     badge: 'Gi',
+                //     //     label: 'Memory11',
+                //     //   },
+                //     //   description: 'Memory Requests',
+                //     // },
+                //     // memory12: {
+                //     //   uiType: 'Number',
+                //     //   params: {
+                //     //     badge: 'Gi',
+                //     //     label: 'Memory11',
+                //     //   },
+                //     //   description: 'Memory Requests',
+                //     // },
+                //     // },
+                //   },
+                // },
               },
               memory: {
                 uiType: 'Number',
