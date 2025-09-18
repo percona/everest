@@ -63,6 +63,7 @@ interface AdvancedConfigurationFormProps {
   automaticallyTogglePodSchedulingPolicySwitch?: boolean;
   allowedFieldsToInitiallyLoadDefaults?: AllowedFieldsToInitiallyLoadDefaults[];
   disableNoConfig?: boolean;
+  activePolicy?: string;
 }
 
 export const AdvancedConfigurationForm = ({
@@ -71,6 +72,7 @@ export const AdvancedConfigurationForm = ({
   automaticallyTogglePodSchedulingPolicySwitch = false,
   allowedFieldsToInitiallyLoadDefaults = [],
   disableNoConfig = false,
+  activePolicy,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues, trigger } =
     useFormContext();
@@ -92,7 +94,7 @@ export const AdvancedConfigurationForm = ({
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
   const { data: policies = [], isLoading: fetchingPolicies } =
-    usePodSchedulingPolicies(dbTypeToDbEngine(dbType), true, {
+    usePodSchedulingPolicies(dbTypeToDbEngine(dbType), false, {
       refetchInterval: 2000,
     });
 
@@ -337,14 +339,20 @@ export const AdvancedConfigurationForm = ({
                     },
                   }}
                 >
-                  {policies.map((policy) => (
-                    <MenuItem
-                      value={policy.metadata.name}
-                      key={policy.metadata.name}
-                    >
-                      {policy.metadata.name}
-                    </MenuItem>
-                  ))}
+                  {policies
+                    .filter(
+                      (p) =>
+                        !!p.spec.affinityConfig ||
+                        p.metadata.name === activePolicy
+                    )
+                    .map((policy) => (
+                      <MenuItem
+                        value={policy.metadata.name}
+                        key={policy.metadata.name}
+                      >
+                        {policy.metadata.name}
+                      </MenuItem>
+                    ))}
                 </SelectInput>
                 {!!policies.length && (
                   <IconButton onClick={handleOnPolicyInfoClick}>
