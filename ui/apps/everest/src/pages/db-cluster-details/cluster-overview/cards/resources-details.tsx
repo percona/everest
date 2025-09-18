@@ -34,7 +34,7 @@ import { Messages } from '../cluster-overview.messages';
 import { ResourcesEditModal } from './resources';
 import {
   cpuParser,
-  getTotalResourcesDetailedString,
+  getResourcesDetailedString,
   memoryParser,
 } from 'utils/k8ResourceParser';
 import { dbEngineToDbType } from '@percona/utils';
@@ -70,8 +70,8 @@ export const ResourcesDetails = ({
     : 0;
   const disk = dbCluster.spec.engine.storage.size;
   const parsedDiskValues = memoryParser(disk.toString());
-  const parsedMemoryValues = memoryParser(memory.toString());
-  const parsedProxyMemoryValues = memoryParser(proxyMemory.toString());
+  const parsedMemoryValues = memoryParser(memory.toString(), 'G');
+  const parsedProxyMemoryValues = memoryParser(proxyMemory.toString(), 'G');
   const dbType = dbEngineToDbType(dbCluster.spec.engine.type);
   const replicas = dbCluster.spec.engine.replicas.toString();
   const proxies = isProxy(dbCluster.spec.proxy)
@@ -81,10 +81,7 @@ export const ResourcesDetails = ({
   const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
-  const numberOfNodesStr =
-    sharding?.enabled && sharding?.shards
-      ? (+replicas * sharding?.shards).toString()
-      : replicas;
+  const numberOfNodesStr = numberOfNodes;
   const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
@@ -186,61 +183,50 @@ export const ResourcesDetails = ({
             </OverviewSection>
           )}
           <OverviewSection
-            title={`${numberOfNodesStr} node${+numberOfNodesStr > 1 ? 's' : ''}`}
+            title={`${numberOfNodesStr} node${+numberOfNodesStr > 1 ? 's' : ''} ${dbType === DbType.Mongo ? 'per shard' : ''}`}
             loading={loading}
           >
             <OverviewSectionRow
               dataTestId="node-cpu"
               label={Messages.fields.cpu}
-              content={getTotalResourcesDetailedString(
+              content={getResourcesDetailedString(
                 cpuParser(cpu.toString() || '0'),
-                parseInt(replicas, 10),
-                'CPU',
-                sharding?.shards,
-                sharding?.enabled
+                ''
               )}
             />
             <OverviewSectionRow
               label={Messages.fields.memory}
-              content={getTotalResourcesDetailedString(
+              content={getResourcesDetailedString(
                 parsedMemoryValues.value,
-                parseInt(replicas, 10),
-                parsedMemoryValues.originalUnit,
-                sharding?.shards,
-                sharding?.enabled
+                'GB'
               )}
             />
             <OverviewSectionRow
               label={Messages.fields.disk}
-              content={getTotalResourcesDetailedString(
+              content={getResourcesDetailedString(
                 parsedDiskValues.value,
-                parseInt(replicas, 10),
-                parsedDiskValues.originalUnit,
-                sharding?.shards,
-                sharding?.enabled
+                parsedDiskValues.originalUnit
               )}
             />
           </OverviewSection>
           {numberOfProxiesInt > 0 && (
             <OverviewSection
-              title={`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}`}
+              title={`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']} ${dbType === DbType.Mongo ? 'per shard' : ''}`}
               loading={loading}
             >
               <OverviewSectionRow
                 dataTestId={`${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}-cpu`}
                 label={Messages.fields.cpu}
-                content={getTotalResourcesDetailedString(
+                content={getResourcesDetailedString(
                   cpuParser(proxyCpu.toString() || '0'),
-                  parseInt(proxies, 10),
-                  'CPU'
+                  ''
                 )}
               />
               <OverviewSectionRow
                 label={Messages.fields.memory}
-                content={getTotalResourcesDetailedString(
+                content={getResourcesDetailedString(
                   parsedProxyMemoryValues.value,
-                  parseInt(proxies, 10),
-                  parsedProxyMemoryValues.originalUnit
+                  'GB'
                 )}
               />
             </OverviewSection>
