@@ -14,7 +14,10 @@
 // limitations under the License.
 
 import { z } from 'zod';
-import { AdvancedConfigurationFields } from './advanced-configuration.types';
+import {
+  AdvancedConfigurationFields,
+  ExposureMethod,
+} from './advanced-configuration.types';
 import { IP_REGEX } from 'consts';
 import { Messages } from './messages';
 
@@ -32,7 +35,6 @@ export const advancedConfigurationsSchema = () =>
             });
           }
         }),
-      [AdvancedConfigurationFields.externalAccess]: z.boolean(),
       [AdvancedConfigurationFields.sourceRanges]: z.array(
         z.object({ sourceRange: z.string().optional() })
       ),
@@ -40,20 +42,66 @@ export const advancedConfigurationsSchema = () =>
       [AdvancedConfigurationFields.engineParameters]: z.string().optional(),
       [AdvancedConfigurationFields.podSchedulingPolicyEnabled]: z.boolean(),
       [AdvancedConfigurationFields.podSchedulingPolicy]: z.string().optional(),
+      [AdvancedConfigurationFields.loadBalancerConfigName]: z
+        .string()
+        .optional(),
+      [AdvancedConfigurationFields.exposureMethod]:
+        z.nativeEnum(ExposureMethod),
     })
     .passthrough()
-    .superRefine(({ sourceRanges }, ctx) => {
+    .superRefine(({ sourceRanges, exposureMethod }, ctx) => {
+      if (exposureMethod !== ExposureMethod.LoadBalancer) {
+        return;
+      }
+
+      const nonEmptyRanges = sourceRanges
+        .map(({ sourceRange }) => sourceRange)
+        .filter((range): range is string => !!range);
+
+      // Format: { [range]: [indexes] }
+      const duplicateIndexes: Record<string, number[]> = {};
       sourceRanges.forEach(({ sourceRange }, index) => {
-        if (sourceRange && IP_REGEX.exec(sourceRange) === null) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.invalid_string,
-            validation: 'ip',
-            path: [
-              AdvancedConfigurationFields.sourceRanges,
-              index,
-              'sourceRange',
-            ],
-            message: Messages.errors.sourceRange.invalid,
+        if (sourceRange) {
+          // Validate if it's a valid IP using regex
+          if (IP_REGEX.exec(sourceRange) === null) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.invalid_string,
+              validation: 'ip',
+              path: [
+                AdvancedConfigurationFields.sourceRanges,
+                index,
+                'sourceRange',
+              ],
+              message: Messages.errors.sourceRange.invalid,
+            });
+          }
+
+          const duplicateEntry = nonEmptyRanges.filter(
+            (item) => item === sourceRange
+          );
+
+          // We exclude our current entry
+          if (duplicateEntry.length > 1) {
+            duplicateIndexes[sourceRange] = duplicateIndexes[sourceRange] || [];
+            duplicateIndexes[sourceRange].push(index);
+          }
+        }
+      });
+
+      // Check for duplicates
+      Object.entries(duplicateIndexes).forEach(([, indexes]) => {
+        if (indexes.length >= 2) {
+          // Remove the first index to avoid adding an issue for the first occurrence
+          indexes.slice(1).forEach((index) => {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: [
+                AdvancedConfigurationFields.sourceRanges,
+                index,
+                'sourceRange',
+              ],
+              message: Messages.errors.sourceRange.duplicate,
+            });
           });
         }
       });

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { useEffect, useState } from 'react';
 import { FieldError, useFieldArray, useFormContext } from 'react-hook-form';
 import { IconButton, InputAdornment } from '@mui/material';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
@@ -27,20 +28,35 @@ const TextArray = ({
   label,
   placeholder,
   handleBlur,
+  onRemove = () => {},
 }: TextArrayProps) => {
   const {
     control,
     formState: { errors },
+    watch,
+    trigger,
   } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: fieldName,
   });
-
-  const defaultFields = fields.length ? fields : [];
+  const defaultFields: Record<string, string>[] = fields.length ? fields : [];
+  const [fieldAppended, setFieldAppended] = useState(false);
   const error = (index: number): FieldError | undefined =>
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[fieldKey];
+
+  useEffect(() => {
+    if (fieldAppended) {
+      const lastField = document.querySelector(
+        `input[name="${fieldName}.${fields.length - 1}.${fieldKey}"]`
+      );
+      if (lastField) {
+        (lastField as HTMLInputElement).focus();
+      }
+      setFieldAppended(false);
+    }
+  }, [fieldAppended]);
 
   return (
     <>
@@ -52,6 +68,7 @@ const TextArray = ({
             append({
               [fieldKey]: '',
             });
+            setFieldAppended(true);
           },
         }}
       >
@@ -73,6 +90,12 @@ const TextArray = ({
               },
 
               InputProps: {
+                onChange: () => {
+                  const initialFieldValue = watch(
+                    `${fieldName}.${index}.${fieldKey}`
+                  );
+                  defaultFields[index][fieldKey] = initialFieldValue;
+                },
                 onBlur: handleBlur
                   ? (e) => {
                       handleBlur(
@@ -86,7 +109,11 @@ const TextArray = ({
                   <InputAdornment position="end">
                     <IconButton
                       data-testid={`delete-text-input-${index}-button`}
-                      onClick={() => remove(index)}
+                      onClick={() => {
+                        remove(index);
+                        onRemove(index);
+                        trigger(fieldName);
+                      }}
                     >
                       <DeleteOutlineOutlinedIcon />
                     </IconButton>

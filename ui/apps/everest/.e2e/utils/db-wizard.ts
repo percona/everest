@@ -15,20 +15,27 @@ export const storageLocationAutocompleteEmptyValidationCheck = async (
   ).toBeVisible();
 };
 
-export const moveForward = async (page: Page) => {
+const waitForStepHeaderToChange = async (
+  page: Page,
+  directionalButtonTestId: string
+) => {
   const currHeader = await page.getByTestId('step-header').textContent();
-  await page.getByTestId('db-wizard-continue-button').click();
-
+  await page.getByTestId(directionalButtonTestId).click();
   do {
     if ((await page.getByTestId('step-header').textContent()) !== currHeader) {
       break;
     }
-    page.waitForTimeout(200);
+    await page.waitForTimeout(200);
   } while (1);
 };
 
-export const moveBack = (page: Page) =>
-  page.getByTestId('db-wizard-previous-button').click();
+export const moveForward = async (page: Page) => {
+  await waitForStepHeaderToChange(page, 'db-wizard-continue-button');
+};
+
+export const moveBack = async (page: Page) => {
+  await waitForStepHeaderToChange(page, 'db-wizard-previous-button');
+};
 
 export const goToStep = (
   page: Page,
@@ -233,17 +240,31 @@ export const populateAdvancedConfig = async (
   externalAccess: boolean = false,
   externalAccessSourceRange: string,
   addDefaultEngineParameters: boolean,
-  engineParameters: string
+  engineParameters: string,
+  enablePodSchedulingPolicy: boolean = true
 ) => {
   const combobox = page.getByTestId('text-input-storage-class');
   await combobox.waitFor({ state: 'visible', timeout: 5000 });
   await expect(combobox).toHaveValue(/.+/, { timeout: 5000 });
 
-  if (externalAccess) {
+  const policyInput = page.getByTestId('select-input-pod-scheduling-policy');
+  await policyInput.waitFor({ state: 'visible', timeout: 5000 });
+  await expect(policyInput).toHaveValue(/.+/, { timeout: 5000 });
+
+  // policy is already enabled by default
+  if (!enablePodSchedulingPolicy) {
     await page
-      .getByTestId('switch-input-external-access')
+      .getByTestId('switch-input-pod-scheduling-policy-enabled')
       .getByRole('checkbox')
-      .check();
+      // https://github.com/microsoft/playwright/issues/20893
+      .dispatchEvent('click');
+  }
+
+  if (externalAccess) {
+    await page.getByTestId('select-input-exposure-method').waitFor();
+    await page.getByTestId('select-exposure-method-button').click();
+    await page.getByRole('option', { name: 'Load balancer' }).click();
+
     if (externalAccessSourceRange != '') {
       await page
         .getByTestId('text-input-source-ranges.0.source-range')

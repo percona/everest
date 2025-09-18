@@ -19,6 +19,7 @@ import { Messages } from './dbClusterView.messages';
 import { DbClusterTableElement } from './dbClusterView.types';
 import { Backup, BackupStatus } from 'shared-types/backups.types';
 import { isProxy } from 'utils/db';
+import { DbErrorType } from 'shared-types/dbErrors.types';
 
 const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.ready]: Messages.statusProvider.up,
@@ -32,10 +33,23 @@ const DB_CLUSTER_STATUS_HUMANIFIED: Record<DbClusterStatus, string> = {
   [DbClusterStatus.resizingVolumes]: Messages.statusProvider.resizingVolumes,
   [DbClusterStatus.creating]: Messages.statusProvider.creating,
   [DbClusterStatus.upgrading]: Messages.statusProvider.upgrading,
+  [DbClusterStatus.importing]: Messages.statusProvider.importing,
 };
 
-export const beautifyDbClusterStatus = (status: DbClusterStatus): string =>
-  DB_CLUSTER_STATUS_HUMANIFIED[status] || Messages.statusProvider.creating;
+export const beautifyDbClusterStatus = (
+  status: DbClusterStatus,
+  conditions?: { type: string }[]
+): string => {
+  if (
+    status === DbClusterStatus.error &&
+    conditions?.some((c) => c.type === DbErrorType.ImportFailed)
+  ) {
+    return Messages.statusProvider.importFailed;
+  }
+  return (
+    DB_CLUSTER_STATUS_HUMANIFIED[status] || Messages.statusProvider.creating
+  );
+};
 
 export const convertDbClusterPayloadToTableFormat = (
   data: DbClusterForNamespaceResult[]
@@ -146,8 +160,8 @@ export const getLastBackupStatus = (
 
 export const sortBackupsByTime = (backups: Backup[]) => {
   return backups.sort((b1, b2) => {
-    const date1 = b1?.completed || new Date();
-    const date2 = b2?.completed || new Date();
+    const date1 = b1?.completed ? new Date(b1.completed) : new Date();
+    const date2 = b2?.completed ? new Date(b2.completed) : new Date();
     return date1.getTime() - date2.getTime();
   });
 };

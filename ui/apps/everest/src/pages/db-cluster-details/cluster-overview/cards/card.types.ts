@@ -45,6 +45,7 @@ export type AdvancedConfigurationOverviewCardProps = {
   parameters: boolean;
   storageClass: string;
   podSchedulingPolicy?: string;
+  loadBalancerConfig?: string;
 } & OverviewCardProps;
 
 export type MonitoringConfigurationOverviewCardProps = {

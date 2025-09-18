@@ -180,8 +180,12 @@ func TestIsBlocked(t *testing.T) {
 		},
 		{
 			// other error cases are covered by unit tests for specific functions
-			name:      "error parse passwordMtime",
-			token:     jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"iat": float64(1847058325), "sub": "test:login", "iss": SessionManagerClaimsIssuer}), // ts is earlier than the password time
+			name: "error parse passwordMtime",
+			token: jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"iat": float64(1847058325),
+				"sub": "test:login",
+				"iss": SessionManagerClaimsIssuer,
+			}), // ts is earlier than the password time
 			error:     errors.New(`parsing time "some weird string" as "2006-01-02T15:04:05Z07:00": cannot parse "some weird string" as "2006"`),
 			isBlocked: false,
 			usersFile: `test:

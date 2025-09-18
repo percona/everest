@@ -93,15 +93,19 @@ func (u *Upgrade) waitForDeployment(ctx context.Context, name, namespace string)
 }
 
 func (u *Upgrade) upgradeCustomResourceDefinitions(ctx context.Context) error {
-	manifests, err := u.helmInstaller.RenderTemplates(ctx)
-	if err != nil {
-		return fmt.Errorf("could not render Helm templates: %w", err)
+	installer := helm.Installer{
+		ReleaseName:      helm.EverestCRDChartName,
+		ReleaseNamespace: common.SystemNamespace,
 	}
-	crds, err := manifests.GetCRDs()
-	if err != nil {
-		return fmt.Errorf("could not get CRDs: %w", err)
+	if err := installer.Init(u.config.KubeconfigPath, helm.ChartOptions{
+		URL:       u.config.RepoURL,
+		Directory: utils.CRDSubChartPath(u.config.ChartDir),
+		Name:      helm.EverestCRDChartName,
+		Version:   u.upgradeToVersion,
+	}); err != nil {
+		return fmt.Errorf("could not initialize Helm installer: %w", err)
 	}
-	return u.kubeConnector.ApplyManifestFile(ctx, helmutils.YAMLStringsToBytes(crds), common.SystemNamespace)
+	return installer.Install(ctx)
 }
 
 func (u *Upgrade) upgradeHelmChart(ctx context.Context) error {
@@ -153,7 +157,8 @@ func (u *Upgrade) upgradeEverestDBNamespaceHelmChart(ctx context.Context, namesp
 
 	return installer.Upgrade(ctx, helm.UpgradeOptions{
 		DisableHooks: true,
-		ReuseValues:  true,
+		// This will preserve old values and use any new values from the chart.
+		ResetThenReuseValues: true,
 	})
 }
 

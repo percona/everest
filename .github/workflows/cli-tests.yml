@@ -11,9 +11,8 @@ on:
 jobs:
   integration_tests:
     strategy:
-      fail-fast: false
-      matrix:
-        go-version: [ 1.24.x ]
+      fail-fast: true
+    continue-on-error: false
     name: CLI ${{inputs.make_target}}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -21,65 +20,67 @@ jobs:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
       MAKE_TARGET: ${{ inputs.make_target }}
     steps:
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Enable Go modules cache
-        uses: percona-platform/cache@v3
+      - name: Set up Go release
+        uses: actions/setup-go@v6
         with:
-          path: ~/go/pkg/mod
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-modules-
+          go-version-file: 'go.mod'
+          cache: true
 
-      - name: Enable Go build cache
-        uses: percona-platform/cache@v3
+      - name: Install Kubernetes tools
+        uses: ./.github/actions/install-kubernetes-tools
         with:
-          path: ~/.cache/go-build
-          key: ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-${{ hashFiles('**') }}
-          restore-keys: |
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-${{ github.ref }}-
-            ${{ matrix.os }}-go-${{ matrix.go-version }}-build-
+          install-kubectl: true
+          install-k3d: true
 
+      - name: Adjust GitHub worker node
+        uses: ./.github/actions/adjust-github-node
+        with:
+          adjust-host-for-k3d: true
+          mount-docker-data: true
 
-      # https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
-      # https://minikube.sigs.k8s.io/docs/drivers/docker/
-      - name: Configure minikube
+      - name: Run K3D test cluster
+        run: |
+          make k3d-cluster-up
+
+      - name: Build Everest API Server binary
+        run: |
+          make build-debug
+
+      - name: Build Everest API server docker image
+        run: |
+          make docker-build
+
+      - name: Upload Everest API server image to K3D test cluster
+        run: |
+          make k3d-upload-server-image
+
+      - name: Build Everest operator docker image
+        run: |
+          make docker-build-operator
+
+      - name: Upload Everest operator image to K3D test cluster
+        run: |
+          make k3d-upload-operator-image
+
+      - name: Build Everest CLI binary
+        run: |
+          make build-cli-debug
+
+      - name: Init ${{ env.MAKE_TARGET }} integration tests
         working-directory: cli-tests
         run: |
-          minikube delete --all --purge
-          rm -rf ~/.minikube
-          minikube config set cpus 2
-          minikube start
-
-      - name: Set up Go release for CLI
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Build CLI binary
-        run: |
           make init
-          make build-cli
 
       - name: Run ${{ env.MAKE_TARGET }} integration tests
         working-directory: cli-tests
         id: cli-tests
         run: |
-          make init
           make ${{ env.MAKE_TARGET }}
 
       - name: Collect logs from backend

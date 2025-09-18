@@ -123,6 +123,8 @@ export type PodSchedulingPolicy = {
   metadata: {
     name: string;
     finalizers: string[];
+    generation: number;
+    resourceVersion: string;
   };
   spec: {
     engineType: DbEngineType;

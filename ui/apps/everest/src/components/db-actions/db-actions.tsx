@@ -26,11 +26,13 @@ import { useRBACPermissions } from 'hooks/rbac';
 import { Messages } from './db-actions.messages';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import DbActionsModals from './db-actions-modals';
+import { useNavigate } from 'react-router-dom';
 import { useDbActions } from 'hooks';
 import { shouldDbActionsBeBlocked } from 'utils/db';
 
 export const DbActions = ({
-  isDetailView = false,
+  showDetailsAction = false,
+  showStatusActions = false,
   dbCluster,
 }: DbActionsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -54,12 +56,15 @@ export const DbActions = ({
   const open = Boolean(anchorEl);
   const dbClusterName = dbCluster.metadata.name;
   const namespace = dbCluster.metadata.namespace;
+  const redirectURL = `/databases/${namespace}/${dbClusterName}/overview`;
+
+  const navigate = useNavigate();
   const actionsBlocked = shouldDbActionsBeBlocked(dbCluster.status?.status);
   const hasSchedules = !!(
     dbCluster.spec.backup && (dbCluster.spec.backup.schedules || []).length > 0
   );
   const monitoringEnabled = !!(
-    dbCluster.spec.monitoring && dbCluster.spec.monitoring.monitoringConfigName
+    dbCluster.spec.monitoring && dbCluster.spec.monitoring?.monitoringConfigName
   );
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -127,7 +132,7 @@ export const DbActions = ({
   return (
     <>
       <Box>
-        {isDetailView ? (
+        {showStatusActions ? (
           <Button
             id="actions-button"
             data-testid="actions-button"
@@ -163,6 +168,18 @@ export const DbActions = ({
             'aria-labelledby': 'row-actions-button',
           }}
         >
+          {showDetailsAction && (
+            <MenuItem
+              data-testid={`${dbClusterName}-details`}
+              key={0}
+              onClick={() => {
+                navigate(redirectURL);
+              }}
+              sx={sx}
+            >
+              <VisibilityOutlinedIcon /> {Messages.menuItems.dbDetails}
+            </MenuItem>
+          )}
           {canUpdate && (
             <MenuItem
               disabled={actionsBlocked}
@@ -203,7 +220,7 @@ export const DbActions = ({
               <KeyboardReturnIcon /> {Messages.menuItems.restoreFromBackup}
             </MenuItem>
           )}
-          {isDetailView && dbCluster?.status?.details && (
+          {showStatusActions && dbCluster?.status?.details && (
             <MenuItem
               key={6}
               sx={sx}

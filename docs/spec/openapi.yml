@@ -700,6 +700,97 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  '/namespaces/{namespace}/database-clusters/{dbName}/data-import-jobs':
+    x-everest-resource-name: data-import-jobs
+    get:
+      tags:
+      - Database Cluster
+      summary: List data import jobs for a database cluster
+      description: |
+        This API lists all data import jobs for the database cluster specified by the `name` and `namespace`.
+      operationId: listDataImportJobs
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: dbName
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataImportJobList'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  '/namespaces/{namespace}/database-clusters/{dbName}/secret':
+    post:
+      tags:
+        - Database Cluster
+      summary: Create a secret for the given database cluster
+      description: |
+        This API creates a secret for the database cluster specified by the `name` and `namespace`
+      operationId: createDatabaseClusterSecret
+      parameters:
+        - name: dbName
+          in: path
+          description: Name of the database cluster
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: secretName
+          in: query
+          description: Optional name of the secret to be created. If not provided, a random name will be generated.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Secret'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The Secret object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Secret'
+      
   '/namespaces/{namespace}/database-engines':
     x-everest-resource-name: database-engines
     get:
@@ -1858,7 +1949,213 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
+  '/data-importers':
+    x-everest-resource-name: data-importers
+    get:
+      tags:
+        - Data Importer
+      summary: List data importers
+      description: |
+        This API lists all data importers in the kubernetes cluster.
+      operationId: listDataImporters
+      parameters:
+      - in: query
+        name: supportedEngines
+        description: Filter data importers by supported database engine type. Accepts a comma-separated list.
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataImporterList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/load-balancer-configs':
+    x-everest-resource-name: load-balancer-configs
+    post:
+      tags:
+        - Load Balancer Config
+      summary: Create load balancer config
+      description: |
+        This API creates a new load balancer config.
+      operationId: createLoadBalancerConfig
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadBalancerConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The load balancer config object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadBalancerConfig'
+    get:
+      tags:
+        - Load Balancer Config
+      summary: List load balancer configs
+      description: |
+        This API lists all load balancer configs in the kubernetes cluster.
+      operationId: listLoadBalancerConfig
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadBalancerConfigList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/load-balancer-configs/{config-name}':
+    x-everest-resource-name: load-balancer-configs
+    get:
+      tags:
+        - Load Balancer Config
+      summary: Get load balancer config
+      description: |
+        This API gets the load balancer config specified by the `name`.
+      operationId: getLoadBalancerConfig
+      parameters:
+        - name: config-name
+          in: path
+          description: Name of the load balancer config. Can be found under Metadata["name"] of the LoadBalancerConfig object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadBalancerConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Load Balancer Config
+      summary: Update load balancer config
+      description: |
+        This API updates a load balancer config specified by the `name`.
+      operationId: updateLoadBalancerConfig
+      parameters:
+        - name: config-name
+          in: path
+          description: Name of the load balancer config. Can be found under Metadata["name"] of the LoadBalancerConfig object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadBalancerConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The load balancer config object to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadBalancerConfig'
+    delete:
+      tags:
+        - Load Balancer Config
+      summary: Delete load balancer config
+      description: |
+        This API deletes the load balancer config specified by the `name`.
+      operationId: deleteLoadBalancerConfig
+      parameters:
+        - name: config-name
+          in: path
+          description: Name of the load balancer config. Can be found under Metadata["name"] of the LoadBalancerConfig object.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status_v2'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     BearerAuth:
@@ -2488,6 +2785,29 @@ components:
         metadata:
           type: object
       type: object
+    LoadBalancerConfigList:
+      description: LoadBalancerConfigList is an object that contains the list of the existing load balancer configs.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoadBalancerConfig'
+        metadata:
+          type: object
+      type: object
     SizeLimit:
       anyOf:
         - $ref: '#/components/schemas/Integer'
@@ -2508,14 +2828,19 @@ components:
       description: DatabaseEngine is the Schema for the databaseengines API.
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
           type: string
         metadata:
           type: object
@@ -2526,10 +2851,33 @@ components:
               items:
                 type: string
               type: array
+            secretKeys:
+              description: |-
+                SecretKeys contains the definition of the various Secrets that
+                the given DBEngine supports.
+                This information acts like metadata for the Everest UI to guide the users
+                in filling out the correct Secret keys for their clusters.
+              properties:
+                user:
+                  description: User secret keys are used to store the details of
+                    the users.
+                  items:
+                    description: SecretKey defines a single Secret key.
+                    properties:
+                      description:
+                        description: Description is a human-readable description
+                          of the Secret key.
+                        type: string
+                      name:
+                        description: Name is the name of the Secret key.
+                        type: string
+                    type: object
+                  type: array
+              type: object
             type:
-              description: EngineType stands for the supported database engines.
-                Right now it's only pxc and psmdb. However, it can be ps, pg and
-                any other source.
+              description: |-
+                EngineType stands for the supported database engines. Right now it's only pxc
+                and psmdb. However, it can be ps, pg and any other source.
               type: string
           required:
           - type
@@ -2543,9 +2891,9 @@ components:
               properties:
                 backup:
                   additionalProperties:
-                    description: Component contains information of the database
-                      engine component. Database Engine component can be database
-                      engine, database proxy or tools image path.
+                    description: |-
+                      Component contains information of the database engine component.
+                      Database Engine component can be database engine, database proxy or tools image path.
                     properties:
                       critical:
                         type: boolean
@@ -2554,14 +2902,17 @@ components:
                       imagePath:
                         type: string
                       status:
+                        description: ComponentStatus represents status of the database
+                          engine component.
                         type: string
                     type: object
+                  description: ComponentsMap is a map of database engine components.
                   type: object
                 engine:
                   additionalProperties:
-                    description: Component contains information of the database
-                      engine component. Database Engine component can be database
-                      engine, database proxy or tools image path.
+                    description: |-
+                      Component contains information of the database engine component.
+                      Database Engine component can be database engine, database proxy or tools image path.
                     properties:
                       critical:
                         type: boolean
@@ -2570,15 +2921,18 @@ components:
                       imagePath:
                         type: string
                       status:
+                        description: ComponentStatus represents status of the database
+                          engine component.
                         type: string
                     type: object
+                  description: ComponentsMap is a map of database engine components.
                   type: object
                 proxy:
                   additionalProperties:
                     additionalProperties:
-                      description: Component contains information of the database
-                        engine component. Database Engine component can be database
-                        engine, database proxy or tools image path.
+                      description: |-
+                        Component contains information of the database engine component.
+                        Database Engine component can be database engine, database proxy or tools image path.
                       properties:
                         critical:
                           type: boolean
@@ -2587,16 +2941,19 @@ components:
                         imagePath:
                           type: string
                         status:
+                          description: ComponentStatus represents status of the
+                            database engine component.
                           type: string
                       type: object
+                    description: ComponentsMap is a map of database engine components.
                     type: object
                   type: object
                 tools:
                   additionalProperties:
                     additionalProperties:
-                      description: Component contains information of the database
-                        engine component. Database Engine component can be database
-                        engine, database proxy or tools image path.
+                      description: |-
+                        Component contains information of the database engine component.
+                        Database Engine component can be database engine, database proxy or tools image path.
                       properties:
                         critical:
                           type: boolean
@@ -2605,25 +2962,36 @@ components:
                         imagePath:
                           type: string
                         status:
+                          description: ComponentStatus represents status of the
+                            database engine component.
                           type: string
                       type: object
+                    description: ComponentsMap is a map of database engine components.
                     type: object
                   type: object
               type: object
             operatorUpgrade:
-              description: |-
-                OperatorUpgrade contains the status of the operator upgrade.
-                This is set only if the `everest.percona.com/upgrade-operator-to` annotation is present.
+              description: OperatorUpgrade contains the status of the operator upgrade.
               properties:
                 installPlanRef:
-                  description: InstallPlanRef is a reference to the InstallPlan
-                    object created for the operator upgrade.
+                  description: |-
+                    InstallPlanRef is a reference to the InstallPlan object created for the operator upgrade.
+
+                    We do not recommended approving this InstallPlan directly from the Kubernetes API.
+                    This is because this InstallPlan may also upgrade other operators in the namespace and that
+                    can have unintended consequences.
+                    This behaviour is not a bug from Everest, but an unfortunate limitation of OLM.
+                    We suggest using the Everest API/UI to handle operator upgrades, which will perform a series
+                    of checks and safely upgrade all operators in the namespace.
                   properties:
                     name:
+                      default: ""
                       description: |-
                         Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Add other useful fields. apiVersion, kind, uid?
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -2649,14 +3017,24 @@ components:
                   operator upgrade.
                 properties:
                   installPlanRef:
-                    description: InstallPlanRef is a reference to the InstallPlan
-                      object created for the operator upgrade.
+                    description: |-
+                      InstallPlanRef is a reference to the InstallPlan object created for the operator upgrade.
+
+                      We do not recommended approving this InstallPlan directly from the Kubernetes API.
+                      This is because this InstallPlan may also upgrade other operators in the namespace and that
+                      can have unintended consequences.
+                      This behaviour is not a bug from Everest, but an unfortunate limitation of OLM.
+                      We suggest using the Everest API/UI to handle operator upgrades, which will perform a series
+                      of checks and safely upgrade all operators in the namespace.
                     properties:
                       name:
+                        default: ""
                         description: |-
                           Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?
                         type: string
                     type: object
                     x-kubernetes-map-type: atomic
@@ -2671,7 +3049,6 @@ components:
               type: string
           type: object
       type: object
-
 
     # -------------------------
     # DatabaseCluster spec is imported from the everest operator,
@@ -2730,7 +3107,7 @@ components:
                         binlogs uploads
                       type: integer
                   required:
-                    - enabled
+                  - enabled
                   type: object
                 schedules:
                   description: Schedules is a list of backup schedules
@@ -2758,10 +3135,10 @@ components:
                         description: Schedule is the cron schedule
                         type: string
                     required:
-                      - backupStorageName
-                      - enabled
-                      - name
-                      - schedule
+                    - backupStorageName
+                    - enabled
+                    - name
+                    - schedule
                     type: object
                   type: array
               type: object
@@ -2781,9 +3158,90 @@ components:
                       description: Path is the path to the backup file/directory.
                       type: string
                   required:
-                    - backupStorageName
-                    - path
+                  - backupStorageName
+                  - path
                   type: object
+                dataImport:
+                  description: DataImport allows importing data from an external
+                    backup source.
+                  properties:
+                    config:
+                      description: |-
+                        Config defines the configuration for the data import job.
+                        These options are specific to the DataImporter being used and must conform to
+                        the schema defined in the DataImporter's .spec.config.openAPIV3Schema.
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    dataImporterName:
+                      description: DataImporterName is the data importer to use
+                        for the import.
+                      type: string
+                    source:
+                      description: Source is the source of the data to import.
+                      properties:
+                        path:
+                          description: |-
+                            Path is the path to the directory to import the data from.
+                            This may be a path to a file or a directory, depending on the data importer.
+                          type: string
+                        s3:
+                          description: S3 contains the S3 information for the data
+                            import.
+                          properties:
+                            accessKeyId:
+                              description: |-
+                                AccessKeyID allows specifying the S3 access key ID inline.
+                                It is provided as a write-only input field for convenience.
+                                When this field is set, a webhook writes this value in the Secret specified by `credentialsSecretName`
+                                and empties this field.
+                                This field is not stored in the API.
+                              type: string
+                            bucket:
+                              description: Bucket is the name of the S3 bucket.
+                              type: string
+                            credentialsSecretName:
+                              description: |-
+                                CredentialsSecreName is the reference to the secret containing the S3 credentials.
+                                The Secret must contain the keys `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+                              type: string
+                            endpointURL:
+                              description: EndpointURL is an endpoint URL of backup
+                                storage.
+                              type: string
+                            forcePathStyle:
+                              default: false
+                              description: |-
+                                ForcePathStyle is set to use path-style URLs.
+                                If unspecified, the default value is false.
+                              type: boolean
+                            region:
+                              description: Region is the region of the S3 bucket.
+                              type: string
+                            secretAccessKey:
+                              description: |-
+                                SecretAccessKey allows specifying the S3 secret access key inline.
+                                It is provided as a write-only input field for convenience.
+                                When this field is set, a webhook writes this value in the Secret specified by `credentialsSecretName`
+                                and empties this field.
+                                This field is not stored in the API.
+                              type: string
+                            verifyTLS:
+                              default: true
+                              description: |-
+                                VerifyTLS is set to ensure TLS/SSL verification.
+                                If unspecified, the default value is true.
+                              type: boolean
+                          required:
+                          - credentialsSecretName
+                          type: object
+                      type: object
+                  required:
+                  - dataImporterName
+                  - source
+                  type: object
+                  x-kubernetes-validations:
+                  - message: .spec.dataSource.dataImport is immutable
+                    rule: self == oldSelf
                 dbClusterBackupName:
                   description: DBClusterBackupName is the name of the DB cluster
                     backup to restore from
@@ -2799,8 +3257,8 @@ components:
                       default: date
                       description: Type is the type of recovery.
                       enum:
-                        - date
-                        - latest
+                      - date
+                      - latest
                       type: string
                   type: object
               type: object
@@ -2830,15 +3288,15 @@ components:
                   properties:
                     cpu:
                       anyOf:
-                        - type: integer
-                        - type: string
+                      - type: integer
+                      - type: string
                       description: CPU is the CPU resource requirements
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                     memory:
                       anyOf:
-                        - type: integer
-                        - type: string
+                      - type: integer
+                      - type: string
                       description: Memory is the memory resource requirements
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
@@ -2852,20 +3310,20 @@ components:
                       type: string
                     size:
                       anyOf:
-                        - type: integer
-                        - type: string
+                      - type: integer
+                      - type: string
                       description: Size is the size of the persistent volume claim
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                   required:
-                    - size
+                  - size
                   type: object
                 type:
                   description: Type is the engine type
                   enum:
-                    - pxc
-                    - postgresql
-                    - psmdb
+                  - pxc
+                  - postgresql
+                  - psmdb
                   type: string
                 userSecretsName:
                   description: UserSecretsName is the name of the secret containing
@@ -2875,8 +3333,8 @@ components:
                   description: Version is the engine version
                   type: string
               required:
-                - storage
-                - type
+              - storage
+              - type
               type: object
             monitoring:
               description: Monitoring is the monitoring configuration
@@ -2914,17 +3372,17 @@ components:
                               only the result of this request.
                             type: string
                         required:
-                          - name
+                        - name
                         type: object
                       type: array
                       x-kubernetes-list-map-keys:
-                        - name
+                      - name
                       x-kubernetes-list-type: map
                     limits:
                       additionalProperties:
                         anyOf:
-                          - type: integer
-                          - type: string
+                        - type: integer
+                        - type: string
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                       description: |-
@@ -2934,8 +3392,8 @@ components:
                     requests:
                       additionalProperties:
                         anyOf:
-                          - type: integer
-                          - type: string
+                        - type: integer
+                        - type: string
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                       description: |-
@@ -2976,12 +3434,16 @@ components:
                           notation or without a netmask.
                         type: string
                       type: array
+                    loadBalancerConfigName:
+                      description: LoadBalancerConfigName is the name of load balancer
+                        config if applied
+                      type: string
                     type:
                       default: internal
                       description: Type is the expose type, can be internal or external
                       enum:
-                        - internal
-                        - external
+                      - internal
+                      - external
                       type: string
                   type: object
                 replicas:
@@ -2996,15 +3458,15 @@ components:
                   properties:
                     cpu:
                       anyOf:
-                        - type: integer
-                        - type: string
+                      - type: integer
+                      - type: string
                       description: CPU is the CPU resource requirements
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                     memory:
                       anyOf:
-                        - type: integer
-                        - type: string
+                      - type: integer
+                      - type: string
                       description: Memory is the memory resource requirements
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
@@ -3012,10 +3474,10 @@ components:
                 type:
                   description: Type is the proxy type
                   enum:
-                    - mongos
-                    - haproxy
-                    - proxysql
-                    - pgbouncer
+                  - mongos
+                  - haproxy
+                  - proxysql
+                  - pgbouncer
                   type: string
               type: object
             sharding:
@@ -3031,7 +3493,7 @@ components:
                       minimum: 1
                       type: integer
                   required:
-                    - replicas
+                  - replicas
                   type: object
                 enabled:
                   description: Enabled defines if the sharding is enabled
@@ -3042,12 +3504,12 @@ components:
                   minimum: 1
                   type: integer
               required:
-                - configServer
-                - enabled
-                - shards
+              - configServer
+              - enabled
+              - shards
               type: object
           required:
-            - engine
+          - engine
           type: object
         status:
           description: DatabaseClusterStatus defines the observed state of DatabaseCluster.
@@ -3095,9 +3557,9 @@ components:
                   status:
                     description: status of the condition, one of True, False, Unknown.
                     enum:
-                      - "True"
-                      - "False"
-                      - Unknown
+                    - "True"
+                    - "False"
+                    - Unknown
                     type: string
                   type:
                     description: type of condition in CamelCase or in foo.example.com/CamelCase.
@@ -3105,16 +3567,21 @@ components:
                     pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                     type: string
                 required:
-                  - lastTransitionTime
-                  - message
-                  - reason
-                  - status
-                  - type
+                - lastTransitionTime
+                - message
+                - reason
+                - status
+                - type
                 type: object
               type: array
             crVersion:
               description: CRVersion is the observed version of the CR used with
                 the underlying operator.
+              type: string
+            dataImportJobName:
+              description: |-
+                DataImportJobName refers to the DataImportJob that is used to import data into the cluster.
+                This is set only when .spec.dataSource.dataImport is set.
               type: string
             details:
               description: Details provides full status of the upstream cluster
@@ -3154,6 +3621,7 @@ components:
               type: string
           type: object
       type: object
+
     # -------------------------
     # DatabaseClusterBackup spec is imported from the everest operator,
     # please do not edit the definition below manually
@@ -3280,6 +3748,372 @@ components:
             state:
               description: RestoreState represents state of restoration.
               type: string
+          type: object
+      type: object
+    
+    DataImportJob:
+      description: DataImportJob is the schema for the dataimportjobs API.
+      properties:
+        apiVersion:
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+          type: string
+        kind:
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            config:
+              description: |-
+                Config defines the configuration for the data import job.
+                These options are specific to the DataImporter being used and must conform to
+                the schema defined in the DataImporter's .spec.config.openAPIV3Schema.
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            dataImporterName:
+              description: DataImporterName is the data importer to use for the
+                import.
+              type: string
+            source:
+              description: Source is the source of the data to import.
+              properties:
+                path:
+                  description: |-
+                    Path is the path to the directory to import the data from.
+                    This may be a path to a file or a directory, depending on the data importer.
+                  type: string
+                s3:
+                  description: S3 contains the S3 information for the data import.
+                  properties:
+                    accessKeyId:
+                      description: |-
+                        AccessKeyID allows specifying the S3 access key ID inline.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `credentialsSecretName`
+                        and empties this field.
+                        This field is not stored in the API.
+                      type: string
+                    bucket:
+                      description: Bucket is the name of the S3 bucket.
+                      type: string
+                    credentialsSecretName:
+                      description: |-
+                        CredentialsSecreName is the reference to the secret containing the S3 credentials.
+                        The Secret must contain the keys `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+                      type: string
+                    endpointURL:
+                      description: EndpointURL is an endpoint URL of backup storage.
+                      type: string
+                    forcePathStyle:
+                      default: false
+                      description: |-
+                        ForcePathStyle is set to use path-style URLs.
+                        If unspecified, the default value is false.
+                      type: boolean
+                    region:
+                      description: Region is the region of the S3 bucket.
+                      type: string
+                    secretAccessKey:
+                      description: |-
+                        SecretAccessKey allows specifying the S3 secret access key inline.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `credentialsSecretName`
+                        and empties this field.
+                        This field is not stored in the API.
+                      type: string
+                    verifyTLS:
+                      default: true
+                      description: |-
+                        VerifyTLS is set to ensure TLS/SSL verification.
+                        If unspecified, the default value is true.
+                      type: boolean
+                  required:
+                  - credentialsSecretName
+                  type: object
+              type: object
+            targetClusterName:
+              description: TargetClusterName is the reference to the target cluster.
+              type: string
+          required:
+          - dataImporterName
+          - source
+          - targetClusterName
+          type: object
+        status:
+          properties:
+            completedAt:
+              description: CompletedAt is the time when the data import job completed
+                successfully.
+              format: date-time
+              type: string
+            jobName:
+              description: JobName is the reference to the job that is running the
+                data import.
+              type: string
+            lastObservedGeneration:
+              description: LastObservedGeneration is the last observed generation
+                of the data import job.
+              format: int64
+              type: integer
+            message:
+              description: Message is the message of the data import job.
+              type: string
+            startedAt:
+              description: StartedAt is the time when the data import job started.
+              format: date-time
+              type: string
+            state:
+              description: State is the current state of the data import job.
+              type: string
+          type: object
+      type: object
+    
+    # -------------------------
+    # DataImporter spec is imported from the everest operator,
+    # please do not edit the definition below manually
+    # -------------------------
+    DataImporter:
+      description: DataImporter defines a reusable strategy for importing data into
+        a DatabaseCluster.
+      properties:
+        apiVersion:
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+          type: string
+        kind:
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DataImporterSpec defines the specification of a DataImporter.
+          properties:
+            clusterPermissions:
+              description: |-
+                ClusterPermissions defines the cluster-wide permissions required by the data importer.
+                These permissions are used to generate a ClusterRole for the data importer job.
+              items:
+                description: |-
+                  PolicyRule holds information that describes a policy rule, but does not contain information
+                  about who the rule applies to or which namespace the rule applies to.
+                properties:
+                  apiGroups:
+                    description: |-
+                      APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of
+                      the enumerated resources in any API group will be allowed. "" represents the core API group and "*" represents all API groups.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  nonResourceURLs:
+                    description: |-
+                      NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path
+                      Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding.
+                      Rules can either apply to API resources (such as "pods" or "secrets") or non-resource URL paths (such as "/api"),  but not both.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  resourceNames:
+                    description: ResourceNames is an optional white list of names
+                      that the rule applies to.  An empty set means that everything
+                      is allowed.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  resources:
+                    description: Resources is a list of resources this rule applies
+                      to. '*' represents all resources.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  verbs:
+                    description: Verbs is a list of Verbs that apply to ALL the
+                      ResourceKinds contained in this rule. '*' represents all verbs.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                required:
+                - verbs
+                type: object
+              type: array
+            config:
+              description: Config contains additional configuration defined for
+                the data importer.
+              properties:
+                openAPIV3Schema:
+                  description: OpenAPIV3Schema is the OpenAPI v3 schema of the data
+                    importer.
+                  x-kubernetes-preserve-unknown-fields: true
+              type: object
+            databaseClusterConstraints:
+              description: |-
+                DatabaseClusterConstraints defines compatibility requirements and prerequisites that must be satisfied
+                by a DatabaseCluster before this data importer can be used with it. This allows the data importer to
+                express specific requirements about the database configuration needed for successful import operations,
+                such as required database fields, specific engine configurations, or other database properties.
+                When a DatabaseCluster references this data importer, the operator will validate the DatabaseCluster
+                against these constraints before proceeding with the import operation.
+              properties:
+                requiredFields:
+                  description: |-
+                    RequiredFields contains a list of fields that must be set in the DatabaseCluster spec.
+                    Each key is a JSON path expressions that points to a field in the DatabaseCluster spec.
+                    For example, ".spec.engine.type" or ".spec.dataSource.dataImport.config.someField".
+                  items:
+                    type: string
+                  type: array
+              type: object
+            description:
+              description: Description is the description of the data importer.
+              type: string
+            displayName:
+              description: DisplayName is a human-readable name for the data importer.
+              type: string
+            jobSpec:
+              description: JobSpec is the specification of the data importer job.
+              properties:
+                command:
+                  description: Command is the command to run the data importer.
+                  items:
+                    type: string
+                  type: array
+                image:
+                  description: Image is the image of the data importer.
+                  type: string
+              type: object
+            permissions:
+              description: |-
+                Permissions defines the permissions required by the data importer.
+                These permissions are used to generate a Role for the data importer job.
+              items:
+                description: |-
+                  PolicyRule holds information that describes a policy rule, but does not contain information
+                  about who the rule applies to or which namespace the rule applies to.
+                properties:
+                  apiGroups:
+                    description: |-
+                      APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of
+                      the enumerated resources in any API group will be allowed. "" represents the core API group and "*" represents all API groups.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  nonResourceURLs:
+                    description: |-
+                      NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path
+                      Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding.
+                      Rules can either apply to API resources (such as "pods" or "secrets") or non-resource URL paths (such as "/api"),  but not both.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  resourceNames:
+                    description: ResourceNames is an optional white list of names
+                      that the rule applies to.  An empty set means that everything
+                      is allowed.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  resources:
+                    description: Resources is a list of resources this rule applies
+                      to. '*' represents all resources.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  verbs:
+                    description: Verbs is a list of Verbs that apply to ALL the
+                      ResourceKinds contained in this rule. '*' represents all verbs.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                required:
+                - verbs
+                type: object
+              type: array
+            supportedEngines:
+              description: SupportedEngines is the list of engines that the data
+                importer supports.
+              items:
+                description: |-
+                  EngineType stands for the supported database engines. Right now it's only pxc
+                  and psmdb. However, it can be ps, pg and any other source.
+                type: string
+              type: array
+          type: object
+        status:
+          type: object
+      type: object
+      
+    DataImportJobList:
+      description: DataImportJobList is an object that contains the list of the existing data import jobs.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataImportJob'
+        metadata:
+          type: object
+      type: object
+
+    DataImporterList:
+      description: DataImporterList is an object that contains the list of the existing data importers.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataImporter'
+        metadata:
           type: object
       type: object
 
@@ -9834,7 +10668,60 @@ components:
               type: integer
           type: object
       type: object
+    # -------------------------
 
+    # -------------------------
+    # LoadBalancerConfig spec is imported from the everest operator,
+    # please do not edit the definition below manually
+    # -------------------------
+    LoadBalancerConfig:
+      description: LoadBalancerConfig is the Schema for the Load Balancer Config
+        API.
+      properties:
+        apiVersion:
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+          type: string
+        kind:
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: LoadBalancerConfigSpec defines the desired state of LoadBalancerConfig.
+          properties:
+            annotations:
+              additionalProperties:
+                type: string
+              description: Annotations key-value pairs to apply as annotations to
+                the load balancer
+              type: object
+          type: object
+        status:
+          default:
+            inUse: false
+          description: LoadBalancerConfigStatus defines the observed state of LoadBalancerConfig.
+          properties:
+            inUse:
+              default: false
+              description: InUse is a flag that indicates if the config is used
+                by any DB cluster.
+              type: boolean
+            lastObservedGeneration:
+              description: LastObservedGeneration is the most recent generation
+                observed for this LoadBalancerConfig.
+              format: int64
+              type: integer
+          type: object
+      type: object
     # -------------------------
     # StorageClass is imported from the k8s API,
     # but some fields are omitted that are not relevant to Everest.
@@ -9898,6 +10785,37 @@ components:
         status:
           description: 'Status of the operation. One of: "Success" or "Failure". More
             info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status'
+          type: string
+  
+    Secret:
+      description: Secret holds secret data of a certain type. The total bytes of the values in the Data field must be less than MaxSecretSize bytes.
+      type: object
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        data:
+          description: Data contains the secret data. Each key must consist of alphanumeric characters, '-', '_' or '.'. The serialized form of the secret data is a base64 encoded string, representing the arbitrary (possibly non-string) data value here. Described in https://tools.ietf.org/html/rfc4648#section-4
+          type: object
+          additionalProperties:
+            type: string
+            format: byte
+        immutable:
+          description: Immutable, if set to true, ensures that data stored in the Secret cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.
+          type: boolean
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+          type: object
+        stringData:
+          description: stringData allows specifying non-binary secret data in string form. It is provided as a write-only input field for convenience. All keys and values are merged into the data field on write, overwriting any existing values. The stringData field is never output when reading from the API.
+          type: object
+          additionalProperties:
+            type: string
+        type:
+          description: 'Used to facilitate programmatic handling of secret data. More info: https://kubernetes.io/docs/concepts/configuration/secret/#secret-types'
           type: string
 
     # -------------------------

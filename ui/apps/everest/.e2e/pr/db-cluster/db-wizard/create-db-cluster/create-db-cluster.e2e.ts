@@ -22,7 +22,10 @@ import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { advancedConfigurationStepCheck } from './steps/advanced-configuration-step';
 import { backupsStepCheck } from './steps/backups-step';
-import { basicInformationStepCheck } from './steps/basic-information-step';
+import {
+  basicInformationStepCheck,
+  DEFAULT_CLUSTER_VERSION,
+} from './steps/basic-information-step';
 import { resourcesStepCheck } from './steps/resources-step';
 import {
   goToLastAndSubmit,
@@ -160,7 +163,9 @@ test.describe('DB Cluster creation', () => {
     // Test the mechanism for default number of nodes
     await page.getByTestId('button-edit-preview-basic-information').click();
     // Here we test that version wasn't reset to default
-    await expect(page.getByText('Version: 6.0.9-7')).toBeVisible();
+    await expect(
+      page.getByText(`Version: ${DEFAULT_CLUSTER_VERSION}`)
+    ).toBeVisible();
 
     // Make sure name doesn't change when we go back to first step
     expect(await page.getByTestId('text-input-db-name').inputValue()).toBe(
@@ -250,7 +255,7 @@ test.describe('DB Cluster creation', () => {
 
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).toBeDisabled();
-    await addFirstScheduleInDBWizard(page);
+    await addFirstScheduleInDBWizard(page, 'testFirst');
     await expect(enabledPitrCheckbox).not.toBeChecked();
     await expect(enabledPitrCheckbox).not.toBeDisabled();
     await enabledPitrCheckbox.setChecked(true);
@@ -365,10 +370,10 @@ test.describe('DB Cluster creation', () => {
     // Backups step
     await moveForward(page);
 
-    await addFirstScheduleInDBWizard(page);
+    await addFirstScheduleInDBWizard(page, 'testFirst');
     await openCreateScheduleDialogFromDBWizard(page);
     await expect(page.getByTestId('same-schedule-warning')).not.toBeVisible();
-    await fillScheduleModalForm(page, undefined, undefined, false, '1');
+    await fillScheduleModalForm(page, undefined, '1', undefined, undefined);
     await expect(page.getByTestId('same-schedule-warning')).toBeVisible();
   });
 
@@ -378,7 +383,7 @@ test.describe('DB Cluster creation', () => {
     await selectDbEngine(page, 'psmdb');
     await moveForward(page);
     await moveForward(page);
-    await addFirstScheduleInDBWizard(page);
+    await addFirstScheduleInDBWizard(page, 'testFirst');
     await page
       .getByTestId('switch-input-pitr-enabled-label')
       .getByRole('checkbox')

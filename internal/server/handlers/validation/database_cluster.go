@@ -9,15 +9,16 @@ import (
 
 	goversion "github.com/hashicorp/go-version"
 	"golang.org/x/mod/semver"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	operatorUtils "github.com/percona/everest-operator/utils"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/utils"
 )
 
 const (
@@ -184,7 +185,7 @@ func validateSharding(dbc *everestv1alpha1.DatabaseCluster) error {
 }
 
 func validateCreateDatabaseClusterRequest(dbc *everestv1alpha1.DatabaseCluster) error {
-	return utils.ValidateEverestResourceName(dbc.GetName(), "metadata.name")
+	return operatorUtils.ValidateEverestResourceName(dbc.GetName(), "metadata.name")
 }
 
 func validateEngine(databaseCluster *everestv1alpha1.DatabaseCluster, engine *everestv1alpha1.DatabaseEngine) error {
@@ -247,6 +248,14 @@ func validateProxy(databaseCluster *everestv1alpha1.DatabaseCluster) error {
 			databaseCluster.Spec.Proxy.Replicas != nil && *databaseCluster.Spec.Proxy.Replicas < minPXCProxyReplicas {
 			return errMinPXCProxyReplicas
 		}
+	}
+
+	rangesMap := make(map[everestv1alpha1.IPSourceRange]struct{})
+	for _, sourceRange := range databaseCluster.Spec.Proxy.Expose.IPSourceRanges {
+		if _, ok := rangesMap[sourceRange]; ok {
+			return ErrDuplicateSourceRange(sourceRange)
+		}
+		rangesMap[sourceRange] = struct{}{}
 	}
 
 	return nil
@@ -367,8 +376,22 @@ func validateDataSource(dataSource *everestv1alpha1.DataSource) error {
 	if dataSource == nil {
 		return nil
 	}
-	if (dataSource.DBClusterBackupName == "" && dataSource.BackupSource == nil) ||
-		(dataSource.DBClusterBackupName != "" && dataSource.BackupSource != nil) {
+
+	ensureOneDataSourceSpecified := func() bool {
+		sources := 0
+		if dataSource.DBClusterBackupName != "" {
+			sources++
+		}
+		if dataSource.BackupSource != nil {
+			sources++
+		}
+		if dataSource.DataImport != nil {
+			sources++
+		}
+
+		return sources == 1
+	}
+	if !ensureOneDataSourceSpecified() {
 		return errDataSourceConfig
 	}
 
@@ -729,4 +752,9 @@ func (h *validateHandler) validatePodSchedulingPolicy(ctx context.Context, db *e
 		}
 	}
 	return nil
+}
+
+func (h *validateHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret,
+) (*corev1.Secret, error) {
+	return h.next.CreateDatabaseClusterSecret(ctx, namespace, dbName, secret)
 }

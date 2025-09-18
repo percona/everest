@@ -27,6 +27,7 @@ export const OverviewSectionRow = ({
     container
     data-testid={`${dataTestId ?? kebabize(label)}-overview-section-row`}
     position="relative"
+    alignItems="center"
   >
     <Grid item xs={6} minWidth="90px" {...labelProps}>
       <Typography variant="body2" sx={{ fontWeight: '700' }}>

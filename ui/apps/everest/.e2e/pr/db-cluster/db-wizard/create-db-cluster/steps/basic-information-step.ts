@@ -15,6 +15,8 @@
 
 import { Page, expect } from '@playwright/test';
 
+export const DEFAULT_CLUSTER_VERSION = '6.0.9-7';
+
 export const basicInformationStepCheck = async (
   page: Page,
   engineVersions,
@@ -39,7 +41,10 @@ export const basicInformationStepCheck = async (
     recommendedEngineVersions.psmdb
   );
 
-  await page.getByRole('option').filter({ hasText: '6.0.9-7' }).click();
+  await page
+    .getByRole('option')
+    .filter({ hasText: DEFAULT_CLUSTER_VERSION })
+    .click();
   await page.getByTestId('text-input-db-name').fill(clusterName);
   expect(
     await page.getByTestId('switch-input-sharding').getByRole('checkbox')

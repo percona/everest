@@ -21,7 +21,7 @@ export const findRowAndClickActions = async (
 export const waitForInitializingState = async (page: Page, name: string) => {
   const dbRow = page.getByRole('row').filter({ hasText: name });
   await expect(dbRow).toBeVisible();
-  await expect(dbRow.getByText('Creating')).not.toBeVisible({ timeout: 15000 });
+  await expect(dbRow.getByText('Creating')).not.toBeVisible({ timeout: 45000 });
 };
 
 /**
@@ -38,7 +38,7 @@ export const waitForStatus = async (
   timeout: number
 ) => {
   const dbRow = page.getByRole('row').filter({ hasText: name });
-  await expect(dbRow).toBeVisible({ timeout: 10000 });
+  await expect(dbRow).toBeVisible({ timeout: 15000 });
   await expect(dbRow.getByText(status, { exact: true })).toBeVisible({
     timeout: timeout,
   });
@@ -55,6 +55,7 @@ export const waitForDelete = async (
   name: string,
   timeout: number
 ) => {
+  await page.reload({ waitUntil: 'networkidle' });
   await expect(page.getByRole('row').getByText(name)).toHaveCount(0, {
     timeout: timeout,
   });

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -19,17 +20,32 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	"github.com/percona/everest-operator/utils"
+	operatorUtils "github.com/percona/everest-operator/utils"
 	"github.com/percona/everest/api"
 	"github.com/percona/everest/cmd/config"
-	"github.com/percona/everest/pkg/utils"
 )
 
 const (
 	timeoutS3AccessSec = 2
+)
+
+var (
+	errDuplicatedBackupStorage = func(namespace string) error {
+		return fmt.Errorf("backup storage with the same url, bucket and region already exists in namespace='%s'", namespace)
+	}
+	// Used backup storage errors
+	errEditInUseBackupStorage = func(namespace, name string) error {
+		return fmt.Errorf("backup storage='%s' in namespace='%s' is used and cannot be updated", name, namespace)
+	}
+	errDeleteInUseBackupStorage = func(namespace, name string) error {
+		return fmt.Errorf("backup storage='%s' in namespace='%s' is used and cannot be deleted", name, namespace)
+	}
 )
 
 func (h *validateHandler) ListBackupStorages(ctx context.Context, namespace string) (*everestv1alpha1.BackupStorageList, error) {
@@ -41,11 +57,11 @@ func (h *validateHandler) GetBackupStorage(ctx context.Context, namespace, name 
 }
 
 func (h *validateHandler) CreateBackupStorage(ctx context.Context, namespace string, req *api.CreateBackupStorageParams) (*everestv1alpha1.BackupStorage, error) {
-	existing, err := h.kubeConnector.ListBackupStorages(ctx, ctrlclient.InNamespace(namespace))
+	bsList, err := h.kubeConnector.ListBackupStorages(ctx, ctrlclient.InNamespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to ListBackupStorages: %w", err)
 	}
-	if err := validateCreateBackupStorageRequest(ctx, h.log, req, existing); err != nil {
+	if err := validateCreateBackupStorageRequest(ctx, h.log, req, bsList); err != nil {
 		return nil, errors.Join(ErrInvalidRequest, err)
 	}
 	return h.next.CreateBackupStorage(ctx, namespace, req)
@@ -67,6 +83,16 @@ func (h *validateHandler) UpdateBackupStorage(ctx context.Context, namespace, na
 }
 
 func (h *validateHandler) DeleteBackupStorage(ctx context.Context, namespace, name string) error {
+	var bs *metav1.PartialObjectMetadata
+	var err error
+	if bs, err = h.kubeConnector.GetBackupStorageMeta(ctx, types.NamespacedName{Namespace: namespace, Name: name}); err != nil {
+		return err
+	}
+
+	if operatorUtils.IsEverestObjectInUse(bs) {
+		// backup storage is used by some DB cluster
+		return errors.Join(ErrInvalidRequest, errDeleteInUseBackupStorage(namespace, name))
+	}
 	return h.next.DeleteBackupStorage(ctx, namespace, name)
 }
 
@@ -76,12 +102,13 @@ func validateCreateBackupStorageRequest(
 	params *api.CreateBackupStorageParams,
 	existingStorages *everestv1alpha1.BackupStorageList,
 ) error {
-	for _, storage := range existingStorages.Items {
-		if storage.Spec.Region == params.Region &&
+	if slices.ContainsFunc(existingStorages.Items, func(storage everestv1alpha1.BackupStorage) bool {
+		// Check if the storage already exists with the same region, endpoint URL, and bucket name
+		return storage.Spec.Region == params.Region &&
 			storage.Spec.EndpointURL == pointer.GetString(params.Url) &&
-			storage.Spec.Bucket == params.BucketName {
-			return errDuplicatedBackupStorage
-		}
+			storage.Spec.Bucket == params.BucketName
+	}) {
+		return errDuplicatedBackupStorage(existingStorages.Items[0].GetNamespace())
 	}
 
 	if err := utils.ValidateEverestResourceName(params.Name, "name"); err != nil {
@@ -311,12 +338,8 @@ func (h *validateHandler) validateUpdateBackupStorageRequest(
 	existing *everestv1alpha1.BackupStorage,
 	secret *corev1.Secret,
 ) error {
-	used, err := h.kubeConnector.IsBackupStorageUsed(ctx, types.NamespacedName{Namespace: existing.GetNamespace(), Name: existing.GetName()})
-	if err != nil {
-		return err
-	}
-	if used && basicStorageParamsAreChanged(existing, params) {
-		return errEditBackupStorageInUse
+	if operatorUtils.IsEverestObjectInUse(existing) && basicStorageParamsAreChanged(existing, params) {
+		return errEditInUseBackupStorage(existing.GetNamespace(), existing.GetName())
 	}
 
 	existingStorages, err := h.kubeConnector.ListBackupStorages(ctx, ctrlclient.InNamespace(existing.GetNamespace()))
@@ -324,12 +347,12 @@ func (h *validateHandler) validateUpdateBackupStorageRequest(
 		return err
 	}
 	if duplicate := validateDuplicateStorageByUpdate(existing.GetName(), existing, existingStorages, params); duplicate {
-		return errDuplicatedBackupStorage
+		return errDuplicatedBackupStorage(existing.GetNamespace())
 	}
 
 	url := &existing.Spec.EndpointURL
 	if params.Url != nil {
-		if ok := utils.ValidateURL(*params.Url); !ok {
+		if ok := operatorUtils.ValidateURL(*params.Url); !ok {
 			err := ErrInvalidURL("url")
 			return err
 		}

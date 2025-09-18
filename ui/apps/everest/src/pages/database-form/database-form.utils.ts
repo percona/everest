@@ -34,6 +34,7 @@ import {
 import { isProxy } from 'utils/db.tsx';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
 import { WizardMode } from 'shared-types/wizard.types.ts';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types.ts';
 
 export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
@@ -47,10 +48,11 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   [DbWizardFormFields.dbVersion]: '',
   [DbWizardFormFields.storageClass]: '',
   [DbWizardFormFields.k8sNamespace]: null,
-  [DbWizardFormFields.externalAccess]: false,
   [DbWizardFormFields.sourceRanges]: [{ sourceRange: '' }],
   [DbWizardFormFields.podSchedulingPolicyEnabled]: false,
   [DbWizardFormFields.podSchedulingPolicy]: '',
+  [DbWizardFormFields.exposureMethod]: ExposureMethod.ClusterIP,
+  [DbWizardFormFields.loadBalancerConfigName]: '',
   [DbWizardFormFields.engineParametersEnabled]: false,
   [DbWizardFormFields.engineParameters]: '',
   [DbWizardFormFields.monitoring]: false,
@@ -73,6 +75,16 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
     getDefaultNumberOfconfigServersByNumberOfNodes(
       parseInt(DEFAULT_NODES[DbType.Mongo], 10)
     ),
+  [DbWizardFormFields.dataImporter]: '',
+  [DbWizardFormFields.bucketName]: '',
+  [DbWizardFormFields.region]: '',
+  [DbWizardFormFields.endpoint]: '',
+  [DbWizardFormFields.accessKey]: '',
+  [DbWizardFormFields.secretKey]: '',
+  [DbWizardFormFields.filePath]: '',
+  [DbWizardFormFields.verifyTlS]: true,
+  [DbWizardFormFields.forcePathStyle]: false,
+  [DbWizardFormFields.credentials]: {},
 });
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
@@ -118,10 +130,10 @@ export const DbClusterPayloadToFormValues = (
     ),
     [DbWizardFormFields.dbName]:
       mode === WizardMode.Restore
-        ? `${dbCluster?.metadata?.name}-${generateShortUID()}`.slice(
+        ? `${dbCluster?.metadata?.name.slice(
             0,
-            MAX_DB_CLUSTER_NAME_LENGTH
-          )
+            MAX_DB_CLUSTER_NAME_LENGTH - 4
+          )}-${generateShortUID()}`
         : dbCluster?.metadata?.name,
     [DbWizardFormFields.dbVersion]: dbCluster?.spec?.engine?.version || '',
 

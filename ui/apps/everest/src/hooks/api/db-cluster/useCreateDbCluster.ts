@@ -19,7 +19,11 @@ import {
   useMutation,
   useQuery,
 } from '@tanstack/react-query';
-import { createDbClusterFn, getDbClusterCredentialsFn } from 'api/dbClusterApi';
+import {
+  createDbClusterFn,
+  createDbClusterSecretFn,
+  getDbClusterCredentialsFn,
+} from 'api/dbClusterApi';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   MIN_NUMBER_OF_SHARDS,
@@ -30,12 +34,15 @@ import {
   DataSource,
   DbCluster,
   GetDbClusterCredentialsPayload,
+  ProxyExposeType,
 } from 'shared-types/dbCluster.types';
 import { PerconaQueryOptions } from 'shared-types/query.types';
 import cronConverter from 'utils/cron-converter';
-import { getProxySpec } from './utils';
+import { getDataSource, getProxySpec } from './utils';
 import { DbType } from '@percona/types';
 import { useRBACPermissions } from 'hooks/rbac';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 type CreateDbClusterArgType = {
   dbPayload: DbWizardType;
@@ -98,6 +105,13 @@ const formValuesToPayloadMapping = (
         config: dbPayload.engineParametersEnabled
           ? dbPayload.engineParameters
           : '',
+        ...(dbPayload.dataImporter &&
+        dbPayload.credentials &&
+        Object.keys(dbPayload.credentials).length > 0
+          ? {
+              userSecretsName: `everest-secrets-${dbPayload.dbName}`,
+            }
+          : {}),
       },
       monitoring: {
         ...(!!dbPayload.monitoring && {
@@ -108,11 +122,15 @@ const formValuesToPayloadMapping = (
         dbPayload.dbType,
         dbPayload.numberOfProxies,
         dbPayload.customNrOfProxies || '',
-        dbPayload.externalAccess,
+        dbPayload.exposureMethod,
         dbPayload.proxyCpu,
         dbPayload.proxyMemory,
         dbPayload.sharding,
-        dbPayload.sourceRanges || []
+        dbPayload.sourceRanges || [],
+        dbPayload.exposureMethod === ExposureMethod.LoadBalancer ||
+          dbPayload.loadBalancerConfigName === EMPTY_LOAD_BALANCER_CONFIGURATION
+          ? dbPayload.loadBalancerConfigName
+          : undefined
       ),
       ...(dbPayload.dbType === DbType.Mongo && {
         sharding: {
@@ -123,21 +141,30 @@ const formValuesToPayloadMapping = (
           },
         },
       }),
-      ...(backupDataSource?.dbClusterBackupName && {
-        dataSource: {
-          dbClusterBackupName: backupDataSource.dbClusterBackupName,
-          ...(backupDataSource?.pitr && {
-            pitr: {
-              date: backupDataSource.pitr.date,
-              type: 'date',
+      ...(backupDataSource?.dbClusterBackupName || dbPayload.dataImporter
+        ? {
+            dataSource: {
+              ...getDataSource({
+                backupDataSource: backupDataSource,
+                dbPayload: dbPayload,
+              }),
             },
-          }),
-        },
-      }),
+          }
+        : {}),
       ...(dbPayload.podSchedulingPolicyEnabled &&
         dbPayload.podSchedulingPolicy && {
           podSchedulingPolicyName: dbPayload.podSchedulingPolicy,
         }),
+      ...(!!dbPayload.externalAccess && {
+        spec: {
+          proxy: {
+            expose: {
+              loadBalancerConfigName: dbPayload.loadBalancerConfig,
+              type: ProxyExposeType.external,
+            },
+          },
+        },
+      }),
     },
   };
 
@@ -181,3 +208,19 @@ export const useDbClusterCredentials = (
     enabled: (options?.enabled ?? true) && canReadCredentials,
   });
 };
+
+type CreateDbClusterSecretProps = {
+  dbClusterName: string;
+  namespace: string;
+  credentials: Record<string, string>;
+};
+
+export const useCreateDbClusterSecret = () =>
+  useMutation({
+    mutationFn: ({
+      dbClusterName,
+      namespace,
+      credentials,
+    }: CreateDbClusterSecretProps) =>
+      createDbClusterSecretFn(dbClusterName, namespace, credentials),
+  });

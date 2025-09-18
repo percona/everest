@@ -38,13 +38,19 @@ import {
   findRowAndClickActions,
 } from '@e2e/utils/table';
 import { clickCreateSchedule } from '@e2e/pr/db-cluster-details/utils';
-import { prepareTestDB, dropTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
+import { prepareTestDB, queryTestDB } from '@e2e/utils/db-cmd-line';
 import { getDbClusterAPI } from '@e2e/utils/db-cluster';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
 let token: string;
 
 test.describe.configure({ retries: 0 });
+
+const zephyrMap: Record<string, string> = {
+  'restore-pxc': 'T116',
+  'restore-psmdb': 'T117',
+  'restore-postgresql': 'T118',
+};
 
 function getNextScheduleMinute(incrementMinutes: number): string {
   const d: number = new Date().getMinutes();
@@ -55,8 +61,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
 [
   { db: 'psmdb', size: 3 },
-  // TODO: Re-enable after fix for https://perconadev.atlassian.net/browse/EVEREST-2017
-  //  { db: 'pxc', size: 3 },
+  { db: 'pxc', size: 3 },
   { db: 'postgresql', size: 3 },
 ].forEach(({ db, size }) => {
   test.describe(
@@ -66,11 +71,12 @@ function getNextScheduleMinute(incrementMinutes: number): string {
     },
     () => {
       test.skip(!shouldExecuteDBCombination(db, size));
-      test.describe.configure({ timeout: 720000 });
+      test.describe.configure({ timeout: 1_200_000 });
 
       // Define primary and restored cluster names to use across related tests
       const clusterName = `${db}-${size}-pri`;
       const restoredClusterName = `${db}-${size}-rest`;
+      let zephyrId: string;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -146,8 +152,10 @@ function getNextScheduleMinute(incrementMinutes: number): string {
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 15000);
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, clusterName, 'Initializing', 15000);
+          }
+          await waitForStatus(page, clusterName, 'Up', 900000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -198,9 +206,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await fillScheduleModalForm(
             page,
             timeOption1,
+            '0',
             'first-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
 
@@ -233,9 +241,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await fillScheduleModalForm(
             page,
             timeOption2,
+            '0',
             'second-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
 
@@ -300,7 +308,8 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
       });
 
-      test(`Restore to a new database cluster [${db} size ${size}]`, async ({
+      zephyrId = zephyrMap[`restore-${db}`];
+      test(`${zephyrId} - Restore to a new database cluster [${db} size ${size}]`, async ({
         page,
       }) => {
         await gotoDbClusterBackups(page, clusterName);
@@ -313,6 +322,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         await expect(
           page.getByTestId('select-input-backup-name')
         ).not.toBeEmpty();
+
         await page.getByTestId('form-dialog-create').click();
 
         await page.waitForURL('**/databases/new');
@@ -347,56 +357,62 @@ function getNextScheduleMinute(incrementMinutes: number): string {
         });
 
         await test.step('Check restored DB list and status', async () => {
-          await waitForStatus(page, restoredClusterName, 'Initializing', 15000);
-          await waitForStatus(page, restoredClusterName, 'Up', 600000);
+          if (db !== 'postgresql') {
+            await waitForStatus(
+              page,
+              restoredClusterName,
+              'Initializing',
+              15000
+            );
+          }
+          await waitForStatus(page, restoredClusterName, 'Restoring', 600000);
+          await waitForStatus(page, restoredClusterName, 'Up', 2400000);
         });
-      });
 
-      test(`Delete primary database cluster [${db} size ${size}]`, async ({
-        page,
-      }) => {
-        await deleteDbCluster(page, clusterName);
-        await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 240000);
-      });
-
-      test(`Verify data after restore on the new database [${db} size ${size}]`, async () => {
-        const result = await queryTestDB(restoredClusterName, namespace);
-
-        switch (db) {
-          case 'pxc':
-            expect(result.trim()).toBe('1\n2\n3');
-            break;
-          case 'psmdb':
-            // Normalize JSON format before comparison
-            const parsedResult = JSON.stringify(JSON.parse(result.trim()));
-            const expectedJson = JSON.stringify([{ a: 1 }, { a: 2 }, { a: 3 }]);
-            expect(parsedResult).toBe(expectedJson);
-            break;
-          case 'postgresql':
-            expect(result.trim()).toBe('1\n 2\n 3');
-            break;
-        }
-      });
-
-      test(`Verify and Delete Restore History for the restored database [${db} size ${size}]`, async ({
-        page,
-      }) => {
-        // TODO: Remove the if statement after fix for https://perconadev.atlassian.net/browse/EVEREST-1012
-        if (db === 'postgresql') {
-          //Skip the test for PostgreSQL
-          test.skip();
-          return;
-        }
-        await gotoDbClusterRestores(page, restoredClusterName);
-        await test.step('Verify restore history exists', async () => {
-          await expect(page.getByTestId('status')).toHaveText('Succeeded');
+        await test.step(`Delete primary database cluster`, async () => {
+          await deleteDbCluster(page, clusterName);
+          await waitForStatus(page, clusterName, 'Deleting', 15000);
+          await waitForDelete(page, clusterName, 240000);
         });
-        await test.step('Delete the restore entry', async () => {
-          await findRowAndClickActions(page, restoredClusterName, 'Delete');
-          await expect(page.getByLabel('Delete restore')).toBeVisible();
-          await page.getByTestId('confirm-dialog-delete').click();
-          await waitForDelete(page, restoredClusterName, 15000);
+
+        await test.step(`Verify data after restore on the new database`, async () => {
+          const result = await queryTestDB(restoredClusterName, namespace);
+
+          switch (db) {
+            case 'pxc':
+              expect(result.trim()).toBe('1\n2\n3');
+              break;
+            case 'psmdb':
+              // Normalize JSON format before comparison
+              const parsedResult = JSON.stringify(JSON.parse(result.trim()));
+              const expectedJson = JSON.stringify([
+                { a: 1 },
+                { a: 2 },
+                { a: 3 },
+              ]);
+              expect(parsedResult).toBe(expectedJson);
+              break;
+            case 'postgresql':
+              expect(result.trim()).toBe('1\n 2\n 3');
+              break;
+          }
+        });
+
+        await test.step(`Verify and Delete Restore History for the restored database`, async () => {
+          // TODO: Remove the if statement after fix for https://perconadev.atlassian.net/browse/EVEREST-1012
+          if (db === 'postgresql') {
+            return;
+          }
+          await gotoDbClusterRestores(page, restoredClusterName);
+          await test.step('Verify restore history exists', async () => {
+            await expect(page.getByTestId('status')).toHaveText('Succeeded');
+          });
+          await test.step('Delete the restore entry', async () => {
+            await findRowAndClickActions(page, restoredClusterName, 'Delete');
+            await expect(page.getByLabel('Delete restore')).toBeVisible();
+            await page.getByTestId('confirm-dialog-delete').click();
+            await waitForDelete(page, restoredClusterName, 15000);
+          });
         });
       });
 
@@ -419,9 +435,9 @@ function getNextScheduleMinute(incrementMinutes: number): string {
           await fillScheduleModalForm(
             page,
             timeOption,
+            '0',
             'hourly-schedule',
-            false,
-            '0'
+            undefined
           );
           await page.getByTestId('form-dialog-create').click();
 

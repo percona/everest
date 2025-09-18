@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/AlekSi/pointer"
+	corev1 "k8s.io/api/core/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -225,5 +226,20 @@ func (h *rbacHandler) enforceDBClusterRead(ctx context.Context, db *everestv1alp
 	if err := h.enforce(ctx, rbac.ResourceDatabaseEngines, rbac.ActionRead, rbac.ObjectName(namespace, engineName)); err != nil {
 		return err
 	}
+
+	if lbcName := db.Spec.Proxy.Expose.LoadBalancerConfigName; lbcName != "" {
+		if err := h.enforce(ctx, rbac.ResourceLoadBalancerConfigs, rbac.ActionRead, lbcName); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func (h *rbacHandler) CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret,
+) (*corev1.Secret, error) {
+	if err := h.enforce(ctx, rbac.ResourceDatabaseClusters, rbac.ActionCreate, rbac.ObjectName(namespace, dbName)); err != nil {
+		return nil, err
+	}
+	return h.next.CreateDatabaseClusterSecret(ctx, namespace, dbName, secret)
 }

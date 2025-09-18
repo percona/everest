@@ -5,7 +5,6 @@ import {
   DbClusterStatus,
   ManageableSchedules,
   Proxy,
-  ProxyExposeConfig,
   ProxyExposeType,
   Schedule,
 } from 'shared-types/dbCluster.types';
@@ -35,6 +34,8 @@ import { dbEngineToDbType } from '@percona/utils';
 import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
 import { Path, UseFormGetFieldState } from 'react-hook-form';
 import cronConverter from './cron-converter';
+import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -107,10 +108,9 @@ export const someErrorInStateFields = <T extends Record<string, unknown>>(
   return fields.some((field) => fieldStateGetter(field)?.error);
 };
 
-export const isProxy = (proxy: Proxy | ProxyExposeConfig): proxy is Proxy => {
-  return proxy && typeof (proxy as Proxy).expose === 'object';
+export const isProxy = (proxy: Proxy): boolean => {
+  return proxy && typeof proxy.expose === 'object';
 };
-
 export const transformSchedulesIntoManageableSchedules = async (
   schedules: Schedule[],
   namespace: string,
@@ -257,8 +257,23 @@ export const dbPayloadToAffinityRules = (
     }
   });
 
-  return rules;
+  return rules.sort((a, b) => {
+    if (a.component === b.component) {
+      if (a.type === b.type) {
+        if (a.priority === b.priority) {
+          return (b.weight ?? 0) - (a.weight ?? 0);
+        }
+        return a.priority.localeCompare(b.priority);
+      }
+      return a.type.localeCompare(b.type);
+    }
+    return a.component.localeCompare(b.component);
+  });
 };
+
+export const doesAffinityOperatorRequireValues = (
+  operator: AffinityOperator
+): boolean => [AffinityOperator.In, AffinityOperator.NotIn].includes(operator);
 
 export const affinityRulesToDbPayload = (
   affinityRules: AffinityRule[]
@@ -276,9 +291,10 @@ export const affinityRulesToDbPayload = (
           {
             key,
             operator: operator!,
-            ...(values.length > 0 && {
-              values,
-            }),
+            ...(doesAffinityOperatorRequireValues(operator!) &&
+              values.length > 0 && {
+                values,
+              }),
           },
         ],
       },
@@ -324,9 +340,7 @@ export const affinityRulesToDbPayload = (
           {
             key: key!,
             operator: operator!,
-            ...([AffinityOperator.In, AffinityOperator.NotIn].includes(
-              operator!
-            ) && {
+            ...(doesAffinityOperatorRequireValues(operator!) && {
               values: valuesList,
             }),
           },
@@ -729,11 +743,12 @@ export const changeDbClusterCrd = (
 export const changeDbClusterAdvancedConfig = (
   dbCluster: DbCluster,
   engineParametersEnabled = false,
-  externalAccess = false,
+  exposureMethod: ExposureMethod,
   engineParameters = '',
   sourceRanges?: Array<{ sourceRange?: string }>,
   podSchedulingPolicyEnabled = false,
-  podSchedulingPolicy = ''
+  podSchedulingPolicy = '',
+  loadBalancerConfigName = ''
 ) => ({
   ...dbCluster,
   spec: {
@@ -748,10 +763,16 @@ export const changeDbClusterAdvancedConfig = (
     proxy: {
       ...dbCluster.spec.proxy,
       expose: {
-        type: externalAccess
-          ? ProxyExposeType.external
-          : ProxyExposeType.internal,
-        ...(!!externalAccess &&
+        loadBalancerConfigName:
+          (exposureMethod === ExposureMethod.LoadBalancer &&
+            loadBalancerConfigName !== EMPTY_LOAD_BALANCER_CONFIGURATION &&
+            loadBalancerConfigName) ||
+          undefined,
+        type:
+          exposureMethod === ExposureMethod.LoadBalancer
+            ? ProxyExposeType.external
+            : ProxyExposeType.internal,
+        ...(exposureMethod === ExposureMethod.LoadBalancer &&
           sourceRanges && {
             ipSourceRanges: sourceRanges.flatMap((source) =>
               source.sourceRange ? [source.sourceRange] : []
@@ -826,13 +847,18 @@ export const changeDbClusterResources = (
       dbEngineToDbType(dbCluster.spec.engine.type),
       newResources.numberOfProxies.toString(),
       '',
-      (dbCluster.spec.proxy as Proxy).expose.type === 'external',
+      dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+        ? ExposureMethod.LoadBalancer
+        : ExposureMethod.ClusterIP,
       newResources.proxyCpu,
       newResources.proxyMemory,
       !!sharding,
       ((dbCluster.spec.proxy as Proxy).expose.ipSourceRanges || []).map(
         (sourceRange) => ({ sourceRange })
-      )
+      ),
+      dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+        ? dbCluster.spec.proxy.expose.loadBalancerConfigName
+        : undefined
     ),
     ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
       sharding && {
@@ -886,7 +912,8 @@ export const changeDbClusterPITR = (
 
 export const deleteScheduleFromDbCluster = (
   scheduleName: string,
-  dbCluster: DbCluster
+  dbCluster: DbCluster,
+  disablePITR: boolean
 ): DbCluster => {
   const schedules = dbCluster?.spec?.backup?.schedules || [];
   const filteredSchedulesWithCronCorrection = schedules.reduce(
@@ -907,6 +934,14 @@ export const deleteScheduleFromDbCluster = (
       ...dbCluster?.spec,
       backup: {
         ...dbCluster.spec.backup,
+        ...(disablePITR && {
+          pitr: {
+            ...dbCluster.spec.backup?.pitr,
+            backupStorageName:
+              dbCluster.spec.backup?.pitr?.backupStorageName || '',
+            enabled: false,
+          },
+        }),
         schedules:
           filteredSchedulesWithCronCorrection.length > 0
             ? filteredSchedulesWithCronCorrection
@@ -952,6 +987,7 @@ export const shouldDbActionsBeBlocked = (status?: DbClusterStatus) => {
     DbClusterStatus.deleting,
     DbClusterStatus.resizingVolumes,
     DbClusterStatus.upgrading,
+    DbClusterStatus.importing,
   ].includes(status || ('' as DbClusterStatus));
 };
 

@@ -52,10 +52,30 @@ const (
 	ResourceDatabaseClusterCredentials = "database-cluster-credentials"
 	ResourceDatabaseClusterRestores    = "database-cluster-restores"
 	ResourceDatabaseEngines            = "database-engines"
+	ResourceLoadBalancerConfigs        = "load-balancer-configs"
 	ResourceMonitoringInstances        = "monitoring-instances"
 	ResourceNamespaces                 = "namespaces"
 	ResourcePodSchedulingPolicies      = "pod-scheduling-policies"
+	ResourceDataImporters              = "data-importers"
+	ResourceDataImportJobs             = "data-import-jobs"
 )
+
+// GlobalResources is a list of all Everest API resources that are considered global.
+var GlobalResources = []string{
+	ResourceNamespaces,
+	ResourcePodSchedulingPolicies,
+	ResourceLoadBalancerConfigs,
+	ResourceDataImporters,
+}
+
+func IsGlobalResource(resource string) bool {
+	for _, globalResource := range GlobalResources {
+		if resource == globalResource {
+			return true
+		}
+	}
+	return false
+}
 
 // RBAC actions.
 const (
@@ -255,8 +275,7 @@ func loadAdminPolicy(enf casbin.IEnforcer) error {
 	action := ActionAll
 	for resource := range resources {
 		object := "*/*"
-		if resource == ResourceNamespaces ||
-			resource == ResourcePodSchedulingPolicies {
+		if IsGlobalResource(resource) {
 			object = "*"
 		}
 
@@ -319,8 +338,7 @@ func Can(ctx context.Context, filePath string, k kubernetes.KubernetesConnector,
 	user, action, resource, object := req[0], req[1], req[2], req[3]
 	if object == "*" || object == "all" {
 		object = "/"
-		if resource == ResourceNamespaces ||
-			resource == ResourcePodSchedulingPolicies {
+		if IsGlobalResource(resource) {
 			object = ""
 		}
 	}

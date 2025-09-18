@@ -14,25 +14,54 @@
 // limitations under the License.
 
 import { useEffect, useState } from 'react';
-import { Box, Button, Menu, MenuItem, Skeleton } from '@mui/material';
+import {
+  Box,
+  Button,
+  Divider,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { dbEngineToDbType } from '@percona/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDBEnginesForDbEngineTypes } from 'hooks';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { humanizeDbType } from 'utils/db';
+import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
 
-export const CreateDbButton = () => {
+export const CreateDbButton = ({
+  createFromImport = false,
+}: {
+  createFromImport?: boolean;
+}) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showDropdownButton, setShowDropdownButton] = useState(false);
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
+  const { data: availableDbImporters } = useDataImporters();
+  const supportedEngineTypesForImport = new Set(
+    availableDbImporters?.items
+      .map((importer) => importer.spec.supportedEngines)
+      .flat()
+  );
+
   const open = Boolean(anchorEl);
 
-  const [availableDbTypes, availableDbTypesFetching] =
+  const [allAvailableDbTypes, availableDbTypesFetching] =
     useDBEnginesForDbEngineTypes(undefined, {
       refetchInterval: 30 * 1000,
     });
+
+  const availableDbTypes = allAvailableDbTypes.filter((item) =>
+    item.dbEngines.some((engine) =>
+      createFromImport
+        ? supportedEngineTypesForImport.has(engine.dbEngine!.type)
+        : true
+    )
+  );
 
   const availableEngines = availableDbTypes.filter(
     (item) =>
@@ -47,7 +76,10 @@ export const CreateDbButton = () => {
       setAnchorEl(event.currentTarget);
     } else {
       navigate('/databases/new', {
-        state: { selectedDbEngine: availableEngines[0].type },
+        state: {
+          selectedDbEngine: availableEngines[0].type,
+          showImport: createFromImport,
+        },
       });
     }
   };
@@ -71,28 +103,50 @@ export const CreateDbButton = () => {
     borderRadius: '128px',
   };
 
+  const showTechPreviewTooltip =
+    createFromImport && availableEngines.length === 1;
+
+  const techPreviewText = 'Technical Preview';
+
+  const createButton = (
+    <Button
+      data-testid={`${createFromImport ? 'import' : 'add'}-db-cluster-button`}
+      size="small"
+      variant={createFromImport ? 'text' : 'contained'}
+      sx={buttonStyle}
+      aria-controls={
+        open
+          ? `${createFromImport ? 'import' : 'add'}
+            -db-cluster-button-menu`
+          : undefined
+      }
+      aria-haspopup="true"
+      aria-expanded={open ? 'true' : undefined}
+      onClick={handleClick}
+      endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
+    >
+      {createFromImport ? 'Import' : 'Create database'}
+    </Button>
+  );
+
   return availableEngines.length > 0 ? (
     <Box>
       {showDropdownButton ? (
-        <Button
-          data-testid="add-db-cluster-button"
-          size="small"
-          variant="contained"
-          sx={buttonStyle}
-          aria-controls={open ? 'add-db-cluster-button-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
-          onClick={handleClick}
-          endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
-        >
-          Create database
-        </Button>
+        showTechPreviewTooltip ? (
+          <Tooltip title={techPreviewText} enterDelay={0}>
+            {createButton}
+          </Tooltip>
+        ) : (
+          createButton
+        )
       ) : (
         <Skeleton variant="rounded" sx={skeletonStyle} />
       )}
       {availableEngines.length > 1 && (
         <Menu
-          data-testid="add-db-cluster-button-menu"
+          data-testid={`${
+            createFromImport ? 'import' : 'add'
+          }-db-cluster-button-menu`}
           anchorEl={anchorEl}
           open={open}
           onClose={closeMenu}
@@ -104,9 +158,28 @@ export const CreateDbButton = () => {
         >
           {
             <Box>
+              {createFromImport && (
+                <>
+                  <MenuItem
+                    sx={{
+                      cursor: 'text',
+                      userSelect: 'text',
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Typography
+                      sx={{ fontSize: '14px !important' }}
+                      color="text.secondary"
+                    >
+                      {techPreviewText}
+                    </Typography>
+                  </MenuItem>
+                  <Divider />
+                </>
+              )}
               {availableDbTypes.map((item) => (
                 <MenuItem
-                  data-testid={`add-db-cluster-button-${item.type}`}
+                  data-testid={`${createFromImport ? 'import' : 'add'}-db-cluster-button-${item.type}`}
                   disabled={!item.available}
                   key={item.type}
                   component={Link}
@@ -118,7 +191,10 @@ export const CreateDbButton = () => {
                     px: 2,
                     py: '10px',
                   }}
-                  state={{ selectedDbEngine: item.type }}
+                  state={{
+                    selectedDbEngine: item.type,
+                    showImport: createFromImport,
+                  }}
                 >
                   {humanizeDbType(dbEngineToDbType(item.type))}
                 </MenuItem>

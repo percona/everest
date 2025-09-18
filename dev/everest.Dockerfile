@@ -1,4 +1,4 @@
-FROM alpine as dev
+FROM alpine AS dev
 WORKDIR /home/everest
 RUN adduser -D everest
 USER 1000:1000
@@ -8,12 +8,12 @@ EXPOSE 8080
 ENTRYPOINT ["./everest-api"]
 
 # Build the Delve debuger
-FROM golang:1.24-alpine as delve
-RUN go install github.com/go-delve/delve/cmd/dlv@v1.24.0
+FROM golang:1.25-alpine AS delve
+RUN go install github.com/go-delve/delve/cmd/dlv@v1.25.2
 RUN chmod +x /go/bin/dlv
 
 # Build the image with debuger
-FROM dev as debug
+FROM dev AS debug
 COPY --from=delve /go/bin/dlv /dlv
 WORKDIR /
 USER root

@@ -17,10 +17,10 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+	operatorUtils "github.com/percona/everest-operator/utils"
 	"github.com/percona/everest/internal/server/handlers/k8s"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/utils"
 )
 
 func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
@@ -40,7 +40,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: utils.ErrNameNotRFC1035Compatible("metadata.name"),
+			err: operatorUtils.ErrNameNotRFC1035Compatible("metadata.name"),
 		},
 		{
 			name: "starts with -",
@@ -50,7 +50,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: utils.ErrNameNotRFC1035Compatible("metadata.name"),
+			err: operatorUtils.ErrNameNotRFC1035Compatible("metadata.name"),
 		},
 		{
 			name: "ends with -",
@@ -60,7 +60,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: utils.ErrNameNotRFC1035Compatible("metadata.name"),
+			err: operatorUtils.ErrNameNotRFC1035Compatible("metadata.name"),
 		},
 		{
 			name: "contains uppercase",
@@ -70,7 +70,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: utils.ErrNameNotRFC1035Compatible("metadata.name"),
+			err: operatorUtils.ErrNameNotRFC1035Compatible("metadata.name"),
 		},
 		{
 			name: "valid",
@@ -90,7 +90,7 @@ func TestValidateCreateDatabaseClusterRequest(t *testing.T) {
 					Namespace: "ns",
 				},
 			},
-			err: utils.ErrNameTooLong("metadata.name"),
+			err: operatorUtils.ErrNameTooLong("metadata.name"),
 		},
 	}
 
@@ -251,6 +251,52 @@ func TestValidateProxy(t *testing.T) {
 					Proxy: everestv1alpha1.Proxy{
 						Type:     everestv1alpha1.ProxyTypeHAProxy,
 						Replicas: pointer.ToInt32(1),
+					},
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "duplicated sourceRange",
+			cluster: everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type:     everestv1alpha1.DatabaseEnginePXC,
+						Replicas: 1,
+					},
+					Proxy: everestv1alpha1.Proxy{
+						Type:     everestv1alpha1.ProxyTypeHAProxy,
+						Replicas: pointer.ToInt32(1),
+						Expose: everestv1alpha1.Expose{
+							IPSourceRanges: []everestv1alpha1.IPSourceRange{
+								"192.168.0.1/32",
+								"192.168.0.2/32",
+								"192.168.0.1/32",
+							},
+						},
+					},
+				},
+			},
+			err: ErrDuplicateSourceRange("192.168.0.1/32"),
+		},
+		{
+			name: "no duplicated sourceRange",
+			cluster: everestv1alpha1.DatabaseCluster{
+				Spec: everestv1alpha1.DatabaseClusterSpec{
+					Engine: everestv1alpha1.Engine{
+						Type:     everestv1alpha1.DatabaseEnginePXC,
+						Replicas: 1,
+					},
+					Proxy: everestv1alpha1.Proxy{
+						Type:     everestv1alpha1.ProxyTypeHAProxy,
+						Replicas: pointer.ToInt32(1),
+						Expose: everestv1alpha1.Expose{
+							IPSourceRanges: []everestv1alpha1.IPSourceRange{
+								"192.168.0.1/32",
+								"192.168.0.2/32",
+								"192.168.0.3/32",
+							},
+						},
 					},
 				},
 			},

@@ -142,7 +142,7 @@ jobs:
 
 
       - name: Operator - check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
@@ -217,6 +217,8 @@ jobs:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
+          build-args: |
+            FLAGS= -X 'github.com/percona/everest-operator/internal/consts.Version=${{ env.VERSION }}'
 
       - name: Operator - push everest-operator-bundle image
         uses: docker/build-push-action@v6
@@ -227,7 +229,7 @@ jobs:
           file: everest-operator/bundle.Dockerfile
 
       - name: Helm - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/percona-helm-charts
           ref: ${{ env.HELM_BRANCH }}
@@ -237,7 +239,7 @@ jobs:
       - name: Helm - build
         run: |
           cd percona-helm-charts/charts/everest
-          CRD_VERSION=${{ env.VERSION_TAG }} make crds-gen
+          CRD_VERSION=${{ env.VERSION_TAG }} VERSION=${{ env.VERSION }} make crds-gen link-crds
           make release-dev
 
       - name: Helm - copy chart
@@ -245,7 +247,7 @@ jobs:
           cp -r percona-helm-charts/charts/everest /tmp/${{ env.VERSION }}/helm-chart
 
       - name: Operator - check out again
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
@@ -258,7 +260,7 @@ jobs:
           git push -d origin $VERSION_TAG
 
       - name: VS - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: Percona-Lab/percona-version-service
           ref: ${{ env.VS_BRANCH }}
@@ -289,30 +291,12 @@ jobs:
 
 
       - name: Catalog - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-catalog
           ref: ${{ env.EVEREST_CATALOG_BRANCH }}
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: Catalog - update veneer file
-        run: |
-          cd everest-catalog/tools
-          go run . \
-            --veneer-file ../veneer/everest-operator.yaml \
-            --channel fast-v0  \
-            --new-version ${{ env.VERSION }} 
-          
-          cd ..
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.48.0/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
-          # Check if catalog has the new version listed
-          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
-            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            exit 1
-          fi
 
       - name: Catalog - setup Docker meta for everest-catalog
         id: catalog_meta
@@ -333,7 +317,7 @@ jobs:
 
 
       - name: Everest - check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
           ref: ${{ env.EVEREST_BRANCH }}
@@ -371,8 +355,10 @@ jobs:
 
       - name: Everest - copy feature build helper scripts
         run: |
-          cp dev/fb/cli.sh /tmp/${VERSION}/cli.sh
-          cp dev/fb/helm.sh /tmp/${VERSION}/helm.sh
+          cp dev/fb/install-cli.sh /tmp/${VERSION}/install-cli.sh
+          cp dev/fb/upgrade-cli.sh /tmp/${VERSION}/upgrade-cli.sh
+          cp dev/fb/install-helm.sh /tmp/${VERSION}/install-helm.sh
+          cp dev/fb/upgrade-helm.sh /tmp/${VERSION}/upgrade-helm.sh
           cp dev/fb/vs.sh /tmp/${VERSION}/vs.sh
 
       - name: Everest - push Everest image
@@ -389,9 +375,9 @@ jobs:
 
       - name: Version Service - create deployment manifest
         run: |
-          curl https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
+          curl -fsSL https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
           sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" /tmp/${VERSION}/vs_deploy.yaml
-
+          sed -i "s/replicas: [0-9]/replicas: 1/g" /tmp/${VERSION}/vs_deploy.yaml
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -404,13 +390,13 @@ jobs:
         run: |
           printf "To install FB using helm:\n\
           1. Download and unzip the \`$VERSION\` artifact below.\n\
-          2. Run the command:\n\`\`\`./helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          2. Run the command:\n\`\`\`./install-helm.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
           
           printf "To install FB using CLI:\n\
           1. Download and unzip the \`$VERSION\` artifact below.\n\
-          2. Run the command:\n\`\`\`./cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+          2. Run the command:\n\`\`\`./install-cli.sh\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
 
           printf "____________________\n" >> "$GITHUB_STEP_SUMMARY"
           

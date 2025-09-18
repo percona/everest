@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/resource"
+
+	"github.com/percona/everest-operator/api/v1alpha1"
 )
 
 var (
@@ -30,7 +32,7 @@ var (
 	errPXCPitrS3Only                 = errors.New("point-in-time recovery only supported for s3 compatible storages")
 	errPSMDBMultipleStorages         = errors.New("can't use more than one backup storage for PSMDB clusters")
 	errPSMDBViolateActiveStorage     = errors.New("can't change the active storage for PSMDB clusters")
-	errDataSourceConfig              = errors.New("either DBClusterBackupName or BackupSource must be specified in the DataSource field")
+	errDataSourceConfig              = errors.New("either DBClusterBackupName, BackupSource or DataImport must be specified in the DataSource field")
 	errDataSourceNoPitrDateSpecified = errors.New("pitr Date must be specified for type Date")
 	errDataSourceWrongDateFormat     = errors.New("failed to parse .Spec.DataSource.Pitr.Date as 2006-01-02T15:04:05Z")
 	errDataSourceNoBackupStorageName = errors.New("'backupStorageName' should be specified in .Spec.DataSource.BackupSource")
@@ -45,8 +47,6 @@ var (
 	errDuplicatedSchedules           = errors.New("duplicated backup schedules are not allowed")
 	errDuplicatedStoragePG           = errors.New("postgres clusters can't use the same storage for the different schedules")
 	errStorageChangePG               = errors.New("the existing postgres schedules can't change their storage")
-	errDuplicatedBackupStorage       = errors.New("backup storages with the same url, bucket and region are not allowed")
-	errEditBackupStorageInUse        = errors.New("can't edit bucket or region of the backup storage in use")
 	errShardingIsNotSupported        = errors.New("sharding is not supported")
 	errInsufficientShardsNumber      = errors.New("shards number should be greater than 0")
 	errInsufficientCfgSrvNumber      = errors.New("sharding: minimum config servers number is 3")
@@ -75,4 +75,9 @@ func ErrInvalidURL(fieldName string) error {
 // ErrCreateStorageNotSupported appears when trying to create a storage of a type that is not supported.
 func ErrCreateStorageNotSupported(storageType string) error {
 	return fmt.Errorf("creating storage is not implemented for '%s'", storageType)
+}
+
+// ErrDuplicateSourceRange appears when a duplicated source range is found.
+func ErrDuplicateSourceRange(sourceRange v1alpha1.IPSourceRange) error {
+	return fmt.Errorf("duplicate expose ranges for source range %s", sourceRange)
 }

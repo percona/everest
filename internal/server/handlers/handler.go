@@ -1,10 +1,12 @@
 // Package handlers contains the interface and types for the Everest API handlers.
 package handlers
 
-//go:generate ../../../bin/mockery --name=Handler --case=snake --inpackage
+//go:generate go tool mockery --name=Handler --case=snake --inpackage
 
 import (
 	"context"
+
+	corev1 "k8s.io/api/core/v1"
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
 	"github.com/percona/everest/api"
@@ -28,6 +30,9 @@ type Handler interface {
 	BackupStorageHandler
 	MonitoringInstanceHandler
 	PodSchedulingPolicyHandler
+	LoadBalancerConfigHandler
+	DataImporterHandler
+	DataImportJobHandler
 
 	GetKubernetesClusterResources(ctx context.Context) (*api.KubernetesClusterResources, error)
 	GetKubernetesClusterInfo(ctx context.Context) (*api.KubernetesClusterInfo, error)
@@ -45,6 +50,7 @@ type DatabaseClusterHandler interface {
 	GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error)
 	GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error)
 	GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error)
+	CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret) (*corev1.Secret, error)
 }
 
 // NamespacesHandler provides methods for handling operations on namespaces.
@@ -103,4 +109,23 @@ type PodSchedulingPolicyHandler interface {
 	ListPodSchedulingPolicies(ctx context.Context, params *api.ListPodSchedulingPolicyParams) (*everestv1alpha1.PodSchedulingPolicyList, error)
 	DeletePodSchedulingPolicy(ctx context.Context, name string) error
 	GetPodSchedulingPolicy(ctx context.Context, name string) (*everestv1alpha1.PodSchedulingPolicy, error)
+}
+
+// LoadBalancerConfigHandler provides methods for handling operations on load balancer configs.
+type LoadBalancerConfigHandler interface {
+	CreateLoadBalancerConfig(ctx context.Context, psp *everestv1alpha1.LoadBalancerConfig) (*everestv1alpha1.LoadBalancerConfig, error)
+	UpdateLoadBalancerConfig(ctx context.Context, psp *everestv1alpha1.LoadBalancerConfig) (*everestv1alpha1.LoadBalancerConfig, error)
+	ListLoadBalancerConfigs(ctx context.Context) (*everestv1alpha1.LoadBalancerConfigList, error)
+	DeleteLoadBalancerConfig(ctx context.Context, name string) error
+	GetLoadBalancerConfig(ctx context.Context, name string) (*everestv1alpha1.LoadBalancerConfig, error)
+}
+
+// DataImporterHandler provides methods for handling operations on data importers.
+type DataImporterHandler interface {
+	ListDataImporters(ctx context.Context, supportedEngines ...string) (*everestv1alpha1.DataImporterList, error)
+}
+
+// DataImportJobHandler provides methods for handling operations on data import jobs.
+type DataImportJobHandler interface {
+	ListDataImportJobs(ctx context.Context, namespace, dbName string) (*everestv1alpha1.DataImportJobList, error)
 }

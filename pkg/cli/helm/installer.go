@@ -50,6 +50,8 @@ const (
 	// EverestDBNamespaceChartName is the name of the Everest Helm chart that is installed
 	// into DB namespaces managed by Everest.
 	EverestDBNamespaceChartName = "everest-db-namespace"
+	// EverestCRDChartName is the name of the Everest Helm chart that installs the Everest CRDs.
+	EverestCRDChartName = "everest-crds"
 )
 
 var settings = helmcli.New() //nolint:gochecknoglobals
@@ -353,7 +355,7 @@ func everestctlCacheDir() (string, error) {
 	return res, nil
 }
 
-// Runs `helm dependency build` in the chart directory.
+// Runs `helm dependency update` in the chart directory.
 func buildChartDeps(chartDir string) error {
 	man := &downloader.Manager{
 		Out:              io.Discard,
@@ -362,13 +364,15 @@ func buildChartDeps(chartDir string) error {
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
 	}
-	return man.Build()
+	return man.Update()
 }
 
 func newActionsCfg(namespace, kubeconfig string) (*action.Configuration, error) {
 	logger := func(_ string, _ ...interface{}) {}
 	cfg := action.Configuration{}
-	restClientGetter := genericclioptions.ConfigFlags{}
+	restClientGetter := genericclioptions.ConfigFlags{
+		Namespace: &namespace,
+	}
 	if kubeconfig != "" {
 		home := os.Getenv("HOME")
 		kubeconfig = strings.ReplaceAll(kubeconfig, "~", home)

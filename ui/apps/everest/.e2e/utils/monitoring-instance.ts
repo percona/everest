@@ -15,7 +15,8 @@
 
 import { APIRequestContext, expect } from '@playwright/test';
 import { execSync } from 'child_process';
-import { getDBClientPod, getK8sUid } from '@e2e/utils/db-cmd-line';
+import { getDBClientPod } from '@e2e/utils/db-cmd-line';
+import { getK8sUid } from '@e2e/utils/kubernetes';
 
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
@@ -98,7 +99,7 @@ export const checkDBMetrics = async (
   const date = new Date();
   const end = Math.floor(date.getTime() / 1000);
   const start = end - 60;
-  const endpoint = 'monitoring-service.monitoring:443';
+  const endpoint = 'monitoring-service.everest-system:443';
   const url = `https://${userPass}@${endpoint}/graph/api/datasources/proxy/1/api/v1/query_range?query=min%28${metric}%7Bnode_name%3D%7E%22${instance}%22%7d%20or%20${metric}%7Bnode_name%3D%7E%22${instance}%22%7D%29&start=${start}&end=${end}&step=60`;
 
   try {
@@ -124,7 +125,7 @@ export const checkK8sMetrics = async (
   const date = new Date();
   const end = Math.floor(date.getTime() / 1000);
   const start = end - 60;
-  const endpoint = 'monitoring-service.monitoring:443';
+  const endpoint = 'monitoring-service.everest-system:443';
   const url = `https://${userPass}@${endpoint}/graph/api/datasources/proxy/1/api/v1/query_range?query=count%28${metric}%7Bk8s_cluster_id%3D%22${k8sUid}%22%7D%29&start=${start}&end=${end}&step=60`;
 
   try {
@@ -151,7 +152,7 @@ export const checkQAN = async (
   const start = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
   const end = now.toISOString();
 
-  const endpoint = 'monitoring-service.monitoring:443';
+  const endpoint = 'monitoring-service.everest-system:443';
   const url = `https://${userPass}@${endpoint}/v0/qan/ObjectDetails/GetMetrics`;
 
   const payload = JSON.stringify({

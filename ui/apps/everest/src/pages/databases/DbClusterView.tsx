@@ -32,15 +32,15 @@ import {
   convertDbClusterPayloadToTableFormat,
 } from './DbClusterView.utils';
 import { DbClusterTableElement } from './dbClusterView.types';
-import { ExpandedRow } from './expandedRow/ExpandedRow';
 import { LastBackup } from './lastBackup/LastBackup';
 import { beautifyDbTypeName, dbEngineToDbType } from '@percona/utils';
 import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import DbActions from 'components/db-actions/db-actions';
-import CreateDbButton from '../../components/create-db-button/create-db-button';
 import { PendingIcon } from '@percona/ui-lib';
-import EmptyStateDatabases from 'components/empty-state-databases';
-import EmptyStateNamespaces from 'components/empty-state-namespaces';
+import CreateDbButton from 'components/create-db-button/create-db-button';
+import EmptyStateDatabases from 'components/empty-state-databases/empty-state-databases';
+import EmptyStateNamespaces from 'components/empty-state-namespaces/empty-state-namespaces';
+import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
 
 export const DbClusterView = () => {
   const { data: namespaces = [], isLoading: loadingNamespaces } = useNamespaces(
@@ -58,6 +58,9 @@ export const DbClusterView = () => {
   const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
   const canAddCluster = canCreate.length > 0 && hasAvailableDbEngines;
+
+  const { data: availableEnginesForImport } = useDataImporters();
+
   const dbClustersResults = useDBClustersForNamespaces(
     namespaces.map((ns) => ({
       namespace: ns,
@@ -90,7 +93,10 @@ export const DbClusterView = () => {
             statusMap={DB_CLUSTER_STATUS_TO_BASE_STATUS}
             defaultIcon={PendingIcon}
           >
-            {beautifyDbClusterStatus(cell.getValue<DbClusterStatus>())}
+            {beautifyDbClusterStatus(
+              cell.getValue<DbClusterStatus>(),
+              cell.row.original?.raw.status?.conditions || []
+            )}
           </StatusField>
         ),
       },
@@ -177,9 +183,25 @@ export const DbClusterView = () => {
           data={tableData}
           enableRowActions
           renderRowActions={({ row }) => {
-            return <DbActions dbCluster={row.original.raw} />;
+            return <DbActions dbCluster={row.original.raw} showDetailsAction />;
           }}
-          renderDetailPanel={({ row }) => <ExpandedRow row={row} />}
+          muiTableBodyRowProps={({ row, isDetailPanel }) => ({
+            onClick: (e) => {
+              if (
+                !isDetailPanel &&
+                e.currentTarget.contains(e.target as Node)
+              ) {
+                navigate(
+                  `/databases/${row.original.namespace}/${row.original.databaseName}/overview`
+                );
+              }
+            },
+            sx: {
+              ...(!isDetailPanel && {
+                cursor: 'pointer', // you might want to change the cursor too when adding an onClick
+              }),
+            },
+          })}
           enableRowHoverAction
           rowHoverAction={(row) =>
             navigate(
@@ -187,7 +209,15 @@ export const DbClusterView = () => {
             )
           }
           renderTopToolbarCustomActions={() =>
-            canAddCluster && tableData.length > 0 && <CreateDbButton />
+            canAddCluster &&
+            tableData.length > 0 && (
+              <Box display="flex" mb={1}>
+                {(availableEnginesForImport?.items || []).length > 0 && (
+                  <CreateDbButton createFromImport />
+                )}
+                <CreateDbButton />
+              </Box>
+            )
           }
           hideExpandAllIcon
         />

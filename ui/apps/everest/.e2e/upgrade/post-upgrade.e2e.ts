@@ -34,9 +34,10 @@ let upgradeClustersInfo: {
   upgradeVersion: string | null;
 }[] = [];
 
-test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
-  test.describe.configure({ timeout: TIMEOUTS.FifteenMinutes });
+test.describe.configure({ retries: 0 });
+test.describe.configure({ timeout: TIMEOUTS.FifteenMinutes });
 
+test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
   test.beforeAll(async ({ request }) => {
     token = await getTokenFromLocalStorage();
     [namespace] = await getNamespacesFn(token, request);
@@ -251,7 +252,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
         await waitForStatus(
           page,
           `${c.name}`,
-          'Initializing',
+          'Upgrading',
           TIMEOUTS.ThreeMinutes
         );
         await waitForStatus(page, `${c.name}`, 'Up', TIMEOUTS.FifteenMinutes);

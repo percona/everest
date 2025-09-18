@@ -30,7 +30,7 @@ import {
   populateAdvancedConfig,
   goToLastStepByStepAndSubmit,
 } from '@e2e/utils/db-wizard';
-import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { EVEREST_CI_NAMESPACES, getBucketNamespacesMap } from '@e2e/constants';
 import {
   waitForStatus,
   waitForDelete,
@@ -57,6 +57,7 @@ type pitrTime = {
 };
 
 let token: string;
+let backupStorage: string;
 let pitrRestoreTime: pitrTime = {
   day: '',
   month: '',
@@ -91,6 +92,45 @@ function getFormattedPITRTime(time: pitrTime): string {
 
 test.describe.configure({ retries: 0 });
 
+const zephyrMap: Record<string, string> = {
+  'backup-pxc': 'T101',
+  'backup-psmdb': 'T102',
+  'backup-postgresql': 'T103',
+  'restore-pxc': 'T104',
+  'restore-psmdb': 'T105',
+  'restore-postgresql': 'T106',
+  'restore-newdb-pxc': 'T125',
+  'restore-newdb-psmdb': 'T126',
+  'restore-newdb-postgresql': 'T127',
+};
+
+function getBackupStorage(): string {
+  const bucketNamespacesMap = getBucketNamespacesMap();
+
+  // Check if map includes ["everest-testing","everest-ui"]
+  const hasEverestTesting = bucketNamespacesMap.some(
+    ([bucket, ns]) => bucket === 'everest-testing' && ns === 'everest-ui'
+  );
+
+  if (
+    process.env.EVEREST_S3_ACCESS_KEY &&
+    process.env.EVEREST_S3_SECRET_KEY &&
+    hasEverestTesting
+  ) {
+    backupStorage = 'everest-testing';
+    console.log(
+      `AWS credentials present and EVEREST_BUCKETS_NAMESPACES_MAP includes ["everest-testing","everest-ui"], so using bucket ${backupStorage}`
+    );
+  } else {
+    backupStorage = 'bucket-1';
+    console.log(
+      `AWS credentials missing or EVEREST_BUCKETS_NAMESPACES_MAP does not include ["everest-testing","everest-ui"], so using MinIO bucket ${backupStorage}`
+    );
+  }
+
+  return backupStorage;
+}
+
 [
   { db: 'psmdb', size: 3 },
   { db: 'pxc', size: 3 },
@@ -106,6 +146,7 @@ test.describe.configure({ retries: 0 });
       test.describe.configure({ timeout: 1_200_000 }); // 20 minutes
 
       const clusterName = `${db}-${size}-pitr`;
+      let zephyrId: string;
 
       let storageClasses = [];
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
@@ -120,6 +161,8 @@ test.describe.configure({ retries: 0 });
           request
         );
         storageClasses = storageClassNames;
+
+        backupStorage = await getBackupStorage();
       });
 
       test(`Cluster creation [${db} size ${size}]`, async ({
@@ -157,7 +200,7 @@ test.describe.configure({ retries: 0 });
         });
 
         await test.step('Populate backups, enable PITR', async () => {
-          await addFirstScheduleInDBWizard(page);
+          await addFirstScheduleInDBWizard(page, backupStorage);
           const pitrCheckbox = page
             .getByTestId('switch-input-pitr-enabled')
             .getByRole('checkbox');
@@ -172,8 +215,12 @@ test.describe.configure({ retries: 0 });
               );
               await expect(pitrStorageLocation).toBeVisible();
               await expect(pitrStorageLocation).not.toBeEmpty();
+              await pitrStorageLocation.click();
+              await page.getByRole('option', { name: backupStorage }).click();
             } else {
-              await expect(page.getByText('Storage: bucket-1')).toHaveCount(2);
+              await expect(
+                page.getByText(`Storage: ${backupStorage}`)
+              ).toHaveCount(2);
             }
           }
 
@@ -202,8 +249,10 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Initializing', 30000);
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          if (db !== 'postgresql') {
+            await waitForStatus(page, clusterName, 'Initializing', 30000);
+          }
+          await waitForStatus(page, clusterName, 'Up', 900000);
         });
 
         await test.step('Update PSMDB cluster PITR uploadIntervalSec', async () => {
@@ -328,7 +377,7 @@ test.describe.configure({ retries: 0 });
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 900000);
 
         await gotoDbClusterRestores(page, clusterName);
         await waitForStatus(page, 'restore-', 'Succeeded', 120000);
@@ -411,22 +460,25 @@ test.describe.configure({ retries: 0 });
         await findDbAndClickActions(page, clusterName, 'Restore from a backup');
         await page
           .getByTestId('radio-option-fromPITR')
-          .click({ timeout: 5000 });
+          .click({ timeout: 10000 });
         await expect(page.getByTestId('radio-option-fromPITR')).toBeChecked({
-          timeout: 5000,
+          timeout: 10000,
         });
         await expect(
           page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
-        ).toBeVisible({ timeout: 5000 });
+        ).toBeVisible({ timeout: 10000 });
         await expect(
           page.getByPlaceholder('DD/MM/YYYY at hh:mm:ss')
-        ).not.toBeEmpty({ timeout: 5000 });
+        ).not.toBeEmpty({ timeout: 10000 });
 
-        await page.getByTestId('form-dialog-restore').click({ timeout: 5000 });
+        await page.getByTestId('CalendarIcon').click();
+        await page.getByRole('button', { name: 'OK' }).click();
+
+        await page.getByTestId('form-dialog-restore').click({ timeout: 10000 });
 
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Restoring', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 900000);
 
         await gotoDbClusterRestores(page, clusterName);
         await waitForStatus(page, 'restore-', 'Succeeded', 120000);
@@ -449,7 +501,8 @@ test.describe.configure({ retries: 0 });
         }
       });
 
-      test(`PITR restore to new cluster [${db} size ${size}]`, async ({
+      zephyrId = zephyrMap[`restore-newdb-${db}`];
+      test(`${zephyrId} - PITR restore to new cluster [${db} size ${size}]`, async ({
         page,
       }) => {
         await test.step('Create a backup to restore from', async () => {
@@ -462,6 +515,7 @@ test.describe.configure({ retries: 0 });
           await expect(
             page.getByTestId('text-input-storage-location')
           ).not.toBeEmpty();
+
           await page.getByTestId('form-dialog-create').click();
           await waitForStatus(
             page,
@@ -517,6 +571,9 @@ test.describe.configure({ retries: 0 });
           ).not.toBeEmpty({ timeout: 5000 });
 
           // Submit and open DB creation wizard
+          await page.getByTestId('CalendarIcon').click();
+          await page.getByRole('button', { name: 'OK' }).click();
+
           await page.getByTestId('form-dialog-create').click({ timeout: 5000 });
           let currentUrl = page.url();
           expect(currentUrl).toContain('/databases/new');
@@ -530,11 +587,11 @@ test.describe.configure({ retries: 0 });
 
         await test.step('Wait for the new cluster to be created and ready', async () => {
           await page.goto('/databases');
-          await waitForStatus(page, newClusterName, 'Initializing', 30000);
           if (db !== 'postgresql') {
-            await waitForStatus(page, newClusterName, 'Restoring', 600000);
+            await waitForStatus(page, newClusterName, 'Initializing', 30000);
           }
-          await waitForStatus(page, newClusterName, 'Up', 600000);
+          await waitForStatus(page, newClusterName, 'Restoring', 600000);
+          await waitForStatus(page, newClusterName, 'Up', 900000);
         });
 
         await test.step('Verify the restore was successful', async () => {

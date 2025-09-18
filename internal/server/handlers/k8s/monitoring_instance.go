@@ -42,13 +42,6 @@ func (h *k8sHandler) CreateMonitoringInstance(ctx context.Context, namespace str
 }
 
 func (h *k8sHandler) DeleteMonitoringInstance(ctx context.Context, namespace, name string) error {
-	used, err := h.kubeConnector.IsMonitoringConfigUsed(ctx, types.NamespacedName{Namespace: namespace, Name: name})
-	if err != nil {
-		return err
-	}
-	if used {
-		return fmt.Errorf("monitoring instance '%s' in namespace '%s' is in use", name, namespace)
-	}
 	delMCObj := &everestv1alpha1.MonitoringConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -176,7 +169,7 @@ func (h *k8sHandler) createMonitoringK8sResources(
 		if dErr := h.kubeConnector.DeleteSecret(c, delObj); dErr != nil {
 			return nil, fmt.Errorf("failed cleaning up the secret because failed creating monitoring instance")
 		}
-		return nil, fmt.Errorf("failed creating monitoring instance")
+		return nil, err
 	}
 
 	return created, nil
