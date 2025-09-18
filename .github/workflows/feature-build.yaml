@@ -142,7 +142,7 @@ jobs:
 
 
       - name: Operator - check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
@@ -217,6 +217,8 @@ jobs:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
+          build-args: |
+            FLAGS= -X 'github.com/percona/everest-operator/internal/consts.Version=${{ env.VERSION }}'
 
       - name: Operator - push everest-operator-bundle image
         uses: docker/build-push-action@v6
@@ -227,7 +229,7 @@ jobs:
           file: everest-operator/bundle.Dockerfile
 
       - name: Helm - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/percona-helm-charts
           ref: ${{ env.HELM_BRANCH }}
@@ -245,7 +247,7 @@ jobs:
           cp -r percona-helm-charts/charts/everest /tmp/${{ env.VERSION }}/helm-chart
 
       - name: Operator - check out again
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
@@ -258,7 +260,7 @@ jobs:
           git push -d origin $VERSION_TAG
 
       - name: VS - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: Percona-Lab/percona-version-service
           ref: ${{ env.VS_BRANCH }}
@@ -289,30 +291,12 @@ jobs:
 
 
       - name: Catalog - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-catalog
           ref: ${{ env.EVEREST_CATALOG_BRANCH }}
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
-
-      - name: Catalog - update veneer file
-        run: |
-          cd everest-catalog/tools
-          go run . \
-            --veneer-file ../veneer/everest-operator.yaml \
-            --channel fast-v0  \
-            --new-version ${{ env.VERSION }} 
-          
-          cd ..
-          curl -Lo /tmp/opm https://github.com/operator-framework/operator-registry/releases/download/v1.48.0/${OS}-${ARCH}-opm
-          chmod +x /tmp/opm
-          /tmp/opm alpha render-template basic --skip-tls -o yaml < veneer/everest-operator.yaml > catalog/everest-operator/catalog.yaml
-          # Check if catalog has the new version listed
-          if ! grep -q "$VERSION$" catalog/everest-operator/catalog.yaml; then
-            echo "catalog/everest-operator/catalog.yaml does not include the version $VERSION"
-            exit 1
-          fi
 
       - name: Catalog - setup Docker meta for everest-catalog
         id: catalog_meta
@@ -333,7 +317,7 @@ jobs:
 
 
       - name: Everest - check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
           ref: ${{ env.EVEREST_BRANCH }}

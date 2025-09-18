@@ -20,8 +20,11 @@ import Components from './pages/db-cluster-details/components';
 import LoginCallback from 'components/login-callback/LoginCallback';
 import { DbClusterContextProvider } from 'pages/db-cluster-details/dbCluster.context';
 import Logout from 'pages/logout';
-import PodSchedulingPolicies from 'pages/settings/pod-scheduling-policies';
-import PolicyDetails from 'pages/settings/pod-scheduling-policies/policy-details';
+import Policies from 'pages/settings/policies/policies';
+import PoliciesList from 'pages/settings/policies/pod-scheduling-policies/policies-list';
+import PolicyDetails from 'pages/settings/policies/pod-scheduling-policies/policy-details';
+import LoadBalancerConfiguration from 'pages/settings/policies/load-balancer-configuration';
+import LoadBalancerConfigDetails from 'pages/settings/policies/load-balancer-configuration/load-balancer-config-detials/load-balancer-config-detials';
 
 const router = createBrowserRouter([
   {
@@ -100,16 +103,26 @@ const router = createBrowserRouter([
             element: <Namespaces />,
           },
           {
-            path: SettingsTabs.podSchedulingPolicies,
-            element: <PodSchedulingPolicies />,
-            children: [
-              {
-                path: ':name',
-                element: <PolicyDetails />,
-              },
-            ],
+            path: SettingsTabs.policies,
+            element: <Policies />,
           },
         ],
+      },
+      {
+        path: '/settings/policies/pod-scheduling/',
+        element: <PoliciesList />,
+      },
+      {
+        path: '/settings/policies/pod-scheduling/:name',
+        element: <PolicyDetails />,
+      },
+      {
+        path: '/settings/policies/load-balancer-configuration',
+        element: <LoadBalancerConfiguration />,
+      },
+      {
+        path: '/settings/policies/load-balancer-configuration/:configName',
+        element: <LoadBalancerConfigDetails />,
       },
       {
         path: '/settings/namespaces/:namespace',
