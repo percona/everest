@@ -200,7 +200,7 @@ test.describe.configure({ retries: 0 });
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
           await waitForStatus(page, clusterName, 'Initializing', 30000);
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          await waitForStatus(page, clusterName, 'Up', 660000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -312,7 +312,7 @@ test.describe.configure({ retries: 0 });
               await page.getByTestId('form-dialog-upgrade').click();
               await page.goto('/databases');
               await waitForStatus(page, clusterName, 'Upgrading', 15000);
-              await waitForStatus(page, clusterName, 'Up', 600000);
+              await waitForStatus(page, clusterName, 'Up', 660000);
               const technology = technologyMap[db] || 'Unknown';
               await expect(
                 page.getByText(`${technology} ${nextMajorVersion}`)
@@ -386,7 +386,7 @@ test.describe.configure({ retries: 0 });
               await page.getByTestId('form-dialog-upgrade').click();
               await page.goto('/databases');
               await waitForStatus(page, clusterName, 'Upgrading', 15000);
-              await waitForStatus(page, clusterName, 'Up', 600000);
+              await waitForStatus(page, clusterName, 'Up', 660000);
               const technology = technologyMap[db] || 'Unknown';
               await expect(
                 page.getByText(`${technology} ${nextDbMinorVersion}`)

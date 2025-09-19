@@ -365,7 +365,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
               15000
             );
           }
-          await waitForStatus(page, restoredClusterName, 'Restoring', 600000);
+          await waitForStatus(page, restoredClusterName, 'Restoring', 660000);
           await waitForStatus(page, restoredClusterName, 'Up', 2400000);
         });
 

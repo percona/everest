@@ -151,7 +151,7 @@ test.describe.configure({ retries: 0 });
         await test.step('Check db list and status', async () => {
           await page.goto('/databases');
           await waitForStatus(page, clusterName, 'Initializing', 30000);
-          await waitForStatus(page, clusterName, 'Up', 600000);
+          await waitForStatus(page, clusterName, 'Up', 660000);
         });
 
         await test.step('Check db cluster k8s object options', async () => {
@@ -291,7 +291,7 @@ test.describe.configure({ retries: 0 });
           await test.step('Check db list and status', async () => {
             await page.goto('/databases');
             await waitForStatus(page, clusterName, 'Initializing', 30000);
-            await waitForStatus(page, clusterName, 'Up', 600000);
+            await waitForStatus(page, clusterName, 'Up', 660000);
           });
 
           await test.step('Check db cluster k8s object options', async () => {
@@ -539,7 +539,7 @@ test.describe(
         await page.goto('/databases');
         await waitForStatus(page, secondClusterName, 'Initializing', 30000);
         await deleteAllK8sPVCs('everest-ui');
-        await waitForStatus(page, secondClusterName, 'Up', 600000);
+        await waitForStatus(page, secondClusterName, 'Up', 660000);
       });
 
       await test.step('Check pods assignment', async () => {

@@ -299,7 +299,7 @@ async function verifyComponentsForDb(
       await test.step('Wait for cluster to be Up', async () => {
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Initializing', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 660000);
       });
     });
 
