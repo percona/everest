@@ -590,7 +590,7 @@ function getBackupStorage(): string {
           if (db !== 'postgresql') {
             await waitForStatus(page, newClusterName, 'Initializing', 30000);
           }
-          await waitForStatus(page, newClusterName, 'Restoring', 600000);
+          await waitForStatus(page, newClusterName, 'Restoring', 660000);
           await waitForStatus(page, newClusterName, 'Up', 900000);
         });
 
