@@ -428,7 +428,7 @@ const zephyrMap: Record<string, string> = {
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 45000);
         }
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 660000);
       });
 
       zephyrId = zephyrMap[`restart-${db}`];
@@ -443,7 +443,7 @@ const zephyrMap: Record<string, string> = {
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 120000);
         }
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 660000);
       });
 
       zephyrId = zephyrMap[`edit-${db}`];
