@@ -15,6 +15,36 @@
 
 import { execSync } from 'child_process';
 
+export const getK8sProvider = async (): Promise<string> => {
+  try {
+    // Get server version JSON
+    const versionCmd = `kubectl version -ojson`;
+    const versionOutput = execSync(versionCmd).toString();
+    const version = JSON.parse(versionOutput);
+
+    const gitVersion: string = version?.serverVersion?.gitVersion ?? "";
+
+    // Quick checks for GKE/EKS
+    if (gitVersion.includes("gke")) {
+      return "GKE";
+    }
+    if (gitVersion.includes("eks")) {
+      return "EKS";
+    }
+
+    // Check for OpenShift APIs (ROSA is OpenShift on AWS)
+    try {
+      execSync(`kubectl api-resources --api-group=config.openshift.io`, { stdio: 'ignore' });
+      return "OpenShift";
+    } catch {
+      return "unknown";
+    }
+  } catch (error) {
+    console.error(`Error detecting Kubernetes provider: ${error}`);
+    throw error;
+  }
+};
+
 export const getK8sUid = async () => {
   try {
     const command = `kubectl get namespace kube-system -o jsonpath='{.metadata.uid}'`;
