@@ -35,6 +35,7 @@ import { ResourcesEditModal } from './resources';
 import {
   cpuParser,
   getResourcesDetailedString,
+  getTotalResourcesDetailedString,
   memoryParser,
 } from 'utils/k8ResourceParser';
 import { dbEngineToDbType } from '@percona/utils';
@@ -77,7 +78,7 @@ export const ResourcesDetails = ({
   const proxies = isProxy(dbCluster.spec.proxy)
     ? (dbCluster.spec.proxy.replicas || 0).toString()
     : '';
-  const numberOfProxiesInt = parseInt(proxies, 10);
+  const numberOfProxiesInt = proxies ? Math.floor(parseInt(proxies, 10)) : 0;
   const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
@@ -211,21 +212,23 @@ export const ResourcesDetails = ({
           </OverviewSection>
           {numberOfProxiesInt > 0 && (
             <OverviewSection
-              title={`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']} ${dbType === DbType.Mongo ? 'per shard' : ''}`}
+              title={`${proxies} ${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}`}
               loading={loading}
             >
               <OverviewSectionRow
                 dataTestId={`${getProxyUnitNamesFromDbType(dbEngineToDbType(dbCluster.spec.engine.type))[numberOfProxiesInt > 1 ? 'plural' : 'singular']}-cpu`}
                 label={Messages.fields.cpu}
-                content={getResourcesDetailedString(
+                content={getTotalResourcesDetailedString(
                   cpuParser(proxyCpu.toString() || '0'),
+                  parseInt(proxies, 10),
                   ''
                 )}
               />
               <OverviewSectionRow
                 label={Messages.fields.memory}
-                content={getResourcesDetailedString(
+                content={getTotalResourcesDetailedString(
                   parsedProxyMemoryValues.value,
+                  parseInt(proxies, 10),
                   'GB'
                 )}
               />
