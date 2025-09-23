@@ -37,6 +37,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/flowcontrol"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -134,8 +135,10 @@ func New(kubeconfigPath string, l *zap.SugaredLogger) (KubernetesConnector, erro
 // NewInCluster creates a new kubernetes client using incluster authentication.
 func NewInCluster(l *zap.SugaredLogger, ctx context.Context, cacheOptions *cache.Options) (KubernetesConnector, error) {
 	restConfig := ctrl.GetConfigOrDie()
-	restConfig.QPS = defaultQPSLimit
-	restConfig.Burst = defaultBurstLimit
+	// restConfig.QPS = defaultQPSLimit
+	// restConfig.QPS = -1 // disable QPS limit, because it causes issues with large clusters
+	// restConfig.Burst = defaultBurstLimit
+	restConfig.RateLimiter = flowcontrol.NewFakeAlwaysRateLimiter()
 
 	var k8sCache cache.Cache
 	var err error

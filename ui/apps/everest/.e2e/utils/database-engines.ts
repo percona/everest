@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { APIRequestContext, expect } from '@playwright/test';
-import { getTokenFromLocalStorage } from './localStorage';
+import { getCITokenFromLocalStorage } from './localStorage';
 
 export const getEnginesList = async (
   token: string,
@@ -66,7 +66,7 @@ export const getEnginesLatestRecommendedVersions = async (
     psmdb: '',
     postgresql: '',
   };
-  const token = await getTokenFromLocalStorage();
+  const token = await getCITokenFromLocalStorage();
   const engines = await getEnginesList(token, namespace, request);
   engines.forEach((engine) => {
     const { type } = engine.spec;

@@ -15,50 +15,69 @@
 
 import { expect, test } from '@playwright/test';
 import { findRowAndClickActions, waitForDelete } from '@e2e/utils/table';
-import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import {EVEREST_CI_NAMESPACES, TIMEOUTS} from '@e2e/constants';
+import {goToUrl, limitedSuffixedName} from "@e2e/utils/generic";
+import {getCITokenFromLocalStorage} from "@e2e/utils/localStorage";
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
-test.describe.serial('Monitoring List', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/settings/monitoring-endpoints');
-    await page.getByTestId('add-monitoring-endpoint').waitFor();
-  });
-  const monitoringEndpointName = 'monitoring-test';
+test.describe.serial('Monitoring Instances', () => {
+  const monitoringConfigName = limitedSuffixedName('pr-set-mon'),
+    namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
+    let token: string;
 
-  test('Create Monitoring Endpoint', async ({ page }) => {
+  test.beforeAll(async ({}) => {
+    token = await getCITokenFromLocalStorage();
+    expect(token).not.toHaveLength(0)
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await goToUrl(page, '/settings/monitoring-endpoints');
+  });
+
+  test.afterAll(async ({request}) => {
+    await expect(async () => {
+      const apiResp = await request.delete(`/v1/namespaces/${namespace}/monitoring-instances/${monitoringConfigName}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        code = apiResp.status()
+      expect(code === 204 || code === 404).toBeTruthy()
+    }).toPass({
+      intervals: [1000],
+      timeout: TIMEOUTS.TenSeconds,
+    })
+  });
+
+  test('Create Monitoring Instance', async ({ page }) => {
     await page.getByTestId('add-monitoring-endpoint').click();
+    await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
 
     // filling out the form
-    await page.getByTestId('text-input-name').fill(monitoringEndpointName);
+    await page.getByTestId('text-input-name').fill(monitoringConfigName);
     const namespaces = page.getByTestId('text-input-namespace');
     await namespaces.click();
-    await expect(
-      page
-        .getByRole('option')
-        .filter({ hasText: EVEREST_CI_NAMESPACES.EVEREST_UI })
-    ).toBeVisible();
-    await page.getByRole('option').last().click();
+    const nsOption = page.getByRole('option').filter({ hasText: namespace });
+    await expect(nsOption).toBeVisible();
+    await nsOption.click();
     await page.getByTestId('text-input-url').fill(MONITORING_URL);
     await page.getByTestId('text-input-user').fill(MONITORING_USER);
     await page.getByTestId('text-input-password').fill(MONITORING_PASSWORD);
-
     await page.getByTestId('form-dialog-add').click();
-
-    await expect(
-      page
-        .locator('.MuiTableRow-root')
-        .filter({ hasText: monitoringEndpointName })
-    ).toBeVisible();
   });
 
-  test('Edit Monitoring Endpoint', async ({ page }) => {
-    await page
+  test('List Monitoring Instance', async ({ page }) => {
+    const row = page
       .locator('.MuiTableRow-root')
-      .filter({ hasText: monitoringEndpointName })
-      .getByTestId('MoreHorizIcon')
-      .click();
+      .filter({hasText: monitoringConfigName});
+    await expect(row).toBeVisible();
+    await expect(row.getByText(MONITORING_URL)).toBeVisible();
+    await expect(row.getByText(namespace)).toBeVisible();
+  });
 
-    await page.getByRole('menuitem', { name: 'Edit' }).click();
+  test('Edit Monitoring Instance', async ({ page }) => {
+    await findRowAndClickActions(page, monitoringConfigName, 'Edit');
 
     await expect(page.getByTestId('text-input-name')).toBeDisabled();
     await expect(page.getByTestId('text-input-namespace')).toBeDisabled();
@@ -95,9 +114,9 @@ test.describe.serial('Monitoring List', () => {
     await page.getByTestId('form-dialog-edit').click();
   });
 
-  test('Delete Monitoring Endpoint', async ({ page }) => {
-    await findRowAndClickActions(page, monitoringEndpointName, 'Delete');
+  test('Delete Monitoring Instance', async ({ page }) => {
+    await findRowAndClickActions(page, monitoringConfigName, 'Delete');
     await page.getByTestId('confirm-dialog-delete').click();
-    await waitForDelete(page, monitoringEndpointName, 10000);
+    await waitForDelete(page, monitoringConfigName, TIMEOUTS.TenSeconds);
   });
 });

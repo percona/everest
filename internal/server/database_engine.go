@@ -29,7 +29,7 @@ import (
 func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) error {
 	result, err := e.handler.ListDatabaseEngines(ctx.Request().Context(), namespace)
 	if err != nil {
-		e.l.Errorf("ListDatabaseEngines failed: %w", err)
+		e.l.Errorf("ListDatabaseEngines failed: %v", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -39,7 +39,7 @@ func (e *EverestServer) ListDatabaseEngines(ctx echo.Context, namespace string) 
 func (e *EverestServer) GetDatabaseEngine(ctx echo.Context, namespace, name string) error {
 	result, err := e.handler.GetDatabaseEngine(ctx.Request().Context(), namespace, name)
 	if err != nil {
-		e.l.Errorf("GetDatabaseEngine failed: %w", err)
+		e.l.Errorf("GetDatabaseEngine failed: %v", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -58,7 +58,7 @@ func (e *EverestServer) UpdateDatabaseEngine(ctx echo.Context, namespace, name s
 
 	result, err := e.handler.UpdateDatabaseEngine(ctx.Request().Context(), dbe)
 	if err != nil {
-		e.l.Errorf("UpdateDatabaseEngine failed: %w", err)
+		e.l.Errorf("UpdateDatabaseEngine failed: %v", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -71,7 +71,7 @@ func (e *EverestServer) GetUpgradePlan(
 ) error {
 	result, err := e.handler.GetUpgradePlan(ctx.Request().Context(), namespace)
 	if err != nil {
-		e.l.Errorf("GetUpgradePlan failed: %w", err)
+		e.l.Errorf("GetUpgradePlan failed: %v", err)
 		return err
 	}
 	return ctx.JSON(http.StatusOK, result)
@@ -80,7 +80,7 @@ func (e *EverestServer) GetUpgradePlan(
 // ApproveUpgradePlan starts the upgrade of operators in the provided namespace.
 func (e *EverestServer) ApproveUpgradePlan(ctx echo.Context, namespace string) error {
 	if err := e.handler.ApproveUpgradePlan(ctx.Request().Context(), namespace); err != nil {
-		e.l.Errorf("ApproveUpgradePlan failed: %w", err)
+		e.l.Errorf("ApproveUpgradePlan failed: %v", err)
 		return err
 	}
 	return nil

@@ -18,7 +18,7 @@ import {
   gotoDbClusterBackups,
   gotoDbClusterRestores,
 } from '@e2e/utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import {
   moveForward,
@@ -83,7 +83,7 @@ function getNextScheduleMinute(incrementMinutes: number): string {
       const monitoringName = 'e2e-endpoint-0';
 
       test.beforeAll(async ({ request }) => {
-        token = await getTokenFromLocalStorage();
+        token = await getCITokenFromLocalStorage();
 
         const { storageClassNames = [] } = await getClusterDetailedInfo(
           token,

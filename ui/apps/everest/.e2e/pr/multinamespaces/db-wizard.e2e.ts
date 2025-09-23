@@ -33,13 +33,13 @@ test.describe('Namespaces DB Wizard', () => {
       await dbEnginesButtons.nth(i).click();
       await page.getByTestId('k8s-namespace-autocomplete').click();
 
-      expect(
+      await expect(
         page.getByRole('option', { name: EVEREST_CI_NAMESPACES.EVEREST_UI })
       ).toBeVisible();
       const dbOnlyNamespace = page.getByRole('option', {
         name: `${dbEngineType === DbEngineType.POSTGRESQL ? 'pg' : dbEngineType}-only`,
       });
-      expect(dbOnlyNamespace).toBeVisible();
+      await expect(dbOnlyNamespace).toBeVisible();
       expect(await page.getByRole('option').count()).toBe(2);
 
       await dbOnlyNamespace.click();

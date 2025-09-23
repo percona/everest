@@ -4,7 +4,7 @@ import { pxcDBCluster, mongoDBCluster, postgresDBCluster } from './testData';
 import { getDbClustersListAPI } from '@e2e/utils/db-clusters-list';
 import { TIMEOUTS } from '@e2e/constants';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { prepareTestDB } from '@e2e/utils/db-cmd-line';
 
 test.describe.configure({ retries: 0 });
@@ -14,7 +14,7 @@ test(
   'Pre upgrade setup',
   { tag: '@pre-upgrade' },
   async ({ page, request }) => {
-    const token = await getTokenFromLocalStorage();
+    const token = await getCITokenFromLocalStorage();
 
     await test.step('Create DB clusters', async () => {
       await createDbClusterFn(request, {

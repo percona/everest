@@ -16,53 +16,25 @@
 import { test, expect } from '@playwright/test';
 import { moveForward } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
 import { DBClusterDetailsTabs } from '../../../src/pages/db-cluster-details/db-cluster-details.types';
 import {
   openCreateScheduleDialogFromDBWizard,
   selectDbEngine,
 } from '../db-cluster/db-wizard/db-wizard-utils';
-import { waitForInitializingState } from '@e2e/utils/table';
 
-test.describe.serial('Namespaces: Backup Storage availability', () => {
-  const pgDbName = 'pg-db';
-  const pxcDbName = 'pxc-db';
+const pgDbName = 'pr-mul-ns-db-pg';
+const pxcDbName = 'pr-mul-ns-db-pxc';
 
-  test.beforeAll(async ({ request }) => {
-    await createDbClusterFn(
-      request,
-      {
-        dbName: pgDbName,
-        dbType: 'postgresql',
-        numberOfNodes: '1',
-      },
-      EVEREST_CI_NAMESPACES.PG_ONLY
-    );
+test.describe.parallel('Namespaces: Backup Storage availability', () => {
 
-    await createDbClusterFn(
-      request,
-      {
-        dbName: pxcDbName,
-        dbType: 'mysql',
-        numberOfNodes: '1',
-        backup: {
-          enabled: false,
-        },
-      },
-      EVEREST_CI_NAMESPACES.PXC_ONLY
-    );
-  });
-
-  test.afterAll(async ({ request }) => {
-    await deleteDbClusterFn(request, pgDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
-    await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/databases');
   });
 
   test('Backup Storage autocomplete in DB Wizard has only backup storages in selected namespace', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await selectDbEngine(page, 'pxc');
 
     // setting everest-pxc namespace
@@ -104,8 +76,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
   test('Backup storage autocomplete in create new backup modal has only available storages for namespace', async ({
     page,
   }) => {
-    await page.goto('/databases');
-    await waitForInitializingState(page, pgDbName);
     await findDbAndClickRow(page, pgDbName);
 
     // go to backups tab in db-cluster details
@@ -123,7 +93,6 @@ test.describe.serial('Namespaces: Backup Storage availability', () => {
   test('Backup storage autocomplete in create schedule modal has only available storages for namespace', async ({
     page,
   }) => {
-    await page.goto('/databases');
     await findDbAndClickRow(page, pxcDbName);
 
     // go to backups tab in db-cluster details

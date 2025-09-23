@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 
 const generateMockEngineData = ({
@@ -61,11 +61,11 @@ const generateMockEngineData = ({
   ],
 });
 
-test.describe('Operator upgrades', () => {
+test.describe.parallel('Operator upgrades', () => {
   let namespaces = [];
 
   test.beforeAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
+    const token = await getCITokenFromLocalStorage();
     namespaces = await getNamespacesFn(token, request);
   });
 

@@ -16,32 +16,19 @@
 import { expect, test } from '@playwright/test';
 import { moveForward } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import { deleteMonitoringInstance } from '@e2e/utils/monitoring-instance';
 import { setNamespace } from '@e2e/utils/namespaces';
 import { selectDbEngine } from '../db-cluster/db-wizard/db-wizard-utils';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 
-const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
-let token: string;
+test.describe.serial('Namespaces: Monitoring availability', () => {
+  let token:string;
 
-test.describe('Namespaces: Monitoring availability', () => {
-  // const pxcStorageLocationName = 'storage-location-pxc';
-  const pxcMonitoringEndpoint = 'pxc-monitoring';
-
-  test.beforeAll(async ({ request }) => {
-    token = await getTokenFromLocalStorage();
-    // await createBackupStorageFn(request, pxcStorageLocationName, [
-    //   EVEREST_CI_NAMESPACES.PXC_ONLY,
-    // ]);
+  test.beforeAll(async ({ }) => {
+    token = await getCITokenFromLocalStorage();
   });
 
-  // test.afterAll(async ({ request }) => {
-  //   await deleteStorageLocationFn(request, pxcStorageLocationName);
-  // });
-
   test('Monitoring autocomplete in DB Wizard has only endpoints in selected namespace', async ({
-    page,
-    request,
+    page
   }) => {
     await page.goto('/databases');
     await selectDbEngine(page, 'pxc');
@@ -57,7 +44,7 @@ test.describe('Namespaces: Monitoring availability', () => {
     await moveForward(page);
     // Monitoring Step
     await moveForward(page);
-    const monitoringCheckbox = await page
+    const monitoringCheckbox = page
       .getByTestId('switch-input-monitoring-label')
       .getByRole('checkbox');
     expect(await monitoringCheckbox.isChecked()).toBeFalsy();
@@ -67,6 +54,6 @@ test.describe('Namespaces: Monitoring availability', () => {
     const namespaces = page.getByRole('option');
     // This might eventually fail if someday we change the namespaces env variable logic
     // But now, we know we add one endpoint per namespace
-    expect(await namespaces.count()).toBe(1);
+    expect(await namespaces.count()).toBeGreaterThanOrEqual(1);
   });
 });

@@ -14,7 +14,7 @@ import {
   pxcDBCluster,
 } from './testData';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 import { getExpectedOperatorVersions } from '@e2e/upgrade/helper';
 import { getDbAvailableUpgradeVersionK8S } from '@e2e/utils/db-cluster';
@@ -39,7 +39,7 @@ test.describe.configure({ timeout: TIMEOUTS.FifteenMinutes });
 
 test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
   test.beforeAll(async ({ request }) => {
-    token = await getTokenFromLocalStorage();
+    token = await getCITokenFromLocalStorage();
     [namespace] = await getNamespacesFn(token, request);
   });
 

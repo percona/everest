@@ -1,4 +1,5 @@
 import { expect, Page } from '@playwright/test';
+import {TIMEOUTS} from "@e2e/constants";
 
 export const storageLocationAutocompleteEmptyValidationCheck = async (
   page: Page,
@@ -31,13 +32,15 @@ const waitForStepHeaderToChange = async (
 
 export const moveForward = async (page: Page) => {
   await waitForStepHeaderToChange(page, 'db-wizard-continue-button');
+  await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
 };
 
 export const moveBack = async (page: Page) => {
   await waitForStepHeaderToChange(page, 'db-wizard-previous-button');
+  await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
 };
 
-export const goToStep = (
+export const goToStep = async (
   page: Page,
   step:
     | 'basic-information'
@@ -45,7 +48,10 @@ export const goToStep = (
     | 'backups'
     | 'advanced-configurations'
     | 'monitoring'
-) => page.getByTestId(`button-edit-preview-${step}`).click();
+) => {
+  await page.getByTestId(`button-edit-preview-${step}`).click();
+  await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+}
 
 export const setPitrEnabledStatus = async (page: Page, checked: boolean) => {
   const checkbox = page

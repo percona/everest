@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { expect, Page, test } from '@playwright/test';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import {
   deleteDbCluster,
   findDbAndClickRow,
@@ -50,7 +50,7 @@ const openResourcesModal = async (page: Page) => {
       let storageClasses = [];
 
       test.beforeAll(async ({ request }) => {
-        token = await getTokenFromLocalStorage();
+        token = await getCITokenFromLocalStorage();
 
         const { storageClassNames = [] } = await getClusterDetailedInfo(
           token,

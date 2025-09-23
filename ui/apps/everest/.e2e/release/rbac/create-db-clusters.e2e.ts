@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import {
@@ -44,7 +44,7 @@ test.describe(
     const pgDb = 'create-pg-0';
 
     test.beforeAll(async ({ request }) => {
-      token = await getTokenFromLocalStorage();
+      token = await getCITokenFromLocalStorage();
 
       const { storageClassNames = [] } = await getClusterDetailedInfo(
         token,
@@ -188,7 +188,7 @@ test.describe(
     const psmdbDb = 'create-psmdb-1';
 
     test.beforeAll(async ({ request }) => {
-      token = await getTokenFromLocalStorage();
+      token = await getCITokenFromLocalStorage();
 
       const { storageClassNames = [] } = await getClusterDetailedInfo(
         token,

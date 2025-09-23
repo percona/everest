@@ -15,7 +15,7 @@
 
 import { test as setup } from '@playwright/test';
 import 'dotenv/config';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { getCITokenFromLocalStorage } from '../utils/localStorage';
 import { doBackupCall } from '../utils/request';
 import { getBucketNamespacesMap } from '../constants';
 
@@ -31,8 +31,8 @@ const {
 } = process.env;
 
 setup.describe.serial('Backup Storage setup', () => {
-  setup('Create Backup storages', async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
+  setup('Create Backup Storages', async ({ request }) => {
+    const token = await getCITokenFromLocalStorage();
     const promises: Promise<any>[] = [];
     // This has a nested array structure, in the form of
     // [
@@ -72,13 +72,15 @@ setup.describe.serial('Backup Storage setup', () => {
           };
 
       promises.push(
-        doBackupCall(() =>
-          request.post(`/v1/namespaces/${namespace}/backup-storages/`, {
-            data,
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
+        doBackupCall(
+          () =>
+            request.post(`/v1/namespaces/${namespace}/backup-storages/`, {
+              data,
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }),
+          1
         )
       );
     });

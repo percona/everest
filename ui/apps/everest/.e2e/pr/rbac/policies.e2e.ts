@@ -7,7 +7,7 @@ import {
 import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import {
   moveForward,
   populateBasicInformation,
@@ -31,7 +31,7 @@ test.describe('Pod scheduling policies RBAC', () => {
       ['database-engines', '*', '*/*'],
     ]);
     const namespaces = await getNamespacesFn(
-      await getTokenFromLocalStorage(),
+      await getCITokenFromLocalStorage(),
       request
     );
     namespace = namespaces[0];

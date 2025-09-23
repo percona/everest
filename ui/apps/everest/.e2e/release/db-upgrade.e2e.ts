@@ -18,7 +18,7 @@ import {
   deleteDbCluster,
   gotoDbClusterBackups,
 } from '@e2e/utils/db-clusters-list';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import {
   moveForward,
@@ -81,7 +81,7 @@ test.describe.configure({ retries: 0 });
       let crVersion: string | undefined;
 
       test.beforeAll(async ({ request }) => {
-        token = await getTokenFromLocalStorage();
+        token = await getCITokenFromLocalStorage();
 
         const { storageClassNames = [] } = await getClusterDetailedInfo(
           token,

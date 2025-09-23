@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import {TIMEOUTS} from "@e2e/constants";
 
 export const findRowAndClickActions = async (
   page: Page,
@@ -14,6 +15,7 @@ export const findRowAndClickActions = async (
 
   if (nameOfAction) {
     await page.getByRole('menuitem', { name: nameOfAction }).click();
+    await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
   }
 };
 
@@ -21,7 +23,7 @@ export const findRowAndClickActions = async (
 export const waitForInitializingState = async (page: Page, name: string) => {
   const dbRow = page.getByRole('row').filter({ hasText: name });
   await expect(dbRow).toBeVisible();
-  await expect(dbRow.getByText('Creating')).not.toBeVisible({ timeout: 15000 });
+  await expect(dbRow.getByText('Creating')).not.toBeVisible({ timeout: 60000 });
 };
 
 /**

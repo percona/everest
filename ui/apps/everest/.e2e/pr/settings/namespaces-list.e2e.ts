@@ -14,14 +14,14 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
-import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import {EVEREST_CI_NAMESPACES, TIMEOUTS} from '@e2e/constants';
 
-test.describe('Namespaces List', () => {
+test.describe.parallel('Namespaces List', () => {
   let namespaces = [];
   test.beforeAll(async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
+    const token = await getCITokenFromLocalStorage();
     namespaces = await getNamespacesFn(token, request);
   });
 
@@ -36,13 +36,18 @@ test.describe('Namespaces List', () => {
     await page.goto('/settings/namespaces');
     await expect(page.getByText('Operator')).toBeVisible();
     await expect(page.getByText('No namespaces added')).not.toBeVisible();
-    const rows = page.locator('.MuiTableRow-root');
-    await expect(
-      page.getByText(EVEREST_CI_NAMESPACES.EVEREST_UI)
-    ).toBeVisible();
-    expect(await rows.count()).toBe(5);
-    expect(await page.getByRole('row', { name: 'pxc' }).count()).toBe(2);
-    expect(await page.getByRole('row', { name: 'psmdb' }).count()).toBe(2);
-    expect(await page.getByRole('row', { name: 'postgresql' }).count()).toBe(2);
+
+    await expect(async () => {
+      await page
+        .getByTestId('namespaces')
+        .getByText(EVEREST_CI_NAMESPACES.EVEREST_UI)
+        .waitFor({timeout: TIMEOUTS.TenSeconds})
+
+      const rows = page.locator('.MuiTableRow-root');
+      expect(await rows.count()).toBe(5);
+      expect(await page.getByRole('row', {name: 'pxc'}).count()).toBe(2);
+      expect(await page.getByRole('row', {name: 'psmdb'}).count()).toBe(2);
+      expect(await page.getByRole('row', {name: 'postgresql'}).count()).toBe(2);
+    }).toPass({timeout: TIMEOUTS.TenSeconds})
   });
 });

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import {
   deleteDbCluster,
   findDbAndClickRow,
@@ -25,7 +25,7 @@ let token: string;
       let storageClasses = [];
 
       test.beforeAll(async ({ request }) => {
-        token = await getTokenFromLocalStorage();
+        token = await getCITokenFromLocalStorage();
 
         const { storageClassNames = [] } = await getClusterDetailedInfo(
           token,

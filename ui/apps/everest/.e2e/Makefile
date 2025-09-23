@@ -16,7 +16,7 @@ init:     ## Install tests dependencies.
 	$(info Installing dependencies)
 	cd $(REPO_ROOT)/ui && pnpm install
 	$(info Install Chromium for Playwright)
-	npx playwright install chromium
+	npx playwright install --with-deps chromium
 
 CI_INIT_DEPS := init deploy-minio create-db-namespaces deploy-monitoring
 #CI_INIT_DEPS += k3d-upload-images
@@ -108,8 +108,8 @@ k3d-upload-images: k3d-upload-pg-images k3d-upload-psmdb-images k3d-upload-pxc-i
 
 ##@ Test
 
-# Set a particular test, e.g. make test TEST=e2e:session
-TEST = e2e
+# Set a particular test, e.g. make test PROJECT=pr,release:session
+PROJECT = pr
 .PHONY: test
 test:               ## Run all tests.
 	@{ \
@@ -131,6 +131,13 @@ test:               ## Run all tests.
 	export EVEREST_LOCATION_SECRET_KEY="minioadmin" ;\
 	export EVEREST_LOCATION_REGION="us-east-1" ;\
 	export EVEREST_LOCATION_URL="https://minio.minio.svc.cluster.local" ;\
-	cd $(REPO_ROOT)/ui ;\
-	pnpm --filter "@percona/everest" $(TEST) ;\
+	projects=$$(echo $(PROJECT) | tr ',' ' ') ;\
+	cmd_proj="" ;\
+	for project in $${projects} ; do \
+	  cmd_proj="$${cmd_proj} --project=$${project}" ;\
+	done ;\
+	npx playwright test --config=./playwright.config.ts $${cmd_proj} ;\
 	}
+
+	#cd $(REPO_ROOT)/ui ;\
+#pnpm --filter "@percona/everest" $(PROJECT) ;\

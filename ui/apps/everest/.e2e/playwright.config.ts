@@ -16,15 +16,11 @@ import { defineConfig } from '@playwright/test';
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import {
-  CI_USER_STORAGE_STATE_FILE,
-  SESSION_USER_STORAGE_STATE_FILE,
-} from './constants';
+import { CI_USER_STORAGE_STATE_FILE } from './constants';
 import 'dotenv/config';
 
-// Convert 'import.meta.url' to the equivalent __filename and __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Convert 'import.meta.url' to the equivalent __dirname
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Read environment variables from file.
@@ -46,7 +42,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: 1,
+  workers: 3,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['github'],
@@ -70,7 +66,6 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    // Define setup and teardown projects
     // {
     //   name: 'global-setup',
     //   testDir: './setup',
@@ -89,61 +84,328 @@ export default defineConfig({
     //   },
     //   testMatch: /global\.teardown\.ts/,
     // },
+    // ---------------------- global setup and teardown ----------------------
+    // global:auth
     {
-      name: 'auth-setup',
+      name: 'global:auth:ci:setup',
       testDir: './setup',
       testMatch: /auth.setup\.ts/,
-      teardown: 'auth-teardown',
-      use: {
-        storageState: CI_USER_STORAGE_STATE_FILE,
-      },
+      teardown: 'global:auth:ci:teardown',
     },
     {
-      name: 'auth-teardown',
+      name: 'global:auth:ci:teardown',
       testDir: './teardown',
+      testMatch: /auth\.teardown\.ts/,
       use: {
         storageState: CI_USER_STORAGE_STATE_FILE,
       },
-      testMatch: /auth\.teardown\.ts/,
     },
+    // global:backup-storage
     {
-      name: 'backup-storage-setup',
+      name: 'global:backup-storage:setup',
       testDir: './setup',
       testMatch: /backup-storage.setup\.ts/,
-      teardown: 'backup-storage-teardown',
-      use: {
-        storageState: CI_USER_STORAGE_STATE_FILE,
-      },
-      dependencies: ['auth-setup'],
+      teardown: 'global:backup-storage:teardown',
+      dependencies: ['global:auth:ci:setup'],
     },
     {
-      name: 'backup-storage-teardown',
+      name: 'global:backup-storage:teardown',
       testDir: './teardown',
-      use: {
-        storageState: CI_USER_STORAGE_STATE_FILE,
-      },
       testMatch: /backup-storage\.teardown\.ts/,
     },
-
-    // Session project
+    // global:monitoring-instance:
     {
-      name: 'session-setup',
+      name: 'global:monitoring-instance:setup',
       testDir: './setup',
-      testMatch: /session-setup\.ts$/,
-      teardown: 'session-teardown',
+      testMatch: /monitoring-instance.setup\.ts/,
+      teardown: 'global:monitoring-instance:teardown',
+      dependencies: ['global:auth:ci:setup'],
     },
     {
-      name: 'session-teardown',
+      name: 'global:monitoring-instance:teardown',
       testDir: './teardown',
-      testMatch: /session-teardown\.ts$/,
+      testMatch: /monitoring-instance\.teardown\.ts/,
+    },
+    // global:session:
+    {
+      name: 'global:session:setup',
+      testDir: './setup',
+      testMatch: /session\.setup\.ts$/,
+      teardown: 'global:session:teardown',
     },
     {
-      name: 'session',
-      testDir: './release/session',
-      dependencies: ['session-setup'],
+      name: 'global:session:teardown',
+      testDir: './teardown',
+      testMatch: /session\.teardown\.ts$/,
     },
 
-    // RBAC project
+    // ---------------------- PR TESTS ----------------------
+    // pr project
+    {
+      name: 'pr',
+      dependencies: [
+        'pr:db-cluster',
+        'pr:multinamespaces',
+        'pr:no-match',
+        'pr:settings',
+      ],
+    },
+    // pr:db-cluster tests
+    {
+      name: 'pr:db-cluster',
+      dependencies: [
+        'pr:db-cluster:db-overview',
+        'pr:db-cluster:db-list',
+        'pr:db-cluster:db-wizard',
+      ],
+    },
+    // pr:db-cluster:db-overview tests
+    {
+      name: 'pr:db-cluster:db-overview:setup',
+      testDir: './pr/db-cluster',
+      testMatch: /db-cluster-overview\.setup\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      teardown: 'pr:db-cluster:db-overview:teardown',
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    {
+      name: 'pr:db-cluster:db-overview:teardown',
+      testDir: './pr/db-cluster',
+      testMatch: /db-cluster-overview\.teardown\.ts/,
+    },
+    {
+      name: 'pr:db-cluster:db-overview',
+      testDir: './pr/db-cluster',
+      testMatch: /db-cluster-overview\.e2e\.ts/,
+      dependencies: ['pr:db-cluster:db-overview:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:db-cluster:db-list tests
+    {
+      name: 'pr:db-cluster:db-list',
+      testDir: './pr/db-cluster',
+      testMatch: /db-clusters-list\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:db-cluster:db-wizard tests
+    {
+      name: 'pr:db-cluster:db-wizard',
+      dependencies: [
+        'pr:db-cluster:db-wizard:create',
+        'pr:db-cluster:db-wizard:create:sharding:psmdb',
+        'pr:db-cluster:db-wizard:errors',
+      ],
+    },
+    // pr:db-cluster:db-wizard:create tests
+    {
+      name: 'pr:db-cluster:db-wizard:create',
+      testDir: './pr/db-cluster/db-wizard/create-db-cluster',
+      testMatch: /create-db-cluster\.e2e\.ts/,
+      dependencies: [
+        'global:backup-storage:setup',
+        'global:monitoring-instance:setup',
+      ],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:db-cluster:db-wizard:errors tests
+    {
+      name: 'pr:db-cluster:db-wizard:errors',
+      testDir: './pr/db-cluster/db-wizard/create-db-cluster',
+      testMatch: /errors-handling\.e2e\.ts/,
+      dependencies: [
+        'global:backup-storage:setup',
+      ],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:db-cluster:db-wizard:create:sharding:psmdb tests
+    {
+      name: 'pr:db-cluster:db-wizard:create:sharding:psmdb',
+      testDir: './pr/db-cluster/db-wizard/create-db-cluster',
+      testMatch: /sharding\.e2e\.ts/,
+      dependencies: [
+        'global:auth:ci:setup',
+      ],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+
+
+    // pr:multinamespaces tests
+    {
+      name: 'pr:multinamespaces',
+      dependencies: [
+        'pr:multinamespaces:db-wizard',
+        'pr:multinamespaces:monitoring',
+        'pr:multinamespaces:storage-location',
+      ],
+    },
+    // pr:multinamespaces:db-wizard tests
+    {
+      name: 'pr:multinamespaces:db-wizard',
+      testDir: './pr/multinamespaces',
+      testMatch: /db-wizard\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:multinamespaces:monitoring tests
+    {
+      name: 'pr:multinamespaces:monitoring',
+      testDir: './pr/multinamespaces',
+      testMatch: /monitoring\.e2e\.ts/,
+      dependencies: ['global:monitoring-instance:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:multinamespaces:storage-location tests
+    {
+      name: 'pr:multinamespaces:storage-location:setup',
+      testDir: './pr/multinamespaces',
+      testMatch: /storage-location\.setup\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      teardown: 'pr:multinamespaces:storage-location:teardown',
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    {
+      name: 'pr:multinamespaces:storage-location:teardown',
+      testDir: './pr/multinamespaces',
+      testMatch: /storage-location\.teardown\.ts/,
+    },
+    {
+      name: 'pr:multinamespaces:storage-location',
+      testDir: './pr/multinamespaces',
+      testMatch: /storage-location\.e2e\.ts/,
+      dependencies: [
+        'global:backup-storage:setup',
+        'pr:multinamespaces:storage-location:setup',
+      ],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:no-match tests
+    {
+      name: 'pr:no-match',
+      testDir: './pr/no-match',
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:rbac tests
+    {
+      name: 'pr:rbac',
+      testDir: './pr/rbac',
+      dependencies: [
+        'pr:rbac:backups',
+      ],
+    },
+    // pr:rbac:backups tests
+    {
+      name: 'pr:rbac:backups',
+      testDir: './pr/rbac',
+      testMatch: /backups\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+
+    // pr:settings tests
+    {
+      name: 'pr:settings',
+      dependencies: [
+        'pr:settings:monitoring-instance',
+        'pr:settings:backup-storage',
+        'pr:settings:namespace',
+        'pr:settings:psp',
+        'pr:settings:operator-upgrade',
+      ],
+    },
+    // pr:settings:backup-storage tests
+    {
+      name: 'pr:settings:backup-storage',
+      testDir: './pr/settings',
+      testMatch: /backup-storage\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:settings:monitoring-instance tests
+    {
+      name: 'pr:settings:monitoring-instance',
+      testDir: './pr/settings',
+      testMatch: /monitoring-instance\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:settings:namespace tests
+    {
+      name: 'pr:settings:namespace',
+      testDir: './pr/settings',
+      testMatch: /namespaces-list\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:settings:psp tests
+    {
+      name: 'pr:settings:psp',
+      testDir: './pr/settings',
+      testMatch: /pod-scheduling-policies\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:settings:operator-upgrade tests
+    {
+      name: 'pr:settings:operator-upgrade',
+      testDir: './pr/settings',
+      testMatch: /operator-upgrade\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+
+    // ---------------------- RELEASE TESTS ----------------------
+    // release project
+    {
+      name: 'release',
+      dependencies: [
+        'release:session',
+      ],
+    },
+    // release:session:session project
+    {
+      name: 'release:session',
+      testDir: './release/session',
+      dependencies: ['global:session:setup'],
+    },
+
+    // -----------------------------------
+    // e2e:rbac project
     // {
     //   name: 'rbac-setup',
     //   testDir: './setup',

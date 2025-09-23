@@ -15,13 +15,15 @@
 
 import { expect, test } from '@playwright/test';
 import { checkNoMatchPage } from '@e2e/utils/no-match';
+import {TIMEOUTS} from "@e2e/constants";
 
-test.describe('No match (404) page', () => {
+test.describe.parallel('No match (404) page', () => {
   test('databases page successfully loaded', async ({ page }) => {
     await page.goto('/databases');
-    const button = page.getByTestId('add-db-cluster-button');
+    await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
 
-    await expect(button).toBeVisible();
+    const button = page.getByTestId('add-db-cluster-button');
+    await expect(button).toBeVisible({timeout: TIMEOUTS.TenSeconds});
   });
 
   test('non existing url should render no match page', async ({ page }) => {

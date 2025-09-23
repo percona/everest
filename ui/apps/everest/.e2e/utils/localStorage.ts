@@ -17,7 +17,7 @@ const getTokenFromStorageFile = async (storageFile: string) => {
     ?.value;
 };
 
-export const getTokenFromLocalStorage = async () => {
+export const getCITokenFromLocalStorage = async () => {
   return await getTokenFromStorageFile(CI_USER_STORAGE_STATE_FILE);
 };
 

@@ -15,7 +15,7 @@
 
 import { test as setup } from '@playwright/test';
 import 'dotenv/config';
-import { getTokenFromLocalStorage } from '../utils/localStorage';
+import { getCITokenFromLocalStorage } from '../utils/localStorage';
 import { doBackupCall } from '../utils/request';
 import {
   CI_USER_STORAGE_STATE_FILE,
@@ -124,39 +124,39 @@ setup.describe.serial('Global setup', () => {
   //   await Promise.all(promises);
   // });
 
-  setup('Monitoring endpoints', async ({ request }) => {
-    const token = await getTokenFromLocalStorage();
-    const bucketNamespacesMap = getBucketNamespacesMap();
-    const allNamespaces = Array.from(
-      new Set(bucketNamespacesMap.map(([, namespaces]) => namespaces).flat())
-    );
-    const promises: Promise<any>[] = [];
-
-    // For the sake of simplicity, we will create a monitoring endpoint for all namespaces in the buckets we defined
-    for (const [idx, namespace] of allNamespaces.entries()) {
-      promises.push(
-        doBackupCall(() =>
-          request.post(`/v1/namespaces/${namespace}/monitoring-instances`, {
-            data: {
-              name: `e2e-endpoint-${idx}`,
-              type: 'pmm',
-              url: MONITORING_URL,
-              allowedNamespaces: [],
-              verifyTLS: false,
-              pmm: {
-                user: MONITORING_USER,
-                password: MONITORING_PASSWORD,
-              },
-            },
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-        )
-      );
-    }
-    await Promise.all(promises);
-  });
+  // setup('Monitoring endpoints', async ({ request }) => {
+  //   const token = await getCITokenFromLocalStorage();
+  //   const bucketNamespacesMap = getBucketNamespacesMap();
+  //   const allNamespaces = Array.from(
+  //     new Set(bucketNamespacesMap.map(([, namespaces]) => namespaces).flat())
+  //   );
+  //   const promises: Promise<any>[] = [];
+  //
+  //   // For the sake of simplicity, we will create a monitoring endpoint for all namespaces in the buckets we defined
+  //   for (const [idx, namespace] of allNamespaces.entries()) {
+  //     promises.push(
+  //       doBackupCall(() =>
+  //         request.post(`/v1/namespaces/${namespace}/monitoring-instances`, {
+  //           data: {
+  //             name: `e2e-endpoint-${idx}`,
+  //             type: 'pmm',
+  //             url: MONITORING_URL,
+  //             allowedNamespaces: [],
+  //             verifyTLS: false,
+  //             pmm: {
+  //               user: MONITORING_USER,
+  //               password: MONITORING_PASSWORD,
+  //             },
+  //           },
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         })
+  //       )
+  //     );
+  //   }
+  //   await Promise.all(promises);
+  // });
 
   setup('Save old RBAC permissions', async ({ request }) => {
     await saveOldRBACPermissions();

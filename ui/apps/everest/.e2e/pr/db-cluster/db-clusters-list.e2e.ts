@@ -14,35 +14,79 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { createDbClusterFn } from '@e2e/utils/db-cluster';
+import {createDbClusterFn, deleteDbClusterFn, getDbClusterAPI} from '@e2e/utils/db-cluster';
 import { findDbAndClickActions } from '@e2e/utils/db-clusters-list';
+import {goToUrl, limitedSuffixedName} from "@e2e/utils/generic";
+import {EVEREST_CI_NAMESPACES, TIMEOUTS} from "@e2e/constants";
+import {getCITokenFromLocalStorage} from "@e2e/utils/localStorage";
 
-test.describe('DB Cluster List', () => {
-  const mySQLName = 'mysql-test-ui';
+const testPrefix = 'pr-db-lst',
+  namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
+let token: string;
+
+test.describe.parallel('DB clusters list', () => {
+
+  test.beforeAll(async ({ }) => {
+    token = await getCITokenFromLocalStorage();
+    expect(token).not.toHaveLength(0)
+  });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/databases');
+    await goToUrl(page, '/databases');
   });
 
   test('DB clusters Delete Action', async ({ page, request }) => {
-    await createDbClusterFn(request, {
-      dbName: mySQLName,
-      dbType: 'mysql',
-      numberOfNodes: '1',
-    });
+    const dbClusterName = limitedSuffixedName(testPrefix + '-del');
 
-    await findDbAndClickActions(page, mySQLName, 'Delete');
+    try {
+      await test.step(`Create ${dbClusterName} DB cluster`, async () => {
+        await createDbClusterFn(
+          request,
+          {
+            dbName: dbClusterName,
+            dbType: 'postgresql',
+            numberOfNodes: '1',
+          },
+          namespace
+        );
+      });
 
-    // Delete action
-    await page.getByTestId(`${mySQLName}-form-dialog`).waitFor();
-    await expect(page.getByTestId('irreversible-action-alert')).toBeVisible();
-    const deleteConfirmationButton = page
-      .getByRole('button')
-      .filter({ hasText: 'Delete' });
-    await expect(deleteConfirmationButton).toBeDisabled();
-    await page.getByTestId('text-input-confirm-input').fill(mySQLName);
-    await expect(deleteConfirmationButton).toBeEnabled();
-    await deleteConfirmationButton.click();
+      await test.step(`Wait for DB cluster ${dbClusterName} creation`, async () => {
+        await expect(async () => {
+          // new DB cluster appears in response not immediately.
+          // wait for new DB cluster to appear.
+          const dbCluster = await getDbClusterAPI(
+            dbClusterName,
+            namespace,
+            request,
+            token)
+          expect(dbCluster).toBeDefined()
+        }).toPass({
+          intervals: [1000],
+          timeout: TIMEOUTS.TenSeconds,
+        })
+      });
+
+      await test.step(`Delete DB cluster ${dbClusterName}`, async () => {
+        await goToUrl(page, '/databases');
+        await expect(page.getByText(dbClusterName)).toBeVisible({timeout: TIMEOUTS.TenSeconds});
+
+        await findDbAndClickActions(page, dbClusterName, 'Delete');
+
+        // Delete action
+        await page.getByTestId(`${dbClusterName}-form-dialog`).waitFor();
+        await expect(page.getByTestId('irreversible-action-alert')).toBeVisible();
+        const deleteConfirmationButton = page
+          .getByRole('button')
+          .filter({hasText: 'Delete'});
+        await expect(deleteConfirmationButton).toBeDisabled();
+        await page.getByTestId('text-input-confirm-input').fill(dbClusterName);
+        await expect(deleteConfirmationButton).toBeEnabled();
+        await deleteConfirmationButton.click();
+      });
+    } finally {
+      await deleteDbClusterFn(request, dbClusterName, namespace);
+    }
   });
 
   test.skip('DB cluster Paused/Resume', async () => {

@@ -12,6 +12,10 @@ registries: # define how registries should be created or used
     name: k3d-registry
     host: "0.0.0.0"
     hostPort: "5000"
+ports:
+  - port: 8080:30080 # Everest UI will be accessible via http://localhost:8080 on the host machine
+    nodeFilters:
+      - agent:0:direct
 options:
   k3d: # k3d runtime settings
     wait: true # wait for cluster to be usable before returining;

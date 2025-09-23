@@ -89,6 +89,9 @@ const logout = async (page: Page, storageFile: string) => {
 
   // Wait for Login page again
   await page.waitForURL('/login', { timeout: TIMEOUTS.ThirtySeconds });
+  await expect(page.getByTestId('login-button')).toBeVisible({
+    timeout: TIMEOUTS.ThirtySeconds,
+  });
 
   // Cleanup storage file
   await page.evaluate(() => localStorage.clear());

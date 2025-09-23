@@ -176,15 +176,15 @@ deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	--skip-wizard \
 	--namespaces $(DB_NAMESPACES) \
 	--helm.set server.image=$(IMAGE_OWNER) \
-	--helm.set server.apiRequestsRateLimit=200 \
+	--helm.set server.apiRequestsRateLimit=500 \
 	--helm.set server.sessionRequestsRateLimit=200 \
 	--helm.set versionMetadataURL=https://check-dev.percona.com \
 	--helm.set server.initialAdminPassword=admin
-	$(MAKE) port-forward
+	$(MAKE) expose
 
-DEPLOY_ALL_DEPS := docker-build k3d-upload-server-image
+DEPLOY_ALL_DEPS := build-cli-debug docker-build
 DEPLOY_ALL_DEPS += docker-build-operator k3d-upload-operator-image
-DEPLOY_ALL_DEPS += build-cli-debug deploy
+DEPLOY_ALL_DEPS += k3d-upload-server-image deploy
 .PHONY: deploy-all
 deploy-all: $(DEPLOY_ALL_DEPS) ## Helper to build Everest and its dependencies and deploy to K3D test cluster.
 
@@ -193,7 +193,6 @@ undeploy: build-cli-debug ## Undeploy Everest from K8S cluster using Everest CLI
 	$(info Uninstalling Everest from K8S cluster using everestctl)
 	$(LOCALBIN)/everestctl uninstall -y -f -v
 
-#DB_NAMESPACES = ''
 .PHONY: add-pg-namespaces
 add-pg-namespaces: ## Add PostgreSQL namespace to Everest using Everest CLI(usage: DB_NAMESPACES=ns-1,ns-2 make add-pg-namespaces).
 	$(info Adding PostgreSQL namespaces=${DB_NAMESPACE} to Everest using everestctl)
@@ -203,7 +202,6 @@ add-pg-namespaces: ## Add PostgreSQL namespace to Everest using Everest CLI(usag
 	--operator.mysql=false \
 	--skip-wizard
 
-#DB_NAMESPACES = ''
 .PHONY: add-psmdb-namespaces
 add-psmdb-namespaces: ## Add PSMDB namespace to Everest using Everest CLI(usage: DB_NAMESPACES=ns-1,ns-2 make add-psmdb-namespaces).
 	$(info Adding PSMDB namespaces=${DB_NAMESPACE} to Everest using everestctl)
@@ -213,7 +211,6 @@ add-psmdb-namespaces: ## Add PSMDB namespace to Everest using Everest CLI(usage:
 	--operator.mysql=false \
 	--skip-wizard
 
-#DB_NAMESPACES = ''
 .PHONY: add-pxc-namespaces
 add-pxc-namespaces: ## Add PXC namespace to Everest using Everest CLI(usage: DB_NAMESPACES=ns-1,ns-2 make add-pxc-namespaces).
 	$(info Adding PXC namespaces=${DB_NAMESPACE} to Everest using everestctl)
@@ -223,9 +220,10 @@ add-pxc-namespaces: ## Add PXC namespace to Everest using Everest CLI(usage: DB_
 	--operator.mysql=true \
 	--skip-wizard
 
-.PHONY: port-forward
-port-forward:
-	kubectl port-forward -n everest-system deployment/everest-server 8080:8080 &
+.PHONY: expose
+expose:
+	kubectl patch svc -n everest-system everest --type=merge \
+	-p '{"spec": {"type": "NodePort", "ports": [{"name": "http", "port": 8080, "protocol": "TCP", "targetPort": 8080, "nodePort": 30080}]}}'
 
 .PHONY: k3d-cluster-up
 k3d-cluster-up: ## Create a K8S cluster for testing.

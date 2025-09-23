@@ -13,16 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { expect } from '@playwright/test';
-import { execSync } from 'child_process';
+import {APIResponse, expect, Page} from '@playwright/test';
+import {execSync} from 'child_process';
+import {TIMEOUTS} from "@e2e/constants";
 
-const { SELECT_DB, SELECT_SIZE } = process.env;
+const {SELECT_DB, SELECT_SIZE} = process.env;
 
-export const checkError = async (response) => {
-  if (!response.ok()) {
+export const testPrefix = () => {
+  let result = '';
+  while (result.length < 16) {
+    result += Math.random().toString(36).substring(2);
+  }
+  return result.substring(0, 16);
+}
+
+export const limitedSuffixedName = (name: string) => {
+  return `${name}-${testPrefix()}`.substring(0, 21)
+}
+
+export const checkError = async (response: APIResponse) => {
+  if (!response.ok() && response.status() !== 404) {
     console.log(`${response.url()}: `, await response.json());
   }
-  expect(response.status()).toBe(200);
+  // expect(response.status()).toBe(200);
   expect(response.ok()).toBeTruthy();
 };
 
@@ -46,4 +59,12 @@ export const shouldExecuteDBCombination = (db: string, size: number) => {
     (SELECT_DB ? SELECT_DB === db : true) &&
     (SELECT_SIZE ? SELECT_SIZE === size.toString() : true)
   );
+};
+
+export const goToUrl = async (
+  page: Page,
+  url: string
+) => {
+  await page.goto(url);
+  await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
 };

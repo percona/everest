@@ -105,6 +105,8 @@ jobs:
         shell: bash
         working-directory: ui/apps/everest/.e2e
         timeout-minutes: 30
+        env:
+          CI: true
         run: |
           make test
 

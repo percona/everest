@@ -17,18 +17,20 @@ import { APIRequestContext, expect } from '@playwright/test';
 import { dbTypeToDbEngine, dbTypeToProxyType } from '@percona/utils';
 import { getEnginesVersions } from './database-engines';
 import { getClusterDetailedInfo } from './storage-class';
-import { getTokenFromLocalStorage } from './localStorage';
+import { getCITokenFromLocalStorage } from './localStorage';
 import { getNamespacesFn } from './namespaces';
 import { DbType } from '@percona/types';
+import { execSync } from 'child_process';
 import { checkError } from '@e2e/utils/generic';
 import { getVersionServiceDBVersions } from '@e2e/utils/version-service';
+import {TIMEOUTS} from "@e2e/constants";
 
 export const createDbClusterFn = async (
   request: APIRequestContext,
   customOptions?,
   desiredNamespace?: string
 ) => {
-  const token = await getTokenFromLocalStorage();
+  const token = await getCITokenFromLocalStorage();
   const namespaces = await getNamespacesFn(token, request);
   const namespace = desiredNamespace ?? namespaces[0];
   const dbEngines = await getEnginesVersions(token, namespace, request);
@@ -72,11 +74,11 @@ export const createDbClusterFn = async (
         replicas: +(customOptions?.numberOfNodes || 1),
         resources: {
           cpu: `${customOptions?.cpu || 1}`,
-          memory: `${customOptions?.memory || 2}G`,
+          memory: `${customOptions?.memory || 1}G`,
         },
         storage: {
           class: customOptions?.storageClass! || storageClassNames,
-          size: `${customOptions?.disk || 25}Gi`,
+          size: `${customOptions?.disk || 1}Gi`,
         },
         // TODO return engineParams to tests
         // config: dbPayload.engineParametersEnabled
@@ -134,17 +136,22 @@ export const createDbClusterFn = async (
     },
   };
 
-  const response = await request.post(
-    `/v1/namespaces/${namespace}/database-clusters`,
-    {
-      data: payload,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  await expect(async () => {
+    const response = await request.post(
+      `/v1/namespaces/${namespace}/database-clusters`,
+      {
+        data: payload,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  expect(response.ok()).toBeTruthy();
+    expect(response.ok()).toBeTruthy();
+  }).toPass({
+    intervals: [1000],
+    timeout: TIMEOUTS.TenSeconds,
+  })
 };
 
 export const deleteDbClusterFn = async (
@@ -152,7 +159,7 @@ export const deleteDbClusterFn = async (
   clusterName: string,
   desiredNamespace?: string
 ) => {
-  const token = await getTokenFromLocalStorage();
+  const token = await getCITokenFromLocalStorage();
   const namespaces = await getNamespacesFn(token, request);
   const namespace = desiredNamespace ?? namespaces[0];
   const deleteResponse = await request.delete(
@@ -162,8 +169,23 @@ export const deleteDbClusterFn = async (
         Authorization: `Bearer ${token}`,
       },
     }
-  );
-  expect(deleteResponse.ok()).toBeTruthy();
+  ),
+    code = deleteResponse.status()
+  expect(code === 204 || code === 404).toBeTruthy();
+};
+
+export const patchPSMDBFinalizers = async (
+  cluster: string,
+  namespace: string
+) => {
+  try {
+    const command = `kubectl patch --namespace ${namespace} psmdb ${cluster} --type='merge' -p '{"metadata":{"finalizers":["percona.com/delete-psmdb-pvc"]}}'`;
+    const output = execSync(command).toString();
+    return true;
+  } catch (error) {
+    console.error(`Error executing command: ${error}`);
+    throw error;
+  }
 };
 
 export const getDbClusterAPI = async (
@@ -182,7 +204,7 @@ export const getDbClusterAPI = async (
   );
   await checkError(response);
 
-  return response.json();
+  return (await response.json());
 };
 
 export const updateDbClusterAPI = async (

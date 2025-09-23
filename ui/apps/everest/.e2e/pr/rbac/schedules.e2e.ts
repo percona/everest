@@ -1,4 +1,4 @@
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
 import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
@@ -18,7 +18,7 @@ test.describe('Schedules RBAC', () => {
   let namespace = '';
   test.beforeAll(async ({ request }) => {
     await setRBACPermissionsK8S([['namespaces', 'read', '*']]);
-    const token = await getTokenFromLocalStorage();
+    const token = await getCITokenFromLocalStorage();
     const namespaces = await getNamespacesFn(token, request);
     namespace = namespaces[0];
   });

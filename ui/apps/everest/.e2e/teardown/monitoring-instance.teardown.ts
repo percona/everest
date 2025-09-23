@@ -16,25 +16,32 @@
 import { test as teardown } from '@playwright/test';
 import { getCITokenFromLocalStorage } from '../utils/localStorage';
 import { getBucketNamespacesMap } from '../constants';
+import {
+  deleteMonitoringInstance,
+  listMonitoringInstances,
+} from '@e2e/utils/monitoring-instance';
 
-teardown.describe.serial('Backup Storage teardown', () => {
-  teardown('Delete Backup Storages', async ({ request }) => {
+teardown.describe.serial('Monitoring Instances teardown', () => {
+  teardown('Delete Monitoring Instances', async ({ request }) => {
     const token = await getCITokenFromLocalStorage();
-    const promises: Promise<any>[] = [];
     const bucketNamespacesMap = getBucketNamespacesMap();
+    const allNamespaces = Array.from(
+      new Set(bucketNamespacesMap.map(([, namespaces]) => namespaces).flat())
+    );
+    const promises: Promise<any>[] = [];
 
-    bucketNamespacesMap.forEach(async ([bucket, namespace]) => {
-      promises.push(
-        request.delete(
-          `/v1/namespaces/${namespace}/backup-storages/${bucket}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
+    for (const [idx, namespace] of allNamespaces.entries()) {
+      const monitoringInstances = await listMonitoringInstances(
+        request,
+        namespace,
+        token
       );
-    });
+      for (const instance of monitoringInstances) {
+        promises.push(
+          deleteMonitoringInstance(request, namespace, instance.name, token)
+        );
+      }
+    }
     await Promise.all(promises);
   });
 });

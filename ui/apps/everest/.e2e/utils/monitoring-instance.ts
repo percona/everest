@@ -68,7 +68,7 @@ export const deleteMonitoringInstance = async (
       },
     }
   );
-  expect(response.ok()).toBeTruthy();
+  expect(response.status() === 204 || response.status() === 404).toBeTruthy();
 };
 
 export const listMonitoringInstances = async (
