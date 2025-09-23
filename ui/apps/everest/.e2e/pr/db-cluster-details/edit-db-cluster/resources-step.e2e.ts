@@ -218,7 +218,7 @@ const openResourcesModal = async (page: Page) => {
               `${db != 'psmdb' ? 'proxies' : 'routers'}-cpu-overview-section-row`
             )
             .filter({
-              hasText: `${db != 'psmdb' ? '0.4' : '2'}`,
+              hasText: `${db != 'psmdb' ? '0.8' : '4'}`,
             })
         ).toBeVisible();
       });
