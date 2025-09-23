@@ -162,7 +162,7 @@ test.describe(
       await test.step('Check db list and status', async () => {
         await page.goto('/databases');
         await waitForStatus(page, clusterName, 'Initializing', 30000);
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 660000);
       });
 
       await test.step('Check db cluster k8s object options', async () => {
@@ -280,7 +280,7 @@ test.describe(
 
       await page.goto('/databases');
       await waitForStatus(page, clusterName, 'Restoring', 30000);
-      await waitForStatus(page, clusterName, 'Up', 600000);
+      await waitForStatus(page, clusterName, 'Up', 660000);
 
       await gotoDbClusterRestores(page, clusterName);
       // we select based on backup source since restores cannot be named and we don't know

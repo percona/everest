@@ -28,44 +28,47 @@ const TextArray = ({
   label,
   placeholder,
   handleBlur,
+  onRemove = () => {},
 }: TextArrayProps) => {
   const {
     control,
     formState: { errors },
     watch,
+    trigger,
   } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: fieldName,
   });
-
-  const [isDisabled, setIsDisabled] = useState<boolean>(true);
   const defaultFields: Record<string, string>[] = fields.length ? fields : [];
-  const [changed, setChanged] = useState(false);
+  const [fieldAppended, setFieldAppended] = useState(false);
   const error = (index: number): FieldError | undefined =>
     // @ts-ignore
     errors?.[fieldName]?.[index]?.[fieldKey];
 
   useEffect(() => {
-    const isAnyFieldEmpty = defaultFields.some(
-      (field) => field[fieldKey] === ''
-    );
-
-    setIsDisabled(isAnyFieldEmpty);
-  }, [defaultFields.length, changed]);
+    if (fieldAppended) {
+      const lastField = document.querySelector(
+        `input[name="${fieldName}.${fields.length - 1}.${fieldKey}"]`
+      );
+      if (lastField) {
+        (lastField as HTMLInputElement).focus();
+      }
+      setFieldAppended(false);
+    }
+  }, [fieldAppended]);
 
   return (
     <>
       <ActionableLabeledContent
         label={label}
         actionButtonProps={{
-          disabled: isDisabled,
           dataTestId: 'add-text-input-button',
           onClick: () => {
-            setIsDisabled(true);
             append({
               [fieldKey]: '',
             });
+            setFieldAppended(true);
           },
         }}
       >
@@ -92,7 +95,6 @@ const TextArray = ({
                     `${fieldName}.${index}.${fieldKey}`
                   );
                   defaultFields[index][fieldKey] = initialFieldValue;
-                  setChanged((prev) => !prev);
                 },
                 onBlur: handleBlur
                   ? (e) => {
@@ -107,7 +109,11 @@ const TextArray = ({
                   <InputAdornment position="end">
                     <IconButton
                       data-testid={`delete-text-input-${index}-button`}
-                      onClick={() => remove(index)}
+                      onClick={() => {
+                        remove(index);
+                        onRemove(index);
+                        trigger(fieldName);
+                      }}
                     >
                       <DeleteOutlineOutlinedIcon />
                     </IconButton>

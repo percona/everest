@@ -186,7 +186,8 @@ deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	--helm.set server.apiRequestsRateLimit=500 \
 	--helm.set server.sessionRequestsRateLimit=200 \
 	--helm.set versionMetadataURL=https://check-dev.percona.com \
-	--helm.set server.initialAdminPassword=admin
+	--helm.set server.initialAdminPassword=admin \
+	--helm.set operator.init=false
 	$(MAKE) expose
 
 DEPLOY_ALL_DEPS := build-cli-debug build-ui build-debug docker-build

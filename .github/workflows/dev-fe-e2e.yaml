@@ -46,6 +46,11 @@ jobs:
         run: |
           make k3d-cluster-up
 
+      - name: Build Everest UI
+        shell: bash
+        run: |
+          make build-ui
+
       - name: Build Everest API Server binary
         shell: bash
         run: |

@@ -3,6 +3,7 @@ import {
   createPodSchedulingPolicyWithValues,
   createRuleForPodSchedulingPolicyWithValues,
   deletePodSchedulingPolicy,
+  POD_SCHEDULING_POLICIES_URL,
 } from '@e2e/utils/policies';
 import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
 import { expect, test } from '@playwright/test';
@@ -62,7 +63,7 @@ test.describe('Pod scheduling policies RBAC', () => {
 
   test('Show Pod scheduling policies when allowed', async ({ page }) => {
     await setRBACPermissionsK8S([['pod-scheduling-policies', 'read', `*`]]);
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
     await expect(page.getByText('everest-default-mongodb')).toBeVisible();
     await expect(page.getByText('everest-default-mysql')).toBeVisible();
@@ -73,7 +74,7 @@ test.describe('Pod scheduling policies RBAC', () => {
     await setRBACPermissionsK8S([
       ['pod-scheduling-policies', 'read', 'some-other-policy'],
     ]);
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).not.toBeVisible();
     await expect(page.getByText('everest-default-mongodb')).not.toBeVisible();
     await expect(page.getByText('everest-default-mysql')).not.toBeVisible();
@@ -87,7 +88,7 @@ test.describe('Pod scheduling policies RBAC', () => {
       ['pod-scheduling-policies', 'read', `${POD_SCHEDULING_POLICY_NAME}`],
       ['pod-scheduling-policies', 'delete', `${POD_SCHEDULING_POLICY_NAME}`],
     ]);
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
     await page
       .locator('.MuiTableRow-root')
@@ -102,7 +103,7 @@ test.describe('Pod scheduling policies RBAC', () => {
       ['pod-scheduling-policies', 'read', `${POD_SCHEDULING_POLICY_NAME}`],
       ['pod-scheduling-policies', 'delete', `some-other-policy`],
     ]);
-    await page.goto('/settings/pod-scheduling-policies');
+    await page.goto(POD_SCHEDULING_POLICIES_URL);
     await expect(page.getByText(POD_SCHEDULING_POLICY_NAME)).toBeVisible();
     await page
       .locator('.MuiTableRow-root')
@@ -118,7 +119,7 @@ test.describe('Pod scheduling policies RBAC', () => {
       ['pod-scheduling-policies', 'update', `${POD_SCHEDULING_POLICY_NAME}`],
     ]);
     await page.goto(
-      `/settings/pod-scheduling-policies/${POD_SCHEDULING_POLICY_NAME}`
+      `${POD_SCHEDULING_POLICIES_URL}/${POD_SCHEDULING_POLICY_NAME}`
     );
     const addBtn = page.getByRole('button', { name: 'Add rule' });
     await expect(addBtn).toBeVisible();
@@ -139,7 +140,7 @@ test.describe('Pod scheduling policies RBAC', () => {
       ['pod-scheduling-policies', 'update', `${POD_SCHEDULING_POLICY_NAME}`],
     ]);
     await page.goto(
-      `/settings/pod-scheduling-policies/${POD_SCHEDULING_POLICY_NAME}`
+      `${POD_SCHEDULING_POLICIES_URL}/${POD_SCHEDULING_POLICY_NAME}`
     );
     await page.getByRole('button', { name: 'Add rule' }).waitFor();
     await page.getByRole('button', { name: 'Add rule' }).click();

@@ -157,7 +157,8 @@ func (u *Upgrade) upgradeEverestDBNamespaceHelmChart(ctx context.Context, namesp
 
 	return installer.Upgrade(ctx, helm.UpgradeOptions{
 		DisableHooks: true,
-		ReuseValues:  true,
+		// This will preserve old values and use any new values from the chart.
+		ResetThenReuseValues: true,
 	})
 }
 
