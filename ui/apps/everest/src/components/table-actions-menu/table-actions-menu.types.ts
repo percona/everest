@@ -7,4 +7,6 @@ export interface TableActionsMenuProps {
   menuProps?: Omit<MenuProps, 'open'> & {
     showMenu?: boolean;
   };
+  isVertical?: boolean;
+  buttonColor?: string;
 }

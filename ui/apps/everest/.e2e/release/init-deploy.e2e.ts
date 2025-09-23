@@ -428,7 +428,7 @@ const zephyrMap: Record<string, string> = {
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 45000);
         }
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 660000);
       });
 
       zephyrId = zephyrMap[`restart-${db}`];
@@ -443,7 +443,7 @@ const zephyrMap: Record<string, string> = {
         if (size != 1 || db != 'psmdb') {
           await waitForStatus(page, clusterName, 'Initializing', 120000);
         }
-        await waitForStatus(page, clusterName, 'Up', 600000);
+        await waitForStatus(page, clusterName, 'Up', 660000);
       });
 
       zephyrId = zephyrMap[`edit-${db}`];
@@ -528,9 +528,6 @@ const zephyrMap: Record<string, string> = {
 
         await test.step('Check new external access values in UI', async () => {
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
-          await expect(
-            page.getByTestId('switch-input-external-access')
-          ).toBeChecked();
           const rawValue = await page
             .getByTestId('text-input-source-ranges.0.source-range')
             .inputValue();

@@ -142,7 +142,7 @@ jobs:
 
 
       - name: Operator - check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
@@ -217,6 +217,8 @@ jobs:
           context: everest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
+          build-args: |
+            FLAGS= -X 'github.com/percona/everest-operator/internal/consts.Version=${{ env.VERSION }}'
 
       - name: Operator - push everest-operator-bundle image
         uses: docker/build-push-action@v6
@@ -227,7 +229,7 @@ jobs:
           file: everest-operator/bundle.Dockerfile
 
       - name: Helm - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/percona-helm-charts
           ref: ${{ env.HELM_BRANCH }}
@@ -245,7 +247,7 @@ jobs:
           cp -r percona-helm-charts/charts/everest /tmp/${{ env.VERSION }}/helm-chart
 
       - name: Operator - check out again
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
@@ -258,7 +260,7 @@ jobs:
           git push -d origin $VERSION_TAG
 
       - name: VS - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: Percona-Lab/percona-version-service
           ref: ${{ env.VS_BRANCH }}
@@ -289,7 +291,7 @@ jobs:
 
 
       - name: Catalog - checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: percona/everest-catalog
           ref: ${{ env.EVEREST_CATALOG_BRANCH }}
@@ -315,7 +317,7 @@ jobs:
 
 
       - name: Everest - check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
           ref: ${{ env.EVEREST_BRANCH }}
