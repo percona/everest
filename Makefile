@@ -11,7 +11,8 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ## Location to install binaries to
-LOCALBIN := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/bin
+CWD = $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+LOCALBIN := $(CWD)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
@@ -104,6 +105,12 @@ build-cli-debug: CLI_BUILD_TAGS = -tags debug
 build-cli-debug: CLI_GC_FLAGS = -gcflags=all="-N -l"
 build-cli-debug: build-cli-helper	## Build Everest CLI binary with debug symbols and development OLM channel.
 
+UI_DIR = $(CWD)/ui
+.PHONY: build-ui
+build-ui: ## Build Everest UI and embed it into the Everest API server binary.
+	$(info Building Everest UI)
+	cd $(UI_DIR) && $(MAKE) init build EVEREST_OUT_DIR=$(CWD)/public/dist
+
 .PHONY: release-cli
 release-cli: CLI_LD_FLAGS += -s -w
 release-cli: ## Build Everest CLI release versions for different OS and ARCH. (Use for building release only!).
@@ -182,7 +189,7 @@ deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	--helm.set server.initialAdminPassword=admin
 	$(MAKE) expose
 
-DEPLOY_ALL_DEPS := build-cli-debug docker-build
+DEPLOY_ALL_DEPS := build-cli-debug build-ui build-debug docker-build
 DEPLOY_ALL_DEPS += docker-build-operator k3d-upload-operator-image
 DEPLOY_ALL_DEPS += k3d-upload-server-image deploy
 .PHONY: deploy-all
