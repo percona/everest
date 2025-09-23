@@ -41,7 +41,7 @@ import {
 } from '@e2e/utils/db-wizard';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 import { waitForStatus, waitForDelete } from '@e2e/utils/table';
-import { getTokenFromLocalStorage } from '@e2e/utils/localStorage';
+import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getClusterDetailedInfo } from '@e2e/utils/storage-class';
 import { shouldExecuteDBCombination } from '@e2e/utils/generic';
 
@@ -247,7 +247,7 @@ async function verifyComponentsForDb(
     let storageClasses: string[] = [];
 
     test.beforeAll(async ({ request }) => {
-      token = await getTokenFromLocalStorage();
+      token = await getCITokenFromLocalStorage();
       const { storageClassNames = [] } = await getClusterDetailedInfo(
         token,
         request
