@@ -33,9 +33,9 @@ export const deletePodSchedulingPolicy = async (
     headers: {
       Authorization: `Bearer ${await getCITokenFromLocalStorage()}`,
     },
-  });
-
-  expect(response.ok()).toBeTruthy();
+  }),
+    code = response.status()
+  expect(code === 204 || code === 404).toBeTruthy()
 };
 
 export const getDefaultPodSchedulingPolicyNameForDbType = (

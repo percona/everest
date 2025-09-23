@@ -39,7 +39,6 @@ const basicInfoSchema = (dbClusters: DbClusterName[]) =>
         });
       }
     });
-};
 
 // .passthrough tells Zod to not drop unrecognized keys
 // this is needed because we parse step by step

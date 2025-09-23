@@ -54,6 +54,24 @@ export const createMonitoringInstance = async (
   expect(response.ok()).toBeTruthy();
 };
 
+export const getMonitoringInstance = async (
+  request: APIRequestContext,
+  namespace: string,
+  name: string,
+  token: string
+) => {
+  const response = await request.get(
+    `/v1/namespaces/${namespace}/monitoring-instances/${name}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  expect(response.status() === 200).toBeTruthy();
+  return await response.json()
+};
+
 export const deleteMonitoringInstance = async (
   request: APIRequestContext,
   namespace,
@@ -67,8 +85,9 @@ export const deleteMonitoringInstance = async (
         Authorization: `Bearer ${token}`,
       },
     }
-  );
-  expect(response.status() === 204 || response.status() === 404).toBeTruthy();
+  ),
+    code = response.status()
+  expect(code === 204 || response.status() === 404).toBeTruthy();
 };
 
 export const listMonitoringInstances = async (

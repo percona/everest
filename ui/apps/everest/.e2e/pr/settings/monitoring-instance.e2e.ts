@@ -18,6 +18,7 @@ import { findRowAndClickActions, waitForDelete } from '@e2e/utils/table';
 import {EVEREST_CI_NAMESPACES, TIMEOUTS} from '@e2e/constants';
 import {goToUrl, limitedSuffixedName} from "@e2e/utils/generic";
 import {getCITokenFromLocalStorage} from "@e2e/utils/localStorage";
+import {deleteMonitoringInstance, getMonitoringInstance} from "@e2e/utils/monitoring-instance";
 const { MONITORING_URL, MONITORING_USER, MONITORING_PASSWORD } = process.env;
 
 test.describe.serial('Monitoring Instances', () => {
@@ -36,35 +37,44 @@ test.describe.serial('Monitoring Instances', () => {
 
   test.afterAll(async ({request}) => {
     await expect(async () => {
-      const apiResp = await request.delete(`/v1/namespaces/${namespace}/monitoring-instances/${monitoringConfigName}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-        code = apiResp.status()
-      expect(code === 204 || code === 404).toBeTruthy()
+      await deleteMonitoringInstance(request, namespace, monitoringConfigName, token);
     }).toPass({
       intervals: [1000],
       timeout: TIMEOUTS.TenSeconds,
     })
   });
 
-  test('Create Monitoring Instance', async ({ page }) => {
-    await page.getByTestId('add-monitoring-endpoint').click();
-    await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+  test('Create Monitoring Instance', async ({ page, request }) => {
+    await test.step(`Create Monitoring Instance`, async () => {
+      await page.getByTestId('add-monitoring-endpoint').click();
+      await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
 
-    // filling out the form
-    await page.getByTestId('text-input-name').fill(monitoringConfigName);
-    const namespaces = page.getByTestId('text-input-namespace');
-    await namespaces.click();
-    const nsOption = page.getByRole('option').filter({ hasText: namespace });
-    await expect(nsOption).toBeVisible();
-    await nsOption.click();
-    await page.getByTestId('text-input-url').fill(MONITORING_URL);
-    await page.getByTestId('text-input-user').fill(MONITORING_USER);
-    await page.getByTestId('text-input-password').fill(MONITORING_PASSWORD);
-    await page.getByTestId('form-dialog-add').click();
+      // filling out the form
+      await page.getByTestId('text-input-name').fill(monitoringConfigName);
+      const namespaces = page.getByTestId('text-input-namespace');
+      await namespaces.click();
+      const nsOption = page.getByRole('option').filter({hasText: namespace});
+      await expect(nsOption).toBeVisible();
+      await nsOption.click();
+      await page.getByTestId('text-input-url').fill(MONITORING_URL);
+      await page.getByTestId('text-input-user').fill(MONITORING_USER);
+      await page.getByTestId('text-input-password').fill(MONITORING_PASSWORD);
+      await page.getByTestId('form-dialog-add').click();
+    });
+
+    await test.step(`Check created Monitoring Instance`, async () => {
+      await expect(async () => {
+        const dbCluster = await getMonitoringInstance(
+          request,
+          namespace,
+          monitoringConfigName,
+          token)
+        expect(dbCluster).toBeDefined()
+      }).toPass({
+        intervals: [1000],
+        timeout: TIMEOUTS.TenSeconds,
+      })
+    });
   });
 
   test('List Monitoring Instance', async ({ page }) => {
@@ -116,7 +126,14 @@ test.describe.serial('Monitoring Instances', () => {
 
   test('Delete Monitoring Instance', async ({ page }) => {
     await findRowAndClickActions(page, monitoringConfigName, 'Delete');
+
+    const delResponse = page.waitForResponse(resp =>
+      resp.request().method() === "DELETE" &&
+      resp.url().includes(`/v1/namespaces/${namespace}/monitoring-instances/${monitoringConfigName}`) &&
+    resp.status() === 204);
     await page.getByTestId('confirm-dialog-delete').click();
+    await delResponse;
+
     await waitForDelete(page, monitoringConfigName, TIMEOUTS.TenSeconds);
   });
 });

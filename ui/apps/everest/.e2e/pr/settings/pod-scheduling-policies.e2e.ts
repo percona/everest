@@ -26,6 +26,7 @@ import {
 import {createDbClusterFn, deleteDbClusterFn, getDbClusterAPI} from "@e2e/utils/db-cluster";
 import {getCITokenFromLocalStorage} from "@e2e/utils/localStorage";
 import {DbEngineType, DbType} from "@percona/types";
+import {deletePodSchedulingPolicy} from "@e2e/utils/policies";
 
 const PG_DEFAULT_PSP_NAME = 'everest-default-postgresql';
 const PSMDB_DEFAULT_PSP_NAME = 'everest-default-mongodb';
@@ -202,14 +203,7 @@ test.describe.parallel('Policies Scheduling Policies', () => {
 
     test.afterAll(async ({request}) => {
       await expect(async () => {
-        const apiResp = await request.delete(`/v1/pod-scheduling-policies/${customPGPolicyName}`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-          code = apiResp.status()
-        expect(code === 204 || code === 404).toBeTruthy()
+        await deletePodSchedulingPolicy(request, customPGPolicyName);
       }).toPass({
         intervals: [1000],
         timeout: TIMEOUTS.TenSeconds,
@@ -217,7 +211,7 @@ test.describe.parallel('Policies Scheduling Policies', () => {
     });
 
     test('Create policy for PG', async ({page}) => {
-      await goToUrl(page, '/settings/pod-scheduling-policies');
+      await goToUrl(page, '/settings/policies/pod-scheduling');
 
       await test.step(`Create policy ${customPGPolicyName} for PG`, async () => {
         await expect(page.getByTestId('add-policy')).toBeVisible();
@@ -388,14 +382,7 @@ test.describe.parallel('Policies Scheduling Policies', () => {
 
     test.afterAll(async ({request}) => {
       await expect(async () => {
-        const apiResp = await request.delete(`/v1/pod-scheduling-policies/${customPSMDBPolicyName}`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-          code = apiResp.status()
-        expect(code === 204 || code === 404).toBeTruthy()
+        await deletePodSchedulingPolicy(request, customPSMDBPolicyName);
       }).toPass({
         intervals: [1000],
         timeout: TIMEOUTS.ThirtySeconds,
@@ -403,7 +390,7 @@ test.describe.parallel('Policies Scheduling Policies', () => {
     });
 
     test('Create policy for PSMDB', async ({page}) => {
-      await goToUrl(page, '/settings/pod-scheduling-policies');
+      await goToUrl(page, '/settings/policies/pod-scheduling');
 
       await test.step(`Create policy ${customPSMDBPolicyName} for PSMDB`, async () => {
         await expect(page.getByTestId('add-policy')).toBeVisible();
@@ -601,14 +588,7 @@ test.describe.parallel('Policies Scheduling Policies', () => {
 
     test.afterAll(async ({request}) => {
       await expect(async () => {
-        const apiResp = await request.delete(`/v1/pod-scheduling-policies/${customPXCPolicyName}`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-          code = apiResp.status()
-        expect(code === 204 || code === 404).toBeTruthy()
+        await deletePodSchedulingPolicy(request, customPXCPolicyName);
       }).toPass({
         intervals: [1000],
         timeout: TIMEOUTS.ThirtySeconds,
@@ -616,7 +596,7 @@ test.describe.parallel('Policies Scheduling Policies', () => {
     });
 
     test('Create policy for PXC', async ({page}) => {
-      await goToUrl(page, '/settings/pod-scheduling-policies');
+      await goToUrl(page, '/settings/policies/pod-scheduling');
 
       await test.step(`Create policy ${customPXCPolicyName} for PXC`, async () => {
         await expect(page.getByTestId('add-policy')).toBeVisible();
