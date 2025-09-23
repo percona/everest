@@ -44,11 +44,9 @@ import {
   getK8sNodes,
   getK8sResource,
   removeLabelFromK8sNode,
-  getK8sProvider
 } from '@e2e/utils/kubernetes';
 
 let token: string;
-let provider: string;
 
 test.describe.configure({ retries: 0 });
 
@@ -69,14 +67,10 @@ test.describe.configure({ retries: 0 });
 
       const clusterName = `${db}-${size}${nProxies ? `-${nProxies}` : ''}${nShards ? `-${nShards}` : ''}`;
       let storageClasses = [];
-
       const namespace = EVEREST_CI_NAMESPACES.EVEREST_UI;
       const monitoringName = 'e2e-endpoint-0';
 
       test.beforeAll(async ({ request }) => {
-        provider = await getK8sProvider();
-        test.skip(provider === 'OpenShift', 'All tests skipped on OpenShift');
-
         token = await getTokenFromLocalStorage();
 
         const { storageClassNames = [] } = await getClusterDetailedInfo(
@@ -217,9 +211,6 @@ test.describe.configure({ retries: 0 });
         const monitoringName = 'e2e-endpoint-0';
 
         test.beforeAll(async ({ request }) => {
-          provider = await getK8sProvider();
-          test.skip(provider === 'OpenShift', 'All tests skipped on OpenShift');
-
           token = await getTokenFromLocalStorage();
 
           const { storageClassNames = [] } = await getClusterDetailedInfo(
@@ -345,9 +336,6 @@ test.describe(
     test.describe.configure({ timeout: 1_200_000 });
 
     test.beforeAll(async ({ request }) => {
-      provider = await getK8sProvider();
-      test.skip(provider === 'OpenShift', 'All tests skipped on OpenShift');
-
       token = await getTokenFromLocalStorage();
 
       const { storageClassNames = [] } = await getClusterDetailedInfo(
