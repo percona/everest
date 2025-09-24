@@ -66,24 +66,6 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    // {
-    //   name: 'global-setup',
-    //   testDir: './setup',
-    //   testMatch: /global.setup\.ts/,
-    //   teardown: 'global-teardown',
-    //   use: {
-    //     storageState: STORAGE_STATE_FILE,
-    //   },
-    //   // dependencies: ['auth'],
-    // },
-    // {
-    //   name: 'global-teardown',
-    //   testDir: './teardown',
-    //   use: {
-    //     storageState: STORAGE_STATE_FILE,
-    //   },
-    //   testMatch: /global\.teardown\.ts/,
-    // },
     // ---------------------- global setup and teardown ----------------------
     // global:auth
     {
@@ -145,6 +127,7 @@ export default defineConfig({
       name: 'pr',
       dependencies: [
         'pr:db-cluster',
+        'pr:db-cluster-details',
         'pr:multinamespaces',
         'pr:no-match',
         'pr:settings',
@@ -241,6 +224,42 @@ export default defineConfig({
       },
     },
 
+    // pr:db-cluster-details tests
+    {
+      name: 'pr:db-cluster-details',
+      dependencies: [
+        'pr:db-cluster-details:components',
+        // 'pr:db-cluster:db-list',
+        // 'pr:db-cluster:db-wizard',
+      ],
+    },
+    // pr:db-cluster-details:components:setup tests
+    {
+      name: 'pr:db-cluster-details:components:setup',
+      testDir: './pr/db-cluster-details/components',
+      testMatch: /components\.setup\.ts/,
+      dependencies: ['global:auth:ci:setup'],
+      teardown: 'pr:db-cluster-details:components:teardown',
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:db-cluster-details:components:teardown tests
+    {
+      name: 'pr:db-cluster-details:components:teardown',
+      testDir: './pr/db-cluster-details/components',
+      testMatch: /components\.teardown\.ts/,
+    },
+    // pr:db-cluster-details:components tests
+    {
+      name: 'pr:db-cluster-details:components',
+      testDir: './pr/db-cluster-details/components',
+      testMatch: /components\.e2e\.ts/,
+      dependencies: ['pr:db-cluster-details:components:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
 
     // pr:multinamespaces tests
     {
@@ -299,6 +318,7 @@ export default defineConfig({
         storageState: CI_USER_STORAGE_STATE_FILE,
       },
     },
+
     // pr:no-match tests
     {
       name: 'pr:no-match',
@@ -308,6 +328,7 @@ export default defineConfig({
         storageState: CI_USER_STORAGE_STATE_FILE,
       },
     },
+
     // pr:rbac tests
     {
       name: 'pr:rbac',
