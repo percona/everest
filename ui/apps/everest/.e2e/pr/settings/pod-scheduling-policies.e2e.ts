@@ -117,8 +117,22 @@ test.describe.parallel('Policies Scheduling Policies', () => {
       });
 
       await test.step('Advanced Configuration step', async () => {
+        const getStorageClassResp = page.waitForResponse(resp =>
+          resp.request().method() === "GET" &&
+          resp.url().includes('/v1/cluster-info') &&
+          resp.status() === 200);
+
+        const getPspResp = page.waitForResponse(resp =>
+          resp.request().method() === "GET" &&
+          resp.url().includes('/v1/pod-scheduling-policies?engineType=postgresql&hasRules=true') &&
+          resp.status() === 200);
+
         // Move to "Advanced Configuration" step
         await moveForward(page);
+
+        // wait for requests to finish
+        await getStorageClassResp;
+        await getPspResp;
 
         const pspCheckBox = page
           .getByTestId('switch-input-pod-scheduling-policy-enabled')
@@ -149,8 +163,22 @@ test.describe.parallel('Policies Scheduling Policies', () => {
       });
 
       await test.step('Advanced Configuration step', async () => {
+        const getStorageClassResp = page.waitForResponse(resp =>
+          resp.request().method() === "GET" &&
+          resp.url().includes('/v1/cluster-info') &&
+          resp.status() === 200);
+
+        const getPspResp = page.waitForResponse(resp =>
+          resp.request().method() === "GET" &&
+          resp.url().includes('/v1/pod-scheduling-policies?engineType=psmdb&hasRules=true') &&
+          resp.status() === 200);
+
         // Move to "Advanced Configuration" step
         await moveForward(page);
+
+        // wait for requests to finish
+        await getStorageClassResp;
+        await getPspResp;
 
         const pspCheckBox = page
           .getByTestId('switch-input-pod-scheduling-policy-enabled')
@@ -181,8 +209,22 @@ test.describe.parallel('Policies Scheduling Policies', () => {
       });
 
       await test.step('Advanced Configuration step', async () => {
+        const getStorageClassResp = page.waitForResponse(resp =>
+          resp.request().method() === "GET" &&
+          resp.url().includes('/v1/cluster-info') &&
+          resp.status() === 200);
+
+        const getPspResp = page.waitForResponse(resp =>
+          resp.request().method() === "GET" &&
+          resp.url().includes('/v1/pod-scheduling-policies?engineType=pxc&hasRules=true') &&
+          resp.status() === 200);
+
         // Move to "Advanced Configuration" step
         await moveForward(page);
+
+        // wait for requests to finish
+        await getStorageClassResp;
+        await getPspResp;
 
         const pspCheckBox = page
           .getByTestId('switch-input-pod-scheduling-policy-enabled')
@@ -225,7 +267,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
         await page.getByTestId('select-type-button').click();
         await page.getByRole('option', {name: technologyMap[DbEngineType.POSTGRESQL], exact: true}).click();
 
+        // Request to create PSP
+        const createPspResp = page.waitForResponse(resp =>
+          resp.request().method() === "POST" &&
+          resp.url().includes('/v1/pod-scheduling-policies') &&
+          resp.status() === 200);
+
         await page.getByTestId('form-dialog-create').click();
+        await createPspResp;
       });
 
       await test.step('Create rules', async () => {
@@ -244,8 +293,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
           await page.getByTestId('select-operator-button').click();
           await page.getByRole('option', {name: 'exists', exact: true}).click();
 
+          // Request to update PSP with new rule
+          const addRuleResp = page.waitForResponse(resp =>
+            resp.request().method() === "PUT" &&
+            resp.url().includes(`/v1/pod-scheduling-policies/${customPGPolicyName}`) &&
+            resp.status() === 200);
+
           await page.getByTestId('form-dialog-add').click();
-          await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+          await addRuleResp;
 
           const row = page
             .locator('.MuiTableRow-root')
@@ -272,8 +327,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
           await page.getByTestId('select-operator-button').click();
           await page.getByRole('option', {name: 'exists', exact: true}).click();
 
+          // Request to update PSP with new rule
+          const addRuleResp = page.waitForResponse(resp =>
+            resp.request().method() === "PUT" &&
+            resp.url().includes(`/v1/pod-scheduling-policies/${customPGPolicyName}`) &&
+            resp.status() === 200);
+
           await page.getByTestId('form-dialog-add').click();
-          await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+          await addRuleResp;
 
           const row = page
             .locator('.MuiTableRow-root')
@@ -337,8 +398,17 @@ test.describe.parallel('Policies Scheduling Policies', () => {
         });
 
         await test.step('Assign custom policy', async () => {
+          const getPspResp = page.waitForResponse(resp =>
+            resp.request().method() === "GET" &&
+            resp.url().includes('/v1/pod-scheduling-policies?engineType=postgresql&hasRules=true') &&
+            resp.status() === 200);
+
           // assign policy
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
+
+          // wait for requests to finish
+          await getPspResp;
+
           await page
             .getByTestId('switch-input-pod-scheduling-policy-enabled')
             .getByRole('checkbox')
@@ -404,7 +474,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
         await page.getByTestId('select-type-button').click();
         await page.getByRole('option', {name: technologyMap[DbEngineType.PSMDB], exact: true}).click();
 
+        // Request to create PSP
+        const createPspResp = page.waitForResponse(resp =>
+          resp.request().method() === "POST" &&
+          resp.url().includes('/v1/pod-scheduling-policies') &&
+          resp.status() === 200);
+
         await page.getByTestId('form-dialog-create').click();
+        await createPspResp;
       });
 
       await test.step('Create rules', async () => {
@@ -422,8 +499,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
           await page.getByTestId('select-operator-button').click();
           await page.getByRole('option', {name: 'exists', exact: true}).click();
 
+          // Request to update PSP with new rule
+          const addRuleResp = page.waitForResponse(resp =>
+            resp.request().method() === "PUT" &&
+            resp.url().includes(`/v1/pod-scheduling-policies/${customPSMDBPolicyName}`) &&
+            resp.status() === 200);
+
           await page.getByTestId('form-dialog-add').click();
-          await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+          await addRuleResp;
 
           const row = page
             .locator('.MuiTableRow-root')
@@ -450,8 +533,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
           await page.getByTestId('select-operator-button').click();
           await page.getByRole('option', {name: 'exists', exact: true}).click();
 
+          // Request to update PSP with new rule
+          const addRuleResp = page.waitForResponse(resp =>
+            resp.request().method() === "PUT" &&
+            resp.url().includes(`/v1/pod-scheduling-policies/${customPSMDBPolicyName}`) &&
+            resp.status() === 200);
+
           await page.getByTestId('form-dialog-add').click();
-          await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+          await addRuleResp;
 
           const row = page
             .locator('.MuiTableRow-root')
@@ -478,8 +567,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
           await page.getByTestId('select-operator-button').click();
           await page.getByRole('option', {name: 'exists', exact: true}).click();
 
+          // Request to update PSP with new rule
+          const addRuleResp = page.waitForResponse(resp =>
+            resp.request().method() === "PUT" &&
+            resp.url().includes(`/v1/pod-scheduling-policies/${customPSMDBPolicyName}`) &&
+            resp.status() === 200);
+
           await page.getByTestId('form-dialog-add').click();
-          await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+          await addRuleResp;
 
           const row = page
             .locator('.MuiTableRow-root')
@@ -498,7 +593,7 @@ test.describe.parallel('Policies Scheduling Policies', () => {
 
     test('Show custom PSMDB policy on DB overview', async ({page, request}) => {
       const dbClusterName = customPSMDBPolicyName,
-        namespace = EVEREST_CI_NAMESPACES.PG_ONLY;
+        namespace = EVEREST_CI_NAMESPACES.PSMDB_ONLY;
 
       try {
         await test.step(`Create ${dbClusterName} DB cluster`, async () => {
@@ -543,8 +638,17 @@ test.describe.parallel('Policies Scheduling Policies', () => {
         });
 
         await test.step('Assign custom policy', async () => {
+          const getPspResp = page.waitForResponse(resp =>
+            resp.request().method() === "GET" &&
+            resp.url().includes('/v1/pod-scheduling-policies?engineType=psmdb&hasRules=true') &&
+            resp.status() === 200);
+
           // assign policy
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
+
+          // wait for requests to finish
+          await getPspResp;
+
           await page
             .getByTestId('switch-input-pod-scheduling-policy-enabled')
             .getByRole('checkbox')
@@ -610,7 +714,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
         await page.getByTestId('select-type-button').click();
         await page.getByRole('option', {name: technologyMap[DbEngineType.PXC], exact: true}).click();
 
+        // Request to create PSP
+        const createPspResp = page.waitForResponse(resp =>
+          resp.request().method() === "POST" &&
+          resp.url().includes('/v1/pod-scheduling-policies') &&
+          resp.status() === 200);
+
         await page.getByTestId('form-dialog-create').click();
+        await createPspResp;
       });
 
       await test.step('Create rules', async () => {
@@ -628,8 +739,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
           await page.getByTestId('select-operator-button').click();
           await page.getByRole('option', {name: 'exists', exact: true}).click();
 
+          // Request to update PSP with new rule
+          const addRuleResp = page.waitForResponse(resp =>
+            resp.request().method() === "PUT" &&
+            resp.url().includes(`/v1/pod-scheduling-policies/${customPXCPolicyName}`) &&
+            resp.status() === 200);
+
           await page.getByTestId('form-dialog-add').click();
-          await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+          await addRuleResp;
 
           const row = page
             .locator('.MuiTableRow-root')
@@ -656,8 +773,14 @@ test.describe.parallel('Policies Scheduling Policies', () => {
           await page.getByTestId('select-operator-button').click();
           await page.getByRole('option', {name: 'exists', exact: true}).click();
 
+          // Request to update PSP with new rule
+          const addRuleResp = page.waitForResponse(resp =>
+            resp.request().method() === "PUT" &&
+            resp.url().includes(`/v1/pod-scheduling-policies/${customPXCPolicyName}`) &&
+            resp.status() === 200);
+
           await page.getByTestId('form-dialog-add').click();
-          await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+          await addRuleResp;
 
           const row = page
             .locator('.MuiTableRow-root')
@@ -721,8 +844,17 @@ test.describe.parallel('Policies Scheduling Policies', () => {
         });
 
         await test.step('Assign custom policy', async () => {
+          const getPspResp = page.waitForResponse(resp =>
+            resp.request().method() === "GET" &&
+            resp.url().includes('/v1/pod-scheduling-policies?engineType=pxc&hasRules=true') &&
+            resp.status() === 200);
+
           // assign policy
           await page.getByTestId('edit-advanced-configuration-db-btn').click();
+
+          // wait for requests to finish
+          await getPspResp;
+
           await page
             .getByTestId('switch-input-pod-scheduling-policy-enabled')
             .getByRole('checkbox')

@@ -94,6 +94,6 @@ export const dbSummaryAdvancedConfigurationCheckForPG = async (page: Page) => {
   // there are several 'preview-content' elements in 'Advanced Configurations' section
   const previewContents = advConfigInfo.getByTestId('preview-content')
   await expect(previewContents.getByText('Storage class: local-path')).toBeVisible();
-  await expect(previewContents.getByText('External access disabled')).toBeVisible();
+  await expect(previewContents.getByText('Ext. access: disabled')).toBeVisible();
   await expect(previewContents.getByText('Pod scheduling policy: everest-default-postgresql')).toBeVisible();
 };

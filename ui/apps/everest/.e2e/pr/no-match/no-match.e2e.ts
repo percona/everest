@@ -19,11 +19,17 @@ import {TIMEOUTS} from "@e2e/constants";
 
 test.describe.parallel('No match (404) page', () => {
   test('databases page successfully loaded', async ({ page }) => {
+    // under the load this page may take some time to render.
+    const getResp = page.waitForResponse(resp =>
+      resp.request().method() === "GET" &&
+      resp.url().includes('/databases') &&
+      resp.status() === 200);
+
     await page.goto('/databases');
-    await page.waitForLoadState('load', {timeout: TIMEOUTS.ThirtySeconds})
+    await getResp;
 
     const button = page.getByTestId('add-db-cluster-button');
-    await expect(button).toBeVisible({timeout: TIMEOUTS.TenSeconds});
+    await expect(button).toBeVisible({timeout: TIMEOUTS.ThirtySeconds});
   });
 
   test('non existing url should render no match page', async ({ page }) => {

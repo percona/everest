@@ -82,7 +82,13 @@ test.describe.parallel('DB clusters list', () => {
         await expect(deleteConfirmationButton).toBeDisabled();
         await page.getByTestId('text-input-confirm-input').fill(dbClusterName);
         await expect(deleteConfirmationButton).toBeEnabled();
+
+        const delResp = page.waitForResponse(resp =>
+          resp.request().method() === "DELETE" &&
+          resp.url().includes(`/v1/namespaces/${namespace}/database-clusters/${dbClusterName}`) &&
+          resp.status() === 204);
         await deleteConfirmationButton.click();
+        await delResp;
       });
     } finally {
       await deleteDbClusterFn(request, dbClusterName, namespace);

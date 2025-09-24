@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 import { getNamespacesFn } from '@e2e/utils/namespaces';
+import {goToUrl} from "@e2e/utils/generic";
 
 const generateMockEngineData = ({
   pg,
@@ -84,7 +85,7 @@ test.describe.parallel('Operator upgrades', () => {
         });
       }
     );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
+    await goToUrl(page, `/settings/namespaces/${namespaces[0]}`);
     await expect(page.getByText('v2.3.1')).toBeVisible();
     await expect(page.getByText('v1.15.0')).toBeVisible();
     await expect(page.getByText('v1.13.0')).toBeVisible();
@@ -126,7 +127,7 @@ test.describe.parallel('Operator upgrades', () => {
         });
       }
     );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
+    await goToUrl(page, `/settings/namespaces/${namespaces[0]}`);
     await expect(
       page.getByRole('button', { name: 'Upgrade Operators' })
     ).toBeVisible();
@@ -186,7 +187,7 @@ test.describe.parallel('Operator upgrades', () => {
         });
       }
     );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
+    await goToUrl(page, `/settings/namespaces/${namespaces[0]}`);
     await expect(
       page.getByRole('button', { name: 'Upgrade Operators' })
     ).toBeVisible();
@@ -233,7 +234,7 @@ test.describe.parallel('Operator upgrades', () => {
       }
     );
 
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
+    await goToUrl(page, `/settings/namespaces/${namespaces[0]}`);
     await expect(page.getByTestId('update-db-button')).toBeVisible();
   });
 
@@ -309,7 +310,7 @@ test.describe.parallel('Operator upgrades', () => {
         });
       }
     );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
+    await goToUrl(page, `/settings/namespaces/${namespaces[0]}`);
     await expect(
       page.getByRole('button', { name: 'Upgrade Operators' })
     ).toBeVisible();
@@ -412,7 +413,7 @@ test.describe.parallel('Operator upgrades', () => {
         });
       }
     );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
+    await goToUrl(page, `/settings/namespaces/${namespaces[0]}`);
     await expect(
       page.getByRole('button', { name: 'Upgrade Operators' })
     ).toBeVisible();
