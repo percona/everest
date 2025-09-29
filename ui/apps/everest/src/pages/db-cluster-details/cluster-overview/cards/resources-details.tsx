@@ -184,7 +184,7 @@ export const ResourcesDetails = ({
             </OverviewSection>
           )}
           <OverviewSection
-            title={`${numberOfNodesStr} node${+numberOfNodesStr > 1 ? 's' : ''} ${dbType === DbType.Mongo ? 'per shard' : ''}`}
+            title={`${numberOfNodesStr} node${+numberOfNodesStr > 1 ? 's' : ''} ${dbType === DbType.Mongo && sharding?.enabled ? 'per shard' : ''}`}
             loading={loading}
           >
             <OverviewSectionRow
