@@ -29,7 +29,9 @@ export const switchUser = async (
 export const login = async (page: Page) => {
   await page.goto('/login');
   await page.getByTestId('text-input-username').fill(CI_USER);
+  expect(await page.getByTestId('text-input-username')).toHaveValue(CI_USER);
   await page.getByTestId('text-input-password').fill(CI_PASSWORD);
+  expect(await page.getByTestId('text-input-password')).toHaveValue(CI_PASSWORD);
   await page.getByTestId('login-button').click();
   await expect(page.getByTestId('user-appbar-button')).toBeVisible({
     timeout: TIMEOUTS.ThirtySeconds,
