@@ -134,11 +134,14 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
   }, [userManager]);
 
   const silentlyRenewToken = useCallback(async () => {
-    const newLoggedUser = await userManager.signinSilent();
-
-    if (newLoggedUser && newLoggedUser.access_token) {
-      localStorage.setItem('everestToken', newLoggedUser.access_token);
-    } else {
+    try {
+      const newLoggedUser = await userManager.signinSilent();
+      if (newLoggedUser && newLoggedUser.access_token) {
+        localStorage.setItem('everestToken', newLoggedUser.access_token);
+      } else {
+        setLogoutStatus();
+      }
+    } catch (error) {
       setLogoutStatus();
     }
   }, [userManager]);
@@ -185,6 +188,7 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
           }
         } else {
           if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
+            console.log('token expired, renewing token silently');
             silentlyRenewToken();
             return;
           }
