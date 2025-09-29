@@ -188,7 +188,6 @@ const AuthProvider = ({ children, isSsoEnabled }: AuthProviderProps) => {
           }
         } else {
           if (isAfter(new Date(), new Date((exp || 0) * 1000))) {
-            console.log('token expired, renewing token silently');
             silentlyRenewToken();
             return;
           }
