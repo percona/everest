@@ -229,7 +229,7 @@ export default defineConfig({
       name: 'pr:db-cluster-details',
       dependencies: [
         'pr:db-cluster-details:components',
-        // 'pr:db-cluster:db-list',
+        'pr:db-cluster-details:edit-db-cluster',
         // 'pr:db-cluster:db-wizard',
       ],
     },
@@ -256,6 +256,25 @@ export default defineConfig({
       testDir: './pr/db-cluster-details/components',
       testMatch: /components\.e2e\.ts/,
       dependencies: ['pr:db-cluster-details:components:setup'],
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+    },
+    // pr:db-cluster-details:edit-db-cluster tests
+    {
+      name: 'pr:db-cluster-details:edit-db-cluster',
+      dependencies: [
+        'pr:db-cluster-details:edit-db-cluster:db-version-upgrade',
+        // 'pr:db-cluster-details:edit-db-cluster:',
+        // 'pr:db-cluster-details:edit-db-cluster:',
+      ],
+    },
+    // pr:db-cluster-details:edit-db-cluster:db-version-upgrade tests
+    {
+      name: 'pr:db-cluster-details:edit-db-cluster:db-version-upgrade',
+      testDir: './pr/db-cluster-details/edit-db-cluster',
+      testMatch: /db-version-upgrade\.e2e\.ts/,
+      dependencies: ['global:auth:ci:setup'],
       use: {
         storageState: CI_USER_STORAGE_STATE_FILE,
       },
