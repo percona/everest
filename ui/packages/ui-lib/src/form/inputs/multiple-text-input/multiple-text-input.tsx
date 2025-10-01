@@ -22,6 +22,7 @@ const MultipleTextInput = ({
   const {
     control,
     formState: { errors },
+    watch,
   } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -49,6 +50,13 @@ const MultipleTextInput = ({
     remove(index);
     onRemove?.(fields.length);
   };
+
+  const fieldValues = watch(fieldName) || [];
+  const lastField = fieldValues[fieldValues.length - 1];
+
+  const isLastFieldEmpty =
+    fieldValues.length > 0 &&
+    (!lastField || (!lastField.key && !lastField.value));
 
   return (
     <Box
@@ -121,6 +129,7 @@ const MultipleTextInput = ({
         size="small"
         startIcon={<AddIcon />}
         onClick={handleAdd}
+        disabled={isLastFieldEmpty}
       >
         Add new
       </Button>
