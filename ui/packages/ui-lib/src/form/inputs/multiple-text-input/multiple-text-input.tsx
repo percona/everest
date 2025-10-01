@@ -52,11 +52,11 @@ const MultipleTextInput = ({
   };
 
   const fieldValues = watch(fieldName) || [];
-  const lastField = fieldValues[fieldValues.length - 1];
-
-  const isLastFieldEmpty =
-    fieldValues.length > 0 &&
-    (!lastField || (!lastField.key && !lastField.value));
+  const hasEmptyFields = fieldValues.some(
+    (field: { key: string; value: string }) => {
+      return !field.key && !field.value;
+    }
+  );
 
   return (
     <Box
@@ -129,7 +129,7 @@ const MultipleTextInput = ({
         size="small"
         startIcon={<AddIcon />}
         onClick={handleAdd}
-        disabled={isLastFieldEmpty}
+        disabled={hasEmptyFields}
       >
         Add new
       </Button>
