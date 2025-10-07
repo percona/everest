@@ -82,7 +82,7 @@ export const ResourcesDetails = ({
   const numberOfNodes = NODES_DB_TYPE_MAP[dbType].includes(replicas)
     ? replicas
     : CUSTOM_NR_UNITS_INPUT_VALUE;
-  const numberOfNodesStr = numberOfNodes;
+  const numberOfNodesStr = replicas;
   const numberOfProxiesStr = NODES_DB_TYPE_MAP[dbType].includes(proxies)
     ? proxies
     : CUSTOM_NR_UNITS_INPUT_VALUE;
