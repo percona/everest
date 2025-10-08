@@ -1,10 +1,9 @@
 ---
 name: API CI
 on:
-  pull_request:
-    paths-ignore:
-      - 'ui/**'
-      - '.github/workflows/dev-fe-ci.yaml'
+  push:
+    branches:
+      - trigger-fe-be-ci
 
 permissions:
   contents: read

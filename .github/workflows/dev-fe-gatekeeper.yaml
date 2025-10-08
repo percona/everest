@@ -1,6 +1,9 @@
 ---
 name: FE CI Gatekeeper
 on:
+  push:
+    branches:
+      - trigger-fe-be-ci
   pull_request:
     paths:
       - "ui/**"
