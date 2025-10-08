@@ -1,12 +1,14 @@
 import { Add } from '@mui/icons-material';
 import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNamespaces } from 'hooks/api';
 import { useQueries } from '@tanstack/react-query';
 import { getAllSplitHorizonDNSConfigs } from 'api/splitHorizon';
+import ConfigurationModal from './configuration-modal';
 
 const SplitHorizon = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: namespaces = [] } = useNamespaces({
     refetchInterval: 10 * 1000,
   });
@@ -39,23 +41,33 @@ const SplitHorizon = () => {
   );
 
   return (
-    <Table
-      tableName="split-horizon"
-      columns={columns}
-      data={data}
-      renderTopToolbarCustomActions={() => (
-        <Button
-          variant="contained"
-          size="medium"
-          onClick={() => {}}
-          data-testid="add-config-button"
-          sx={{ display: 'flex' }}
-          startIcon={<Add />}
-        >
-          Create configuration
-        </Button>
-      )}
-    />
+    <>
+      <Table
+        tableName="split-horizon"
+        columns={columns}
+        data={data}
+        renderTopToolbarCustomActions={() => (
+          <Button
+            variant="contained"
+            size="medium"
+            onClick={() => setIsModalOpen(true)}
+            data-testid="add-config-button"
+            sx={{ display: 'flex' }}
+            startIcon={<Add />}
+          >
+            Create configuration
+          </Button>
+        )}
+      />
+      <ConfigurationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={(data) => {
+          console.log(data);
+          setIsModalOpen(false);
+        }}
+      />
+    </>
   );
 };
 
