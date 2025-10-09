@@ -28,8 +28,9 @@ import { AllowedFieldsToInitiallyLoadDefaults } from 'components/cluster-form/ad
 export const AdvancedConfigurations = ({
   loadingDefaultsForEdition,
 }: StepProps) => {
-  const { watch } = useFormContext();
+  const { watch, getValues } = useFormContext();
   const dbType = watch(DbWizardFormFields.dbType);
+  const namespace = getValues(DbWizardFormFields.k8sNamespace);
   const mode = useDatabasePageMode();
   const allowedFieldsToInitiallyLoadDefaults: AllowedFieldsToInitiallyLoadDefaults[] =
     useMemo(() => {
@@ -54,6 +55,7 @@ export const AdvancedConfigurations = ({
         allowedFieldsToInitiallyLoadDefaults={
           allowedFieldsToInitiallyLoadDefaults
         }
+        namespace={namespace}
       />
     </>
   );

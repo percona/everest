@@ -22,6 +22,7 @@ export enum AdvancedConfigurationFields {
   podSchedulingPolicy = 'podSchedulingPolicy',
   exposureMethod = 'exposureMethod',
   loadBalancerConfigName = 'loadBalancerConfigName',
+  splitHorizonDNS = 'splitHorizonDNS',
 }
 
 export enum ExposureMethod {

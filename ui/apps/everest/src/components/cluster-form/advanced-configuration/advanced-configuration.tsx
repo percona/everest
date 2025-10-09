@@ -48,7 +48,7 @@ import {
   EVEREST_READ_ONLY_FINALIZER,
 } from 'consts';
 import { FormCard } from 'components/form-card';
-import { usePodSchedulingPolicies } from 'hooks';
+import { usePodSchedulingPolicies, useSplitHorizonConfigs } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { dbTypeToDbEngine } from '@percona/utils';
@@ -56,6 +56,7 @@ import { emtpyConfig, SELECT_WIDTH } from './constants';
 import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import LoadBalancerDialog from './load-balancer.dialog';
+import WithInfoIcon from 'components/with-info-icon';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -64,6 +65,7 @@ interface AdvancedConfigurationFormProps {
   allowedFieldsToInitiallyLoadDefaults?: AllowedFieldsToInitiallyLoadDefaults[];
   disableNoConfig?: boolean;
   activePolicy?: string;
+  namespace?: string;
 }
 
 export const AdvancedConfigurationForm = ({
@@ -73,6 +75,7 @@ export const AdvancedConfigurationForm = ({
   allowedFieldsToInitiallyLoadDefaults = [],
   disableNoConfig = false,
   activePolicy,
+  namespace,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues, trigger } =
     useFormContext();
@@ -97,6 +100,12 @@ export const AdvancedConfigurationForm = ({
     usePodSchedulingPolicies(dbTypeToDbEngine(dbType), false, {
       refetchInterval: 2000,
     });
+  const {
+    data: splitHorizonDNSConfigs = [],
+    isLoading: fetchingSplitHorizonDNS,
+  } = useSplitHorizonConfigs(namespace!, {
+    enabled: !!namespace,
+  });
 
   const clusterType = clusterInfo?.clusterType;
 
@@ -417,7 +426,11 @@ export const AdvancedConfigurationForm = ({
                 <FormCard
                   title={Messages.cards.loadBalancerConfiguration.title}
                   controlComponent={
-                    <Box display="flex" ml="auto" alignItems="center">
+                    <WithInfoIcon
+                      onClick={handleOnLoadBalancerConfigInfoClick}
+                      disabled={noConfig}
+                      tooltip={noConfig ? Messages.tooltipTexts.noConfig : ''}
+                    >
                       <SelectInput
                         name={
                           AdvancedConfigurationFields.loadBalancerConfigName
@@ -462,32 +475,7 @@ export const AdvancedConfigurationForm = ({
                           )
                         )}
                       </SelectInput>
-                      {!!loadBalancerConfigs?.items.length && (
-                        <Tooltip
-                          title={noConfig ? Messages.tooltipTexts.noConfig : ''}
-                          placement="right"
-                          arrow
-                        >
-                          <span>
-                            <IconButton
-                              onClick={handleOnLoadBalancerConfigInfoClick}
-                              disabled={noConfig}
-                              sx={{
-                                opacity: noConfig ? 0.5 : 1,
-                                cursor: noConfig ? 'not-allowed' : 'pointer',
-                              }}
-                            >
-                              <InfoIcon
-                                sx={{
-                                  width: '20px',
-                                  color: noConfig ? 'GrayText' : 'default',
-                                }}
-                              />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                    </Box>
+                    </WithInfoIcon>
                   }
                 />
                 <FormCard
@@ -511,6 +499,34 @@ export const AdvancedConfigurationForm = ({
               </>
             )}
           </Box>
+        }
+      />
+      <FormCard
+        title={Messages.cards.splitHorizonDNS.title}
+        description={Messages.cards.splitHorizonDNS.description}
+        controlComponent={
+          <WithInfoIcon tooltip={Messages.tooltipTexts.splitHorizonDNS}>
+            <SelectInput
+              name={AdvancedConfigurationFields.splitHorizonDNS}
+              loading={fetchingSplitHorizonDNS}
+              formControlProps={{
+                sx: {
+                  width: SELECT_WIDTH,
+                  mt: 0,
+                  textAlign: 'left',
+                },
+              }}
+            >
+              {splitHorizonDNSConfigs.map((config) => (
+                <MenuItem
+                  value={config.baseDomainNameSuffix}
+                  key={config.baseDomainNameSuffix}
+                >
+                  {config.baseDomainNameSuffix}
+                </MenuItem>
+              ))}
+            </SelectInput>
+          </WithInfoIcon>
         }
       />
       <FormCard

@@ -57,6 +57,11 @@ export const Messages = {
       description:
         'Set your database engine configuration to adjust your database system to your workload and performance needs. For configuration format and specific parameters, check your database type documentation.',
     },
+    splitHorizonDNS: {
+      title: 'Split-Horizon DNS',
+      description:
+        'Choose a domain name for your cluster. Everest will auto-generate replica hostnames for each network horizon.',
+    },
   },
   errors: {
     sourceRange: {
@@ -76,5 +81,7 @@ export const Messages = {
       'Seems like you don’t have permission to read any pod scheduling policy.',
     noConfig: 'No configurations to display',
     limitations: 'Check limitations in the documentation',
+    splitHorizonDNS:
+      'Percona Everest will create hostnames like domain/example.eg/test',
   },
 };
