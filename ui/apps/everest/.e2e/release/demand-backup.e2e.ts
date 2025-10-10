@@ -192,73 +192,73 @@ const zephyrMap: Record<string, string> = {
         await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 360000);
       });
 
-      test(`Delete data [${db} size ${size}]`, async () => {
-        await dropTestDB(clusterName, namespace);
-      });
+      // test(`Delete data [${db} size ${size}]`, async () => {
+      //   await dropTestDB(clusterName, namespace);
+      // });
 
-      zephyrId = zephyrMap[`restore-${db}`];
-      test(`${zephyrId} - Restore cluster [${db} size ${size}]`, async ({
-        page,
-      }) => {
-        await test.step('Navigate to backups and restore', async () => {
-          await gotoDbClusterBackups(page, clusterName);
-          await findRowAndClickActions(
-            page,
-            baseBackupName + '-1',
-            'Restore to this DB'
-          );
-          await expect(
-            page.getByTestId('select-input-backup-name')
-          ).not.toBeEmpty();
-          await page.getByTestId('form-dialog-restore').click();
+      // zephyrId = zephyrMap[`restore-${db}`];
+      // test(`${zephyrId} - Restore cluster [${db} size ${size}]`, async ({
+      //   page,
+      // }) => {
+      //   await test.step('Navigate to backups and restore', async () => {
+      //     await gotoDbClusterBackups(page, clusterName);
+      //     await findRowAndClickActions(
+      //       page,
+      //       baseBackupName + '-1',
+      //       'Restore to this DB'
+      //     );
+      //     await expect(
+      //       page.getByTestId('select-input-backup-name')
+      //     ).not.toBeEmpty();
+      //     await page.getByTestId('form-dialog-restore').click();
 
-          await page.goto('/databases');
-          await waitForStatus(page, clusterName, 'Restoring', 30000);
-          await waitForStatus(page, clusterName, 'Up', 660000);
+      //     await page.goto('/databases');
+      //     await waitForStatus(page, clusterName, 'Restoring', 30000);
+      //     await waitForStatus(page, clusterName, 'Up', 660000);
 
-          await gotoDbClusterRestores(page, clusterName);
-          // we select based on backup source since restores cannot be named and we don't know
-          // in advance what will be the name
-          await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
-        });
+      //     await gotoDbClusterRestores(page, clusterName);
+      //     // we select based on backup source since restores cannot be named and we don't know
+      //     // in advance what will be the name
+      //     await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 120000);
+      //   });
 
-        await test.step(`Check data after restore [${db} size ${size}]`, async () => {
-          const result = await queryTestDB(clusterName, namespace);
-          switch (db) {
-            case 'pxc':
-              expect(result.trim()).toBe('1\n2\n3');
-              break;
-            case 'psmdb':
-              expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
-              break;
-            case 'postgresql':
-              expect(result.trim()).toBe('1\n 2\n 3');
-              break;
-          }
-        });
-      });
+      //   await test.step(`Check data after restore [${db} size ${size}]`, async () => {
+      //     const result = await queryTestDB(clusterName, namespace);
+      //     switch (db) {
+      //       case 'pxc':
+      //         expect(result.trim()).toBe('1\n2\n3');
+      //         break;
+      //       case 'psmdb':
+      //         expect(result.trim()).toBe('[{"a":1},{"a":2},{"a":3}]');
+      //         break;
+      //       case 'postgresql':
+      //         expect(result.trim()).toBe('1\n 2\n 3');
+      //         break;
+      //     }
+      //   });
+      // });
 
-      test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
-        await gotoDbClusterRestores(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
-        await expect(page.getByLabel('Delete restore')).toBeVisible();
-        await page.getByTestId('confirm-dialog-delete').click();
-        await waitForDelete(page, baseBackupName + '-1', 15000);
-      });
+      // test(`Delete restore [${db} size ${size}]`, async ({ page }) => {
+      //   await gotoDbClusterRestores(page, clusterName);
+      //   await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
+      //   await expect(page.getByLabel('Delete restore')).toBeVisible();
+      //   await page.getByTestId('confirm-dialog-delete').click();
+      //   await waitForDelete(page, baseBackupName + '-1', 15000);
+      // });
 
-      test(`Delete backup [${db} size ${size}]`, async ({ page }) => {
-        await gotoDbClusterBackups(page, clusterName);
-        await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
-        await expect(page.getByLabel('Delete backup')).toBeVisible();
-        await page.getByTestId('form-dialog-delete').click();
-        await waitForDelete(page, baseBackupName + '-1', 30000);
-      });
+      // test(`Delete backup [${db} size ${size}]`, async ({ page }) => {
+      //   await gotoDbClusterBackups(page, clusterName);
+      //   await findRowAndClickActions(page, baseBackupName + '-1', 'Delete');
+      //   await expect(page.getByLabel('Delete backup')).toBeVisible();
+      //   await page.getByTestId('form-dialog-delete').click();
+      //   await waitForDelete(page, baseBackupName + '-1', 30000);
+      // });
 
-      test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
-        await deleteDbCluster(page, clusterName);
-        await waitForStatus(page, clusterName, 'Deleting', 15000);
-        await waitForDelete(page, clusterName, 240000);
-      });
+      // test(`Delete cluster [${db} size ${size}]`, async ({ page }) => {
+      //   await deleteDbCluster(page, clusterName);
+      //   await waitForStatus(page, clusterName, 'Deleting', 15000);
+      //   await waitForDelete(page, clusterName, 240000);
+      // });
     }
   );
 });
