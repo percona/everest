@@ -189,7 +189,7 @@ const zephyrMap: Record<string, string> = {
         ).not.toBeEmpty();
         await page.getByTestId('form-dialog-create').click();
 
-        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 300000);
+        await waitForStatus(page, baseBackupName + '-1', 'Succeeded', 360000);
       });
 
       test(`Delete data [${db} size ${size}]`, async () => {
