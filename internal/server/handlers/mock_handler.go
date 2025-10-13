@@ -9,6 +9,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	engine_features_everestv1alpha1 "github.com/percona/everest-operator/api/engine-features.everest/v1alpha1"
+
 	v1 "k8s.io/api/core/v1"
 
 	v1alpha1 "github.com/percona/everest-operator/api/everest/v1alpha1"
@@ -277,6 +279,36 @@ func (_m *MockHandler) CreatePodSchedulingPolicy(ctx context.Context, psp *v1alp
 	return r0, r1
 }
 
+// CreateSplitHorizonDNSConfig provides a mock function with given fields: ctx, shdc
+func (_m *MockHandler) CreateSplitHorizonDNSConfig(ctx context.Context, shdc *engine_features_everestv1alpha1.SplitHorizonDNSConfig) (*engine_features_everestv1alpha1.SplitHorizonDNSConfig, error) {
+	ret := _m.Called(ctx, shdc)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateSplitHorizonDNSConfig")
+	}
+
+	var r0 *engine_features_everestv1alpha1.SplitHorizonDNSConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *engine_features_everestv1alpha1.SplitHorizonDNSConfig) (*engine_features_everestv1alpha1.SplitHorizonDNSConfig, error)); ok {
+		return rf(ctx, shdc)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *engine_features_everestv1alpha1.SplitHorizonDNSConfig) *engine_features_everestv1alpha1.SplitHorizonDNSConfig); ok {
+		r0 = rf(ctx, shdc)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*engine_features_everestv1alpha1.SplitHorizonDNSConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *engine_features_everestv1alpha1.SplitHorizonDNSConfig) error); ok {
+		r1 = rf(ctx, shdc)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteBackupStorage provides a mock function with given fields: ctx, namespace, name
 func (_m *MockHandler) DeleteBackupStorage(ctx context.Context, namespace string, name string) error {
 	ret := _m.Called(ctx, namespace, name)
@@ -396,6 +428,24 @@ func (_m *MockHandler) DeletePodSchedulingPolicy(ctx context.Context, name strin
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(ctx, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteSplitHorizonDNSConfig provides a mock function with given fields: ctx, namespace, name
+func (_m *MockHandler) DeleteSplitHorizonDNSConfig(ctx context.Context, namespace string, name string) error {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteSplitHorizonDNSConfig")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, namespace, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -823,6 +873,36 @@ func (_m *MockHandler) GetSettings(ctx context.Context) (*api.Settings, error) {
 	return r0, r1
 }
 
+// GetSplitHorizonDNSConfig provides a mock function with given fields: ctx, namespace, name
+func (_m *MockHandler) GetSplitHorizonDNSConfig(ctx context.Context, namespace string, name string) (*engine_features_everestv1alpha1.SplitHorizonDNSConfig, error) {
+	ret := _m.Called(ctx, namespace, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSplitHorizonDNSConfig")
+	}
+
+	var r0 *engine_features_everestv1alpha1.SplitHorizonDNSConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*engine_features_everestv1alpha1.SplitHorizonDNSConfig, error)); ok {
+		return rf(ctx, namespace, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *engine_features_everestv1alpha1.SplitHorizonDNSConfig); ok {
+		r0 = rf(ctx, namespace, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*engine_features_everestv1alpha1.SplitHorizonDNSConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetUpgradePlan provides a mock function with given fields: ctx, namespace
 func (_m *MockHandler) GetUpgradePlan(ctx context.Context, namespace string) (*api.UpgradePlan, error) {
 	ret := _m.Called(ctx, namespace)
@@ -1220,6 +1300,36 @@ func (_m *MockHandler) ListPodSchedulingPolicies(ctx context.Context, params *ap
 	return r0, r1
 }
 
+// ListSplitHorizonDNSConfigs provides a mock function with given fields: ctx, namespace
+func (_m *MockHandler) ListSplitHorizonDNSConfigs(ctx context.Context, namespace string) (*engine_features_everestv1alpha1.SplitHorizonDNSConfigList, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSplitHorizonDNSConfigs")
+	}
+
+	var r0 *engine_features_everestv1alpha1.SplitHorizonDNSConfigList
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*engine_features_everestv1alpha1.SplitHorizonDNSConfigList, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *engine_features_everestv1alpha1.SplitHorizonDNSConfigList); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*engine_features_everestv1alpha1.SplitHorizonDNSConfigList)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SetNext provides a mock function with given fields: h
 func (_m *MockHandler) SetNext(h Handler) {
 	_m.Called(h)
@@ -1428,6 +1538,36 @@ func (_m *MockHandler) UpdatePodSchedulingPolicy(ctx context.Context, psp *v1alp
 
 	if rf, ok := ret.Get(1).(func(context.Context, *v1alpha1.PodSchedulingPolicy) error); ok {
 		r1 = rf(ctx, psp)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateSplitHorizonDNSConfig provides a mock function with given fields: ctx, shdc
+func (_m *MockHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, shdc *engine_features_everestv1alpha1.SplitHorizonDNSConfig) (*engine_features_everestv1alpha1.SplitHorizonDNSConfig, error) {
+	ret := _m.Called(ctx, shdc)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateSplitHorizonDNSConfig")
+	}
+
+	var r0 *engine_features_everestv1alpha1.SplitHorizonDNSConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *engine_features_everestv1alpha1.SplitHorizonDNSConfig) (*engine_features_everestv1alpha1.SplitHorizonDNSConfig, error)); ok {
+		return rf(ctx, shdc)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *engine_features_everestv1alpha1.SplitHorizonDNSConfig) *engine_features_everestv1alpha1.SplitHorizonDNSConfig); ok {
+		r0 = rf(ctx, shdc)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*engine_features_everestv1alpha1.SplitHorizonDNSConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *engine_features_everestv1alpha1.SplitHorizonDNSConfig) error); ok {
+		r1 = rf(ctx, shdc)
 	} else {
 		r1 = ret.Error(1)
 	}
