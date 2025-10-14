@@ -1,5 +1,5 @@
 export const messages = {
-  title: 'Load Balancer Configuration',
+  title: 'LoadBalancer Configuration',
   rowActions: {
     viewDetails: 'View details',
     delete: 'Delete',
