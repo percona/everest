@@ -249,13 +249,9 @@ const ResourcesToggles = ({
   useEffect(() => {
     if (dbType === DbType.Mysql && dbVersion === '8.4.0') {
       setValue(DbWizardFormFields.memory, 3);
-    } else {
-      setValue(
-        DbWizardFormFields.memory,
-        NODES_DEFAULT_SIZES[dbType].small.memory
-      );
     }
-  }, [dbType, dbVersion, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbType, dbVersion]);
 
   return (
     <FormGroup sx={{ mt: 3 }}>
