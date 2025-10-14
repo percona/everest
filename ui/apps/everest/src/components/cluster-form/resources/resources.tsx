@@ -255,7 +255,7 @@ const ResourcesToggles = ({
         NODES_DEFAULT_SIZES[dbType].small.memory
       );
     }
-  }, [dbType, dbVersion, resourceSizePerUnit, setValue]);
+  }, [dbType, dbVersion, setValue]);
 
   return (
     <FormGroup sx={{ mt: 3 }}>
