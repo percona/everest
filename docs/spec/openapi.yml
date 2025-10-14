@@ -3080,7 +3080,7 @@ components:
             allowUnsafeConfiguration:
               description: |-
                 AllowUnsafeConfiguration field used to ensure that the user can create configurations unfit for production use.
-
+                
                 Deprecated: AllowUnsafeConfiguration will not be supported in the future releases.
               type: boolean
             backup:
@@ -3107,7 +3107,7 @@ components:
                         binlogs uploads
                       type: integer
                   required:
-                  - enabled
+                    - enabled
                   type: object
                 schedules:
                   description: Schedules is a list of backup schedules
@@ -3135,10 +3135,10 @@ components:
                         description: Schedule is the cron schedule
                         type: string
                     required:
-                    - backupStorageName
-                    - enabled
-                    - name
-                    - schedule
+                      - backupStorageName
+                      - enabled
+                      - name
+                      - schedule
                     type: object
                   type: array
               type: object
@@ -3158,8 +3158,8 @@ components:
                       description: Path is the path to the backup file/directory.
                       type: string
                   required:
-                  - backupStorageName
-                  - path
+                    - backupStorageName
+                    - path
                   type: object
                 dataImport:
                   description: DataImport allows importing data from an external
@@ -3183,7 +3183,12 @@ components:
                           description: |-
                             Path is the path to the directory to import the data from.
                             This may be a path to a file or a directory, depending on the data importer.
+                            Only absolute file paths are allowed. Leading and trailing '/' are optional.
                           type: string
+                          x-kubernetes-validations:
+                            - message: path must be an absolute file or directory
+                                path
+                              rule: self.matches('^/?([^/]+(/[^/]+)*)/?$')
                         s3:
                           description: S3 contains the S3 information for the data
                             import.
@@ -3208,6 +3213,9 @@ components:
                               description: EndpointURL is an endpoint URL of backup
                                 storage.
                               type: string
+                              x-kubernetes-validations:
+                                - message: endpointURL must be a valid URL
+                                  rule: isURL(self)
                             forcePathStyle:
                               default: false
                               description: |-
@@ -3232,16 +3240,21 @@ components:
                                 If unspecified, the default value is true.
                               type: boolean
                           required:
-                          - credentialsSecretName
+                            - bucket
+                            - credentialsSecretName
+                            - endpointURL
+                            - region
                           type: object
+                      required:
+                        - path
                       type: object
                   required:
-                  - dataImporterName
-                  - source
+                    - dataImporterName
+                    - source
                   type: object
                   x-kubernetes-validations:
-                  - message: .spec.dataSource.dataImport is immutable
-                    rule: self == oldSelf
+                    - message: .spec.dataSource.dataImport is immutable
+                      rule: self == oldSelf
                 dbClusterBackupName:
                   description: DBClusterBackupName is the name of the DB cluster
                     backup to restore from
@@ -3251,14 +3264,14 @@ components:
                   properties:
                     date:
                       description: 'Date is the UTC date to recover to. The accepted
-                        format: "2006-01-02T15:04:05Z".'
+                       format: "2006-01-02T15:04:05Z".'
                       type: string
                     type:
                       default: date
                       description: Type is the type of recovery.
                       enum:
-                      - date
-                      - latest
+                        - date
+                        - latest
                       type: string
                   type: object
               type: object
@@ -3273,7 +3286,7 @@ components:
                     CRVersion is the desired version of the CR to use with the
                     underlying operator.
                     If unspecified, everest-operator will use the same version as the operator.
-
+                    
                     NOTE: Updating this property post installation may lead to a restart of the cluster.
                   type: string
                 replicas:
@@ -3288,15 +3301,15 @@ components:
                   properties:
                     cpu:
                       anyOf:
-                      - type: integer
-                      - type: string
+                        - type: integer
+                        - type: string
                       description: CPU is the CPU resource requirements
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                     memory:
                       anyOf:
-                      - type: integer
-                      - type: string
+                        - type: integer
+                        - type: string
                       description: Memory is the memory resource requirements
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
@@ -3310,20 +3323,20 @@ components:
                       type: string
                     size:
                       anyOf:
-                      - type: integer
-                      - type: string
+                        - type: integer
+                        - type: string
                       description: Size is the size of the persistent volume claim
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                   required:
-                  - size
+                    - size
                   type: object
                 type:
                   description: Type is the engine type
                   enum:
-                  - pxc
-                  - postgresql
-                  - psmdb
+                    - pxc
+                    - postgresql
+                    - psmdb
                   type: string
                 userSecretsName:
                   description: UserSecretsName is the name of the secret containing
@@ -3333,8 +3346,8 @@ components:
                   description: Version is the engine version
                   type: string
               required:
-              - storage
-              - type
+                - storage
+                - type
               type: object
             monitoring:
               description: Monitoring is the monitoring configuration
@@ -3351,10 +3364,10 @@ components:
                       description: |-
                         Claims lists the names of resources, defined in spec.resourceClaims,
                         that are used by this container.
-
+                        
                         This is an alpha field and requires enabling the
                         DynamicResourceAllocation feature gate.
-
+                        
                         This field is immutable. It can only be set for containers.
                       items:
                         description: ResourceClaim references one entry in PodSpec.ResourceClaims.
@@ -3372,17 +3385,17 @@ components:
                               only the result of this request.
                             type: string
                         required:
-                        - name
+                          - name
                         type: object
                       type: array
                       x-kubernetes-list-map-keys:
-                      - name
+                        - name
                       x-kubernetes-list-type: map
                     limits:
                       additionalProperties:
                         anyOf:
-                        - type: integer
-                        - type: string
+                          - type: integer
+                          - type: string
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                       description: |-
@@ -3392,8 +3405,8 @@ components:
                     requests:
                       additionalProperties:
                         anyOf:
-                        - type: integer
-                        - type: string
+                          - type: integer
+                          - type: string
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                       description: |-
@@ -3439,13 +3452,23 @@ components:
                         config if applied
                       type: string
                     type:
-                      default: internal
-                      description: Type is the expose type, can be internal or external
+                      default: ClusterIP
+                      description: Type is the expose type, can be ClusterIP, LoadBalancer,
+                        NodePort. The types internal and external are deprecated.
                       enum:
-                      - internal
-                      - external
+                        - internal
+                        - external
+                        - ClusterIP
+                        - LoadBalancer
+                        - NodePort
                       type: string
                   type: object
+                  x-kubernetes-validations:
+                    - message: .spec.proxy.expose.loadBalancerConfigName cannot be
+                        cleared once set
+                      rule: self.type == 'internal' || !has(oldSelf.loadBalancerConfigName)
+                        || oldSelf.loadBalancerConfigName == '' || (has(self.loadBalancerConfigName)
+                        && self.loadBalancerConfigName != '')
                 replicas:
                   description: Replicas is the number of proxy replicas
                   format: int32
@@ -3458,15 +3481,15 @@ components:
                   properties:
                     cpu:
                       anyOf:
-                      - type: integer
-                      - type: string
+                        - type: integer
+                        - type: string
                       description: CPU is the CPU resource requirements
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                     memory:
                       anyOf:
-                      - type: integer
-                      - type: string
+                        - type: integer
+                        - type: string
                       description: Memory is the memory resource requirements
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
@@ -3474,10 +3497,10 @@ components:
                 type:
                   description: Type is the proxy type
                   enum:
-                  - mongos
-                  - haproxy
-                  - proxysql
-                  - pgbouncer
+                    - mongos
+                    - haproxy
+                    - proxysql
+                    - pgbouncer
                   type: string
               type: object
             sharding:
@@ -3493,7 +3516,7 @@ components:
                       minimum: 1
                       type: integer
                   required:
-                  - replicas
+                    - replicas
                   type: object
                 enabled:
                   description: Enabled defines if the sharding is enabled
@@ -3504,12 +3527,12 @@ components:
                   minimum: 1
                   type: integer
               required:
-              - configServer
-              - enabled
-              - shards
+                - configServer
+                - enabled
+                - shards
               type: object
           required:
-          - engine
+            - engine
           type: object
         status:
           description: DatabaseClusterStatus defines the observed state of DatabaseCluster.
@@ -3557,9 +3580,9 @@ components:
                   status:
                     description: status of the condition, one of True, False, Unknown.
                     enum:
-                    - "True"
-                    - "False"
-                    - Unknown
+                      - "True"
+                      - "False"
+                      - Unknown
                     type: string
                   type:
                     description: type of condition in CamelCase or in foo.example.com/CamelCase.
@@ -3567,11 +3590,11 @@ components:
                     pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                     type: string
                 required:
-                - lastTransitionTime
-                - message
-                - reason
-                - status
-                - type
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
                 type: object
               type: array
             crVersion:
