@@ -172,6 +172,7 @@ const ResourcesToggles = ({
   const { watch, setValue, setError, clearErrors, getFieldState, resetField } =
     useFormContext();
 
+  const dbVersion = watch(DbWizardFormFields.dbVersion);
   const resourceSizePerUnit: ResourceSize = watch(resourceSizePerUnitInputName);
   const cpu: number = watch(cpuInputName);
   const memory: number = watch(memoryInputName);
@@ -244,6 +245,17 @@ const ResourcesToggles = ({
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
   }, [memory, setValue]);
+
+  useEffect(() => {
+    if (dbType === DbType.Mysql && dbVersion === '8.4.0') {
+      setValue(DbWizardFormFields.memory, 3);
+    } else {
+      setValue(
+        DbWizardFormFields.memory,
+        NODES_DEFAULT_SIZES[dbType].small.memory
+      );
+    }
+  }, [dbType, dbVersion, resourceSizePerUnit, setValue]);
 
   return (
     <FormGroup sx={{ mt: 3 }}>
