@@ -426,7 +426,6 @@ function getBackupStorage(): string {
           // PSMDB uses the same storage location for PITR and backups
           await page.getByTestId('text-input-storage-location').click();
           await page.getByRole('option', { name: `${backupStorage}` }).click();
-
         }
         await expect(
           page.getByTestId('text-input-storage-location')
@@ -526,7 +525,9 @@ function getBackupStorage(): string {
           if (db !== 'psmdb') {
             // PSMDB uses the same storage location for PITR and backups
             await page.getByTestId('text-input-storage-location').click();
-            await page.getByRole('option', { name: `${backupStorage}` }).click();
+            await page
+              .getByRole('option', { name: `${backupStorage}` })
+              .click();
           }
           await expect(
             page.getByTestId('text-input-storage-location')
