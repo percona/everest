@@ -272,7 +272,8 @@ func (u *Upgrade) canUpgrade(ctx context.Context, everestVersion *goversion.Vers
 }
 
 func validateVersionToUpgrade(
-	currentEverestVersion, targetEverestVersion *goversion.Version) error {
+	currentEverestVersion, targetEverestVersion *goversion.Version,
+) error {
 	// Downgrade is not allowed.
 	if targetEverestVersion.LessThan(currentEverestVersion) {
 		return ErrDowngradeNotAllowed
