@@ -25,8 +25,8 @@ export enum AdvancedConfigurationFields {
 }
 
 export enum ExposureMethod {
-  ClusterIP = 'Cluster IP',
-  LoadBalancer = 'Load balancer',
+  ClusterIP = 'ClusterIP',
+  LoadBalancer = 'LoadBalancer',
 }
 
 export type AllowedFieldsToInitiallyLoadDefaults =
