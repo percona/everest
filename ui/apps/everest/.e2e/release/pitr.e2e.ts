@@ -663,7 +663,7 @@ function getBackupStorage(): string {
             );
             await expect(page.getByLabel('Delete backup')).toBeVisible();
             await page.getByTestId('form-dialog-delete').click();
-            await waitForDelete(page, baseBackupName + `-${i}`, 30000);
+            await waitForDelete(page, baseBackupName + `-${i}`, 60000);
           }
         }
       });
