@@ -94,6 +94,7 @@ export const AdvancedConfigurationEditModal = ({
           dbCluster.spec.proxy.expose.type === ProxyExposeType.external &&
           dbCluster.spec.proxy.expose.loadBalancerConfigName !== undefined
         }
+        activePolicy={dbCluster?.spec.podSchedulingPolicyName}
       />
     </FormDialog>
   );
