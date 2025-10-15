@@ -45,7 +45,7 @@ export const Messages = {
       title: 'Exposure Method',
     },
     loadBalancerConfiguration: {
-      title: 'Load balancer configuration',
+      title: 'LoadBalancer configuration',
     },
     sourceRange: {
       title: 'Source Range',

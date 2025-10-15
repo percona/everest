@@ -55,6 +55,7 @@ export const ClusterOverview = () => {
   const { data: dbClusterDetails, isFetching: fetchingClusterDetails } =
     useDbClusterCredentials(dbClusterName || '', namespace, {
       enabled: !!dbClusterName && canRead && isStatusReady,
+      refetchInterval: 5 * 1000,
     });
 
   if (!dbCluster) {
