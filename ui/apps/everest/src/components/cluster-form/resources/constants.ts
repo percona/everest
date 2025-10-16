@@ -57,58 +57,66 @@ export const humanizedResourceSizeMap: Record<ResourceSize, string> = {
   [ResourceSize.custom]: 'Custom',
 };
 
-export const NODES_DEFAULT_SIZES = {
-  [DbType.Mysql]: {
-    [ResourceSize.small]: {
-      [DbWizardFormFields.cpu]: 1,
-      [DbWizardFormFields.memory]: 2,
-      [DbWizardFormFields.disk]: 25,
-    },
-    [ResourceSize.medium]: {
-      [DbWizardFormFields.cpu]: 4,
-      [DbWizardFormFields.memory]: 8,
-      [DbWizardFormFields.disk]: 100,
-    },
-    [ResourceSize.large]: {
-      [DbWizardFormFields.cpu]: 8,
-      [DbWizardFormFields.memory]: 32,
-      [DbWizardFormFields.disk]: 200,
-    },
-  },
-  [DbType.Mongo]: {
-    [ResourceSize.small]: {
-      [DbWizardFormFields.cpu]: 1,
-      [DbWizardFormFields.memory]: 4,
-      [DbWizardFormFields.disk]: 25,
-    },
-    [ResourceSize.medium]: {
-      [DbWizardFormFields.cpu]: 4,
-      [DbWizardFormFields.memory]: 8,
-      [DbWizardFormFields.disk]: 100,
-    },
-    [ResourceSize.large]: {
-      [DbWizardFormFields.cpu]: 8,
-      [DbWizardFormFields.memory]: 32,
-      [DbWizardFormFields.disk]: 200,
-    },
-  },
-  [DbType.Postresql]: {
-    [ResourceSize.small]: {
-      [DbWizardFormFields.cpu]: 1,
-      [DbWizardFormFields.memory]: 2,
-      [DbWizardFormFields.disk]: 25,
-    },
-    [ResourceSize.medium]: {
-      [DbWizardFormFields.cpu]: 4,
-      [DbWizardFormFields.memory]: 8,
-      [DbWizardFormFields.disk]: 100,
-    },
-    [ResourceSize.large]: {
-      [DbWizardFormFields.cpu]: 8,
-      [DbWizardFormFields.memory]: 32,
-      [DbWizardFormFields.disk]: 200,
-    },
-  },
+export const MYSQL_SPECIAL_MEMORY = '8.4.0';
+
+export const NODES_DEFAULT_SIZES = (dbType: DbType, dbVersion: string = '') => {
+  switch (dbType) {
+    case DbType.Mysql:
+      return {
+        [ResourceSize.small]: {
+          [DbWizardFormFields.cpu]: 1,
+          [DbWizardFormFields.memory]:
+            dbVersion === MYSQL_SPECIAL_MEMORY ? 3 : 2,
+          [DbWizardFormFields.disk]: 25,
+        },
+        [ResourceSize.medium]: {
+          [DbWizardFormFields.cpu]: 4,
+          [DbWizardFormFields.memory]: 8,
+          [DbWizardFormFields.disk]: 100,
+        },
+        [ResourceSize.large]: {
+          [DbWizardFormFields.cpu]: 8,
+          [DbWizardFormFields.memory]: 32,
+          [DbWizardFormFields.disk]: 200,
+        },
+      };
+    case DbType.Mongo:
+      return {
+        [ResourceSize.small]: {
+          [DbWizardFormFields.cpu]: 1,
+          [DbWizardFormFields.memory]: 4,
+          [DbWizardFormFields.disk]: 25,
+        },
+        [ResourceSize.medium]: {
+          [DbWizardFormFields.cpu]: 4,
+          [DbWizardFormFields.memory]: 8,
+          [DbWizardFormFields.disk]: 100,
+        },
+        [ResourceSize.large]: {
+          [DbWizardFormFields.cpu]: 8,
+          [DbWizardFormFields.memory]: 32,
+          [DbWizardFormFields.disk]: 200,
+        },
+      };
+    case DbType.Postresql:
+      return {
+        [ResourceSize.small]: {
+          [DbWizardFormFields.cpu]: 1,
+          [DbWizardFormFields.memory]: 2,
+          [DbWizardFormFields.disk]: 25,
+        },
+        [ResourceSize.medium]: {
+          [DbWizardFormFields.cpu]: 4,
+          [DbWizardFormFields.memory]: 8,
+          [DbWizardFormFields.disk]: 100,
+        },
+        [ResourceSize.large]: {
+          [DbWizardFormFields.cpu]: 8,
+          [DbWizardFormFields.memory]: 32,
+          [DbWizardFormFields.disk]: 200,
+        },
+      };
+  }
 };
 
 export const PROXIES_DEFAULT_SIZES = {

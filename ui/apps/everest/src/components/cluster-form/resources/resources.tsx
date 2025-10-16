@@ -40,6 +40,7 @@ import {
   ResourceSize,
   PROXIES_DEFAULT_SIZES,
   resourcesFormSchema,
+  MYSQL_SPECIAL_MEMORY,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
@@ -150,6 +151,7 @@ const ResourceInput = ({
 
 const ResourcesToggles = ({
   dbType,
+  dbVersion,
   unit = 'node',
   unitPlural = `${unit}s`,
   options,
@@ -172,7 +174,6 @@ const ResourcesToggles = ({
   const { watch, setValue, setError, clearErrors, getFieldState, resetField } =
     useFormContext();
 
-  const dbVersion = watch(DbWizardFormFields.dbVersion);
   const resourceSizePerUnit: ResourceSize = watch(resourceSizePerUnitInputName);
   const cpu: number = watch(cpuInputName);
   const memory: number = watch(memoryInputName);
@@ -237,21 +238,35 @@ const ResourcesToggles = ({
     }
   }, [disk, allowDiskInputUpdate, setValue]);
 
-  useEffect(() => {
-    if (
-      resourceSizePerUnit !== ResourceSize.custom &&
-      memory !== sizeOptions[resourceSizePerUnit].memory
-    ) {
-      setValue(resourceSizePerUnitInputName, ResourceSize.custom);
-    }
-  }, [memory, setValue]);
+  // for MySQL 8.4.0 with 3GB memory, the default resource size should be small
+  const isMySQLSpecialMemory =
+    dbType === DbType.Mysql &&
+    dbVersion === MYSQL_SPECIAL_MEMORY &&
+    memory === 3;
 
   useEffect(() => {
-    if (dbType === DbType.Mysql && dbVersion === '8.4.0') {
-      setValue(DbWizardFormFields.memory, 3);
+    if (resourceSizePerUnit !== ResourceSize.custom) {
+      const expectedMemory = sizeOptions[resourceSizePerUnit].memory;
+
+      if (
+        memory !== expectedMemory &&
+        (!isMySQLSpecialMemory || expectedMemory !== 3)
+      ) {
+        setValue(resourceSizePerUnitInputName, ResourceSize.custom);
+      }
+    } else if (isMySQLSpecialMemory) {
+      setValue(resourceSizePerUnitInputName, ResourceSize.small);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbType, dbVersion]);
+  }, [
+    memory,
+    setValue,
+    dbType,
+    dbVersion,
+    resourceSizePerUnit,
+    resourceSizePerUnitInputName,
+    sizeOptions,
+    isMySQLSpecialMemory,
+  ]);
 
   return (
     <FormGroup sx={{ mt: 3 }}>
@@ -524,6 +539,7 @@ const ResourcesForm = ({
   } = useFormContext<DbWizardType>();
 
   const numberOfNodes: string = watch(DbWizardFormFields.numberOfNodes);
+  const dbVersion: string = watch(DbWizardFormFields.dbVersion);
 
   const sharding: boolean = watch(DbWizardFormFields.sharding);
   const shardConfigServers = watch(DbWizardFormFields.shardConfigServers);
@@ -693,8 +709,9 @@ const ResourcesForm = ({
         <Divider />
         <ResourcesToggles
           dbType={dbType}
+          dbVersion={dbVersion}
           options={NODES_DB_TYPE_MAP[dbType]}
-          sizeOptions={NODES_DEFAULT_SIZES[dbType]}
+          sizeOptions={NODES_DEFAULT_SIZES(dbType, dbVersion)}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerNode}
           cpuInputName={DbWizardFormFields.cpu}
           diskInputName={DbWizardFormFields.disk}
@@ -727,6 +744,7 @@ const ResourcesForm = ({
           <Divider />
           <ResourcesToggles
             dbType={dbType}
+            dbVersion={dbVersion}
             unit={proxyUnitNames.singular}
             unitPlural={proxyUnitNames.plural}
             options={NODES_DB_TYPE_MAP[dbType]}
