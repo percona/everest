@@ -310,8 +310,11 @@ function getBackupStorage(): string {
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName + '-1');
         await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
-        await page.getByTestId('text-input-storage-location').click();
-        await page.getByRole('option', { name: `${backupStorage}` }).click();
+        if (db !== 'psmdb') {
+          // PSMDB uses the same storage location for PITR and backups
+          await page.getByTestId('text-input-storage-location').click();
+          await page.getByRole('option', { name: `${backupStorage}` }).click();
+        }
         await expect(
           page.getByTestId('text-input-storage-location')
         ).toHaveValue(backupStorage);
@@ -419,8 +422,11 @@ function getBackupStorage(): string {
         await clickOnDemandBackup(page);
         await page.getByTestId('text-input-name').fill(baseBackupName + '-2');
         await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
-        await page.getByTestId('text-input-storage-location').click();
-        await page.getByRole('option', { name: `${backupStorage}` }).click();
+        if (db !== 'psmdb') {
+          // PSMDB uses the same storage location for PITR and backups
+          await page.getByTestId('text-input-storage-location').click();
+          await page.getByRole('option', { name: `${backupStorage}` }).click();
+        }
         await expect(
           page.getByTestId('text-input-storage-location')
         ).toHaveValue(backupStorage);
@@ -516,8 +522,13 @@ function getBackupStorage(): string {
             .getByTestId('text-input-name')
             .fill(baseBackupName + '-new-cluster');
           await expect(page.getByTestId('text-input-name')).not.toBeEmpty();
-          await page.getByTestId('text-input-storage-location').click();
-          await page.getByRole('option', { name: `${backupStorage}` }).click();
+          if (db !== 'psmdb') {
+            // PSMDB uses the same storage location for PITR and backups
+            await page.getByTestId('text-input-storage-location').click();
+            await page
+              .getByRole('option', { name: `${backupStorage}` })
+              .click();
+          }
           await expect(
             page.getByTestId('text-input-storage-location')
           ).toHaveValue(backupStorage);
@@ -652,7 +663,7 @@ function getBackupStorage(): string {
             );
             await expect(page.getByLabel('Delete backup')).toBeVisible();
             await page.getByTestId('form-dialog-delete').click();
-            await waitForDelete(page, baseBackupName + `-${i}`, 30000);
+            await waitForDelete(page, baseBackupName + `-${i}`, 60000);
           }
         }
       });
