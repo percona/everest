@@ -102,7 +102,10 @@ test(
     });
 
     await test.step('Collect info about k8s objects', async () => {
-      await getK8sObjectsNamespaceYaml(EVEREST_CI_NAMESPACES.EVEREST_UI, '1-pre-upgrade');
+      await getK8sObjectsNamespaceYaml(
+        EVEREST_CI_NAMESPACES.EVEREST_UI,
+        '1-pre-upgrade'
+      );
     });
   }
 );

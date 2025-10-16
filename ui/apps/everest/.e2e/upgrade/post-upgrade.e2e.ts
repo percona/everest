@@ -97,7 +97,10 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
   });
 
   test('Collect info about k8s objects after Everest upgrade', async () => {
-    await getK8sObjectsNamespaceYaml(EVEREST_CI_NAMESPACES.EVEREST_UI, '2-everest-upgrade');
+    await getK8sObjectsNamespaceYaml(
+      EVEREST_CI_NAMESPACES.EVEREST_UI,
+      '2-everest-upgrade'
+    );
   });
 
   test('Verify operators upgrade', async ({ page }) => {
@@ -200,7 +203,10 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
   });
 
   test('Collect info about k8s objects after operators upgrade', async () => {
-    await getK8sObjectsNamespaceYaml(EVEREST_CI_NAMESPACES.EVEREST_UI, '3-operators-upgrade');
+    await getK8sObjectsNamespaceYaml(
+      EVEREST_CI_NAMESPACES.EVEREST_UI,
+      '3-operators-upgrade'
+    );
   });
 
   test('Verify databases upgrade', async ({ page, request }) => {
