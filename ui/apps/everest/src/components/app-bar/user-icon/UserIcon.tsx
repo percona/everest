@@ -64,7 +64,13 @@ const AppBarUserIcon = () => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem disabled disableTouchRipple>
+        <MenuItem
+          disableTouchRipple
+          sx={{
+            pointerEvents: 'none',
+            cursor: 'default',
+          }}
+        >
           <Typography variant="helperText" color="text.secondary">
             {userToShow}
           </Typography>

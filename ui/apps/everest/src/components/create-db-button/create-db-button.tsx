@@ -159,7 +159,13 @@ export const CreateDbButton = ({
             <Box>
               {createFromImport && (
                 <>
-                  <MenuItem disabled disableTouchRipple>
+                  <MenuItem
+                    disableTouchRipple
+                    sx={{
+                      pointerEvents: 'none',
+                      cursor: 'default',
+                    }}
+                  >
                     <Typography
                       sx={{ fontSize: '14px !important' }}
                       color="text.secondary"
