@@ -31,7 +31,7 @@ export const getK8sObjectsNamespaceYaml = async (
   prefix: string,
   directory: string = 'upgrade-objects-yaml'
 ) => {
-  const objects = ['pxc', 'psmdb', 'pg', 'sts', 'DatabaseCluster', 'secret'];
+  const objects = ['pxc', 'psmdb', 'pg', 'sts', 'db', 'secret'];
   const command = `mkdir -p ${directory} || true`;
   execSync(command);
 
