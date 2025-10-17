@@ -79,19 +79,19 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
         page,
         mongoDBCluster.name,
         'Up',
-        TIMEOUTS.ThirtySeconds
+        TIMEOUTS.FiveSeconds
       );
       await waitForStatus(
         page,
         postgresDBCluster.name,
         'Up',
-        TIMEOUTS.ThirtySeconds
+        TIMEOUTS.FiveSeconds
       );
       await waitForStatus(
         page,
         pxcDBCluster.name,
         'Up',
-        TIMEOUTS.ThirtySeconds
+        TIMEOUTS.FiveSeconds
       );
     });
   });
@@ -167,7 +167,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
           page,
           `${operator.shortName}-db-cluster`,
           'Up',
-          TIMEOUTS.ThirtySeconds
+          TIMEOUTS.FiveSeconds
         );
 
         await page
