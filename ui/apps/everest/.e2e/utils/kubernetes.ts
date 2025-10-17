@@ -29,7 +29,7 @@ export const getK8sUid = async () => {
 export const getK8sObjectsNamespaceYaml = async (
   namespace: string,
   prefix: string,
-  directory: string = 'test-results/upgrade-yaml'
+  directory: string = 'upgrade-objects-yaml'
 ) => {
   const objects = ['pxc', 'psmdb', 'pg', 'sts', 'DatabaseCluster', 'secret'];
   const command = `mkdir -p ${directory} || true`;
