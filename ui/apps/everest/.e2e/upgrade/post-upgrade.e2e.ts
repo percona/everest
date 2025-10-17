@@ -87,12 +87,7 @@ test.describe('Post upgrade tests', { tag: '@post-upgrade' }, async () => {
         'Up',
         TIMEOUTS.FiveSeconds
       );
-      await waitForStatus(
-        page,
-        pxcDBCluster.name,
-        'Up',
-        TIMEOUTS.FiveSeconds
-      );
+      await waitForStatus(page, pxcDBCluster.name, 'Up', TIMEOUTS.FiveSeconds);
     });
   });
 
