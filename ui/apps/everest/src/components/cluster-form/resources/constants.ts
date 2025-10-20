@@ -64,7 +64,7 @@ export const NODES_DEFAULT_SIZES = (dbType: DbType, dbVersion: string = '') => {
       return {
         [ResourceSize.small]: {
           [DbWizardFormFields.cpu]: 1,
-          [DbWizardFormFields.memory]: isVersion84x(dbVersion) ? 4 : 2,
+          [DbWizardFormFields.memory]: isVersion84x(dbVersion) ? 3 : 2,
           [DbWizardFormFields.disk]: 25,
         },
         [ResourceSize.medium]: {

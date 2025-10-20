@@ -240,7 +240,7 @@ const ResourcesToggles = ({
 
   // for MySQL 8.4.0 with 3GB memory, the default resource size should be small
   const isMySQLSpecialMemory =
-    dbType === DbType.Mysql && isVersion84x(dbVersion) && memory === 4;
+    dbType === DbType.Mysql && isVersion84x(dbVersion) && memory === 3;
 
   useEffect(() => {
     if (resourceSizePerUnit !== ResourceSize.custom) {
@@ -248,7 +248,7 @@ const ResourcesToggles = ({
 
       if (
         memory !== expectedMemory &&
-        (!isMySQLSpecialMemory || expectedMemory !== 4)
+        (!isMySQLSpecialMemory || expectedMemory !== 3)
       ) {
         setValue(resourceSizePerUnitInputName, ResourceSize.custom);
       }
