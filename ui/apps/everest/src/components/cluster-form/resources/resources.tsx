@@ -40,7 +40,6 @@ import {
   ResourceSize,
   PROXIES_DEFAULT_SIZES,
   resourcesFormSchema,
-  MYSQL_SPECIAL_MEMORY,
 } from './constants';
 import { DbWizardFormFields } from 'consts';
 import { DbType } from '@percona/types';
@@ -51,6 +50,7 @@ import { z } from 'zod';
 import { memoryParser } from 'utils/k8ResourceParser';
 import { DbWizardType } from 'pages/database-form/database-form-schema';
 import { getProxyUnitNamesFromDbType, someErrorInStateFields } from 'utils/db';
+import { isVersion84x } from './utils';
 
 const humanizeResourceSizeMap = (type: ResourceSize): string =>
   humanizedResourceSizeMap[type];
@@ -240,9 +240,7 @@ const ResourcesToggles = ({
 
   // for MySQL 8.4.0 with 3GB memory, the default resource size should be small
   const isMySQLSpecialMemory =
-    dbType === DbType.Mysql &&
-    dbVersion === MYSQL_SPECIAL_MEMORY &&
-    memory === 3;
+    dbType === DbType.Mysql && isVersion84x(dbVersion) && memory === 3;
 
   useEffect(() => {
     if (resourceSizePerUnit !== ResourceSize.custom) {
