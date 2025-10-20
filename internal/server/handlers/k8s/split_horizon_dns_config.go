@@ -18,18 +18,35 @@ package k8s
 import (
 	"context"
 
+	"github.com/AlekSi/pointer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	enginefeaturesv1alpha1 "github.com/percona/everest-operator/api/engine-features.everest/v1alpha1"
+	enginefeaturesv1alpha1 "github.com/percona/everest-operator/api/enginefeatures.everest/v1alpha1"
+	"github.com/percona/everest/api"
 )
 
-func (h *k8sHandler) CreateSplitHorizonDNSConfig(ctx context.Context, shdc *enginefeaturesv1alpha1.SplitHorizonDNSConfig) (*enginefeaturesv1alpha1.SplitHorizonDNSConfig, error) {
+func (h *k8sHandler) CreateSplitHorizonDNSConfig(ctx context.Context, shdc *enginefeaturesv1alpha1.SplitHorizonDNSConfig) (*enginefeaturesv1alpha1.SplitHorizonDNSConfig, error) { //nolint:lll
 	return h.kubeConnector.CreateSplitHorizonDNSConfig(ctx, shdc)
 }
 
-func (h *k8sHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, shdc *enginefeaturesv1alpha1.SplitHorizonDNSConfig) (*enginefeaturesv1alpha1.SplitHorizonDNSConfig, error) {
+func (h *k8sHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, namespace, name string, req *api.SplitHorizonDNSConfigUpdateParams) (*enginefeaturesv1alpha1.SplitHorizonDNSConfig, error) { //nolint:lll
+	shdc, err := h.kubeConnector.GetSplitHorizonDNSConfig(ctx, types.NamespacedName{Namespace: namespace, Name: name})
+	if err != nil {
+		return nil, err
+	}
+
+	if pointer.Get(req.BaseDomainNameSuffix) != "" {
+		shdc.Spec.BaseDomainNameSuffix = pointer.Get(req.BaseDomainNameSuffix)
+	}
+
+	if req.Certificate != nil {
+		shdc.Spec.TLS.Certificate.CACert = req.Certificate.CaCrt
+		shdc.Spec.TLS.Certificate.TLSCert = req.Certificate.TlsCrt
+		shdc.Spec.TLS.Certificate.TLSKey = req.Certificate.TlsKey
+	}
+
 	return h.kubeConnector.UpdateSplitHorizonDNSConfig(ctx, shdc)
 }
 

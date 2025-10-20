@@ -20,7 +20,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/percona/everest-operator/api/engine-features.everest/v1alpha1"
+	"github.com/percona/everest-operator/api/enginefeatures.everest/v1alpha1"
+	"github.com/percona/everest/api"
 	"github.com/percona/everest/pkg/rbac"
 )
 
@@ -31,11 +32,11 @@ func (h *rbacHandler) CreateSplitHorizonDNSConfig(ctx context.Context, shdc *v1a
 	return h.next.CreateSplitHorizonDNSConfig(ctx, shdc)
 }
 
-func (h *rbacHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, shdc *v1alpha1.SplitHorizonDNSConfig) (*v1alpha1.SplitHorizonDNSConfig, error) { //nolint:lll
-	if err := h.enforce(ctx, rbac.ResourceEngineFeatures_SplitHorizonDNSConfigs, rbac.ActionUpdate, rbac.ObjectName(shdc.GetNamespace(), shdc.GetName())); err != nil {
+func (h *rbacHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, namespace, name string, req *api.SplitHorizonDNSConfigUpdateParams) (*v1alpha1.SplitHorizonDNSConfig, error) { //nolint:lll
+	if err := h.enforce(ctx, rbac.ResourceEngineFeatures_SplitHorizonDNSConfigs, rbac.ActionUpdate, rbac.ObjectName(namespace, name)); err != nil {
 		return nil, err
 	}
-	return h.next.UpdateSplitHorizonDNSConfig(ctx, shdc)
+	return h.next.UpdateSplitHorizonDNSConfig(ctx, namespace, name, req)
 }
 
 func (h *rbacHandler) ListSplitHorizonDNSConfigs(ctx context.Context, namespace string) (*v1alpha1.SplitHorizonDNSConfigList, error) {

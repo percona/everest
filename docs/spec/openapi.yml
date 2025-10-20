@@ -2327,7 +2327,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SplitHorizonDNSConfig'
+              $ref: '#/components/schemas/SplitHorizonDNSConfigUpdateParams'
     delete:
       tags:
         - SplitHorizonDNSConfig
@@ -11170,7 +11170,7 @@ components:
           type: string
     # ---------- Engine Features Components -------------------------
     SplitHorizonDNSConfig:
-      description: SplitHorizonDNSConfig is the Schema for the Split-Horizon DNS engine feature for PSMDB.
+      description: SplitHorizonDNSConfig is the Schema for the splithorizondnsconfigs API.
       properties:
         apiVersion:
           description: |-
@@ -11208,21 +11208,34 @@ components:
                   description: Certificate is the TLS certificate and key for the
                     split-horizon DNS configuration.
                   properties:
-                    caCertFile:
-                      description: CaCertFile is based64 encoded CA certificate
-                        file content.
+                    ca.crt:
+                      description: |-
+                        CACert is based64 encoded CA certificate file content.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                        and empties this field.
+                        This field is not stored in the API.
                       type: string
-                    certFile:
-                      description: CertFile is based64 encoded TLS certificate file
-                        content.
+                    tls.crt:
+                      description: |-
+                        TLSCert is based64 encoded TLS certificate file content.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                        and empties this field.
+                        This field is not stored in the API.
                       type: string
-                    keyFile:
-                      description: KeyFile is based64 encoded TLS key file content.
+                    tls.key:
+                      description: |-
+                        TLSKey is based64 encoded TLS key file content.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                        and empties this field.
+                        This field is not stored in the API.
                       type: string
                   required:
-                    - caCertFile
-                    - certFile
-                    - keyFile
+                    - ca.crt
+                    - tls.crt
+                    - tls.key
                   type: object
                 secretName:
                   description: SecretName is the name of the secret containing the
@@ -11252,4 +11265,52 @@ components:
               format: int64
               type: integer
           type: object
+      required:
+        - spec
       type: object
+    SplitHorizonDNSConfigUpdateParams:
+      description: SplitHorizonDNSConfigUpdateParams is the Schema for the splithorizondnsconfigs update API.
+      properties:
+        baseDomainNameSuffix:
+          description: |-
+            BaseDomainNameSuffix is the base domain name suffix for generating domain names for each Pod in ReplicaSet.
+            It should be a valid domain name suffix.
+          example: example.com
+          minLength: 3
+          pattern: ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$
+          type: string
+        certificate:
+          description: Certificate is the TLS certificate and key for the
+            split-horizon DNS configuration.
+          properties:
+            ca.crt:
+              description: |-
+                CACert is based64 encoded CA certificate file content.
+                It is provided as a write-only input field for convenience.
+                When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                and empties this field.
+                This field is not stored in the API.
+              type: string
+            tls.crt:
+              description: |-
+                TLSCert is based64 encoded TLS certificate file content.
+                It is provided as a write-only input field for convenience.
+                When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                and empties this field.
+                This field is not stored in the API.
+              type: string
+            tls.key:
+              description: |-
+                TLSKey is based64 encoded TLS key file content.
+                It is provided as a write-only input field for convenience.
+                When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                and empties this field.
+                This field is not stored in the API.
+              type: string
+          required:
+            - ca.crt
+            - tls.crt
+            - tls.key
+          type: object
+      type: object
+      additionalProperties: false

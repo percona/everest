@@ -17,17 +17,41 @@ package validation
 
 import (
 	"context"
+	"errors"
 
-	enginefeaturesv1alpha1 "github.com/percona/everest-operator/api/engine-features.everest/v1alpha1"
+	enginefeaturesv1alpha1 "github.com/percona/everest-operator/api/enginefeatures.everest/v1alpha1"
+	"github.com/percona/everest/api"
 )
 
-func (h *validateHandler) CreateSplitHorizonDNSConfig(ctx context.Context, shdc *enginefeaturesv1alpha1.SplitHorizonDNSConfig) (*enginefeaturesv1alpha1.SplitHorizonDNSConfig, error) {
-	// The validation is performed in the webhook, so we just pass the call to the next handler.
+func (h *validateHandler) CreateSplitHorizonDNSConfig(ctx context.Context, shdc *enginefeaturesv1alpha1.SplitHorizonDNSConfig) (*enginefeaturesv1alpha1.SplitHorizonDNSConfig, error) { //nolint:lll
+	// The validation is performed in the webhook, so we just bypass the call to the next handler.
 	return h.next.CreateSplitHorizonDNSConfig(ctx, shdc)
 }
 
-func (h *validateHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, shdc *enginefeaturesv1alpha1.SplitHorizonDNSConfig) (*enginefeaturesv1alpha1.SplitHorizonDNSConfig, error) {
-	return h.next.UpdateSplitHorizonDNSConfig(ctx, shdc)
+func (h *validateHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, namespace, name string, req *api.SplitHorizonDNSConfigUpdateParams) (*enginefeaturesv1alpha1.SplitHorizonDNSConfig, error) { //nolint:lll
+	if req.BaseDomainNameSuffix == nil && req.Certificate == nil {
+		return nil, errors.New("at least one field must be provided to update")
+	}
+
+	if req.Certificate != nil {
+		var allErrs []error
+		if req.Certificate.CaCrt == "" {
+			allErrs = append(allErrs, errors.New("certificate.caCrt can not be empty"))
+		}
+
+		if req.Certificate.TlsKey == "" {
+			allErrs = append(allErrs, errors.New("certificate.tls.key can not be empty"))
+		}
+
+		if req.Certificate.TlsCrt == "" {
+			allErrs = append(allErrs, errors.New("certificate.tls.crt can not be empty"))
+		}
+
+		if len(allErrs) > 0 {
+			return nil, errors.Join(allErrs...)
+		}
+	}
+	return h.next.UpdateSplitHorizonDNSConfig(ctx, namespace, name, req)
 }
 
 func (h *validateHandler) ListSplitHorizonDNSConfigs(ctx context.Context, namespace string) (*enginefeaturesv1alpha1.SplitHorizonDNSConfigList, error) {

@@ -22,7 +22,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	enginefeaturesv1alpha1 "github.com/percona/everest-operator/api/engine-features.everest/v1alpha1"
+	enginefeaturesv1alpha1 "github.com/percona/everest-operator/api/enginefeatures.everest/v1alpha1"
+	"github.com/percona/everest/api"
 )
 
 func (e *EverestServer) CreateSplitHorizonDNSConfig(ctx echo.Context, namespace string) error {
@@ -61,14 +62,12 @@ func (e *EverestServer) GetSplitHorizonDNSConfig(ctx echo.Context, namespace str
 }
 
 func (e *EverestServer) UpdateSplitHorizonDNSConfig(ctx echo.Context, namespace, name string) error {
-	shdc := &enginefeaturesv1alpha1.SplitHorizonDNSConfig{}
-	if err := e.getBodyFromContext(ctx, shdc); err != nil {
+	req := &api.SplitHorizonDNSConfigUpdateParams{}
+	if err := ctx.Bind(req); err != nil {
 		return errors.Join(errFailedToReadRequestBody, err)
 	}
-	shdc.SetName(name)
-	shdc.SetNamespace(namespace)
 
-	result, err := e.handler.UpdateSplitHorizonDNSConfig(ctx.Request().Context(), shdc)
+	result, err := e.handler.UpdateSplitHorizonDNSConfig(ctx.Request().Context(), namespace, name, req)
 	if err != nil {
 		e.l.Errorf("UpdateSplitHorizonDNSConfig failed: %v", err)
 		return err
