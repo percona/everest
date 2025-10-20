@@ -16,7 +16,7 @@
 // Package common holds common constants used across Everest.
 package common
 
-import everestv1alpha1 "github.com/percona/everest-operator/api/v1alpha1"
+import everestv1alpha1 "github.com/percona/everest-operator/api/everest/v1alpha1"
 
 const (
 	// Everest ...
