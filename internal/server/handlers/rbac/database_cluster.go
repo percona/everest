@@ -66,6 +66,11 @@ func (h *rbacHandler) CreateDatabaseCluster(ctx context.Context, db *everestv1al
 			return nil, err
 		}
 	}
+
+	// Check permissions for engine features used in the database cluster.
+	if err := h.enforceEngineFeaturesRead(ctx, db); err != nil {
+		return nil, err
+	}
 	return h.next.CreateDatabaseCluster(ctx, db)
 }
 
@@ -156,6 +161,11 @@ func (h *rbacHandler) UpdateDatabaseCluster(ctx context.Context, db *everestv1al
 			return nil, err
 		}
 	}
+
+	// Check permissions for engine features used in the database cluster.
+	if err := h.enforceEngineFeaturesRead(ctx, db); err != nil {
+		return nil, err
+	}
 	return h.next.UpdateDatabaseCluster(ctx, db)
 }
 
@@ -233,6 +243,33 @@ func (h *rbacHandler) enforceDBClusterRead(ctx context.Context, db *everestv1alp
 		}
 	}
 
+	// Check permissions for engine features used in the database cluster.
+	if err := h.enforceEngineFeaturesRead(ctx, db); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *rbacHandler) enforceEngineFeaturesRead(ctx context.Context, db *everestv1alpha1.DatabaseCluster) error {
+	namespace := db.GetNamespace()
+
+	// PSMDB features
+	if db.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePSMDB {
+		psmdbFeatures := pointer.Get(pointer.Get(db.Spec.EngineFeatures).PSMDB)
+
+		// SplitHorizonDNSConfig feature.
+		if psmdbFeatures.SplitHorizonDNSConfigName != "" {
+			if err := h.enforce(ctx, rbac.ResourceEngineFeatures_SplitHorizonDNSConfigs,
+				rbac.ActionRead,
+				rbac.ObjectName(namespace, psmdbFeatures.SplitHorizonDNSConfigName),
+			); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Rest of engine features can be added here.
 	return nil
 }
 

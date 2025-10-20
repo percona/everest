@@ -2158,7 +2158,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 # ------- Engine Features endpoints -------
   '/namespaces/{namespace}/engine-features/split-horizon-dns-config':
-    x-everest-resource-name: engine-features/split-horizon-dns-configs
+    x-everest-resource-name: enginefeatures/split-horizon-dns-configs
     post:
       tags:
         - SplitHorizonDNSConfig
@@ -2232,7 +2232,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/engine-features/split-horizon-dns-config/{name}':
-    x-everest-resource-name: engine-features/split-horizon-dns-configs
+    x-everest-resource-name: enginefeatures/split-horizon-dns-configs
     get:
       tags:
         - SplitHorizonDNSConfig

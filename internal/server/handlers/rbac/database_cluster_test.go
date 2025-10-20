@@ -40,6 +40,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 			},
@@ -54,6 +55,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/*",
 					"p, role:test, database-cluster-backups, read, default/*",
 					"p, role:test, database-cluster-restores, read, default/*",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/*",
 					"g, bob, role:test",
 				),
 			},
@@ -79,6 +81,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -94,6 +97,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -108,6 +112,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -122,6 +127,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -136,6 +142,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -150,6 +157,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -164,6 +172,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-restores, create, default/*",
 					"p, role:test, database-cluster-backups, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -178,12 +187,28 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-cluster-restores, create, default/*",
 					"p, role:test, database-cluster-credentials, read, default/source-cluster",
 					"p, role:test, database-cluster-restores, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
 				desc: "missing read database-cluster-restores permissions on source cluster",
+				policy: newPolicy(
+					"p, role:test, database-clusters, create, default/test",
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"p, role:test, database-cluster-backups, create, default/*",
+					"p, role:test, backup-storages, read, default/test-backup-storage",
+					"p, role:test, database-cluster-restores, create, default/*",
+					"p, role:test, database-cluster-credentials, read, default/source-cluster",
+					"p, role:test, database-cluster-backups, read, default/source-cluster",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read enginefeatures/split-horizon-dns-configs permissions on source cluster",
 				policy: newPolicy(
 					"p, role:test, database-clusters, create, default/test",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
@@ -242,6 +267,11 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 						DataSource: &everestv1alpha1.DataSource{
 							DBClusterBackupName: "test-backup",
 						},
+						EngineFeatures: &everestv1alpha1.EngineFeatures{
+							PSMDB: &everestv1alpha1.PSMDBEngineFeatures{
+								SplitHorizonDNSConfigName: "split-horizon-dns-config-1",
+							},
+						},
 					},
 				})
 				assert.ErrorIs(t, err, tc.wantErr)
@@ -262,6 +292,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
 					"p, role:test, database-cluster-backups, create, default/*",
 					"p, role:test, backup-storages, read, default/test-backup-storage",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 			},
@@ -282,6 +313,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-clusters, update, default/test-cluster",
 					"p, role:test, database-cluster-backups, create, default/*",
 					"p, role:test, backup-storages, read, default/test-backup-storage",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
@@ -292,12 +324,24 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, database-clusters, update, default/test-cluster",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
 					"p, role:test, backup-storages, read, default/test-backup-storage",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
 			{
 				desc: "missing read permission for backup-storages",
+				policy: newPolicy(
+					"p, role:test, database-clusters, update, default/test-cluster",
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"p, role:test, database-cluster-backups, create, default/*",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
+			{
+				desc: "missing read permission for enginefeatures/split-horizon-dns-configs",
 				policy: newPolicy(
 					"p, role:test, database-clusters, update, default/test-cluster",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
@@ -350,6 +394,11 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 								},
 							},
 						},
+						EngineFeatures: &everestv1alpha1.EngineFeatures{
+							PSMDB: &everestv1alpha1.PSMDBEngineFeatures{
+								SplitHorizonDNSConfigName: "split-horizon-dns-config-1",
+							},
+						},
 					},
 				})
 				assert.ErrorIs(t, err, tc.wantErr)
@@ -377,6 +426,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 					"g, bob, role:test",
 				),
 			},
@@ -435,6 +485,18 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 				),
 				wantErr: ErrInsufficientPermissions,
 			},
+			{
+				desc: "missing read permission for enginefeatures/split-horizon-dns-configs",
+				policy: newPolicy(
+					"p, role:test, database-clusters, read, default/test-cluster",
+					"p, role:test, backup-storages, read, default/test-backup-storage",
+					"p, role:test, backup-storages, read, default/test-backup-storage-pitr",
+					"p, role:test, monitoring-instances, read, default/test-monitoring-instance",
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"g, bob, role:test",
+				),
+				wantErr: ErrInsufficientPermissions,
+			},
 		}
 
 		ctx := context.WithValue(context.Background(), common.UserCtxKey, rbac.User{Subject: "bob"})
@@ -468,6 +530,11 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 							},
 							Monitoring: &everestv1alpha1.Monitoring{
 								MonitoringConfigName: "test-monitoring-instance",
+							},
+							EngineFeatures: &everestv1alpha1.EngineFeatures{
+								PSMDB: &everestv1alpha1.PSMDBEngineFeatures{
+									SplitHorizonDNSConfigName: "split-horizon-dns-config-1",
+								},
 							},
 						},
 					}, nil,
@@ -514,6 +581,11 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 								Monitoring: &everestv1alpha1.Monitoring{
 									MonitoringConfigName: "test-monitoring-instance-1",
 								},
+								EngineFeatures: &everestv1alpha1.EngineFeatures{
+									PSMDB: &everestv1alpha1.PSMDBEngineFeatures{
+										SplitHorizonDNSConfigName: "split-horizon-dns-config-1",
+									},
+								},
 							},
 						},
 						{
@@ -537,6 +609,11 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 								},
 								Monitoring: &everestv1alpha1.Monitoring{
 									MonitoringConfigName: "test-monitoring-instance-2",
+								},
+								EngineFeatures: &everestv1alpha1.EngineFeatures{
+									PSMDB: &everestv1alpha1.PSMDBEngineFeatures{
+										SplitHorizonDNSConfigName: "split-horizon-dns-config-2",
+									},
 								},
 							},
 						},
@@ -562,6 +639,11 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 								Monitoring: &everestv1alpha1.Monitoring{
 									MonitoringConfigName: "test-monitoring-instance-3",
 								},
+								EngineFeatures: &everestv1alpha1.EngineFeatures{
+									PSMDB: &everestv1alpha1.PSMDBEngineFeatures{
+										SplitHorizonDNSConfigName: "split-horizon-dns-config-3",
+									},
+								},
 							},
 						},
 					},
@@ -584,18 +666,21 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-1",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-1",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 
 					"p, role:test, database-clusters, read, default/test-cluster-2",
 					"p, role:test, backup-storages, read, default/test-backup-storage-2",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-2",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-2",
 					"p, role:test, database-engines, read, default/percona-postgresql-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-2",
 
 					"p, role:test, database-clusters, read, default/test-cluster-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-3",
 
 					"g, bob, role:test",
 				),
@@ -641,12 +726,14 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-2",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-2",
 					"p, role:test, database-engines, read, default/percona-postgresql-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-2",
 
 					"p, role:test, database-clusters, read, default/test-cluster-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-3",
 
 					"g, bob, role:test",
 				),
@@ -667,6 +754,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-1",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-1",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 
 					"p, role:test, database-clusters, read, default/test-cluster-2",
 					"p, role:test, backup-storages, read, default/test-backup-storage-2",
@@ -678,6 +766,7 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-3",
 
 					"g, bob, role:test",
 				),
@@ -698,12 +787,14 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-1",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-1",
 					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-1",
 
 					"p, role:test, database-clusters, read, default/test-cluster-2",
 					"p, role:test, backup-storages, read, default/test-backup-storage-2",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-2",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-2",
 					"p, role:test, database-engines, read, default/percona-postgresql-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-2",
 
 					"p, role:test, database-clusters, read, default/test-cluster-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-3",
@@ -734,12 +825,14 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-2",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-2",
 					"p, role:test, database-engines, read, default/percona-postgresql-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-2",
 
 					"p, role:test, database-clusters, read, default/test-cluster-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-3",
 
 					"g, bob, role:test",
 				),
@@ -765,12 +858,14 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-2",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-2",
 					"p, role:test, database-engines, read, default/percona-postgresql-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-2",
 
 					"p, role:test, database-clusters, read, default/test-cluster-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-3",
 
 					"g, bob, role:test",
 				),
@@ -796,12 +891,47 @@ func TestRBAC_DatabaseCluster(t *testing.T) {
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-2",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-2",
 					"p, role:test, database-engines, read, default/percona-postgresql-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-2",
 
 					"p, role:test, database-clusters, read, default/test-cluster-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-3",
 					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
 					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
 					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-3",
+
+					"g, bob, role:test",
+				),
+				assert: func(res *everestv1alpha1.DatabaseClusterList) bool {
+					if slices.ContainsFunc(res.Items, func(item everestv1alpha1.DatabaseCluster) bool {
+						return item.Name == "test-cluster-1"
+					}) {
+						return false
+					}
+					return len(res.Items) == 2
+				},
+			},
+			{
+				desc: "no permission for split-horizon-dns-config-1",
+				policy: newPolicy(
+					"p, role:test, database-clusters, read, default/test-cluster-1",
+					"p, role:test, backup-storages, read, default/test-backup-storage-1",
+					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-1",
+					"p, role:test, database-engines, read, default/percona-xtradb-cluster-operator",
+
+					"p, role:test, database-clusters, read, default/test-cluster-2",
+					"p, role:test, backup-storages, read, default/test-backup-storage-2",
+					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-2",
+					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-2",
+					"p, role:test, database-engines, read, default/percona-postgresql-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-2",
+
+					"p, role:test, database-clusters, read, default/test-cluster-3",
+					"p, role:test, backup-storages, read, default/test-backup-storage-3",
+					"p, role:test, backup-storages, read, default/test-backup-storage-pitr-3",
+					"p, role:test, monitoring-instances, read, default/test-monitoring-instance-3",
+					"p, role:test, database-engines, read, default/percona-server-mongodb-operator",
+					"p, role:test, enginefeatures/split-horizon-dns-configs, read, default/split-horizon-dns-config-3",
 
 					"g, bob, role:test",
 				),

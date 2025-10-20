@@ -61,7 +61,7 @@ const (
 
 	// Engine Features resources
 
-	ResourceEngineFeatures_SplitHorizonDNSConfigs = "engine-features/split-horizon-dns-configs"
+	ResourceEngineFeatures_SplitHorizonDNSConfigs = "enginefeatures/split-horizon-dns-configs"
 )
 
 // GlobalResources is a list of all Everest API resources that are considered global.
