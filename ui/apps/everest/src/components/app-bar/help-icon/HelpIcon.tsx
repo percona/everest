@@ -42,7 +42,11 @@ const AppBarHelpIcon = () => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem sx={{ cursor: 'text', userSelect: 'text' }}>
+        {/* For this particular menu title, we allow text selection, as it contains the version number */}
+        <MenuItem
+          disableTouchRipple
+          sx={{ cursor: 'text', userSelect: 'text' }}
+        >
           <Typography variant="helperText" color="text.secondary">
             {`Everest ${currentVersion}`}
           </Typography>
