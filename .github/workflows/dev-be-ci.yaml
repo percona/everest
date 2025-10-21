@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
 
       - name: Run tests
         timeout-minutes: 20
@@ -75,7 +75,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
 
       - name: Download Go modules
         run: go mod download
@@ -126,7 +126,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
 
       - name: Install Kubernetes tools
         uses: ./.github/actions/install-kubernetes-tools
@@ -212,7 +212,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
 
       - name: Build CLI binary
         run: |
