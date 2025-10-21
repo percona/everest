@@ -34,6 +34,7 @@ jobs:
       - name: Run tests
         timeout-minutes: 20
         run: |
+          go clean -modcache
           go clean -testcache
           make test
 
