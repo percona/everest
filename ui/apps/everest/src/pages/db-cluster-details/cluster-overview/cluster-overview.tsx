@@ -96,6 +96,10 @@ export const ClusterOverview = () => {
           parameters={!!dbCluster?.spec.engine.config}
           storageClass={dbCluster?.spec.engine.storage.class!}
           podSchedulingPolicy={dbCluster?.spec.podSchedulingPolicyName}
+          splitHorizonDNS={
+            dbCluster?.spec.engineFeatures?.psmdb?.splitHorizonDnsConfigName ||
+            ''
+          }
           loadBalancerConfig={
             isProxy(dbCluster.spec.proxy)
               ? dbCluster.spec.proxy.expose.type === ProxyExposeType.external

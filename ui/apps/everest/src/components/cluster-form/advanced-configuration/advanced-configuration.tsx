@@ -113,8 +113,7 @@ export const AdvancedConfigurationForm = ({
     data: splitHorizonDNSConfigs = [],
     isLoading: fetchingSplitHorizonDNS,
   } = useSplitHorizonConfigs(namespace!, {
-    enabled:
-      !!namespace && isSplitHorizonDNSEnabled(dbType) && !shardingEnabled,
+    enabled: !!namespace,
   });
 
   const clusterType = clusterInfo?.clusterType;
@@ -192,7 +191,7 @@ export const AdvancedConfigurationForm = ({
     ) {
       setValue(
         AdvancedConfigurationFields.splitHorizonDNS,
-        splitHorizonDNSConfigs[0].spec.baseDomainNameSuffix
+        splitHorizonDNSConfigs[0].metadata.name
       );
     }
   }, [
@@ -542,10 +541,10 @@ export const AdvancedConfigurationForm = ({
                   >
                     {splitHorizonDNSConfigs.map((config) => (
                       <MenuItem
-                        value={config.spec.baseDomainNameSuffix}
-                        key={config.spec.baseDomainNameSuffix}
+                        value={config.metadata.name}
+                        key={config.metadata.name}
                       >
-                        {config.spec.baseDomainNameSuffix}
+                        {config.metadata.name}
                       </MenuItem>
                     ))}
                   </SelectInput>
@@ -554,34 +553,6 @@ export const AdvancedConfigurationForm = ({
             </Box>
           }
         />
-        // <FormCard
-        //   title={Messages.cards.splitHorizonDNS.title}
-        //   description={Messages.cards.splitHorizonDNS.description}
-        //   controlComponent={
-        //     <WithInfoIcon tooltip={Messages.tooltipTexts.splitHorizonDNS}>
-        //       <SelectInput
-        //         name={AdvancedConfigurationFields.splitHorizonDNS}
-        //         loading={fetchingSplitHorizonDNS}
-        //         formControlProps={{
-        //           sx: {
-        //             width: SELECT_WIDTH,
-        //             mt: 0,
-        //             textAlign: 'left',
-        //           },
-        //         }}
-        //       >
-        //         {splitHorizonDNSConfigs.map((config) => (
-        //           <MenuItem
-        //             value={config.spec.baseDomainNameSuffix}
-        //             key={config.spec.baseDomainNameSuffix}
-        //           >
-        //             {config.spec.baseDomainNameSuffix}
-        //           </MenuItem>
-        //         ))}
-        //       </SelectInput>
-        //     </WithInfoIcon>
-        //   }
-        // />
       )}
       <FormCard
         title={Messages.cards.engineParameters.title}

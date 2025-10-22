@@ -37,6 +37,7 @@ export const AdvancedConfiguration = ({
   storageClass,
   podSchedulingPolicy,
   loadBalancerConfig,
+  splitHorizonDNS,
 }: AdvancedConfigurationOverviewCardProps) => {
   const {
     canUpdateDb,
@@ -75,6 +76,7 @@ export const AdvancedConfiguration = ({
     podSchedulingPolicy,
     exposureMethod,
     loadBalancerConfigName,
+    splitHorizonDNS,
   }: AdvancedConfigurationFormType) => {
     setUpdating(true);
     updateCluster(
@@ -86,7 +88,8 @@ export const AdvancedConfiguration = ({
         sourceRanges,
         podSchedulingPolicyEnabled,
         podSchedulingPolicy,
-        loadBalancerConfigName
+        loadBalancerConfigName,
+        splitHorizonDNS
       )
     );
   };
@@ -162,6 +165,10 @@ export const AdvancedConfiguration = ({
             Messages.fields.disabled
           )
         }
+      />
+      <OverviewSectionRow
+        label={Messages.fields.splitHorizonDNS}
+        content={splitHorizonDNS}
       />
       {openEditModal && dbCluster && (
         <AdvancedConfigurationEditModal

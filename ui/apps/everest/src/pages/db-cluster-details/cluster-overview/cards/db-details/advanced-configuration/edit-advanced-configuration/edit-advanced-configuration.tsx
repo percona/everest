@@ -45,6 +45,8 @@ export const AdvancedConfigurationEditModal = ({
     podSchedulingPolicyEnabled,
     podSchedulingPolicy,
     loadBalancerConfigName,
+    splitHorizonDNSEnabled,
+    splitHorizonDNS,
   }) => {
     handleSubmitModal({
       engineParametersEnabled,
@@ -58,6 +60,8 @@ export const AdvancedConfigurationEditModal = ({
         loadBalancerConfigName !== EMPTY_LOAD_BALANCER_CONFIGURATION
           ? loadBalancerConfigName
           : '',
+      splitHorizonDNSEnabled,
+      splitHorizonDNS,
     });
   };
 
@@ -87,6 +91,7 @@ export const AdvancedConfigurationEditModal = ({
     >
       <AdvancedConfigurationForm
         dbType={dbEngineToDbType(dbCluster?.spec?.engine?.type)}
+        namespace={dbCluster?.metadata.namespace}
         allowedFieldsToInitiallyLoadDefaults={
           allowedFieldsToInitiallyLoadDefaults
         }

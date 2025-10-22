@@ -748,11 +748,21 @@ export const changeDbClusterAdvancedConfig = (
   sourceRanges?: Array<{ sourceRange?: string }>,
   podSchedulingPolicyEnabled = false,
   podSchedulingPolicy = '',
-  loadBalancerConfigName = ''
+  loadBalancerConfigName = '',
+  splitHorizonDnsConfigName = ''
 ) => ({
   ...dbCluster,
   spec: {
     ...dbCluster.spec,
+    ...(splitHorizonDnsConfigName && {
+      engineFeatures: {
+        ...dbCluster.spec.engineFeatures,
+        psmdb: {
+          ...dbCluster.spec.engineFeatures?.psmdb,
+          splitHorizonDnsConfigName: splitHorizonDnsConfigName,
+        },
+      },
+    }),
     podSchedulingPolicyName: podSchedulingPolicyEnabled
       ? podSchedulingPolicy
       : undefined,

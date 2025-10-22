@@ -37,7 +37,7 @@ export const ConnectionDetails = ({
 }: ConnectionDetailsOverviewCardProps) => {
   const { canReadCredentials } = useContext(DbClusterContext);
   const [showUrl, setShowUrl] = useState(false);
-
+  const [showSplitHorizonUrl, setShowSplitHorizonUrl] = useState(false);
   return (
     <OverviewSection
       title={Messages.titles.connectionDetails}
@@ -84,8 +84,10 @@ export const ConnectionDetails = ({
           InputProps={{
             endAdornment: (
               <>
-                <IconButton onClick={() => setShowUrl(!showUrl)}>
-                  {showUrl ? (
+                <IconButton
+                  onClick={() => setShowSplitHorizonUrl(!showSplitHorizonUrl)}
+                >
+                  {showSplitHorizonUrl ? (
                     <VisibilityOutlinedIcon />
                   ) : (
                     <VisibilityOffOutlinedIcon />
@@ -96,7 +98,9 @@ export const ConnectionDetails = ({
                     sx: { mt: -0.5 },
                     size: 'small',
                   }}
-                  textToCopy={connectionUrl}
+                  textToCopy={
+                    showSplitHorizonUrl ? 'REPLACE_ME' : connectionUrl
+                  }
                 />
               </>
             ),
@@ -104,6 +108,34 @@ export const ConnectionDetails = ({
           InputLabelProps={{ shrink: true }}
         />
       )}
+      <TextField
+        label="Split-Horizon Connection URL"
+        value={'REPLACE_ME'}
+        size="small"
+        sx={{ maxHeight: '50px', marginTop: '20px', width: '100%' }}
+        type="text"
+        InputProps={{
+          endAdornment: (
+            <>
+              <IconButton onClick={() => setShowUrl(!showUrl)}>
+                {showUrl ? (
+                  <VisibilityOutlinedIcon />
+                ) : (
+                  <VisibilityOffOutlinedIcon />
+                )}
+              </IconButton>
+              <CopyToClipboardButton
+                buttonProps={{
+                  sx: { mt: -0.5 },
+                  size: 'small',
+                }}
+                textToCopy={connectionUrl}
+              />
+            </>
+          ),
+        }}
+        InputLabelProps={{ shrink: true }}
+      />
     </OverviewSection>
   );
 };
