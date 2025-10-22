@@ -1,22 +1,27 @@
 import { FormDialog } from 'components/form-dialog';
-import { TextInput, FileInput } from '@percona/ui-lib';
+import { TextInput, FileInput, SelectInput } from '@percona/ui-lib';
 import { z } from 'zod';
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, MenuItem, Stack, Typography } from '@mui/material';
 import { fileValidation } from 'utils/common-validation';
 import { FILE_NOT_INSTANCE_OF_FILE_ERROR } from 'consts';
 
 const ConfigurationModal = ({
   isOpen,
+  namespacesAvailable,
   onClose,
   onSubmit,
 }: {
+  namespacesAvailable: string[];
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {
+    name: string;
+    namespace: string;
     domain: string;
     certificate: File | null;
     key: File | null;
     caCert: File | null;
+    secretName: string;
   }) => void;
 }) => {
   return (
@@ -26,7 +31,13 @@ const ConfigurationModal = ({
       headerMessage="Create configuration"
       onSubmit={onSubmit}
       schema={z.object({
-        domain: z.string().min(1),
+        name: z.string().min(1),
+        namespace: z.string().min(1),
+        domain: z
+          .string()
+          .min(1)
+          .regex(/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/),
+        secretName: z.string().min(1),
         certificate: z
           .instanceof(File, { message: FILE_NOT_INSTANCE_OF_FILE_ERROR })
           .superRefine(fileValidation),
@@ -38,7 +49,10 @@ const ConfigurationModal = ({
           .superRefine(fileValidation),
       })}
       defaultValues={{
+        name: '',
+        namespace: '',
         domain: '',
+        secretName: '',
         certificate: null,
         key: null,
         caCert: null,
@@ -46,6 +60,35 @@ const ConfigurationModal = ({
     >
       <Box>
         <Stack>
+          <Typography variant="sectionHeading">Name</Typography>
+          <TextInput
+            name="name"
+            label="Name"
+            textFieldProps={{
+              placeholder: 'Insert name',
+              sx: {
+                mb: 2,
+                mt: 2,
+              },
+            }}
+          />
+          <Typography variant="sectionHeading">Namespace</Typography>
+          <SelectInput
+            name="namespace"
+            label="Namespace"
+            formControlProps={{
+              sx: {
+                mt: 2,
+                mb: 2,
+              },
+            }}
+          >
+            {namespacesAvailable.map((namespace) => (
+              <MenuItem key={namespace} value={namespace}>
+                {namespace}
+              </MenuItem>
+            ))}
+          </SelectInput>
           <Typography variant="sectionHeading">Domain</Typography>
           <TextInput
             name="domain"
@@ -64,7 +107,17 @@ const ConfigurationModal = ({
       </Box>
       <Box mt={2}>
         <Stack gap={2}>
-          <Typography variant="sectionHeading">Certificate</Typography>
+          <Typography variant="sectionHeading">TLS</Typography>
+          <TextInput
+            name="secretName"
+            label="Secret name"
+            textFieldProps={{
+              placeholder: 'Insert secret name',
+              sx: {
+                mt: 0,
+              },
+            }}
+          />
           <FileInput
             name="certificate"
             label="Certificate"
@@ -92,7 +145,8 @@ const ConfigurationModal = ({
               placeholder: 'Insert ca cert',
             }}
             fileInputProps={{
-              accept: '.pem,.crt,.cer,.cert,.p12,.der,.pfx,.p12,.ca-bundle',
+              accept:
+                '.pem,.crt,.cer,.cert,.p12,.der,.pfx,.p12,.ca-bundle,.key',
             }}
           />
         </Stack>

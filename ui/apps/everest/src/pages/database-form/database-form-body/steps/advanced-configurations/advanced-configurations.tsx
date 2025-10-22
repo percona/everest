@@ -39,6 +39,7 @@ export const AdvancedConfigurations = ({
           'storageClass',
           'podSchedulingPolicy',
           'loadBalancerConfigName',
+          'splitHorizonDNS',
         ];
       }
       return [];

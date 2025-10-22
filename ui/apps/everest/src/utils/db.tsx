@@ -1023,3 +1023,19 @@ export const mergeNewDbClusterData = (
 
   return newCluster;
 };
+
+export const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+  });
+
+export const isSplitHorizonDNSEnabled = (dbType: DbType): boolean => {
+  return dbType === DbType.Mongo;
+};

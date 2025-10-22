@@ -57,6 +57,8 @@ import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import LoadBalancerDialog from './load-balancer.dialog';
 import WithInfoIcon from 'components/with-info-icon';
+import { isSplitHorizonDNSEnabled } from 'utils/db';
+import ToggableFormCard from 'components/toggable-form-card';
 
 interface AdvancedConfigurationFormProps {
   dbType: DbType;
@@ -86,13 +88,20 @@ export const AdvancedConfigurationForm = ({
   const initialLbConfigName = useRef(
     getValues(AdvancedConfigurationFields.loadBalancerConfigName)
   );
+  const shardingEnabled = getValues(DbWizardFormFields.sharding);
   const selectedLoadBalancerConfig = useRef<
     LoadBalancerConfig | null | undefined
   >(null);
-  const [engineParametersEnabled, policiesEnabled, exposureMethod] = watch([
+  const [
+    engineParametersEnabled,
+    policiesEnabled,
+    exposureMethod,
+    splitHorizonDNSEnabled,
+  ] = watch([
     AdvancedConfigurationFields.engineParametersEnabled,
     AdvancedConfigurationFields.podSchedulingPolicyEnabled,
     AdvancedConfigurationFields.exposureMethod,
+    AdvancedConfigurationFields.splitHorizonDNSEnabled,
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
@@ -104,7 +113,8 @@ export const AdvancedConfigurationForm = ({
     data: splitHorizonDNSConfigs = [],
     isLoading: fetchingSplitHorizonDNS,
   } = useSplitHorizonConfigs(namespace!, {
-    enabled: !!namespace,
+    enabled:
+      !!namespace && isSplitHorizonDNSEnabled(dbType) && !shardingEnabled,
   });
 
   const clusterType = clusterInfo?.clusterType;
@@ -173,11 +183,26 @@ export const AdvancedConfigurationForm = ({
         selectDefaultValue
       );
     }
+
+    if (
+      isSplitHorizonDNSEnabled(dbType) &&
+      !shardingEnabled &&
+      allowedFieldsToInitiallyLoadDefaults.includes('splitHorizonDNS') &&
+      splitHorizonDNSConfigs.length > 0
+    ) {
+      setValue(
+        AdvancedConfigurationFields.splitHorizonDNS,
+        splitHorizonDNSConfigs[0].spec.baseDomainNameSuffix
+      );
+    }
   }, [
     allowedFieldsToInitiallyLoadDefaults,
     getValues,
     selectDefaultValue,
     setValue,
+    splitHorizonDNSConfigs,
+    dbType,
+    shardingEnabled,
   ]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
@@ -326,10 +351,15 @@ export const AdvancedConfigurationForm = ({
           />
         }
       />
-      <FormCard
+      <ToggableFormCard
         title={Messages.cards.policies.title}
         description={Messages.cards.policies.description}
-        cardContent={
+        tooltipText={!policies?.length ? Messages.tooltipTexts.noPolicies : ''}
+        switchInputName={AdvancedConfigurationFields.podSchedulingPolicyEnabled}
+        switchFieldProps={{
+          disabled: !policies?.length,
+        }}
+        bottomSlot={
           <Box
             display="flex"
             justifyContent="space-between"
@@ -371,23 +401,6 @@ export const AdvancedConfigurationForm = ({
               </Box>
             )}
           </Box>
-        }
-        controlComponent={
-          <Tooltip
-            title={!policies?.length ? Messages.tooltipTexts.noPolicies : ''}
-            placement="top"
-            arrow
-          >
-            <span>
-              <SwitchInput
-                label={Messages.enable}
-                name={AdvancedConfigurationFields.podSchedulingPolicyEnabled}
-                switchFieldProps={{
-                  disabled: !policies?.length,
-                }}
-              />
-            </span>
-          </Tooltip>
         }
       />
       <FormCard
@@ -501,34 +514,75 @@ export const AdvancedConfigurationForm = ({
           </Box>
         }
       />
-      <FormCard
-        title={Messages.cards.splitHorizonDNS.title}
-        description={Messages.cards.splitHorizonDNS.description}
-        controlComponent={
-          <WithInfoIcon tooltip={Messages.tooltipTexts.splitHorizonDNS}>
-            <SelectInput
-              name={AdvancedConfigurationFields.splitHorizonDNS}
-              loading={fetchingSplitHorizonDNS}
-              formControlProps={{
-                sx: {
-                  width: SELECT_WIDTH,
-                  mt: 0,
-                  textAlign: 'left',
-                },
-              }}
+      {isSplitHorizonDNSEnabled(dbType) && !shardingEnabled && (
+        <ToggableFormCard
+          title={Messages.cards.splitHorizonDNS.title}
+          description={Messages.cards.splitHorizonDNS.description}
+          tooltipText={Messages.tooltipTexts.splitHorizonDNS}
+          switchInputName={AdvancedConfigurationFields.splitHorizonDNSEnabled}
+          bottomSlot={
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="top"
+              minHeight={'50px'}
             >
-              {splitHorizonDNSConfigs.map((config) => (
-                <MenuItem
-                  value={config.baseDomainNameSuffix}
-                  key={config.baseDomainNameSuffix}
-                >
-                  {config.baseDomainNameSuffix}
-                </MenuItem>
-              ))}
-            </SelectInput>
-          </WithInfoIcon>
-        }
-      />
+              {!!splitHorizonDNSEnabled && (
+                <WithInfoIcon tooltip={Messages.tooltipTexts.splitHorizonDNS}>
+                  <SelectInput
+                    name={AdvancedConfigurationFields.splitHorizonDNS}
+                    loading={fetchingSplitHorizonDNS}
+                    formControlProps={{
+                      sx: {
+                        width: SELECT_WIDTH,
+                        mt: 0,
+                        textAlign: 'left',
+                      },
+                    }}
+                  >
+                    {splitHorizonDNSConfigs.map((config) => (
+                      <MenuItem
+                        value={config.spec.baseDomainNameSuffix}
+                        key={config.spec.baseDomainNameSuffix}
+                      >
+                        {config.spec.baseDomainNameSuffix}
+                      </MenuItem>
+                    ))}
+                  </SelectInput>
+                </WithInfoIcon>
+              )}
+            </Box>
+          }
+        />
+        // <FormCard
+        //   title={Messages.cards.splitHorizonDNS.title}
+        //   description={Messages.cards.splitHorizonDNS.description}
+        //   controlComponent={
+        //     <WithInfoIcon tooltip={Messages.tooltipTexts.splitHorizonDNS}>
+        //       <SelectInput
+        //         name={AdvancedConfigurationFields.splitHorizonDNS}
+        //         loading={fetchingSplitHorizonDNS}
+        //         formControlProps={{
+        //           sx: {
+        //             width: SELECT_WIDTH,
+        //             mt: 0,
+        //             textAlign: 'left',
+        //           },
+        //         }}
+        //       >
+        //         {splitHorizonDNSConfigs.map((config) => (
+        //           <MenuItem
+        //             value={config.spec.baseDomainNameSuffix}
+        //             key={config.spec.baseDomainNameSuffix}
+        //           >
+        //             {config.spec.baseDomainNameSuffix}
+        //           </MenuItem>
+        //         ))}
+        //       </SelectInput>
+        //     </WithInfoIcon>
+        //   }
+        // />
+      )}
       <FormCard
         title={Messages.cards.engineParameters.title}
         description={Messages.cards.engineParameters.description}

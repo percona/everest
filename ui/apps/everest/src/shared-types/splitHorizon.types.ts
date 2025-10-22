@@ -1,11 +1,18 @@
 export type SplitHorizonDNSConfig = {
-  baseDomainNameSuffix: string;
-  tls: {
-    secretName: string;
-    certificate: {
-      certFile: string;
-      keyFile: string;
-      caCertFile: string;
+  apiVersion: 'everest.percona.com/v1alpha1';
+  kind: 'SplitHorizonDNSConfig';
+  metadata: {
+    name: string;
+  };
+  spec: {
+    baseDomainNameSuffix: string;
+    tls: {
+      secretName: string;
+      certificate: {
+        'ca.crt': string;
+        'tls.crt': string;
+        'tls.key': string;
+      };
     };
   };
 };

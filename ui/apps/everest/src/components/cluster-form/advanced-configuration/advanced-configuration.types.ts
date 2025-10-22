@@ -23,6 +23,7 @@ export enum AdvancedConfigurationFields {
   exposureMethod = 'exposureMethod',
   loadBalancerConfigName = 'loadBalancerConfigName',
   splitHorizonDNS = 'splitHorizonDNS',
+  splitHorizonDNSEnabled = 'splitHorizonDNSEnabled',
 }
 
 export enum ExposureMethod {
@@ -33,4 +34,5 @@ export enum ExposureMethod {
 export type AllowedFieldsToInitiallyLoadDefaults =
   | 'storageClass'
   | 'podSchedulingPolicy'
-  | 'loadBalancerConfigName';
+  | 'loadBalancerConfigName'
+  | 'splitHorizonDNS';

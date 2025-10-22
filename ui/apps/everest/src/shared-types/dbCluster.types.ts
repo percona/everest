@@ -130,6 +130,12 @@ export interface Sharding {
   enabled: boolean;
 }
 
+export interface EngineFeatures {
+  psmdb?: {
+    splitHorizonDnsConfigName?: string;
+  };
+}
+
 export interface Spec {
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
@@ -140,6 +146,7 @@ export interface Spec {
   monitoring: Monitoring;
   sharding?: Sharding;
   podSchedulingPolicyName?: string;
+  engineFeatures?: EngineFeatures;
 }
 export interface StatusCondition {
   type: DbErrorType;

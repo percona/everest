@@ -3,36 +3,14 @@ import { api } from './api';
 
 export const getAllSplitHorizonDNSConfigs = async (
   namespace: string
-): Promise<SplitHorizonDNSConfig[]> => {
-  return [
-    {
-      baseDomainNameSuffix: 'test',
-      tls: {
-        secretName: 'test',
-        certificate: {
-          certFile: 'test',
-          keyFile: 'test',
-          caCertFile: 'test',
-        },
-      },
-    },
-    {
-      baseDomainNameSuffix: 'test2',
-      tls: {
-        secretName: 'test2',
-        certificate: {
-          certFile: 'test2',
-          keyFile: 'test2',
-          caCertFile: 'test2',
-        },
-      },
-    },
-  ];
-  // TODO: Implement this
-  // const response = await api.get<SplitHorizonDNSConfig[]>(
-  //   `namespaces/${namespace}/engine-features/split-horizon-dns-config`
-  // );
-  // return response.data;
+): Promise<Array<SplitHorizonDNSConfig & { namespace: string }>> => {
+  const response = await api.get<{ items: SplitHorizonDNSConfig[] }>(
+    `namespaces/${namespace}/engine-features/split-horizon-dns-config`
+  );
+  return response.data.items.map((config) => ({
+    ...config,
+    namespace,
+  }));
 };
 
 export const getSplitHorizonDNSConfig = async (
