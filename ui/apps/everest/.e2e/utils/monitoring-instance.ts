@@ -164,7 +164,10 @@ export const checkQAN = async (
   const end = now.toISOString();
   const PMMMajorVersion = await getPMMMajorVersion();
   const endpoint = 'monitoring-service.everest-system:443';
-  const url = PMMMajorVersion.trim() === '2' ? `https://${userPass}@${endpoint}/v0/qan/ObjectDetails/GetMetrics` : `https://${userPass}@${endpoint}/v1/qan:getMetrics`;
+  const url =
+    PMMMajorVersion.trim() === '2'
+      ? `https://${userPass}@${endpoint}/v0/qan/ObjectDetails/GetMetrics`
+      : `https://${userPass}@${endpoint}/v1/qan:getMetrics`;
 
   const payload = JSON.stringify({
     period_start_from: start,
