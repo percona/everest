@@ -20,6 +20,9 @@ jobs:
       fail-fast: true
     continue-on-error: false
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: auto
+      GONOSUMDB: "github.com/percona/percona-xtradb-cluster-operator"
 
     steps:
       - name: Check out code
@@ -63,6 +66,9 @@ jobs:
       fail-fast: true
     continue-on-error: false
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: auto
+      GONOSUMDB: "github.com/percona/percona-xtradb-cluster-operator"
 
     steps:
       - name: Check out code into the Go module directory
@@ -118,6 +124,9 @@ jobs:
     continue-on-error: false
     name: API Integration Tests
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: auto
+      GONOSUMDB: "github.com/percona/percona-xtradb-cluster-operator"
     steps:
       - name: Check out code
         uses: actions/checkout@v5
@@ -201,6 +210,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
+      GOTOOLCHAIN: auto
+      GONOSUMDB: "github.com/percona/percona-xtradb-cluster-operator"
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v5
