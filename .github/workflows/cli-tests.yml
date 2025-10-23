@@ -32,6 +32,24 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
+      - name: Full Debug Info
+        run: |
+          echo "======================================="
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "======================================="
+          go version
+          go env GOPROXY
+          go env GOSUMDB
+          go env GOMODCACHE
+          echo "======================================="
+          echo "Checking module source..."
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Origin'
+          echo "======================================="
+          echo "Module hash:"
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Sum'
+          echo "======================================="
+
       - name: Install Kubernetes tools
         uses: ./.github/actions/install-kubernetes-tools
         with:
