@@ -31,6 +31,24 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
+      - name: Full Debug Info
+        run: |
+          echo "======================================="
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "======================================="
+          go version
+          go env GOPROXY
+          go env GOSUMDB
+          go env GOMODCACHE
+          echo "======================================="
+          echo "Checking module source..."
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Origin'
+          echo "======================================="
+          echo "Module hash:"
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Sum'
+          echo "======================================="
+
       - name: Run tests
         timeout-minutes: 20
         run: |
@@ -76,6 +94,24 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+
+      - name: Full Debug Info
+        run: |
+          echo "======================================="
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "======================================="
+          go version
+          go env GOPROXY
+          go env GOSUMDB
+          go env GOMODCACHE
+          echo "======================================="
+          echo "Checking module source..."
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Origin'
+          echo "======================================="
+          echo "Module hash:"
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Sum'
+          echo "======================================="
 
       - name: Download Go modules
         run: go mod download
@@ -127,6 +163,24 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+
+      - name: Full Debug Info
+        run: |
+          echo "======================================="
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "======================================="
+          go version
+          go env GOPROXY
+          go env GOSUMDB
+          go env GOMODCACHE
+          echo "======================================="
+          echo "Checking module source..."
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Origin'
+          echo "======================================="
+          echo "Module hash:"
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Sum'
+          echo "======================================="
 
       - name: Install Kubernetes tools
         uses: ./.github/actions/install-kubernetes-tools
@@ -213,6 +267,24 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+
+      - name: Full Debug Info
+        run: |
+          echo "======================================="
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "======================================="
+          go version
+          go env GOPROXY
+          go env GOSUMDB
+          go env GOMODCACHE
+          echo "======================================="
+          echo "Checking module source..."
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Origin'
+          echo "======================================="
+          echo "Module hash:"
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Sum'
+          echo "======================================="
 
       - name: Build CLI binary
         run: |

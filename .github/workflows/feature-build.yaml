@@ -315,6 +315,24 @@ jobs:
           go-version-file: "./go.mod"
           cache: true
 
+      - name: Full Debug Info
+        run: |
+          echo "======================================="
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "======================================="
+          go version
+          go env GOPROXY
+          go env GOSUMDB
+          go env GOMODCACHE
+          echo "======================================="
+          echo "Checking module source..."
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Origin'
+          echo "======================================="
+          echo "Module hash:"
+          go mod download -json github.com/percona/percona-xtradb-cluster-operator | jq -r '.Sum'
+          echo "======================================="
+
       - name: Everest UI - setup pnpm
         uses: pnpm/action-setup@v4
         with:
