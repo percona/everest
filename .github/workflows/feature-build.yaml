@@ -75,7 +75,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ 1.24.x ]
         may-fail: [ false ]
 
     continue-on-error: ${{ matrix.may-fail }}
@@ -129,11 +128,6 @@ jobs:
         run: |
           mkdir -p /tmp/${VERSION}
 
-      - name: Set GO_VERSION environment variable
-        run: |
-          go version
-          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -148,13 +142,6 @@ jobs:
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
-
-
-      - name: Set up Go release
-        uses: percona-platform/setup-go@v4
-        with:
-          go-version: ${{ matrix.go-version }}
-
 
       - name: Operator - install operator-sdk
         run: |
@@ -321,6 +308,12 @@ jobs:
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
           ref: ${{ env.EVEREST_BRANCH }}
+
+      - name: Set up Go release
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: "./go.mod"
+          cache: true
 
       - name: Everest UI - setup pnpm
         uses: pnpm/action-setup@v4
