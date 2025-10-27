@@ -30,6 +30,12 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+          
+      - name: Setup Go modules
+        run: |
+          go clean -modcache
+          rm go.sum
+          go mod tidy
 
       - name: Run tests
         timeout-minutes: 20
@@ -77,8 +83,11 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      - name: Download Go modules
-        run: go mod download
+      - name: Setup Go modules
+        run: |
+          go clean -modcache
+          rm go.sum
+          go mod tidy
 
       - name: Run linters
         run: |
@@ -128,7 +137,7 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
       
-      - name: Install Go modules
+      - name: Setup Go modules
         run: |
           go clean -modcache
           rm go.sum
@@ -219,6 +228,12 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+          
+      - name: Setup Go modules
+        run: |
+          go clean -modcache
+          rm go.sum
+          go mod tidy
 
       - name: Build CLI binary
         run: |
