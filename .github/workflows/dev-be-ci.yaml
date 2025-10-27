@@ -152,8 +152,8 @@ jobs:
       - name: Adjust GitHub worker node
         uses: ./.github/actions/adjust-github-node
         with:
-          adjust-host-for-k3d: false
-          mount-docker-data: false
+          adjust-host-for-k3d: true
+          mount-docker-data: true
 
       - name: Run K3D test cluster
         run: |
