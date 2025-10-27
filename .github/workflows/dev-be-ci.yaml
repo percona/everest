@@ -31,6 +31,8 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
           
+      # The pxc-operator v1.18.0 go module gives checksum mismatch errors due to it being re-tagged.
+      # To workaround this problem, we need to clear the module cache and run `go mod tidy` again.
       - name: Setup Go modules
         run: |
           go clean -modcache
@@ -83,6 +85,8 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
+      # The pxc-operator v1.18.0 go module gives checksum mismatch errors due to it being re-tagged.
+      # To workaround this problem, we need to clear the module cache and run `go mod tidy` again.
       - name: Setup Go modules
         run: |
           go clean -modcache
@@ -137,6 +141,8 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
       
+      # The pxc-operator v1.18.0 go module gives checksum mismatch errors due to it being re-tagged.
+      # To workaround this problem, we need to clear the module cache and run `go mod tidy` again.
       - name: Setup Go modules
         run: |
           go clean -modcache
@@ -229,6 +235,8 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
           
+      # The pxc-operator v1.18.0 go module gives checksum mismatch errors due to it being re-tagged.
+      # To workaround this problem, we need to clear the module cache and run `go mod tidy` again.
       - name: Setup Go modules
         run: |
           go clean -modcache
