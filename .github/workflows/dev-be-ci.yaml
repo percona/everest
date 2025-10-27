@@ -20,11 +20,6 @@ jobs:
       fail-fast: true
     continue-on-error: false
     runs-on: ubuntu-latest
-    env:
-      GOTOOLCHAIN: auto
-      # Temporary workaround for pxc 1.18.0 go mod issue (incorrect checksum)
-      # Remove after upgrading to pxc 1.18.0+
-      GONOSUMDB: "github.com/percona/percona-xtradb-cluster-operator"
 
     steps:
       - name: Check out code
@@ -68,11 +63,6 @@ jobs:
       fail-fast: true
     continue-on-error: false
     runs-on: ubuntu-latest
-    env:
-      GOTOOLCHAIN: auto
-      # Temporary workaround for pxc 1.18.0 go mod issue (incorrect checksum)
-      # Remove after upgrading to pxc 1.18.0+
-      GONOSUMDB: "github.com/percona/percona-xtradb-cluster-operator"
 
     steps:
       - name: Check out code into the Go module directory
@@ -128,11 +118,6 @@ jobs:
     continue-on-error: false
     name: API Integration Tests
     runs-on: ubuntu-latest
-    env:
-      GOTOOLCHAIN: auto
-      # Temporary workaround for pxc 1.18.0 go mod issue (incorrect checksum)
-      # Remove after upgrading to pxc 1.18.0+
-      GONOSUMDB: "github.com/percona/percona-xtradb-cluster-operator"
     steps:
       - name: Check out code
         uses: actions/checkout@v5
@@ -142,6 +127,12 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+      
+      - name: Install Go modules
+        run: |
+          go clean -modcache
+          rm go.sum
+          go mod tidy
 
       - name: Install Kubernetes tools
         uses: ./.github/actions/install-kubernetes-tools
@@ -149,11 +140,11 @@ jobs:
           install-kubectl: true
           install-k3d: true
 
-      # - name: Adjust GitHub worker node
-      #   uses: ./.github/actions/adjust-github-node
-      #   with:
-      #     adjust-host-for-k3d: false
-      #     mount-docker-data: false
+      - name: Adjust GitHub worker node
+        uses: ./.github/actions/adjust-github-node
+        with:
+          adjust-host-for-k3d: false
+          mount-docker-data: false
 
       - name: Run K3D test cluster
         run: |
@@ -216,10 +207,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
-      GOTOOLCHAIN: auto
-      # Temporary workaround for pxc 1.18.0 go mod issue (incorrect checksum)
-      # Remove after upgrading to pxc 1.18.0+
-      GONOSUMDB: "github.com/percona/percona-xtradb-cluster-operator"
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v5
