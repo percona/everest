@@ -25,7 +25,7 @@ const FormProviderWrapper = ({
       storageClass: 'standard',
       engineParametersEnabled: false,
       podSchedulingPolicyEnabled: false,
-      exposureMethod: 'Cluster IP',
+      exposureMethod: ProxyExposeType.ClusterIP,
       sourceRanges: [
         {
           sourceRange: '192.168.1.1',
@@ -83,7 +83,7 @@ describe('FourthStep', () => {
 
     await waitFor(() =>
       expect(screen.getByTestId('select-input-exposure-method')).toHaveValue(
-        'Load balancer'
+        ProxyExposeType.LoadBalancer
       )
     );
 
