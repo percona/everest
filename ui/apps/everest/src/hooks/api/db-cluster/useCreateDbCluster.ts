@@ -41,7 +41,6 @@ import cronConverter from 'utils/cron-converter';
 import { getDataSource, getProxySpec } from './utils';
 import { DbType } from '@percona/types';
 import { useRBACPermissions } from 'hooks/rbac';
-import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
 import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
 type CreateDbClusterArgType = {
@@ -127,7 +126,7 @@ const formValuesToPayloadMapping = (
         dbPayload.proxyMemory,
         dbPayload.sharding,
         dbPayload.sourceRanges || [],
-        dbPayload.exposureMethod === ExposureMethod.LoadBalancer ||
+        dbPayload.exposureMethod === ProxyExposeType.LoadBalancer ||
           dbPayload.loadBalancerConfigName === EMPTY_LOAD_BALANCER_CONFIGURATION
           ? dbPayload.loadBalancerConfigName
           : undefined
@@ -160,7 +159,7 @@ const formValuesToPayloadMapping = (
           proxy: {
             expose: {
               loadBalancerConfigName: dbPayload.loadBalancerConfig,
-              type: ProxyExposeType.external,
+              type: ProxyExposeType.LoadBalancer,
             },
           },
         },

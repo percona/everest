@@ -102,15 +102,17 @@ export const ClusterOverview = () => {
           connectionUrl={dbClusterDetails?.connectionUrl!}
           externalAccess={
             isProxy(dbCluster.spec.proxy) &&
-            dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+            dbCluster.spec.proxy.expose.type === ProxyExposeType.LoadBalancer
           }
+          exposeType={dbCluster.spec.proxy.expose.type}
           monitoring={dbCluster?.spec.monitoring?.monitoringConfigName}
           parameters={!!dbCluster?.spec.engine.config}
           storageClass={dbCluster?.spec.engine.storage.class!}
           podSchedulingPolicy={dbCluster?.spec.podSchedulingPolicyName}
           loadBalancerConfig={
             isProxy(dbCluster.spec.proxy)
-              ? dbCluster.spec.proxy.expose.type === ProxyExposeType.external
+              ? dbCluster.spec.proxy.expose.type ===
+                ProxyExposeType.LoadBalancer
                 ? dbCluster.spec.proxy.expose.loadBalancerConfigName ||
                   EMPTY_LOAD_BALANCER_CONFIGURATION
                 : ''

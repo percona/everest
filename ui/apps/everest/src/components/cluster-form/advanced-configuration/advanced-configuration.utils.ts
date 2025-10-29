@@ -15,10 +15,7 @@
 
 import { DbType } from '@percona/types';
 import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
-import {
-  AdvancedConfigurationFields,
-  ExposureMethod,
-} from './advanced-configuration.types';
+import { AdvancedConfigurationFields } from './advanced-configuration.types';
 import { AdvancedConfigurationFormType } from './advanced-configuration-schema';
 import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 
@@ -64,12 +61,10 @@ export const advancedConfigurationModalDefaultValues = (
     [AdvancedConfigurationFields.podSchedulingPolicy]:
       dbCluster?.spec.podSchedulingPolicyName,
     [AdvancedConfigurationFields.loadBalancerConfigName]:
-      dbCluster?.spec?.proxy.expose.type === ProxyExposeType.external
+      dbCluster?.spec?.proxy.expose.type === ProxyExposeType.LoadBalancer
         ? lbConfigName || EMPTY_LOAD_BALANCER_CONFIGURATION
         : '',
     [AdvancedConfigurationFields.exposureMethod]:
-      dbCluster?.spec?.proxy.expose.type === ProxyExposeType.external
-        ? ExposureMethod.LoadBalancer
-        : ExposureMethod.ClusterIP,
+      dbCluster?.spec?.proxy.expose.type,
   };
 };
