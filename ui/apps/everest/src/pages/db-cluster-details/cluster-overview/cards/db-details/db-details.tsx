@@ -43,6 +43,7 @@ export const DbDetails = ({
   storageClass,
   podSchedulingPolicy,
   loadBalancerConfig,
+  exposeType,
 }: DatabaseDetailsOverviewCardProps) => {
   const { data: monitoringInstances } =
     useMonitoringInstancesForNamespace(namespace);
@@ -87,6 +88,7 @@ export const DbDetails = ({
           hostname={hostname}
           connectionUrl={connectionUrl}
           type={type}
+          exposeType={exposeType}
         />
         {canReadMonitoring && (
           <MonitoringDetails loading={loading} monitoring={monitoring} />

@@ -91,7 +91,7 @@ export const AdvancedConfigurationEditModal = ({
           allowedFieldsToInitiallyLoadDefaults
         }
         disableNoConfig={
-          dbCluster.spec.proxy.expose.type === ProxyExposeType.external &&
+          dbCluster.spec.proxy.expose.type === ProxyExposeType.LoadBalancer &&
           dbCluster.spec.proxy.expose.loadBalancerConfigName !== undefined
         }
         activePolicy={dbCluster?.spec.podSchedulingPolicyName}
