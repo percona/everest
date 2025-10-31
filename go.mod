@@ -28,7 +28,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.33.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20251031071312-cd4f98416ca1
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251014070137-b218a0bfeb94
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251024201113-5f562d3ccbba
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
@@ -169,7 +169,7 @@ require (
 	github.com/go-openapi/swag/typeutils v0.25.1 // indirect
 	github.com/go-openapi/swag/yamlutils v0.25.1 // indirect
 	github.com/go-openapi/validate v0.25.0 // indirect
-	github.com/go-sql-driver/mysql v1.9.1 // indirect
+	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/go-test/deep v1.1.0 // indirect
 	github.com/go-toolsmith/astcast v1.1.0 // indirect
 	github.com/go-toolsmith/astcopy v1.1.0 // indirect
@@ -302,7 +302,7 @@ require (
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20250925114718-2f499a6a31c8 // indirect
 	github.com/percona/percona-postgresql-operator v0.0.0-20250717192602-2b721be58505 // indirect
 	github.com/percona/percona-server-mongodb-operator v1.21.1 // indirect
-	github.com/percona/percona-xtradb-cluster-operator v1.17.0 // indirect
+	github.com/percona/percona-xtradb-cluster-operator v1.18.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
