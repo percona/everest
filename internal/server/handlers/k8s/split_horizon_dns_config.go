@@ -43,8 +43,7 @@ func (h *k8sHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, namespace,
 
 	if req.Certificate != nil {
 		shdc.Spec.TLS.Certificate.CACert = req.Certificate.CaCrt
-		shdc.Spec.TLS.Certificate.TLSCert = req.Certificate.TlsCrt
-		shdc.Spec.TLS.Certificate.TLSKey = req.Certificate.TlsKey
+		shdc.Spec.TLS.Certificate.CAKey = req.Certificate.CaKey
 	}
 
 	return h.kubeConnector.UpdateSplitHorizonDNSConfig(ctx, shdc)
