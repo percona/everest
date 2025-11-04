@@ -63,11 +63,11 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   [DbWizardFormFields.resourceSizePerProxy]: ResourceSize.small,
   [DbWizardFormFields.customNrOfNodes]: DEFAULT_NODES[dbType],
   [DbWizardFormFields.customNrOfProxies]: DEFAULT_NODES[dbType],
-  [DbWizardFormFields.cpu]: NODES_DEFAULT_SIZES[dbType].small.cpu,
+  [DbWizardFormFields.cpu]: NODES_DEFAULT_SIZES(dbType).small.cpu,
   [DbWizardFormFields.proxyCpu]: PROXIES_DEFAULT_SIZES[dbType].small.cpu,
-  [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES[dbType].small.disk,
+  [DbWizardFormFields.disk]: NODES_DEFAULT_SIZES(dbType).small.disk,
   [DbWizardFormFields.diskUnit]: 'Gi',
-  [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES[dbType].small.memory,
+  [DbWizardFormFields.memory]: NODES_DEFAULT_SIZES(dbType).small.memory,
   [DbWizardFormFields.proxyMemory]: PROXIES_DEFAULT_SIZES[dbType].small.memory,
   [DbWizardFormFields.sharding]: false,
   [DbWizardFormFields.shardNr]: '2',
@@ -148,7 +148,7 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.customNrOfProxies]: proxies,
     [DbWizardFormFields.resourceSizePerNode]: matchFieldsValueToResourceSize(
-      NODES_DEFAULT_SIZES[dbEngineToDbType(dbCluster?.spec?.engine?.type)],
+      NODES_DEFAULT_SIZES(dbEngineToDbType(dbCluster?.spec?.engine?.type)),
       dbCluster?.spec?.engine?.resources
     ),
     [DbWizardFormFields.resourceSizePerProxy]: isProxy(dbCluster?.spec?.proxy)

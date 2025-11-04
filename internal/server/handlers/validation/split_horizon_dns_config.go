@@ -36,15 +36,11 @@ func (h *validateHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, names
 	if req.Certificate != nil {
 		var allErrs []error
 		if req.Certificate.CaCrt == "" {
-			allErrs = append(allErrs, errors.New("certificate.caCrt can not be empty"))
+			allErrs = append(allErrs, errors.New("certificate.ca.crt can not be empty"))
 		}
 
-		if req.Certificate.TlsKey == "" {
-			allErrs = append(allErrs, errors.New("certificate.tls.key can not be empty"))
-		}
-
-		if req.Certificate.TlsCrt == "" {
-			allErrs = append(allErrs, errors.New("certificate.tls.crt can not be empty"))
+		if req.Certificate.CaKey == "" {
+			allErrs = append(allErrs, errors.New("certificate.ca.key can not be empty"))
 		}
 
 		if len(allErrs) > 0 {
