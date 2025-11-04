@@ -37,9 +37,9 @@ export const createSplitHorizonDNSConfig = async (
 export const updateSplitHorizonDNSConfig = async (
   namespace: string,
   name: string,
-  config: SplitHorizonDNSConfig
+  config: Pick<SplitHorizonDNSConfig['spec']['tls'], 'certificate'>
 ) => {
-  const response = await api.put<SplitHorizonDNSConfig>(
+  const response = await api.patch<SplitHorizonDNSConfig>(
     `namespaces/${namespace}/engine-features/split-horizon-dns-config/${name}`,
     config
   );

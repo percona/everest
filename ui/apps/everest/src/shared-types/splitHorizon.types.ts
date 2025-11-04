@@ -15,4 +15,7 @@ export type SplitHorizonDNSConfig = {
       };
     };
   };
+  status: {
+    inUse: boolean;
+  };
 };

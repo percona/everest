@@ -4,15 +4,20 @@ import { z } from 'zod';
 import { Box, MenuItem, Stack, Typography } from '@mui/material';
 import { fileValidation } from 'utils/common-validation';
 import { FILE_NOT_INSTANCE_OF_FILE_ERROR } from 'consts';
+import { TableRow } from './types';
 
 const ConfigurationModal = ({
   isOpen,
+  isSubmitting,
   namespacesAvailable,
+  selectedConfig,
   onClose,
   onSubmit,
 }: {
+  isSubmitting: boolean;
   namespacesAvailable: string[];
   isOpen: boolean;
+  selectedConfig?: TableRow;
   onClose: () => void;
   onSubmit: (data: {
     name: string;
@@ -27,9 +32,13 @@ const ConfigurationModal = ({
   return (
     <FormDialog
       isOpen={isOpen}
+      submitting={isSubmitting}
       closeModal={onClose}
-      headerMessage="Create configuration"
+      headerMessage={
+        selectedConfig ? 'Edit configuration' : 'Create configuration'
+      }
       onSubmit={onSubmit}
+      submitMessage={selectedConfig ? 'Save' : 'Create'}
       schema={z.object({
         name: z.string().min(1),
         namespace: z.string().min(1),
@@ -49,10 +58,10 @@ const ConfigurationModal = ({
           .superRefine(fileValidation),
       })}
       defaultValues={{
-        name: '',
-        namespace: '',
-        domain: '',
-        secretName: '',
+        name: selectedConfig?.name || '',
+        namespace: selectedConfig?.namespace || '',
+        domain: selectedConfig?.domain || '',
+        secretName: selectedConfig?.secretName || '',
         certificate: null,
         key: null,
         caCert: null,
@@ -66,6 +75,7 @@ const ConfigurationModal = ({
             label="Name"
             textFieldProps={{
               placeholder: 'Insert name',
+              disabled: !!selectedConfig,
               sx: {
                 mb: 2,
                 mt: 2,
@@ -81,6 +91,7 @@ const ConfigurationModal = ({
                 mt: 2,
                 mb: 2,
               },
+              disabled: !!selectedConfig,
             }}
           >
             {namespacesAvailable.map((namespace) => (
@@ -100,6 +111,7 @@ const ConfigurationModal = ({
               sx: {
                 mt: 2,
               },
+              disabled: !!selectedConfig,
             }}
             isRequired
           />
@@ -113,6 +125,7 @@ const ConfigurationModal = ({
             label="Secret name"
             textFieldProps={{
               placeholder: 'Insert secret name',
+              disabled: !!selectedConfig,
               sx: {
                 mt: 0,
               },

@@ -1,24 +1,56 @@
 import { Add } from '@mui/icons-material';
 import { Button } from '@mui/material';
 import { Table } from '@percona/ui-lib';
-import { useMemo, useState } from 'react';
-import { useCreateSplitHorizonConfig, useNamespaces } from 'hooks/api';
+import { useMemo, useRef, useState } from 'react';
+import {
+  useCreateSplitHorizonConfig,
+  useDeleteSplitHorizonDNSConfig,
+  useNamespaces,
+  useUpdateSplitHorizonConfig,
+} from 'hooks/api';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { getAllSplitHorizonDNSConfigs } from 'api/splitHorizon';
 import ConfigurationModal from './configuration-modal';
 import { fileToBase64 } from 'utils/db';
+import SplitHorizonRowActions from './row-actions';
+import { TableRow } from './types';
+import DeleteSplitHorizonConfigDialog from './delete-dialog';
+import { useNamespacePermissionsForResource } from 'hooks/rbac';
 
 const SplitHorizon = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const selectedConfig = useRef<TableRow | undefined>();
+  const { canCreate } = useNamespacePermissionsForResource(
+    'enginefeatures/split-horizon-dns-configs'
+  );
   const queryClient = useQueryClient();
-  const { mutate: createSplitHorizonConfig } = useCreateSplitHorizonConfig({
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['split-horizon-configs'],
-      });
-      setIsModalOpen(false);
-    },
-  });
+  const { mutate: createSplitHorizonConfig, isPending: isCreating } =
+    useCreateSplitHorizonConfig({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['split-horizon-configs'],
+        });
+        setIsModalOpen(false);
+      },
+    });
+  const { mutate: updateSplitHorizonConfig, isPending: isUpdating } =
+    useUpdateSplitHorizonConfig({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['split-horizon-configs'],
+        });
+        setIsModalOpen(false);
+      },
+    });
+  const { mutate: deleteSplitHorizonConfig, isPending: isDeleting } =
+    useDeleteSplitHorizonDNSConfig({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['split-horizon-configs'],
+        });
+      },
+    });
   const { data: namespaces = [] } = useNamespaces({
     refetchInterval: 10 * 1000,
   });
@@ -48,15 +80,69 @@ const SplitHorizon = () => {
     []
   );
 
-  const data = useMemo(() => {
+  const data = useMemo<TableRow[]>(() => {
     return splitHorizonConfigs.flatMap(({ data }) =>
       (data || []).map((config) => ({
         name: config.metadata.name,
         domain: config.spec.baseDomainNameSuffix,
         namespace: config.namespace,
+        secretName: config.spec.tls.secretName,
+        inUse: config.status.inUse,
       }))
     );
   }, [splitHorizonConfigs]);
+
+  const handleOnEditIconClick = (config: TableRow) => {
+    selectedConfig.current = config;
+    setIsModalOpen(true);
+  };
+
+  const handleOnDeleteIconClick = (config: TableRow) => {
+    selectedConfig.current = config;
+    setRemoveDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteSplitHorizonConfig({
+      name: selectedConfig.current!.name,
+      namespace: selectedConfig.current!.namespace,
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['split-horizon-configs'],
+    });
+    setRemoveDialogOpen(false);
+  };
+
+  const handleModalConfirm = (
+    name: string,
+    namespace: string,
+    baseDomain: string,
+    caCrt: string,
+    tlsCrt: string,
+    tlsKey: string,
+    secretName: string
+  ) => {
+    if (selectedConfig.current) {
+      updateSplitHorizonConfig({
+        name,
+        namespace,
+        caCrt,
+        tlsCrt,
+        tlsKey,
+        secretName,
+      });
+    } else {
+      createSplitHorizonConfig({
+        name,
+        namespace,
+        baseDomain,
+        caCrt,
+        tlsCrt,
+        tlsKey,
+        secretName,
+      });
+    }
+  };
 
   return (
     <>
@@ -64,35 +150,61 @@ const SplitHorizon = () => {
         tableName="split-horizon"
         columns={columns}
         data={data}
-        renderTopToolbarCustomActions={() => (
-          <Button
-            variant="contained"
-            size="medium"
-            onClick={() => setIsModalOpen(true)}
-            data-testid="add-config-button"
-            sx={{ display: 'flex' }}
-            startIcon={<Add />}
-          >
-            Create configuration
-          </Button>
+        enableRowActions
+        renderTopToolbarCustomActions={() =>
+          canCreate.length > 0 && (
+            <Button
+              variant="contained"
+              size="medium"
+              onClick={() => setIsModalOpen(true)}
+              data-testid="add-config-button"
+              sx={{ display: 'flex' }}
+              startIcon={<Add />}
+            >
+              Create configuration
+            </Button>
+          )
+        }
+        renderRowActions={({ row }) => (
+          <SplitHorizonRowActions
+            namespace={row.original.namespace}
+            configName={row.original.name}
+            handleOnDeleteIconClick={() =>
+              handleOnDeleteIconClick(row.original)
+            }
+            handleOnEditIconClick={() => handleOnEditIconClick(row.original)}
+          />
         )}
       />
-      <ConfigurationModal
-        isOpen={isModalOpen}
-        namespacesAvailable={namespaces || []}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={async (data) => {
-          createSplitHorizonConfig({
-            name: data.name,
-            namespace: data.namespace,
-            baseDomain: data.domain,
-            caCrt: await fileToBase64(data.caCert!),
-            tlsCrt: await fileToBase64(data.certificate!),
-            tlsKey: await fileToBase64(data.key!),
-            secretName: data.secretName,
-          });
-        }}
-      />
+      {isModalOpen && (
+        <ConfigurationModal
+          isOpen
+          isSubmitting={isCreating || isUpdating}
+          selectedConfig={selectedConfig.current}
+          namespacesAvailable={canCreate}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={async (data) => {
+            handleModalConfirm(
+              data.name,
+              data.namespace,
+              data.domain,
+              await fileToBase64(data.caCert!),
+              await fileToBase64(data.certificate!),
+              await fileToBase64(data.key!),
+              data.secretName
+            );
+          }}
+        />
+      )}
+      {removeDialogOpen && (
+        <DeleteSplitHorizonConfigDialog
+          configInUse={selectedConfig.current!.inUse}
+          configName={selectedConfig.current!.name}
+          handleCloseDeleteDialog={() => setRemoveDialogOpen(false)}
+          handleConfirmDelete={handleConfirmDelete}
+          submitting={isDeleting}
+        />
+      )}
     </>
   );
 };
