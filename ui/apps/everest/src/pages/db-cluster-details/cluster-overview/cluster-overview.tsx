@@ -104,7 +104,7 @@ export const ClusterOverview = () => {
             isProxy(dbCluster.spec.proxy) &&
             dbCluster.spec.proxy.expose.type === ProxyExposeType.LoadBalancer
           }
-          exposeType={dbCluster.spec.proxy.expose.type}
+          exposeType={dbCluster.spec.proxy?.expose?.type}
           monitoring={dbCluster?.spec.monitoring?.monitoringConfigName}
           parameters={!!dbCluster?.spec.engine.config}
           storageClass={dbCluster?.spec.engine.storage.class!}
