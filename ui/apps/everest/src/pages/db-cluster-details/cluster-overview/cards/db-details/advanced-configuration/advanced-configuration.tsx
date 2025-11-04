@@ -168,7 +168,7 @@ export const AdvancedConfiguration = ({
       />
       <OverviewSectionRow
         label={Messages.fields.splitHorizonDNS}
-        content={splitHorizonDNS}
+        content={splitHorizonDNS || Messages.fields.disabled}
       />
       {openEditModal && dbCluster && (
         <AdvancedConfigurationEditModal

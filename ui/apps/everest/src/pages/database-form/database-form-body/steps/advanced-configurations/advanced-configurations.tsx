@@ -57,6 +57,7 @@ export const AdvancedConfigurations = ({
           allowedFieldsToInitiallyLoadDefaults
         }
         namespace={namespace}
+        showSplitHorizonDNS={!getValues(DbWizardFormFields.sharding)}
       />
     </>
   );

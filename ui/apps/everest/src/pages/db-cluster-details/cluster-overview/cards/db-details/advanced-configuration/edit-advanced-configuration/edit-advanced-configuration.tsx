@@ -99,6 +99,8 @@ export const AdvancedConfigurationEditModal = ({
           dbCluster.spec.proxy.expose.loadBalancerConfigName !== undefined
         }
         activePolicy={dbCluster?.spec.podSchedulingPolicyName}
+        namespace={dbCluster?.metadata.namespace}
+        showSplitHorizonDNS={false}
       />
     </FormDialog>
   );
