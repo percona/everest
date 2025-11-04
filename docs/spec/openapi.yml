@@ -3857,6 +3857,43 @@ components:
               description: Details provides full status of the upstream cluster
                 as a plain text.
               type: string
+            engineFeatures:
+              description: EngineFeaturesStatus represents additional features statuses
+                for the database engine.
+              properties:
+                psmdb:
+                  description: PSMDB represents additional features statuses for
+                    the PSMDB engine.
+                  properties:
+                    splitHorizon:
+                      description: SplitHorizon status of SplitHorizon feature.
+                      properties:
+                        domains:
+                          description: SplitHorizon status of SplitHorizon feature.
+                          items:
+                            description: SplitHorizonDomain defines SplitHorizon
+                              domain status (domain -> IPs mapping).
+                            properties:
+                              domain:
+                                description: Domain is the SplitHorizon domain name.
+                                type: string
+                              privateIP:
+                                description: PrivateIP is the private IP address
+                                  for the domain.
+                                type: string
+                              publicIP:
+                                description: PublicIP is the public IP address for
+                                  the domain.
+                                type: string
+                            type: object
+                          type: array
+                        host:
+                          description: ConnectionURL is the connection URL using
+                            SplitHorizon domains.
+                          type: string
+                      type: object
+                  type: object
+              type: object
             hostname:
               description: Hostname is the hostname where the cluster can be reached
               type: string
