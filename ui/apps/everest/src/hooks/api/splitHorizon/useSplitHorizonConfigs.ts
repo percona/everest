@@ -37,8 +37,7 @@ export const useCreateSplitHorizonConfig = (
       namespace: string;
       baseDomain: string;
       caCrt: string;
-      tlsCrt: string;
-      tlsKey: string;
+      caKey: string;
       secretName: string;
     }) => {
       const dnsConfig: SplitHorizonDNSConfig = {
@@ -53,8 +52,7 @@ export const useCreateSplitHorizonConfig = (
             secretName: args.secretName,
             certificate: {
               'ca.crt': args.caCrt,
-              'tls.crt': args.tlsCrt,
-              'tls.key': args.tlsKey,
+              'ca.key': args.caKey,
             },
           },
         },
@@ -77,15 +75,13 @@ export const useUpdateSplitHorizonConfig = (
       name: string;
       namespace: string;
       caCrt: string;
-      tlsCrt: string;
-      tlsKey: string;
+      caKey: string;
       secretName: string;
     }) => {
       const dnsConfig = {
         certificate: {
           'ca.crt': args.caCrt,
-          'tls.crt': args.tlsCrt,
-          'tls.key': args.tlsKey,
+          'ca.key': args.caKey,
         },
       };
       return updateSplitHorizonDNSConfig(args.namespace, args.name, dnsConfig);

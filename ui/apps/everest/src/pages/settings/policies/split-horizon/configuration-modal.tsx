@@ -24,7 +24,7 @@ const ConfigurationModal = ({
     namespace: string;
     domain: string;
     certificate: File | null;
-    key: File | null;
+    caKey: File | null;
     caCert: File | null;
     secretName: string;
   }) => void;
@@ -47,10 +47,7 @@ const ConfigurationModal = ({
           .min(1)
           .regex(/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/),
         secretName: z.string().min(1),
-        certificate: z
-          .instanceof(File, { message: FILE_NOT_INSTANCE_OF_FILE_ERROR })
-          .superRefine(fileValidation),
-        key: z
+        caKey: z
           .instanceof(File, { message: FILE_NOT_INSTANCE_OF_FILE_ERROR })
           .superRefine(fileValidation),
         caCert: z
@@ -62,8 +59,7 @@ const ConfigurationModal = ({
         namespace: selectedConfig?.namespace || '',
         domain: selectedConfig?.domain || '',
         secretName: selectedConfig?.secretName || '',
-        certificate: null,
-        key: null,
+        caKey: null,
         caCert: null,
       }}
     >
@@ -132,26 +128,6 @@ const ConfigurationModal = ({
             }}
           />
           <FileInput
-            name="certificate"
-            label="Certificate"
-            textFieldProps={{
-              placeholder: 'Insert certificate',
-            }}
-            fileInputProps={{
-              accept: '.pem,.crt,.cer,.cert,.p12,.der,.pfx',
-            }}
-          />
-          <FileInput
-            name="key"
-            label="Key"
-            textFieldProps={{
-              placeholder: 'Insert key',
-            }}
-            fileInputProps={{
-              accept: '.key',
-            }}
-          />
-          <FileInput
             name="caCert"
             label="Ca cert"
             textFieldProps={{
@@ -160,6 +136,16 @@ const ConfigurationModal = ({
             fileInputProps={{
               accept:
                 '.pem,.crt,.cer,.cert,.p12,.der,.pfx,.p12,.ca-bundle,.key',
+            }}
+          />
+          <FileInput
+            name="caKey"
+            label="Ca key"
+            textFieldProps={{
+              placeholder: 'Insert certificate',
+            }}
+            fileInputProps={{
+              accept: '.pem,.crt,.cer,.cert,.p12,.der,.pfx,.key',
             }}
           />
         </Stack>

@@ -10,8 +10,7 @@ export type SplitHorizonDNSConfig = {
       secretName: string;
       certificate: {
         'ca.crt': string;
-        'tls.crt': string;
-        'tls.key': string;
+        'ca.key': string;
       };
     };
   };

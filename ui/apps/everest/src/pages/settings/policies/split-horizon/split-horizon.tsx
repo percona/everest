@@ -118,8 +118,7 @@ const SplitHorizon = () => {
     namespace: string,
     baseDomain: string,
     caCrt: string,
-    tlsCrt: string,
-    tlsKey: string,
+    caKey: string,
     secretName: string
   ) => {
     if (selectedConfig.current) {
@@ -127,8 +126,7 @@ const SplitHorizon = () => {
         name,
         namespace,
         caCrt,
-        tlsCrt,
-        tlsKey,
+        caKey,
         secretName,
       });
     } else {
@@ -137,8 +135,7 @@ const SplitHorizon = () => {
         namespace,
         baseDomain,
         caCrt,
-        tlsCrt,
-        tlsKey,
+        caKey,
         secretName,
       });
     }
@@ -169,6 +166,7 @@ const SplitHorizon = () => {
           <SplitHorizonRowActions
             namespace={row.original.namespace}
             configName={row.original.name}
+            isConfigInUse={row.original.inUse}
             handleOnDeleteIconClick={() =>
               handleOnDeleteIconClick(row.original)
             }
@@ -189,8 +187,7 @@ const SplitHorizon = () => {
               data.namespace,
               data.domain,
               await fileToBase64(data.caCert!),
-              await fileToBase64(data.certificate!),
-              await fileToBase64(data.key!),
+              await fileToBase64(data.caKey!),
               data.secretName
             );
           }}

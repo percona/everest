@@ -91,7 +91,6 @@ export const AdvancedConfigurationEditModal = ({
     >
       <AdvancedConfigurationForm
         dbType={dbEngineToDbType(dbCluster?.spec?.engine?.type)}
-        namespace={dbCluster?.metadata.namespace}
         allowedFieldsToInitiallyLoadDefaults={
           allowedFieldsToInitiallyLoadDefaults
         }

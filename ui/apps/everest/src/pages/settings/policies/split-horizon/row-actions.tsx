@@ -7,11 +7,13 @@ import TableActionsMenu from 'components/table-actions-menu';
 const SplitHorizonRowActions = ({
   namespace,
   configName,
+  isConfigInUse,
   handleOnDeleteIconClick,
   handleOnEditIconClick,
 }: {
   namespace: string;
   configName: string;
+  isConfigInUse: boolean;
   handleOnDeleteIconClick: () => void;
   handleOnEditIconClick: () => void;
 }) => {
@@ -20,24 +22,26 @@ const SplitHorizonRowActions = ({
     `${namespace}/${configName}`
   );
 
-  const menuItems = [
-    ...(canUpdate
-      ? [
-          <MenuItem key="edit" onClick={handleOnEditIconClick}>
-            <EditOutlinedIcon sx={{ mr: 1 }} />
-            Edit
-          </MenuItem>,
-        ]
-      : []),
-    ...(canDelete
-      ? [
-          <MenuItem key="delete" onClick={handleOnDeleteIconClick}>
-            <DeleteIcon sx={{ mr: 1 }} />
-            Delete
-          </MenuItem>,
-        ]
-      : []),
-  ];
+  const menuItems = isConfigInUse
+    ? []
+    : [
+        ...(canUpdate
+          ? [
+              <MenuItem key="edit" onClick={handleOnEditIconClick}>
+                <EditOutlinedIcon sx={{ mr: 1 }} />
+                Edit
+              </MenuItem>,
+            ]
+          : []),
+        ...(canDelete
+          ? [
+              <MenuItem key="delete" onClick={handleOnDeleteIconClick}>
+                <DeleteIcon sx={{ mr: 1 }} />
+                Delete
+              </MenuItem>,
+            ]
+          : []),
+      ];
 
   return (
     <TableActionsMenu

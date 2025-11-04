@@ -48,7 +48,7 @@ import {
   EVEREST_READ_ONLY_FINALIZER,
 } from 'consts';
 import { FormCard } from 'components/form-card';
-import { usePodSchedulingPolicies, useSplitHorizonConfigs } from 'hooks';
+import { usePodSchedulingPolicies } from 'hooks';
 import PoliciesDialog from './policies.dialog';
 import { PodSchedulingPolicy } from 'shared-types/affinity.types';
 import { dbTypeToDbEngine } from '@percona/utils';
@@ -57,7 +57,6 @@ import { useLoadBalancerConfigs } from 'hooks/api/load-balancer';
 import { LoadBalancerConfig } from 'shared-types/loadbalancer.types';
 import LoadBalancerDialog from './load-balancer.dialog';
 import WithInfoIcon from 'components/with-info-icon';
-import { isSplitHorizonDNSEnabled } from 'utils/db';
 import ToggableFormCard from 'components/toggable-form-card';
 
 interface AdvancedConfigurationFormProps {
@@ -67,7 +66,6 @@ interface AdvancedConfigurationFormProps {
   allowedFieldsToInitiallyLoadDefaults?: AllowedFieldsToInitiallyLoadDefaults[];
   disableNoConfig?: boolean;
   activePolicy?: string;
-  namespace?: string;
 }
 
 export const AdvancedConfigurationForm = ({
@@ -77,7 +75,6 @@ export const AdvancedConfigurationForm = ({
   allowedFieldsToInitiallyLoadDefaults = [],
   disableNoConfig = false,
   activePolicy,
-  namespace,
 }: AdvancedConfigurationFormProps) => {
   const { watch, setValue, getFieldState, getValues, trigger } =
     useFormContext();
@@ -88,20 +85,13 @@ export const AdvancedConfigurationForm = ({
   const initialLbConfigName = useRef(
     getValues(AdvancedConfigurationFields.loadBalancerConfigName)
   );
-  const shardingEnabled = getValues(DbWizardFormFields.sharding);
   const selectedLoadBalancerConfig = useRef<
     LoadBalancerConfig | null | undefined
   >(null);
-  const [
-    engineParametersEnabled,
-    policiesEnabled,
-    exposureMethod,
-    splitHorizonDNSEnabled,
-  ] = watch([
+  const [engineParametersEnabled, policiesEnabled, exposureMethod] = watch([
     AdvancedConfigurationFields.engineParametersEnabled,
     AdvancedConfigurationFields.podSchedulingPolicyEnabled,
     AdvancedConfigurationFields.exposureMethod,
-    AdvancedConfigurationFields.splitHorizonDNSEnabled,
   ]);
   const { data: clusterInfo, isLoading: clusterInfoLoading } =
     useKubernetesClusterInfo(['wizard-k8-info']);
@@ -109,12 +99,6 @@ export const AdvancedConfigurationForm = ({
     usePodSchedulingPolicies(dbTypeToDbEngine(dbType), false, {
       refetchInterval: 2000,
     });
-  const {
-    data: splitHorizonDNSConfigs = [],
-    isLoading: fetchingSplitHorizonDNS,
-  } = useSplitHorizonConfigs(namespace!, {
-    enabled: !!namespace,
-  });
 
   const clusterType = clusterInfo?.clusterType;
 
@@ -182,26 +166,12 @@ export const AdvancedConfigurationForm = ({
         selectDefaultValue
       );
     }
-
-    if (
-      isSplitHorizonDNSEnabled(dbType) &&
-      !shardingEnabled &&
-      allowedFieldsToInitiallyLoadDefaults.includes('splitHorizonDNS') &&
-      splitHorizonDNSConfigs.length > 0
-    ) {
-      setValue(
-        AdvancedConfigurationFields.splitHorizonDNS,
-        splitHorizonDNSConfigs[0].metadata.name
-      );
-    }
   }, [
     allowedFieldsToInitiallyLoadDefaults,
     getValues,
     selectDefaultValue,
     setValue,
-    splitHorizonDNSConfigs,
     dbType,
-    shardingEnabled,
   ]);
 
   const handleOnLoadBalancerConfigInfoClick = () => {
@@ -513,7 +483,8 @@ export const AdvancedConfigurationForm = ({
           </Box>
         }
       />
-      {isSplitHorizonDNSEnabled(dbType) && !shardingEnabled && (
+      {/* TODO uncomment when editing split horizon dns is implemented */}
+      {/* {isSplitHorizonDNSEnabled(dbType) && !shardingEnabled && (
         <ToggableFormCard
           title={Messages.cards.splitHorizonDNS.title}
           description={Messages.cards.splitHorizonDNS.description}
@@ -553,7 +524,7 @@ export const AdvancedConfigurationForm = ({
             </Box>
           }
         />
-      )}
+      )} */}
       <FormCard
         title={Messages.cards.engineParameters.title}
         description={Messages.cards.engineParameters.description}
