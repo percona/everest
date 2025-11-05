@@ -843,15 +843,15 @@ export const changeDbClusterResources = (
       dbEngineToDbType(dbCluster.spec.engine.type),
       newResources.numberOfProxies.toString(),
       '',
-      dbCluster.spec.proxy.expose.type,
+      dbCluster.spec.proxy?.expose?.type || ProxyExposeType.ClusterIP,
       newResources.proxyCpu,
       newResources.proxyMemory,
       !!sharding,
-      ((dbCluster.spec.proxy as Proxy).expose.ipSourceRanges || []).map(
+      ((dbCluster.spec.proxy as Proxy)?.expose?.ipSourceRanges || []).map(
         (sourceRange) => ({ sourceRange })
       ),
-      dbCluster.spec.proxy.expose.type === ProxyExposeType.LoadBalancer
-        ? dbCluster.spec.proxy.expose.loadBalancerConfigName
+      dbCluster.spec.proxy?.expose?.type === ProxyExposeType.LoadBalancer
+        ? dbCluster.spec.proxy?.expose?.loadBalancerConfigName
         : undefined
     ),
     ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&

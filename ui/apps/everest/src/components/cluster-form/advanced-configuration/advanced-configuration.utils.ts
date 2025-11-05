@@ -43,8 +43,8 @@ export const getParamsPlaceholderFromDbType = (dbType: DbType) => {
 export const advancedConfigurationModalDefaultValues = (
   dbCluster: DbCluster
 ): AdvancedConfigurationFormType => {
-  const sourceRangesSource = dbCluster?.spec?.proxy.expose.ipSourceRanges;
-  const lbConfigName = dbCluster?.spec.proxy.expose.loadBalancerConfigName;
+  const sourceRangesSource = dbCluster?.spec?.proxy?.expose?.ipSourceRanges;
+  const lbConfigName = dbCluster?.spec?.proxy?.expose?.loadBalancerConfigName;
 
   return {
     [AdvancedConfigurationFields.storageClass]:
@@ -61,10 +61,10 @@ export const advancedConfigurationModalDefaultValues = (
     [AdvancedConfigurationFields.podSchedulingPolicy]:
       dbCluster?.spec.podSchedulingPolicyName,
     [AdvancedConfigurationFields.loadBalancerConfigName]:
-      dbCluster?.spec?.proxy.expose.type === ProxyExposeType.LoadBalancer
+      dbCluster?.spec?.proxy?.expose?.type === ProxyExposeType.LoadBalancer
         ? lbConfigName || EMPTY_LOAD_BALANCER_CONFIGURATION
         : '',
     [AdvancedConfigurationFields.exposureMethod]:
-      dbCluster?.spec?.proxy.expose.type,
+      dbCluster?.spec?.proxy?.expose?.type || ProxyExposeType.ClusterIP,
   };
 };
