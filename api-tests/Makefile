@@ -116,7 +116,7 @@ test:               ## Run all tests.
 	if [ -z "$${PMM1_IP}" ]; then echo "Cannot get PMM1_IP" ; exit 1 ; fi ;\
 	export PMM2_IP=$$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP') ;\
 	if [ -z "$${PMM2_IP}" ]; then echo "Cannot get PMM2_IP" ; exit 1 ; fi ;\
-	export PMM1_API_KEY := $$( \
+	export PMM1_API_KEY=$$( \
       SA_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8090/graph/api/serviceaccounts" \
         --header 'Content-Type: application/json' \
         --insecure \
@@ -130,8 +130,8 @@ test:               ## Run all tests.
       KEY=$$(echo "$$TOKEN_RESP" | jq -r '.key'); \
       if [ -z "$$KEY" ] || [ "$$KEY" = "null" ]; then echo "Failed to create token for PMM1_API_KEY"; exit 1; fi ;\
       echo "$$KEY" \
-    ) \
-	export PMM2_API_KEY := $$( \
+    ) ;\
+	export PMM2_API_KEY=$$( \
 	  SA_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8091/graph/api/serviceaccounts" \
 		--header 'Content-Type: application/json' \
 		--insecure \
@@ -145,7 +145,7 @@ test:               ## Run all tests.
 	  KEY=$$(echo "$$TOKEN_RESP" | jq -r '.key'); \
 	  if [ -z "$$KEY" ] || [ "$$KEY" = "null" ]; then echo "Failed to create token for PMM2_API_KEY"; exit 1; fi ;\
 	  echo "$$KEY" \
-	) \
+	) ;\
 	export API_TOKEN=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token) ;\
 	if [ -z "$${API_TOKEN}" ]; then echo "Cannot get API_TOKEN" ; exit 1 ; fi ;\
 	export API_TOKEN_TEST=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token) ;\
