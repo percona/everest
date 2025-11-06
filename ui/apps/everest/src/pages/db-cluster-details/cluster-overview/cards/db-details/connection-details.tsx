@@ -111,7 +111,7 @@ export const ConnectionDetails = ({
           value={splitHorizonUrl}
           size="small"
           sx={{ maxHeight: '50px', marginTop: '20px', width: '100%' }}
-          type="text"
+          type={showSplitHorizonUrl ? 'text' : 'password'}
           InputProps={{
             endAdornment: (
               <>

@@ -66,10 +66,7 @@ export const ClusterOverview = () => {
     dbCluster?.status?.engineFeatures?.psmdb?.splitHorizon?.host &&
     username &&
     password
-      ? dbCluster?.status?.engineFeatures?.psmdb?.splitHorizon?.host
-          .split(',')
-          .map((host) => `mongodb://${username}:${password}@${host}`)
-          .join(',')
+      ? `mongodb://${username}:${password}@${dbCluster?.status?.engineFeatures?.psmdb?.splitHorizon?.host}`
       : '';
 
   return (
