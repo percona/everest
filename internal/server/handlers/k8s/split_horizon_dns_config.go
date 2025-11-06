@@ -18,7 +18,6 @@ package k8s
 import (
 	"context"
 
-	"github.com/AlekSi/pointer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,11 +36,15 @@ func (h *k8sHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, namespace,
 		return nil, err
 	}
 
-	shdc.Spec.BaseDomainNameSuffix = pointer.Get(req.BaseDomainNameSuffix)
+	if req.BaseDomainNameSuffix != nil {
+		shdc.Spec.BaseDomainNameSuffix = *req.BaseDomainNameSuffix
+	}
 
 	if req.Certificate != nil {
-		shdc.Spec.TLS.Certificate.CACert = req.Certificate.CaCrt
-		shdc.Spec.TLS.Certificate.CAKey = req.Certificate.CaKey
+		shdc.Spec.TLS.Certificate = &enginefeaturesv1alpha1.SplitHorizonDNSConfigTLSCertificateSpec{
+			CACert: req.Certificate.CaCrt,
+			CAKey:  req.Certificate.CaKey,
+		}
 	}
 
 	return h.kubeConnector.UpdateSplitHorizonDNSConfig(ctx, shdc)
