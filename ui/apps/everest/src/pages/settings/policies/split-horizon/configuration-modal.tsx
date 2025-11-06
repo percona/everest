@@ -107,7 +107,7 @@ const ConfigurationModal = ({
               sx: {
                 mt: 2,
               },
-              disabled: !!selectedConfig,
+              disabled: !!selectedConfig?.inUse,
             }}
             isRequired
           />
