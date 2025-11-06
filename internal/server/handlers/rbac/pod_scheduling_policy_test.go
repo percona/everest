@@ -411,7 +411,8 @@ func TestRBAC_CreatePodSchedulingPolicy(t *testing.T) {
 		next := handlers.MockHandler{}
 		next.On("CreatePodSchedulingPolicy",
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				&everestv1alpha1.PodSchedulingPolicy{}, nil,
 			)
@@ -549,7 +550,8 @@ func TestRBAC_UpdatePodSchedulingPolicy(t *testing.T) {
 		next := handlers.MockHandler{}
 		next.On("UpdatePodSchedulingPolicy",
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				&everestv1alpha1.PodSchedulingPolicy{}, nil,
 			)
@@ -686,7 +688,8 @@ func TestRBAC_DeletePodSchedulingPolicy(t *testing.T) {
 		next := handlers.MockHandler{}
 		next.On("DeletePodSchedulingPolicy",
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				nil,
 			)

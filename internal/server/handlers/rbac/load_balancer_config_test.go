@@ -411,7 +411,8 @@ func TestRBAC_CreateLoadBalancerConfig(t *testing.T) {
 		next := handlers.MockHandler{}
 		next.On("CreateLoadBalancerConfig",
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				&everestv1alpha1.LoadBalancerConfig{}, nil,
 			)
@@ -549,7 +550,8 @@ func TestRBAC_UpdateLoadBalancerConfig(t *testing.T) {
 		next := handlers.MockHandler{}
 		next.On("UpdateLoadBalancerConfig",
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				&everestv1alpha1.LoadBalancerConfig{}, nil,
 			)
@@ -686,7 +688,8 @@ func TestRBAC_DeleteLoadBalancerConfig(t *testing.T) {
 		next := handlers.MockHandler{}
 		next.On("DeleteLoadBalancerConfig",
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				nil,
 			)

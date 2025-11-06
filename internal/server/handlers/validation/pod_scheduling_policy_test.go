@@ -156,7 +156,8 @@ func TestValidate_CreatePodSchedulingPolicy(t *testing.T) {
 				Group:    everestv1alpha1.GroupVersion.Group,
 				Resource: "podschedulingpolicies",
 			},
-				"everest-existing-name"),
+				"everest-existing-name",
+			),
 		},
 		// unsupported engineType
 		{
