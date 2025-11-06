@@ -45,7 +45,8 @@ func Test_rbacHandler_CreateSplitHorizonDNSConfig(t *testing.T) {
 		next := handlers.MockHandler{}
 		next.On("CreateSplitHorizonDNSConfig",
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				&enginefeatureseverestv1alpha1.SplitHorizonDNSConfig{}, nil,
 			)
@@ -200,7 +201,8 @@ func Test_rbacHandler_DeleteSplitHorizonDNSConfig(t *testing.T) {
 		next.On("DeleteSplitHorizonDNSConfig",
 			mock.Anything,
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				nil,
 			)
@@ -773,7 +775,8 @@ func Test_rbacHandler_UpdateSplitHorizonDNSConfig(t *testing.T) {
 			mock.Anything,
 			mock.Anything,
 			mock.Anything,
-			mock.Anything).
+			mock.Anything,
+		).
 			Return(
 				&enginefeatureseverestv1alpha1.SplitHorizonDNSConfig{}, nil,
 			)
