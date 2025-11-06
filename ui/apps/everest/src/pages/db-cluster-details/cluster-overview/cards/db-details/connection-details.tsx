@@ -32,6 +32,7 @@ export const ConnectionDetails = ({
   username,
   password,
   connectionUrl,
+  splitHorizonUrl,
   port,
   type,
 }: ConnectionDetailsOverviewCardProps) => {
@@ -84,9 +85,37 @@ export const ConnectionDetails = ({
           InputProps={{
             endAdornment: (
               <>
-                <IconButton
-                  onClick={() => setShowSplitHorizonUrl(!showSplitHorizonUrl)}
-                >
+                <IconButton onClick={() => setShowUrl(!showUrl)}>
+                  {showUrl ? (
+                    <VisibilityOutlinedIcon />
+                  ) : (
+                    <VisibilityOffOutlinedIcon />
+                  )}
+                </IconButton>
+                <CopyToClipboardButton
+                  buttonProps={{
+                    sx: { mt: -0.5 },
+                    size: 'small',
+                  }}
+                  textToCopy={connectionUrl}
+                />
+              </>
+            ),
+          }}
+          InputLabelProps={{ shrink: true }}
+        />
+      )}
+      {splitHorizonUrl && (
+        <TextField
+          label="Split-Horizon Connection URL"
+          value={splitHorizonUrl}
+          size="small"
+          sx={{ maxHeight: '50px', marginTop: '20px', width: '100%' }}
+          type="text"
+          InputProps={{
+            endAdornment: (
+              <>
+                <IconButton onClick={() => setShowSplitHorizonUrl((s) => !s)}>
                   {showSplitHorizonUrl ? (
                     <VisibilityOutlinedIcon />
                   ) : (
@@ -98,9 +127,7 @@ export const ConnectionDetails = ({
                     sx: { mt: -0.5 },
                     size: 'small',
                   }}
-                  textToCopy={
-                    showSplitHorizonUrl ? 'REPLACE_ME' : connectionUrl
-                  }
+                  textToCopy={splitHorizonUrl}
                 />
               </>
             ),
@@ -108,34 +135,6 @@ export const ConnectionDetails = ({
           InputLabelProps={{ shrink: true }}
         />
       )}
-      <TextField
-        label="Split-Horizon Connection URL"
-        value={'REPLACE_ME'}
-        size="small"
-        sx={{ maxHeight: '50px', marginTop: '20px', width: '100%' }}
-        type="text"
-        InputProps={{
-          endAdornment: (
-            <>
-              <IconButton onClick={() => setShowUrl(!showUrl)}>
-                {showUrl ? (
-                  <VisibilityOutlinedIcon />
-                ) : (
-                  <VisibilityOffOutlinedIcon />
-                )}
-              </IconButton>
-              <CopyToClipboardButton
-                buttonProps={{
-                  sx: { mt: -0.5 },
-                  size: 'small',
-                }}
-                textToCopy={connectionUrl}
-              />
-            </>
-          ),
-        }}
-        InputLabelProps={{ shrink: true }}
-      />
     </OverviewSection>
   );
 };

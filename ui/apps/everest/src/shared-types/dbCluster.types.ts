@@ -136,6 +136,19 @@ export interface EngineFeatures {
   };
 }
 
+export interface StatusEngineFeatures {
+  psmdb?: {
+    splitHorizon?: {
+      domains?: {
+        domain?: string;
+        privateIP?: string;
+        publicIP?: string;
+      }[];
+      host?: string;
+    };
+  };
+}
+
 export interface Spec {
   allowUnsafeConfiguration?: boolean;
   backup?: Backup;
@@ -166,6 +179,7 @@ export interface StatusSpec {
   recommendedCRVersion?: string;
   details?: string;
   conditions: StatusCondition[];
+  engineFeatures?: StatusEngineFeatures;
 }
 
 export interface DbClusterMetadata {
