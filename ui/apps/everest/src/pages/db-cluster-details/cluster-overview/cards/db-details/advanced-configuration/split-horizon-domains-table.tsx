@@ -11,6 +11,7 @@ const SplitHorizonDomainsTable = ({
       {
         header: 'Domain',
         accessorKey: 'domain',
+        minSize: 300,
       },
       {
         header: 'Private IP',

@@ -200,6 +200,8 @@ export const AdvancedConfiguration = ({
       )}
       {showSplitHorizonDomainsTable && (
         <Dialog
+          fullWidth
+          maxWidth="lg"
           open={showSplitHorizonDomainsTable}
           onClose={() => setShowSplitHorizonDomainsTable(false)}
         >
