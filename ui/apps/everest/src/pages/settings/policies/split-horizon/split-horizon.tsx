@@ -122,14 +122,15 @@ const SplitHorizon = () => {
     name: string,
     namespace: string,
     baseDomain: string,
-    caCrt: string,
-    caKey: string,
+    caCrt: string | undefined,
+    caKey: string | undefined,
     secretName: string
   ) => {
     if (selectedConfig.current) {
       updateSplitHorizonConfig({
         name,
         namespace,
+        baseDomain,
         caCrt,
         caKey,
         secretName,
@@ -139,8 +140,8 @@ const SplitHorizon = () => {
         name,
         namespace,
         baseDomain,
-        caCrt,
-        caKey,
+        caCrt: caCrt ?? '',
+        caKey: caKey ?? '',
         secretName,
       });
     }
@@ -191,8 +192,8 @@ const SplitHorizon = () => {
               data.name,
               data.namespace,
               data.domain,
-              await fileToBase64(data.caCert!),
-              await fileToBase64(data.caKey!),
+              data.caCert ? await fileToBase64(data.caCert) : undefined,
+              data.caKey ? await fileToBase64(data.caKey) : undefined,
               data.secretName
             );
           }}

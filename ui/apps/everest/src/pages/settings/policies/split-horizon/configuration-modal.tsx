@@ -39,21 +39,67 @@ const ConfigurationModal = ({
       }
       onSubmit={onSubmit}
       submitMessage={selectedConfig ? 'Save' : 'Create'}
-      schema={z.object({
-        name: z.string().min(1),
-        namespace: z.string().min(1),
-        domain: z
-          .string()
-          .min(1)
-          .regex(/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/),
-        secretName: z.string().min(1),
-        caKey: z
-          .instanceof(File, { message: FILE_NOT_INSTANCE_OF_FILE_ERROR })
-          .superRefine(fileValidation),
-        caCert: z
-          .instanceof(File, { message: FILE_NOT_INSTANCE_OF_FILE_ERROR })
-          .superRefine(fileValidation),
-      })}
+      schema={z
+        .object({
+          name: z.string().min(1),
+          namespace: z.string().min(1),
+          domain: z
+            .string()
+            .min(1)
+            .regex(/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/),
+          secretName: z.string().min(1),
+          caKey: selectedConfig
+            ? z
+                .union([
+                  z
+                    .instanceof(File, {
+                      message: FILE_NOT_INSTANCE_OF_FILE_ERROR,
+                    })
+                    .superRefine(fileValidation),
+                  z.null(),
+                ])
+                .optional()
+            : z
+                .instanceof(File, { message: FILE_NOT_INSTANCE_OF_FILE_ERROR })
+                .superRefine(fileValidation),
+          caCert: selectedConfig
+            ? z
+                .union([
+                  z
+                    .instanceof(File, {
+                      message: FILE_NOT_INSTANCE_OF_FILE_ERROR,
+                    })
+                    .superRefine(fileValidation),
+                  z.null(),
+                ])
+                .optional()
+            : z
+                .instanceof(File, { message: FILE_NOT_INSTANCE_OF_FILE_ERROR })
+                .superRefine(fileValidation),
+        })
+        .refine(
+          (data) => {
+            if (!selectedConfig) {
+              return true; // No validation needed in create mode
+            }
+            // In edit mode: if one is provided, both must be provided
+            const hasCaKey = data.caKey instanceof File;
+            const hasCaCert = data.caCert instanceof File;
+            // Both can be null/undefined, or both must be provided
+
+            if (hasCaKey && !hasCaCert) {
+              return false;
+            }
+            if (!hasCaKey && hasCaCert) {
+              return false;
+            }
+            return true;
+          },
+          {
+            message: 'Both CA certificate and CA key must be provided together',
+            path: ['caCert'], // Show error on caCert field
+          }
+        )}
       defaultValues={{
         name: selectedConfig?.name || '',
         namespace: selectedConfig?.namespace || '',

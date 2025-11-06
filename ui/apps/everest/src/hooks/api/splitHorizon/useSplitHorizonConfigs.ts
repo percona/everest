@@ -74,17 +74,26 @@ export const useUpdateSplitHorizonConfig = (
     mutationFn: (args: {
       name: string;
       namespace: string;
-      caCrt: string;
-      caKey: string;
+      baseDomain: string;
+      caCrt: string | undefined;
+      caKey: string | undefined;
       secretName: string;
     }) => {
       const dnsConfig = {
-        certificate: {
-          'ca.crt': args.caCrt,
-          'ca.key': args.caKey,
-        },
+        certificate:
+          args.caCrt && args.caKey
+            ? {
+                'ca.crt': args.caCrt,
+                'ca.key': args.caKey,
+              }
+            : undefined,
       };
-      return updateSplitHorizonDNSConfig(args.namespace, args.name, dnsConfig);
+      return updateSplitHorizonDNSConfig(
+        args.namespace,
+        args.name,
+        args.baseDomain,
+        dnsConfig
+      );
     },
     ...options,
   });
