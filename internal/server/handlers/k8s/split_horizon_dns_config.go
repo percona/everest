@@ -37,9 +37,7 @@ func (h *k8sHandler) UpdateSplitHorizonDNSConfig(ctx context.Context, namespace,
 		return nil, err
 	}
 
-	if pointer.Get(req.BaseDomainNameSuffix) != "" {
-		shdc.Spec.BaseDomainNameSuffix = pointer.Get(req.BaseDomainNameSuffix)
-	}
+	shdc.Spec.BaseDomainNameSuffix = pointer.Get(req.BaseDomainNameSuffix)
 
 	if req.Certificate != nil {
 		shdc.Spec.TLS.Certificate.CACert = req.Certificate.CaCrt

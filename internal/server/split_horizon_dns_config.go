@@ -26,6 +26,7 @@ import (
 	"github.com/percona/everest/api"
 )
 
+// CreateSplitHorizonDNSConfig handles the creation of a SplitHorizonDNSConfig resource.
 func (e *EverestServer) CreateSplitHorizonDNSConfig(ctx echo.Context, namespace string) error {
 	shdc := &enginefeaturesv1alpha1.SplitHorizonDNSConfig{}
 	if err := e.getBodyFromContext(ctx, shdc); err != nil {
@@ -43,6 +44,7 @@ func (e *EverestServer) CreateSplitHorizonDNSConfig(ctx echo.Context, namespace 
 	return ctx.JSON(http.StatusOK, result)
 }
 
+// ListSplitHorizonDNSConfigs handles listing SplitHorizonDNSConfig resources in a given namespace.
 func (e *EverestServer) ListSplitHorizonDNSConfigs(ctx echo.Context, namespace string) error {
 	list, err := e.handler.ListSplitHorizonDNSConfigs(ctx.Request().Context(), namespace)
 	if err != nil {
@@ -52,6 +54,7 @@ func (e *EverestServer) ListSplitHorizonDNSConfigs(ctx echo.Context, namespace s
 	return ctx.JSON(http.StatusOK, list)
 }
 
+// GetSplitHorizonDNSConfig handles retrieving a specific SplitHorizonDNSConfig resource by name.
 func (e *EverestServer) GetSplitHorizonDNSConfig(ctx echo.Context, namespace string, name string) error {
 	result, err := e.handler.GetSplitHorizonDNSConfig(ctx.Request().Context(), namespace, name)
 	if err != nil {
@@ -61,6 +64,7 @@ func (e *EverestServer) GetSplitHorizonDNSConfig(ctx echo.Context, namespace str
 	return ctx.JSON(http.StatusOK, result)
 }
 
+// UpdateSplitHorizonDNSConfig handles updating a specific SplitHorizonDNSConfig resource.
 func (e *EverestServer) UpdateSplitHorizonDNSConfig(ctx echo.Context, namespace, name string) error {
 	req := &api.SplitHorizonDNSConfigUpdateParams{}
 	if err := ctx.Bind(req); err != nil {
@@ -75,6 +79,7 @@ func (e *EverestServer) UpdateSplitHorizonDNSConfig(ctx echo.Context, namespace,
 	return ctx.JSON(http.StatusOK, result)
 }
 
+// DeleteSplitHorizonDNSConfig handles deleting a specific SplitHorizonDNSConfig resource by name.
 func (e *EverestServer) DeleteSplitHorizonDNSConfig(ctx echo.Context, namespace, name string) error {
 	if err := e.handler.DeleteSplitHorizonDNSConfig(ctx.Request().Context(), namespace, name); err != nil {
 		e.l.Errorf("DeleteSplitHorizonDNSConfig failed: %v", err)

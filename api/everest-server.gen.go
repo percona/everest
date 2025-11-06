@@ -5883,19 +5883,19 @@ type ServerInterface interface {
 	// (PUT /namespaces/{namespace}/database-engines/{name})
 	UpdateDatabaseEngine(ctx echo.Context, namespace string, name string) error
 	// List Split-Horizon DNS Config instances.
-	// (GET /namespaces/{namespace}/engine-features/split-horizon-dns-config)
+	// (GET /namespaces/{namespace}/engine-features/split-horizon-dns-configs)
 	ListSplitHorizonDNSConfigs(ctx echo.Context, namespace string) error
 	// Create Split-Horizon DNS Config for PSMDB.
-	// (POST /namespaces/{namespace}/engine-features/split-horizon-dns-config)
+	// (POST /namespaces/{namespace}/engine-features/split-horizon-dns-configs)
 	CreateSplitHorizonDNSConfig(ctx echo.Context, namespace string) error
 	// Delete Split-Horizon DNS Config instance.
-	// (DELETE /namespaces/{namespace}/engine-features/split-horizon-dns-config/{name})
+	// (DELETE /namespaces/{namespace}/engine-features/split-horizon-dns-configs/{name})
 	DeleteSplitHorizonDNSConfig(ctx echo.Context, namespace string, name string) error
 	// Get Split-Horizon DNS Config instance.
-	// (GET /namespaces/{namespace}/engine-features/split-horizon-dns-config/{name})
+	// (GET /namespaces/{namespace}/engine-features/split-horizon-dns-configs/{name})
 	GetSplitHorizonDNSConfig(ctx echo.Context, namespace string, name string) error
 	// Update Split-Horizon DNS Config instance.
-	// (PATCH /namespaces/{namespace}/engine-features/split-horizon-dns-config/{name})
+	// (PATCH /namespaces/{namespace}/engine-features/split-horizon-dns-configs/{name})
 	UpdateSplitHorizonDNSConfig(ctx echo.Context, namespace string, name string) error
 	// List monitoring instances
 	// (GET /namespaces/{namespace}/monitoring-instances)
@@ -7226,11 +7226,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/namespaces/:namespace/database-engines/upgrade-plan/approval", wrapper.ApproveUpgradePlan)
 	router.GET(baseURL+"/namespaces/:namespace/database-engines/:name", wrapper.GetDatabaseEngine)
 	router.PUT(baseURL+"/namespaces/:namespace/database-engines/:name", wrapper.UpdateDatabaseEngine)
-	router.GET(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-config", wrapper.ListSplitHorizonDNSConfigs)
-	router.POST(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-config", wrapper.CreateSplitHorizonDNSConfig)
-	router.DELETE(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-config/:name", wrapper.DeleteSplitHorizonDNSConfig)
-	router.GET(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-config/:name", wrapper.GetSplitHorizonDNSConfig)
-	router.PATCH(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-config/:name", wrapper.UpdateSplitHorizonDNSConfig)
+	router.GET(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-configs", wrapper.ListSplitHorizonDNSConfigs)
+	router.POST(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-configs", wrapper.CreateSplitHorizonDNSConfig)
+	router.DELETE(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-configs/:name", wrapper.DeleteSplitHorizonDNSConfig)
+	router.GET(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-configs/:name", wrapper.GetSplitHorizonDNSConfig)
+	router.PATCH(baseURL+"/namespaces/:namespace/engine-features/split-horizon-dns-configs/:name", wrapper.UpdateSplitHorizonDNSConfig)
 	router.GET(baseURL+"/namespaces/:namespace/monitoring-instances", wrapper.ListMonitoringInstances)
 	router.POST(baseURL+"/namespaces/:namespace/monitoring-instances", wrapper.CreateMonitoringInstance)
 	router.DELETE(baseURL+"/namespaces/:namespace/monitoring-instances/:name", wrapper.DeleteMonitoringInstance)
@@ -7622,36 +7622,36 @@ var swaggerSpec = []string{
 	"DstMa0VozkjMspxFkCNhJucjGqy3zw//7fRZWKN4Z7s7NevyNUuU+neiKLnROex3Xmb3ipcib912VZ9L",
 	"fuzTLMvlFU0GBGyVIiNwDJeMtiV58xEw8iFQhD04Zr6PMvHlJx76bRDY02d2aFiGSlA3EEl7Ewx1YKDg",
 	"2M3NYHf5JrJ/VklSRTztGqvgZn43CN6pXI8DvDM/2ceCuh118aC/nbmuXPdNiOEGVWpuz0nNAIPfODPd",
-	"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",
-	"sAUA",
+	"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",
+	"BQA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

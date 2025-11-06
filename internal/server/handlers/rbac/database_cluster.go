@@ -80,7 +80,7 @@ func (h *rbacHandler) ListDatabaseClusters(ctx context.Context, namespace string
 		return nil, fmt.Errorf("ListDatabaseClusters failed: %w", err)
 	}
 
-	result := []everestv1alpha1.DatabaseCluster{}
+	result := make([]everestv1alpha1.DatabaseCluster, 0, len(clusterList.Items))
 	for _, db := range clusterList.Items {
 		if err := h.enforceDBClusterRead(ctx, &db); errors.Is(err, ErrInsufficientPermissions) {
 			continue
@@ -255,7 +255,7 @@ func (h *rbacHandler) enforceEngineFeaturesRead(ctx context.Context, db *everest
 	namespace := db.GetNamespace()
 
 	// PSMDB features
-	if db.Spec.Engine.Type != everestv1alpha1.DatabaseEnginePSMDB {
+	if db.Spec.Engine.Type == everestv1alpha1.DatabaseEnginePSMDB {
 		psmdbFeatures := pointer.Get(pointer.Get(db.Spec.EngineFeatures).PSMDB)
 
 		// SplitHorizonDNSConfig feature.
