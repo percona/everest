@@ -113,6 +113,11 @@ const SplitHorizon = () => {
     setRemoveDialogOpen(false);
   };
 
+  const handleOnCloseModal = () => {
+    setIsModalOpen(false);
+    selectedConfig.current = undefined;
+  };
+
   const handleModalConfirm = (
     name: string,
     namespace: string,
@@ -180,7 +185,7 @@ const SplitHorizon = () => {
           isSubmitting={isCreating || isUpdating}
           selectedConfig={selectedConfig.current}
           namespacesAvailable={canCreate}
-          onClose={() => setIsModalOpen(false)}
+          onClose={handleOnCloseModal}
           onSubmit={async (data) => {
             handleModalConfirm(
               data.name,
