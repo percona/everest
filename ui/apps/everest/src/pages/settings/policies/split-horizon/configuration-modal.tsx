@@ -77,29 +77,32 @@ const ConfigurationModal = ({
                 .instanceof(File, { message: FILE_NOT_INSTANCE_OF_FILE_ERROR })
                 .superRefine(fileValidation),
         })
-        .refine(
-          (data) => {
-            if (!selectedConfig) {
-              return true; // No validation needed in create mode
-            }
-            // In edit mode: if one is provided, both must be provided
-            const hasCaKey = data.caKey instanceof File;
-            const hasCaCert = data.caCert instanceof File;
-            // Both can be null/undefined, or both must be provided
-
-            if (hasCaKey && !hasCaCert) {
-              return false;
-            }
-            if (!hasCaKey && hasCaCert) {
-              return false;
-            }
-            return true;
-          },
-          {
-            message: 'Both CA certificate and CA key must be provided together',
-            path: ['caCert'], // Show error on caCert field
+        .superRefine((data, ctx) => {
+          if (!selectedConfig) {
+            return; // No validation needed in create mode
           }
-        )}
+          // In edit mode: if one is provided, both must be provided
+          const hasCaKey = data.caKey instanceof File;
+          const hasCaCert = data.caCert instanceof File;
+
+          // Both can be null/undefined, or both must be provided
+          if (hasCaKey && !hasCaCert) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                'Both CA certificate and CA key must be provided together',
+              path: ['caCert'],
+            });
+          }
+          if (!hasCaKey && hasCaCert) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                'Both CA certificate and CA key must be provided together',
+              path: ['caKey'],
+            });
+          }
+        })}
       defaultValues={{
         name: selectedConfig?.name || '',
         namespace: selectedConfig?.namespace || '',
