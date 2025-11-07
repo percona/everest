@@ -30,6 +30,7 @@ import { Link } from 'react-router-dom';
 import { useRBACPermissions } from 'hooks/rbac';
 import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
 import {
+  Alert,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -209,6 +210,11 @@ export const AdvancedConfiguration = ({
             <Typography variant="h5">Domains</Typography>
           </DialogTitle>
           <DialogContent>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                It might take several minutes for public IPs to be updated.
+              </Typography>
+            </Alert>
             <SplitHorizonDomainsTable domains={splitHorizonDomains || []} />
           </DialogContent>
         </Dialog>
