@@ -27,10 +27,10 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.33.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20251023180125-4098b9e8953a
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251024201113-5f562d3ccbba
+	github.com/percona/everest-operator v0.6.0-dev1.0.20251103084804-88e5f628b75b
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251030140412-1f46b33f6e3f
 	github.com/rodaine/table v1.3.0
-	github.com/spf13/cobra v1.9.1
+	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.10.0
 	github.com/unrolled/secure v1.17.0
 	go.uber.org/zap v1.27.0
@@ -337,7 +337,7 @@ require (
 	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
-	github.com/spf13/pflag v1.0.7 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/spf13/viper v1.20.0 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.2.0 // indirect
