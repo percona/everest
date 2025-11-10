@@ -67,6 +67,11 @@ permissions:
   checks: write
   pull-requests: write
 
+env:
+  GONOPROXY: 'github.com/percona'
+  GONOSUMDB: 'github.com/percona'
+  GOPRIVATE: 'github.com/percona'
+
 jobs:
   build:
     name: Build
