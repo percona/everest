@@ -951,7 +951,7 @@ github.com/percona/percona-postgresql-operator v0.0.0-20250717192602-2b721be5850
 github.com/percona/percona-postgresql-operator v0.0.0-20250717192602-2b721be58505/go.mod h1:Y1xdnR0pzk06fnJbnsFC9QrkdCJULAzc9B+nOmdtPGk=
 github.com/percona/percona-server-mongodb-operator v1.19.1 h1:lqIC7V80bZPJwjeYLYl/WA+QVQMHo193uEAx5zyIg84=
 github.com/percona/percona-server-mongodb-operator v1.19.1/go.mod h1:BEw28t4Byx7NK3APLDc7KENgYxPyMPcDLN2ylML5Jo4=
-github.com/percona/percona-xtradb-cluster-operator v1.18.0 h1:qUfxoYsegxIr3g8vrH8es2Leiqu8NnVMbBzxaAv1Q2o=
+github.com/percona/percona-xtradb-cluster-operator v1.18.0 h1:i5VKJGx0Yp0pPbxxiLnv4+/wEzS0XASshUyzRE27l/c=
 github.com/percona/percona-xtradb-cluster-operator v1.18.0/go.mod h1:5+FzPqMdzJ7lU/DiD6E/ENmWrY4ENgV6EPVIabqBxzI=
 github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=
 github.com/perimeterx/marshmallow v1.1.5/go.mod h1:dsXbUu8CRzfYP5a87xpp0xq9S3u0Vchtcl8we9tYaXw=
