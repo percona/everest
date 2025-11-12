@@ -156,7 +156,7 @@ const ModalContent = ({
               buttonMessage={Messages.seeDocs}
               onClick={() =>
                 window.open(
-                  'https://docs.percona.com/everest/use/createBackups/EnablePITR.html#limitation',
+                  'https://docs.percona.com/everest/reference/known_limitations.html#postgresql-limitation-for-pitr',
                   '_blank',
                   'noopener'
                 )
