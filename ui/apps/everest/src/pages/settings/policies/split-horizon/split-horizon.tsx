@@ -40,6 +40,7 @@ const SplitHorizon = () => {
         queryClient.invalidateQueries({
           queryKey: ['split-horizon-configs'],
         });
+        selectedConfig.current = undefined;
         setIsModalOpen(false);
       },
     });
@@ -49,6 +50,8 @@ const SplitHorizon = () => {
         queryClient.invalidateQueries({
           queryKey: ['split-horizon-configs'],
         });
+        setRemoveDialogOpen(false);
+        selectedConfig.current = undefined;
       },
     });
   const { data: namespaces = [] } = useNamespaces({
@@ -107,10 +110,6 @@ const SplitHorizon = () => {
       name: selectedConfig.current!.name,
       namespace: selectedConfig.current!.namespace,
     });
-    queryClient.invalidateQueries({
-      queryKey: ['split-horizon-configs'],
-    });
-    setRemoveDialogOpen(false);
   };
 
   const handleOnCloseModal = () => {

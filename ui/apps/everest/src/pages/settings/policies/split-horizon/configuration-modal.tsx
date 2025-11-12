@@ -2,7 +2,7 @@ import { FormDialog } from 'components/form-dialog';
 import { TextInput, FileInput, SelectInput } from '@percona/ui-lib';
 import { z } from 'zod';
 import { Box, MenuItem, Stack, Typography } from '@mui/material';
-import { fileValidation } from 'utils/common-validation';
+import { fileValidation, rfc_123_schema } from 'utils/common-validation';
 import { FILE_NOT_INSTANCE_OF_FILE_ERROR } from 'consts';
 import { TableRow } from './types';
 
@@ -31,6 +31,7 @@ const ConfigurationModal = ({
 }) => {
   return (
     <FormDialog
+      size="XL"
       isOpen={isOpen}
       submitting={isSubmitting}
       closeModal={onClose}
@@ -47,7 +48,9 @@ const ConfigurationModal = ({
             .string()
             .min(1)
             .regex(/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/),
-          secretName: z.string().min(1),
+          secretName: rfc_123_schema({
+            fieldName: 'secret name',
+          }),
           caKey: selectedConfig
             ? z
                 .union([
