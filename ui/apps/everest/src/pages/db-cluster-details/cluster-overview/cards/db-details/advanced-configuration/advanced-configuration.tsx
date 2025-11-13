@@ -142,7 +142,7 @@ export const AdvancedConfiguration = ({
           podSchedulingPolicy ? (
             canReadPolicy ? (
               <Link
-                to={`/settings/policies/pod-scheduling/${podSchedulingPolicy}`}
+                to={`/settings/policies/details/pod-scheduling/${podSchedulingPolicy}`}
               >
                 {podSchedulingPolicy}
               </Link>
@@ -161,7 +161,7 @@ export const AdvancedConfiguration = ({
             canReadPolicy &&
             loadBalancerConfig !== EMPTY_LOAD_BALANCER_CONFIGURATION ? (
               <Link
-                to={`/settings/policies/load-balancer-configuration/${loadBalancerConfig}`}
+                to={`/settings/policies/details/load-balancer-configuration/${loadBalancerConfig}`}
               >
                 {loadBalancerConfig}
               </Link>

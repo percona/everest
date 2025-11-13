@@ -12,10 +12,15 @@ const messages = {
 
 const SettingsPoliciesRouter = () => {
   const routeMatch = useMatch('/settings/policies/details/:routeName');
+  const subRouteMatch = useMatch(
+    '/settings/policies/details/:routeName/:subRouteName'
+  );
   const currentRoute = routeMatch?.params?.routeName;
   return (
     <Box>
-      <BackTo to="/settings/policies" prevPage="all policies" />
+      {!subRouteMatch && (
+        <BackTo to="/settings/policies" prevPage="all policies" />
+      )}
       <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
         {
           messages.routeMessages[
