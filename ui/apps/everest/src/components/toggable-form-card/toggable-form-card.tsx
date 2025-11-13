@@ -14,7 +14,7 @@ const ToggableFormCard = ({
   description: string;
   bottomSlot: React.ReactNode;
   switchInputName: string;
-  tooltipText: string;
+  tooltipText?: string;
   switchFieldProps?: SwitchProps;
 }) => {
   return (

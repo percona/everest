@@ -119,6 +119,10 @@ export const AdvancedConfigurationForm = ({
 
   const clusterType = clusterInfo?.clusterType;
 
+  const splitHorizonDNSDomain = splitHorizonDNSConfigs.find(
+    (c) =>
+      c.metadata.name === getValues(AdvancedConfigurationFields.splitHorizonDNS)
+  )?.spec.baseDomainNameSuffix;
   const exposureMethods = Object.values(ExposureMethod);
 
   const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
@@ -518,7 +522,6 @@ export const AdvancedConfigurationForm = ({
         <ToggableFormCard
           title={Messages.cards.splitHorizonDNS.title}
           description={Messages.cards.splitHorizonDNS.description}
-          tooltipText={Messages.tooltipTexts.splitHorizonDNS}
           switchInputName={AdvancedConfigurationFields.splitHorizonDNSEnabled}
           bottomSlot={
             <Box
@@ -528,7 +531,15 @@ export const AdvancedConfigurationForm = ({
               minHeight={'50px'}
             >
               {!!splitHorizonDNSEnabled && (
-                <WithInfoIcon tooltip={Messages.tooltipTexts.splitHorizonDNS}>
+                <WithInfoIcon
+                  tooltip={
+                    splitHorizonDNSDomain
+                      ? Messages.tooltipTexts.splitHorizonDNS(
+                          splitHorizonDNSDomain
+                        )
+                      : ''
+                  }
+                >
                   <SelectInput
                     name={AdvancedConfigurationFields.splitHorizonDNS}
                     loading={fetchingSplitHorizonDNS}

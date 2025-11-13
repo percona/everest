@@ -81,7 +81,7 @@ export const Messages = {
       'Seems like you don’t have permission to read any pod scheduling policy.',
     noConfig: 'No configurations to display',
     limitations: 'Check limitations in the documentation',
-    splitHorizonDNS:
-      'Percona Everest will create hostnames like domain/example.eg/test',
+    splitHorizonDNS: (domain: string) =>
+      `Percona Everest will create domains using ${domain} as suffix`,
   },
 };
