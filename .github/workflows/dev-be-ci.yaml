@@ -12,6 +12,11 @@ permissions:
   checks: write
   pull-requests: write
 
+env:
+  GONOPROXY: 'github.com/percona'
+  GONOSUMDB: 'github.com/percona'
+  GOPRIVATE: 'github.com/percona'
+
 jobs:
   test:
     name: Test
@@ -76,9 +81,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
-
-      - name: Download Go modules
-        run: go mod download
 
       - name: Run linters
         run: |
