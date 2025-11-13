@@ -201,6 +201,7 @@ const SplitHorizon = () => {
       {removeDialogOpen && (
         <DeleteSplitHorizonConfigDialog
           configName={selectedConfig.current!.name}
+          configInUse={selectedConfig.current!.inUse}
           handleCloseDeleteDialog={() => setRemoveDialogOpen(false)}
           handleConfirmDelete={handleConfirmDelete}
           submitting={isDeleting}

@@ -1,4 +1,4 @@
-import { MenuItem } from '@mui/material';
+import { MenuItem, Tooltip } from '@mui/material';
 import { useRBACPermissions } from 'hooks/rbac';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -22,26 +22,38 @@ const SplitHorizonRowActions = ({
     `${namespace}/${configName}`
   );
 
-  const menuItems = isConfigInUse
-    ? []
-    : [
-        ...(canUpdate
-          ? [
-              <MenuItem key="edit" onClick={handleOnEditIconClick}>
+  const menuItems = [
+    ...(canUpdate
+      ? [
+          <Tooltip
+            title={
+              isConfigInUse
+                ? 'This configuration is currently in use by one or more clusters. Please unassign it first before editing.'
+                : undefined
+            }
+          >
+            <span>
+              <MenuItem
+                key="edit"
+                onClick={handleOnEditIconClick}
+                disabled={isConfigInUse}
+              >
                 <EditOutlinedIcon sx={{ mr: 1 }} />
                 Edit
-              </MenuItem>,
-            ]
-          : []),
-        ...(canDelete
-          ? [
-              <MenuItem key="delete" onClick={handleOnDeleteIconClick}>
-                <DeleteIcon sx={{ mr: 1 }} />
-                Delete
-              </MenuItem>,
-            ]
-          : []),
-      ];
+              </MenuItem>
+            </span>
+          </Tooltip>,
+        ]
+      : []),
+    ...(canDelete
+      ? [
+          <MenuItem key="delete" onClick={handleOnDeleteIconClick}>
+            <DeleteIcon sx={{ mr: 1 }} />
+            Delete
+          </MenuItem>,
+        ]
+      : []),
+  ];
 
   return (
     <TableActionsMenu
