@@ -146,7 +146,10 @@ export const DbClusterPayloadToFormValues = (
     [DbWizardFormFields.customNrOfNodes]: replicas,
     [DbWizardFormFields.customNrOfProxies]: proxies,
     [DbWizardFormFields.resourceSizePerNode]: matchFieldsValueToResourceSize(
-      NODES_DEFAULT_SIZES(dbEngineToDbType(dbCluster?.spec?.engine?.type)),
+      NODES_DEFAULT_SIZES(
+        dbEngineToDbType(dbCluster?.spec?.engine?.type),
+        dbCluster?.spec?.engine?.version || ''
+      ),
       dbCluster?.spec?.engine?.resources
     ),
     [DbWizardFormFields.resourceSizePerProxy]: isProxy(dbCluster?.spec?.proxy)

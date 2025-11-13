@@ -238,11 +238,11 @@ const ResourcesToggles = ({
     }
   }, [disk, allowDiskInputUpdate, setValue]);
 
-  // for MySQL 8.4.0 with 3GB memory, the default resource size should be small
-  const isMySQLSpecialMemory =
-    dbType === DbType.Mysql && isVersion84x(dbVersion) && memory === 3;
-
   useEffect(() => {
+    // for MySQL 8.4.0 with 3GB memory, the default resource size should be small
+    const isMySQLSpecialMemory =
+      dbType === DbType.Mysql && isVersion84x(dbVersion) && memory === 3;
+
     if (resourceSizePerUnit !== ResourceSize.custom) {
       const expectedMemory = sizeOptions[resourceSizePerUnit].memory;
 
@@ -255,16 +255,7 @@ const ResourcesToggles = ({
     } else if (isMySQLSpecialMemory) {
       setValue(resourceSizePerUnitInputName, ResourceSize.small);
     }
-  }, [
-    memory,
-    setValue,
-    dbType,
-    dbVersion,
-    resourceSizePerUnit,
-    resourceSizePerUnitInputName,
-    sizeOptions,
-    isMySQLSpecialMemory,
-  ]);
+  }, [memory, setValue]);
 
   return (
     <FormGroup sx={{ mt: 3 }}>
