@@ -29,16 +29,10 @@ import {
 import { Link } from 'react-router-dom';
 import { useRBACPermissions } from 'hooks/rbac';
 import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
-import {
-  Alert,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Typography,
-} from '@mui/material';
+import { Alert, IconButton, Typography } from '@mui/material';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import SplitHorizonDomainsTable from './split-horizon-domains-table';
+import { ConfirmDialog } from 'components/confirm-dialog/confirm-dialog';
 
 export const AdvancedConfiguration = ({
   loading,
@@ -200,24 +194,21 @@ export const AdvancedConfiguration = ({
         />
       )}
       {showSplitHorizonDomainsTable && (
-        <Dialog
+        <ConfirmDialog
+          selectedId="split-horizon-domains"
+          closeModal={() => setShowSplitHorizonDomainsTable(false)}
+          headerMessage="Domains"
           fullWidth
           maxWidth="lg"
-          open={showSplitHorizonDomainsTable}
-          onClose={() => setShowSplitHorizonDomainsTable(false)}
+          open
         >
-          <DialogTitle>
-            <Typography variant="h5">Domains</Typography>
-          </DialogTitle>
-          <DialogContent>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                It might take several minutes for public IPs to be updated.
-              </Typography>
-            </Alert>
-            <SplitHorizonDomainsTable domains={splitHorizonDomains || []} />
-          </DialogContent>
-        </Dialog>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              It might take several minutes for public IPs to be updated.
+            </Typography>
+          </Alert>
+          <SplitHorizonDomainsTable domains={splitHorizonDomains || []} />
+        </ConfirmDialog>
       )}
     </OverviewSection>
   );
