@@ -197,6 +197,8 @@ export const AdvancedConfiguration = ({
         <ConfirmDialog
           selectedId="split-horizon-domains"
           closeModal={() => setShowSplitHorizonDomainsTable(false)}
+          handleConfirm={() => setShowSplitHorizonDomainsTable(false)}
+          submitMessage="Close"
           headerMessage="Domains"
           fullWidth
           maxWidth="lg"
