@@ -77,9 +77,15 @@ export const goToLastStepByStepAndSubmit = async (
   waitMs?: number
 ) => {
   let createDbVisible = false;
+  let stepNr = 0;
   while (!createDbVisible) {
     if (waitMs) {
       await page.waitForTimeout(waitMs);
+    }
+    stepNr++;
+    if (stepNr == 3) {
+      await moveBack(page);
+      await moveForward(page);
     }
     await moveForward(page);
     const a = await page.getByTestId('db-wizard-submit-button').isVisible();

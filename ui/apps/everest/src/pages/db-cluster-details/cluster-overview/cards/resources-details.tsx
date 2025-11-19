@@ -46,6 +46,7 @@ import {
   isProxy,
   getProxyUnitNamesFromDbType,
 } from 'utils/db';
+import { DbWizardFormFields } from 'consts';
 
 export const ResourcesDetails = ({
   dbCluster,
@@ -246,6 +247,7 @@ export const ResourcesDetails = ({
           onSubmit={onSubmit}
           defaultValues={{
             dbType,
+            [DbWizardFormFields.dbVersion]: dbCluster.spec.engine.version || '',
             cpu: cpuParser(cpu.toString() || '0'),
             disk: parsedDiskValues.value,
             diskUnit: parsedDiskValues.originalUnit,
