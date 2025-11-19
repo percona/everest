@@ -8,7 +8,7 @@ require (
 	github.com/Percona-Lab/percona-version-service v0.0.0-20240311164804-ffbc02387a1b
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/casbin/casbin/v2 v2.128.0
-	github.com/casbin/govaluate v1.8.0
+	github.com/casbin/govaluate v1.10.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/charmbracelet/bubbles v0.20.0
@@ -27,8 +27,8 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.33.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20251114142344-1d8f3bf2f2bd
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251030140412-1f46b33f6e3f
+	github.com/percona/everest-operator v0.6.0-dev1.0.20251118122109-f3f6ec367dae
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251117192615-edec270f3586
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
