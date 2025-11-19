@@ -58,6 +58,8 @@ const (
 	VictoriaMetricsOperatorDeploymentName = "vm-operator"
 	// KubeStateMetricsDeploymentName stores the name of kube-state-metrics deployment.
 	KubeStateMetricsDeploymentName = "kube-state-metrics"
+	// PerconaEverestCRDLabel is the label used to identify Everest CRDs.
+	PerconaEverestCRDLabel = "everest.percona.com/crd"
 
 	// EverestOperatorName holds the name for Everest operator.
 	EverestOperatorName = "everest-operator"
