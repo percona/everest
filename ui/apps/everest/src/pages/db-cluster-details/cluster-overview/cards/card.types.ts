@@ -35,6 +35,7 @@ export type ConnectionDetailsOverviewCardProps = {
   username: string;
   password: string;
   connectionUrl: string;
+  splitHorizonUrl?: string;
   clusterName?: string;
   clusterNamespace?: string;
   type: DbType;
@@ -46,6 +47,12 @@ export type AdvancedConfigurationOverviewCardProps = {
   storageClass: string;
   podSchedulingPolicy?: string;
   loadBalancerConfig?: string;
+  splitHorizonDNS?: string;
+  splitHorizonDomains?: {
+    domain?: string;
+    privateIP?: string;
+    publicIP?: string;
+  }[];
 } & OverviewCardProps;
 
 export type MonitoringConfigurationOverviewCardProps = {
