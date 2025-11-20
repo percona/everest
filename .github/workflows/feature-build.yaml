@@ -409,6 +409,7 @@ jobs:
           1. Delete VS: \`kubectl delete deployment percona-version-service && kubectl delete svc percona-version-service\`\n\
           2. Uninstall Everest using the FB everestctl build: \`./<everestctl-OS-ARCH> uninstall --assume-yes --force\` \n" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: "Setup tmate session"
-        uses: "percona/gh-action-action-tmate@v3"
-        if: ${{ always() }}
+# Enable to debug workflow execution
+#      - name: "Setup tmate session"
+#        uses: "percona/gh-action-action-tmate@v3"
+#        if: ${{ always() }}
