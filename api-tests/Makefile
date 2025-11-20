@@ -21,7 +21,7 @@ CI_INIT_DEPS += k3d-upload-pg-images port-forward-monitoring
 .PHONY: ci-init
 ci-init: $(CI_INIT_DEPS) 	## Prepare environment for running tests.
 
-PMM_HELM_CHART_VER=1.3.21
+PMM_HELM_CHART_VER=1.4.13
 HELM=go tool -modfile=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/../go.mod helm
 .PHONY: deploy-monitoring
 deploy-monitoring:     ## Deploy monitoring instances to K3D test cluster.
@@ -116,10 +116,36 @@ test:               ## Run all tests.
 	if [ -z "$${PMM1_IP}" ]; then echo "Cannot get PMM1_IP" ; exit 1 ; fi ;\
 	export PMM2_IP=$$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP') ;\
 	if [ -z "$${PMM2_IP}" ]; then echo "Cannot get PMM2_IP" ; exit 1 ; fi ;\
-	export PMM1_API_KEY=$$(curl --request POST https://admin:admin@localhost:8090/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"  --insecure 2>/dev/null | jq -r '.key') ;\
-	if [ -z "$${PMM1_API_KEY}" ]; then echo "Cannot get PMM1_API_KEY" ; exit 1 ; fi ;\
-	export PMM2_API_KEY=$$(curl --request POST https://admin:admin@localhost:8091/graph/api/auth/keys --header 'Content-Type: application/json; charset=utf-8' --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"  --insecure 2>/dev/null | jq -r '.key') ;\
-	if [ -z "$${PMM2_API_KEY}" ]; then echo "Cannot get PMM2_API_KEY" ; exit 1 ; fi ;\
+	export PMM1_API_KEY=$$( \
+      SA_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8090/graph/api/serviceaccounts" \
+        --header 'Content-Type: application/json' \
+        --insecure \
+        --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
+      UID=$$(echo "$$SA_RESP" | jq -r '.uid'); \
+      if [ -z "$$UID" ] || [ "$$UID" = "null" ]; then echo "Failed to create service account for PMM1_API_KEY"; exit 1; fi ;\
+      TOKEN_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8090/graph/api/serviceaccounts/$$UID/tokens" \
+        --header 'Content-Type: application/json' \
+        --insecure \
+        --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
+      KEY=$$(echo "$$TOKEN_RESP" | jq -r '.key'); \
+      if [ -z "$$KEY" ] || [ "$$KEY" = "null" ]; then echo "Failed to create token for PMM1_API_KEY"; exit 1; fi ;\
+      echo "$$KEY" \
+    ) ;\
+	export PMM2_API_KEY=$$( \
+	  SA_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8091/graph/api/serviceaccounts" \
+		--header 'Content-Type: application/json' \
+		--insecure \
+		--data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
+	  UID=$$(echo "$$SA_RESP" | jq -r '.uid'); \
+	  if [ -z "$$UID" ] || [ "$$UID" = "null" ]; then echo "Failed to create service account for PMM2_API_KEY"; exit 1; fi ;\
+	  TOKEN_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8091/graph/api/serviceaccounts/$$UID/tokens" \
+		--header 'Content-Type: application/json' \
+		--insecure \
+		--data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
+	  KEY=$$(echo "$$TOKEN_RESP" | jq -r '.key'); \
+	  if [ -z "$$KEY" ] || [ "$$KEY" = "null" ]; then echo "Failed to create token for PMM2_API_KEY"; exit 1; fi ;\
+	  echo "$$KEY" \
+	) ;\
 	export API_TOKEN=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token) ;\
 	if [ -z "$${API_TOKEN}" ]; then echo "Cannot get API_TOKEN" ; exit 1 ; fi ;\
 	export API_TOKEN_TEST=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token) ;\
