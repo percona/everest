@@ -27,8 +27,8 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.33.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20251119154302-9b412428b36f
-	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251117192615-edec270f3586
+	github.com/percona/everest-operator v0.6.0-dev1.0.20251120091359-54e9ac816fff
+	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251120093730-2033ab4f17f2
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
