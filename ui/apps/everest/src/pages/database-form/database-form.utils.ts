@@ -85,6 +85,8 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   [DbWizardFormFields.verifyTlS]: true,
   [DbWizardFormFields.forcePathStyle]: false,
   [DbWizardFormFields.credentials]: {},
+  [DbWizardFormFields.splitHorizonDNS]: '',
+  [DbWizardFormFields.splitHorizonDNSEnabled]: false,
 });
 
 const replicasToNodes = (replicas: string, dbType: DbType): string => {
