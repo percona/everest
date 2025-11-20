@@ -32,12 +32,13 @@ export const ConnectionDetails = ({
   username,
   password,
   connectionUrl,
+  splitHorizonUrl,
   port,
   type,
 }: ConnectionDetailsOverviewCardProps) => {
   const { canReadCredentials } = useContext(DbClusterContext);
   const [showUrl, setShowUrl] = useState(false);
-
+  const [showSplitHorizonUrl, setShowSplitHorizonUrl] = useState(false);
   return (
     <OverviewSection
       title={Messages.titles.connectionDetails}
@@ -97,6 +98,36 @@ export const ConnectionDetails = ({
                     size: 'small',
                   }}
                   textToCopy={connectionUrl}
+                />
+              </>
+            ),
+          }}
+          InputLabelProps={{ shrink: true }}
+        />
+      )}
+      {splitHorizonUrl && (
+        <TextField
+          label="Split-Horizon Connection URL"
+          value={splitHorizonUrl}
+          size="small"
+          sx={{ maxHeight: '50px', marginTop: '20px', width: '100%' }}
+          type={showSplitHorizonUrl ? 'text' : 'password'}
+          InputProps={{
+            endAdornment: (
+              <>
+                <IconButton onClick={() => setShowSplitHorizonUrl((s) => !s)}>
+                  {showSplitHorizonUrl ? (
+                    <VisibilityOutlinedIcon />
+                  ) : (
+                    <VisibilityOffOutlinedIcon />
+                  )}
+                </IconButton>
+                <CopyToClipboardButton
+                  buttonProps={{
+                    sx: { mt: -0.5 },
+                    size: 'small',
+                  }}
+                  textToCopy={splitHorizonUrl}
                 />
               </>
             ),

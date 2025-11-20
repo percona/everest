@@ -169,7 +169,8 @@ func (e *EverestServer) initHTTPServer(ctx context.Context) error {
 		return c.Render(http.StatusOK, "index.html",
 			map[string]interface{}{"CSPNonce": secure.CSPNonce(c.Request().Context())},
 		)
-	}, e.securityHeaders())
+	}, e.securityHeaders(),
+	)
 
 	// Serve static files.
 	fsys, err := fs.Sub(public.Static, "dist")
