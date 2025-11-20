@@ -26,6 +26,8 @@ const FormProviderWrapper = ({
       engineParametersEnabled: false,
       podSchedulingPolicyEnabled: false,
       exposureMethod: 'ClusterIP',
+      splitHorizonDNSEnabled: false,
+      splitHorizonDNS: '',
       sourceRanges: [
         {
           sourceRange: '192.168.1.1',
