@@ -11,6 +11,8 @@ export const AdvancedConfigurationsPreviewSection = ({
   storageClass,
   podSchedulingPolicyEnabled,
   podSchedulingPolicy,
+  splitHorizonDNSEnabled,
+  splitHorizonDNS,
 }: AdvancedConfigurationType) => {
   const isExternalAccessEnabled =
     exposureMethod === ExposureMethod.LoadBalancer;
@@ -33,6 +35,9 @@ export const AdvancedConfigurationsPreviewSection = ({
         <PreviewContentText
           text={`Pod scheduling policy: ${podSchedulingPolicy}`}
         />
+      )}
+      {splitHorizonDNSEnabled && splitHorizonDNS && (
+        <PreviewContentText text={`Split-horizon DNS: ${splitHorizonDNS}`} />
       )}
     </>
   );
