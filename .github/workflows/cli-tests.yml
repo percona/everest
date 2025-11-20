@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
-          cache: false
+          cache: true
 
       - name: Install Kubernetes tools
         uses: ./.github/actions/install-kubernetes-tools
