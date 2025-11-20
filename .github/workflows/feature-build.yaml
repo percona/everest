@@ -105,6 +105,11 @@ jobs:
       VS_TAG: ""
 
     steps:
+
+      - name: Enable /mnt (big volume) to be used by runner
+        run: |
+          sudo chown -v runner:runner /mnt
+
       - name: Input validation
         run: |
           if [[ ! "$ARTIFACTS_RETENTION_DAYS" =~ ^[0-9]+$ ]]; then
