@@ -60,6 +60,14 @@ export const ClusterOverview = () => {
     canUpdateDb && !shouldDbActionsBeBlocked(dbCluster.status?.status);
 
   const pitrEnabled = dbCluster?.spec.backup?.pitr?.enabled!;
+  const username = dbClusterDetails?.username;
+  const password = dbClusterDetails?.password;
+  const splitHorizonUrl =
+    dbCluster?.status?.engineFeatures?.psmdb?.splitHorizon?.host &&
+    username &&
+    password
+      ? `mongodb://${username}:${password}@${dbCluster?.status?.engineFeatures?.psmdb?.splitHorizon?.host}`
+      : '';
 
   return (
     <>
@@ -85,8 +93,8 @@ export const ClusterOverview = () => {
           loadingClusterDetails={fetchingClusterDetails}
           hostname={dbCluster.status?.hostname!}
           port={dbCluster.status?.port!}
-          username={dbClusterDetails?.username!}
-          password={dbClusterDetails?.password!}
+          username={username!}
+          password={password!}
           connectionUrl={dbClusterDetails?.connectionUrl!}
           externalAccess={
             isProxy(dbCluster.spec.proxy) &&
@@ -96,6 +104,15 @@ export const ClusterOverview = () => {
           parameters={!!dbCluster?.spec.engine.config}
           storageClass={dbCluster?.spec.engine.storage.class!}
           podSchedulingPolicy={dbCluster?.spec.podSchedulingPolicyName}
+          splitHorizonDNS={
+            dbCluster?.spec.engineFeatures?.psmdb?.splitHorizonDnsConfigName ||
+            ''
+          }
+          splitHorizonUrl={splitHorizonUrl}
+          splitHorizonDomains={
+            dbCluster?.status?.engineFeatures?.psmdb?.splitHorizon?.domains ||
+            []
+          }
           loadBalancerConfig={
             isProxy(dbCluster.spec.proxy)
               ? dbCluster.spec.proxy.expose.type === ProxyExposeType.external
