@@ -170,6 +170,14 @@ const formValuesToPayloadMapping = (
           },
         },
       }),
+      ...(dbPayload.splitHorizonDNSEnabled &&
+        dbPayload.splitHorizonDNS && {
+          engineFeatures: {
+            psmdb: {
+              splitHorizonDnsConfigName: dbPayload.splitHorizonDNS,
+            },
+          },
+        }),
     },
   };
 
