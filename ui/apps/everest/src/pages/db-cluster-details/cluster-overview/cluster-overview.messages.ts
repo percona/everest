@@ -54,5 +54,6 @@ export const Messages = {
     podSchedulingPolicy: 'Pod scheduling policy',
     exposureMethod: 'Exposure Method',
     loadBalancerConfig: 'Load balancer config',
+    splitHorizonDNS: 'Split-Horizon DNS',
   },
 };
