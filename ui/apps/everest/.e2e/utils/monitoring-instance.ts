@@ -92,7 +92,7 @@ export const listMonitoringInstances = async (
 
 export const getPMMMajorVersion = async () => {
   try {
-    const command = `kubectl get pods everest-system-pmm-0 -n everest-system -o jsonpath='{.spec.containers[0].image}' | cut -d':' -f2 | cut -d'.' -f1`;
+    const command = `kubectl get pods -l app.kubernetes.io/component=pmm-server -n everest-system -o jsonpath='{.items[0].spec.containers[0].image}' | cut -d':' -f2 | cut -d'.' -f1`;
     const output = execSync(command).toString();
     return output;
   } catch (error) {
