@@ -71,6 +71,8 @@ env:
   GONOPROXY: 'github.com/percona'
   GONOSUMDB: 'github.com/percona'
   GOPRIVATE: 'github.com/percona'
+  GOCACHE: '/mnt/go_cache'
+  GOMODCACHE: '/mnt/go_mod_cache'
 
 jobs:
   build:
@@ -103,6 +105,11 @@ jobs:
       VS_TAG: ""
 
     steps:
+
+      - name: Enable /mnt (big volume) to be used by runner
+        run: |
+          sudo chown -v runner:runner /mnt
+
       - name: Input validation
         run: |
           if [[ ! "$ARTIFACTS_RETENTION_DAYS" =~ ^[0-9]+$ ]]; then
@@ -414,3 +421,7 @@ jobs:
           1. Delete VS: \`kubectl delete deployment percona-version-service && kubectl delete svc percona-version-service\`\n\
           2. Uninstall Everest using the FB everestctl build: \`./<everestctl-OS-ARCH> uninstall --assume-yes --force\` \n" >> "$GITHUB_STEP_SUMMARY"
 
+# Enable to debug workflow execution
+#      - name: "Setup tmate session"
+#        uses: "percona/gh-action-action-tmate@v3"
+#        if: ${{ always() }}
