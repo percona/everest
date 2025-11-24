@@ -3387,7 +3387,7 @@ components:
                   properties:
                     backupStorageName:
                       description: |-
-                        BackupStorageName is the name of the BackupStorage used for backups.
+                        BackupStorageName is the name of the BackupStorage used for storing backups.
                         The BackupStorage must be created in the same namespace as the DatabaseCluster.
                       type: string
                     path:
@@ -3574,6 +3574,9 @@ components:
                     - postgresql
                     - psmdb
                   type: string
+                  x-kubernetes-validations:
+                    - message: .spec.engine.type cannot be changed
+                      rule: self == oldSelf
                 userSecretsName:
                   description: UserSecretsName is the name of the secret containing
                     the user secrets
@@ -3616,7 +3619,7 @@ components:
                         Claims lists the names of resources, defined in spec.resourceClaims,
                         that are used by this container.
 
-                        This is an alpha field and requires enabling the
+                        This field depends on the
                         DynamicResourceAllocation feature gate.
 
                         This field is immutable. It can only be set for containers.
@@ -3993,13 +3996,23 @@ components:
     # please do not edit the definition below manually
     # -------------------------
     DatabaseClusterRestore:
-      description: DatabaseClusterRestore is the Schema for the databaseclusterrestores API.
+      description: DatabaseClusterRestore is the Schema for the databaseclusterrestores
+        API.
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
           type: string
         metadata:
           type: object
@@ -4010,10 +4023,14 @@ components:
               description: DataSource defines a data source for restoration.
               properties:
                 backupSource:
-                  description: BackupSource is the backup source to restore from
+                  description: |-
+                    BackupSource is the backup source to restore from.
+                    Shall be set either this field or DBClusterBackupName.
                   properties:
                     backupStorageName:
-                      description: BackupStorageName is the name of the BackupStorage used for backups.
+                      description: |-
+                        BackupStorageName is the name of the BackupStorage used for storing backups.
+                        The BackupStorage must be created in the same namespace as the DatabaseCluster.
                       type: string
                     path:
                       description: Path is the path to the backup file/directory.
@@ -4023,13 +4040,18 @@ components:
                     - path
                   type: object
                 dbClusterBackupName:
-                  description: DBClusterBackupName is the name of the DB cluster backup to restore from
+                  description: |-
+                    DBClusterBackupName is the name of the DB cluster backup to restore from.
+                    Shall be set either this field or BackupSource.
                   type: string
                 pitr:
-                  description: PITR is the point-in-time recovery configuration
+                  description: |-
+                    PITR is the point-in-time recovery configuration.
+                    May be set in addition to DBClusterBackupName or BackupSource to perform PITR restore.
                   properties:
                     date:
-                      description: 'Date is the UTC date to recover to. The accepted format: "2006-01-02T15:04:05Z".'
+                      description: 'Date is the UTC date to recover to. The accepted
+                        format: "2006-01-02T15:04:05Z".'
                       type: string
                     type:
                       default: date
@@ -4041,18 +4063,30 @@ components:
                   type: object
               type: object
             dbClusterName:
-              description: DBClusterName defines the cluster name to restore.
+              description: DBClusterName defines the target database cluster name
+                that needs to be restored from backup.
               type: string
           required:
             - dataSource
             - dbClusterName
           type: object
         status:
-          description: DatabaseClusterRestoreStatus defines the observed state of DatabaseClusterRestore.
+          description: DatabaseClusterRestoreStatus defines the observed state of
+            DatabaseClusterRestore.
           properties:
             completed:
               format: date-time
               type: string
+            inUse:
+              default: false
+              description: InUse is a flag that indicates if this restore resource
+                is being used to restore DB cluster from backup.
+              type: boolean
+            lastObservedGeneration:
+              description: LastObservedGeneration is the most recent generation
+                observed for this DatabaseClusterRestore.
+              format: int64
+              type: integer
             message:
               type: string
             state:
