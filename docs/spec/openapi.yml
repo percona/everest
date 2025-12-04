@@ -3940,13 +3940,23 @@ components:
     # please do not edit the definition below manually
     # -------------------------
     DatabaseClusterBackup:
-      description: DatabaseClusterBackup is the Schema for the databaseclusterbackups API.
+      description: DatabaseClusterBackup is the Schema for the databaseclusterbackups
+        API.
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
           type: string
         metadata:
           type: object
@@ -3954,7 +3964,9 @@ components:
           description: DatabaseClusterBackupSpec defines the desired state of DatabaseClusterBackup.
           properties:
             backupStorageName:
-              description: BackupStorageName is the name of the BackupStorage used for backups.
+              description: |-
+                BackupStorageName is the name of the BackupStorage used for backups.
+                The BackupStorage must be created in the same namespace as the DatabaseCluster.
               type: string
             dbClusterName:
               description: DBClusterName is the original database cluster name.
@@ -3964,7 +3976,8 @@ components:
             - dbClusterName
           type: object
         status:
-          description: DatabaseClusterBackupStatus defines the observed state of DatabaseClusterBackup.
+          description: DatabaseClusterBackupStatus defines the observed state of
+            DatabaseClusterBackup.
           properties:
             completed:
               description: Completed is the time when the job was completed.
@@ -3978,10 +3991,17 @@ components:
               description: Destination is the full path to the backup.
               type: string
             gaps:
-              description: Gaps identifies if there are gaps detected in the PITR logs
+              description: Gaps identifies if there are gaps detected in the PITR
+                logs
+              type: boolean
+            inUse:
+              default: false
+              description: InUse is a flag that indicates if this restore resource
+                is being used to restore DB cluster from backup.
               type: boolean
             latestRestorableTime:
-              description: LatestRestorableTime is the latest time that can be used for PITR restore
+              description: LatestRestorableTime is the latest time that can be used
+                for PITR restore
               format: date-time
               type: string
             state:
@@ -4082,11 +4102,6 @@ components:
               description: InUse is a flag that indicates if this restore resource
                 is being used to restore DB cluster from backup.
               type: boolean
-            lastObservedGeneration:
-              description: LastObservedGeneration is the most recent generation
-                observed for this DatabaseClusterRestore.
-              format: int64
-              type: integer
             message:
               type: string
             state:
