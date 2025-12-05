@@ -79,7 +79,7 @@ describe('FourthStep', () => {
     );
     const loadBalancerOption = screen
       .getAllByRole('option')
-      .find((el) => el.textContent === 'LoadBalancer');
+      .find((el) => el.textContent === 'Load balancer');
 
     expect(loadBalancerOption).toBeDefined();
     fireEvent.click(loadBalancerOption!);
@@ -179,7 +179,7 @@ describe('FourthStep', () => {
     );
     const loadBalancerOption = screen
       .getAllByRole('option')
-      .find((el) => el.textContent === 'LoadBalancer');
+      .find((el) => el.textContent === 'Load balancer');
 
     expect(loadBalancerOption).toBeDefined();
     fireEvent.click(loadBalancerOption!);
