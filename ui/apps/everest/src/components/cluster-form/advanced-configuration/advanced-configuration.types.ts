@@ -22,14 +22,17 @@ export enum AdvancedConfigurationFields {
   podSchedulingPolicy = 'podSchedulingPolicy',
   exposureMethod = 'exposureMethod',
   loadBalancerConfigName = 'loadBalancerConfigName',
+  splitHorizonDNS = 'splitHorizonDNS',
+  splitHorizonDNSEnabled = 'splitHorizonDNSEnabled',
 }
 
 export enum ExposureMethod {
-  ClusterIP = 'Cluster IP',
-  LoadBalancer = 'Load balancer',
+  ClusterIP = 'ClusterIP',
+  LoadBalancer = 'LoadBalancer',
 }
 
 export type AllowedFieldsToInitiallyLoadDefaults =
   | 'storageClass'
   | 'podSchedulingPolicy'
-  | 'loadBalancerConfigName';
+  | 'loadBalancerConfigName'
+  | 'splitHorizonDNS';
