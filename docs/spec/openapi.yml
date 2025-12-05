@@ -2156,6 +2156,219 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+# ------- Engine Features endpoints -------
+  '/namespaces/{namespace}/engine-features/split-horizon-dns-configs':
+    x-everest-resource-name: enginefeatures/split-horizon-dns-configs
+    post:
+      tags:
+        - SplitHorizonDNSConfig
+      summary: Create Split-Horizon DNS Config for PSMDB.
+      description: |
+        This API creates a new Split-Horizon DNS Config instance.
+      operationId: createSplitHorizonDNSConfig
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of the Split-Horizon DNS Config instance.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitHorizonDNSConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The Split-Horizon DNS Config instance object to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitHorizonDNSConfig'
+    get:
+      tags:
+        - SplitHorizonDNSConfig
+      summary: List Split-Horizon DNS Config instances.
+      description: This API lists all Split-Horizon DNS Config instances in a given namespace.
+      operationId: listSplitHorizonDNSConfigs
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of the Split-Horizon DNS Config instance.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitHorizonDNSConfigList'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/engine-features/split-horizon-dns-configs/{name}':
+    x-everest-resource-name: enginefeatures/split-horizon-dns-configs
+    get:
+      tags:
+        - SplitHorizonDNSConfig
+      summary: Get Split-Horizon DNS Config instance.
+      description: This API gets the Split-Horizon DNS Config instance specified by the `name`.
+      operationId: getSplitHorizonDNSConfig
+      parameters:
+        - name: name
+          in: path
+          description: Name of the Split-Horizon DNS Config instance.
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the Split-Horizon DNS Config instance.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitHorizonDNSConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Split-Horizon DNS Config instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - SplitHorizonDNSConfig
+      summary: Update Split-Horizon DNS Config instance.
+      description: This API updates the Split-Horizon DNS Config instance specified by the `name`.
+      operationId: updateSplitHorizonDNSConfig
+      parameters:
+        - name: name
+          in: path
+          description: Name of the Split-Horizon DNS Config instance.
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the SplitHorizonDNSConfig instance.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitHorizonDNSConfig'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Split-Horizon DNS Config instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        description: The Split-Horizon DNS Config instance object to be updated.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitHorizonDNSConfigUpdateParams'
+    delete:
+      tags:
+        - SplitHorizonDNSConfig
+      summary: Delete Split-Horizon DNS Config instance.
+      description: This API deletes the Split-Horizon DNS Config instance specified by the `name`.
+      operationId: deleteSplitHorizonDNSConfig
+      parameters:
+        - name: name
+          in: path
+          description: Name of the Split-Horizon DNS Config instance.
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Namespace of the Split-Horizon DNS Config instance.
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Split-Horizon DNS Config instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+# ------- Engine Features endpoints -------
 components:
   securitySchemes:
     BearerAuth:
@@ -2808,6 +3021,29 @@ components:
         metadata:
           type: object
       type: object
+    SplitHorizonDNSConfigList:
+      description: SplitHorizonDNSConfigList is an object that contains the list of the existing split-horizon dns configs.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SplitHorizonDNSConfig'
+        metadata:
+          type: object
+      type: object
     SizeLimit:
       anyOf:
         - $ref: '#/components/schemas/Integer'
@@ -3349,6 +3585,21 @@ components:
                 - storage
                 - type
               type: object
+            engineFeatures:
+              description: EngineFeatures represents configuration of additional
+                features for the database engine.
+              properties:
+                psmdb:
+                  description: PSMDB represents additional features for the PSMDB
+                    engine.
+                  properties:
+                    splitHorizonDnsConfigName:
+                      description: |-
+                        SplitHorizonDNSConfigName is the name of a SplitHorizonDNSConfig CR.
+                        The SplitHorizonDNSConfig must be created in the same namespace as the DatabaseCluster.
+                      type: string
+                  type: object
+              type: object
             monitoring:
               description: Monitoring is the monitoring configuration
               properties:
@@ -3610,6 +3861,43 @@ components:
               description: Details provides full status of the upstream cluster
                 as a plain text.
               type: string
+            engineFeatures:
+              description: EngineFeaturesStatus represents additional features statuses
+                for the database engine.
+              properties:
+                psmdb:
+                  description: PSMDB represents additional features statuses for
+                    the PSMDB engine.
+                  properties:
+                    splitHorizon:
+                      description: SplitHorizon status of SplitHorizon feature.
+                      properties:
+                        domains:
+                          description: SplitHorizon status of SplitHorizon feature.
+                          items:
+                            description: SplitHorizonDomain defines SplitHorizon
+                              domain status (domain -> IPs mapping).
+                            properties:
+                              domain:
+                                description: Domain is the SplitHorizon domain name.
+                                type: string
+                              privateIP:
+                                description: PrivateIP is the private IP address
+                                  for the domain.
+                                type: string
+                              publicIP:
+                                description: PublicIP is the public IP address for
+                                  the domain.
+                                type: string
+                            type: object
+                          type: array
+                        host:
+                          description: ConnectionURL is the connection URL using
+                            SplitHorizon domains.
+                          type: string
+                      type: object
+                  type: object
+              type: object
             hostname:
               description: Hostname is the hostname where the cluster can be reached
               type: string
@@ -3631,9 +3919,12 @@ components:
               type: integer
             recommendedCRVersion:
               description: |-
-                RecommendedCRVersion is the recommended version of the CR to use.
-                If set, the CR needs to be updated to this version before upgrading the operator.
-                If unset, the CR is already at the recommended version.
+                RecommendedCRVersion indicates the target version that the underlying CR should be updated to.
+                When this field is set, it means the CR is running an outdated version and requires an update.
+                The following restrictions apply until the CR is updated to the recommended version:
+                - The operator cannot be upgraded
+                - The database engine version (.spec.engine.version) cannot be modified
+                This field is unset when the CR is already running at the latest recommended version.
               type: string
             size:
               description: Size is the total number of pods
@@ -10955,3 +11246,132 @@ components:
           description: A machine-readable description of the cause of the error. If this
             value is empty there is no information available.
           type: string
+    # ---------- Engine Features Components -------------------------
+    SplitHorizonDNSConfig:
+      description: SplitHorizonDNSConfig is the Schema for the splithorizondnsconfigs
+        API.
+      properties:
+        apiVersion:
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+          type: string
+        kind:
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: Spec defines the desired state of SplitHorizonDNSConfig
+          properties:
+            baseDomainNameSuffix:
+              description: |-
+                BaseDomainNameSuffix is the base domain name suffix for generating domain names for each Pod in ReplicaSet.
+                It should be a valid domain name suffix.
+              example: example.com
+              minLength: 3
+              pattern: ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$
+              type: string
+            tls:
+              description: TLS is the TLS configuration for the split-horizon DNS
+                configuration.
+              properties:
+                certificate:
+                  description: Certificate is the TLS certificate and key for the
+                    split-horizon DNS configuration.
+                  properties:
+                    ca.crt:
+                      description: |-
+                        CACert is based64 encoded ca.pem file content.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                        and empties this field.
+                        This field is not stored in the API.
+                      type: string
+                    ca.key:
+                      description: |-
+                        CA Private Key is based64 encoded ca-key.pem file content.
+                        It is provided as a write-only input field for convenience.
+                        When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                        and empties this field.
+                        This field is not stored in the API.
+                      type: string
+                  required:
+                    - ca.crt
+                    - ca.key
+                  type: object
+                secretName:
+                  description: SecretName is the name of the secret containing the
+                    TLS certificate and key for the split-horizon DNS configuration.
+                  example: my-tls-secret
+                  type: string
+              required:
+                - secretName
+              type: object
+          required:
+            - baseDomainNameSuffix
+            - tls
+          type: object
+        status:
+          default:
+            inUse: false
+          description: Status defines the observed state of SplitHorizonDNSConfig
+          properties:
+            inUse:
+              default: false
+              description: InUse is a flag that indicates if the config is used
+                by any DB cluster.
+              type: boolean
+            lastObservedGeneration:
+              description: LastObservedGeneration is the most recent generation
+                observed for this SplitHorizonDNSConfig.
+              format: int64
+              type: integer
+          type: object
+      required:
+        - spec
+      type: object
+    SplitHorizonDNSConfigUpdateParams:
+      description: SplitHorizonDNSConfigUpdateParams is the Schema for the splithorizondnsconfigs update API.
+      properties:
+        baseDomainNameSuffix:
+          description: |-
+            BaseDomainNameSuffix is the base domain name suffix for generating domain names for each Pod in ReplicaSet.
+            It should be a valid domain name suffix.
+          example: example.com
+          minLength: 3
+          pattern: ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$
+          type: string
+        certificate:
+          description: Certificate is the TLS certificate and key for the
+            split-horizon DNS configuration.
+          properties:
+            ca.crt:
+              description: |-
+                CACert is based64 encoded ca.pem file content.
+                It is provided as a write-only input field for convenience.
+                When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                and empties this field.
+                This field is not stored in the API.
+              type: string
+            ca.key:
+              description: |-
+                CAKey is based64 encoded ca-key.pem file content.
+                It is provided as a write-only input field for convenience.
+                When this field is set, a webhook writes this value in the Secret specified by `.spec.tls.secretName`
+                and empties this field.
+                This field is not stored in the API.
+              type: string
+          required:
+            - ca.crt
+            - ca.key
+          type: object
+      type: object
+      additionalProperties: false

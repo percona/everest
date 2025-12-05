@@ -26,6 +26,9 @@ const FormProviderWrapper = ({
       engineParametersEnabled: false,
       podSchedulingPolicyEnabled: false,
       exposureMethod: ProxyExposeType.ClusterIP,
+      splitHorizonDNSEnabled: false,
+      splitHorizonDNS: '',
+
       sourceRanges: [
         {
           sourceRange: '192.168.1.1',
@@ -76,7 +79,7 @@ describe('FourthStep', () => {
     );
     const loadBalancerOption = screen
       .getAllByRole('option')
-      .find((el) => el.textContent === 'Load balancer');
+      .find((el) => el.textContent === 'LoadBalancer');
 
     expect(loadBalancerOption).toBeDefined();
     fireEvent.click(loadBalancerOption!);
@@ -176,7 +179,7 @@ describe('FourthStep', () => {
     );
     const loadBalancerOption = screen
       .getAllByRole('option')
-      .find((el) => el.textContent === 'Load balancer');
+      .find((el) => el.textContent === 'LoadBalancer');
 
     expect(loadBalancerOption).toBeDefined();
     fireEvent.click(loadBalancerOption!);

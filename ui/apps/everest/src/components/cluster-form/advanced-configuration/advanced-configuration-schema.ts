@@ -45,6 +45,8 @@ export const advancedConfigurationsSchema = () =>
         .optional(),
       [AdvancedConfigurationFields.exposureMethod]:
         z.nativeEnum(ProxyExposeType),
+      [AdvancedConfigurationFields.splitHorizonDNSEnabled]: z.boolean(),
+      [AdvancedConfigurationFields.splitHorizonDNS]: z.string().optional(),
     })
     .passthrough()
     .superRefine(({ sourceRanges, exposureMethod }, ctx) => {

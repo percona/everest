@@ -24,6 +24,8 @@ export enum AdvancedConfigurationFields {
   podSchedulingPolicy = 'podSchedulingPolicy',
   exposureMethod = 'exposureMethod',
   loadBalancerConfigName = 'loadBalancerConfigName',
+  splitHorizonDNS = 'splitHorizonDNS',
+  splitHorizonDNSEnabled = 'splitHorizonDNSEnabled',
 }
 
 export const PROXY_EXPOSE_TYPE_TO_LABEL: Record<ProxyExposeType, string> = {
@@ -35,4 +37,5 @@ export const PROXY_EXPOSE_TYPE_TO_LABEL: Record<ProxyExposeType, string> = {
 export type AllowedFieldsToInitiallyLoadDefaults =
   | 'storageClass'
   | 'podSchedulingPolicy'
-  | 'loadBalancerConfigName';
+  | 'loadBalancerConfigName'
+  | 'splitHorizonDNS';

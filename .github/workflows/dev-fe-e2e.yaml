@@ -12,6 +12,11 @@ on:
       RBAC_PASSWORD:
         required: true
 
+env:
+  GONOPROXY: 'github.com/percona'
+  GONOSUMDB: 'github.com/percona'
+  GOPRIVATE: 'github.com/percona'
+
 jobs:
   e2e:
     strategy:
@@ -46,7 +51,7 @@ jobs:
           version: 9.4.0
 
       - name: Use Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20.x
           cache: "pnpm"
