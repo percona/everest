@@ -17,8 +17,9 @@ import { DbEngineType } from './dbEngines.types';
 import { DbErrorType } from './dbErrors.types';
 
 export enum ProxyExposeType {
-  internal = 'internal',
-  external = 'external',
+  ClusterIP = 'ClusterIP',
+  LoadBalancer = 'LoadBalancer',
+  NodePort = 'NodePort',
 }
 
 export enum DbClusterStatus {

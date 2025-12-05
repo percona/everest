@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { ProxyExposeType } from 'shared-types/dbCluster.types';
+
 export enum AdvancedConfigurationFields {
   sourceRanges = 'sourceRanges',
   engineParametersEnabled = 'engineParametersEnabled',
@@ -26,10 +28,11 @@ export enum AdvancedConfigurationFields {
   splitHorizonDNSEnabled = 'splitHorizonDNSEnabled',
 }
 
-export enum ExposureMethod {
-  ClusterIP = 'ClusterIP',
-  LoadBalancer = 'LoadBalancer',
-}
+export const PROXY_EXPOSE_TYPE_TO_LABEL: Record<ProxyExposeType, string> = {
+  [ProxyExposeType.ClusterIP]: 'Cluster IP',
+  [ProxyExposeType.LoadBalancer]: 'Load balancer',
+  [ProxyExposeType.NodePort]: 'Node port',
+};
 
 export type AllowedFieldsToInitiallyLoadDefaults =
   | 'storageClass'

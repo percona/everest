@@ -34,7 +34,7 @@ import {
 import { isProxy } from 'utils/db.tsx';
 import { advancedConfigurationModalDefaultValues } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils.ts';
 import { WizardMode } from 'shared-types/wizard.types.ts';
-import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types.ts';
+import { ProxyExposeType } from 'shared-types/dbCluster.types';
 
 export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   // TODO should be changed to true after  https://jira.percona.com/browse/EVEREST-509
@@ -51,7 +51,7 @@ export const getDbWizardDefaultValues = (dbType: DbType): DbWizardType => ({
   [DbWizardFormFields.sourceRanges]: [{ sourceRange: '' }],
   [DbWizardFormFields.podSchedulingPolicyEnabled]: false,
   [DbWizardFormFields.podSchedulingPolicy]: '',
-  [DbWizardFormFields.exposureMethod]: ExposureMethod.ClusterIP,
+  [DbWizardFormFields.exposureMethod]: ProxyExposeType.ClusterIP,
   [DbWizardFormFields.loadBalancerConfigName]: '',
   [DbWizardFormFields.engineParametersEnabled]: false,
   [DbWizardFormFields.engineParameters]: '',

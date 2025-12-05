@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { DbType } from '@percona/types';
-import { DbCluster } from 'shared-types/dbCluster.types';
+import { DbCluster, ProxyExposeType } from 'shared-types/dbCluster.types';
 
 export type OverviewCardProps = {
   loading?: boolean;
@@ -39,6 +39,7 @@ export type ConnectionDetailsOverviewCardProps = {
   clusterName?: string;
   clusterNamespace?: string;
   type: DbType;
+  exposeType?: ProxyExposeType;
 } & OverviewCardProps;
 
 export type AdvancedConfigurationOverviewCardProps = {
