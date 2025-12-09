@@ -25,7 +25,9 @@ const FormProviderWrapper = ({
       storageClass: 'standard',
       engineParametersEnabled: false,
       podSchedulingPolicyEnabled: false,
-      exposureMethod: 'Cluster IP',
+      exposureMethod: 'ClusterIP',
+      splitHorizonDNSEnabled: false,
+      splitHorizonDNS: '',
       sourceRanges: [
         {
           sourceRange: '192.168.1.1',
@@ -76,14 +78,14 @@ describe('FourthStep', () => {
     );
     const loadBalancerOption = screen
       .getAllByRole('option')
-      .find((el) => el.textContent === 'Load balancer');
+      .find((el) => el.textContent === 'LoadBalancer');
 
     expect(loadBalancerOption).toBeDefined();
     fireEvent.click(loadBalancerOption!);
 
     await waitFor(() =>
       expect(screen.getByTestId('select-input-exposure-method')).toHaveValue(
-        'Load balancer'
+        'LoadBalancer'
       )
     );
 
@@ -176,7 +178,7 @@ describe('FourthStep', () => {
     );
     const loadBalancerOption = screen
       .getAllByRole('option')
-      .find((el) => el.textContent === 'Load balancer');
+      .find((el) => el.textContent === 'LoadBalancer');
 
     expect(loadBalancerOption).toBeDefined();
     fireEvent.click(loadBalancerOption!);

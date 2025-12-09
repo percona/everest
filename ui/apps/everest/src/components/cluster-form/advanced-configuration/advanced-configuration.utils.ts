@@ -71,5 +71,9 @@ export const advancedConfigurationModalDefaultValues = (
       dbCluster?.spec?.proxy.expose.type === ProxyExposeType.external
         ? ExposureMethod.LoadBalancer
         : ExposureMethod.ClusterIP,
+    [AdvancedConfigurationFields.splitHorizonDNSEnabled]:
+      !!dbCluster?.spec.engineFeatures?.psmdb?.splitHorizonDnsConfigName,
+    [AdvancedConfigurationFields.splitHorizonDNS]:
+      dbCluster?.spec.engineFeatures?.psmdb?.splitHorizonDnsConfigName || '',
   };
 };
