@@ -230,7 +230,7 @@ export default defineConfig({
       dependencies: [
         'pr:db-cluster-details:components',
         'pr:db-cluster-details:edit-db-cluster',
-        // 'pr:db-cluster:db-wizard',
+        'pr:db-cluster:db-wizard',
       ],
     },
     // pr:db-cluster-details:components:setup tests

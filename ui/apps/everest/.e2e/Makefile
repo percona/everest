@@ -19,7 +19,7 @@ init:     ## Install tests dependencies.
 	npx playwright install --with-deps chromium
 
 CI_INIT_DEPS := init deploy-minio create-db-namespaces deploy-monitoring
-#CI_INIT_DEPS += k3d-upload-images
+CI_INIT_DEPS += k3d-upload-images
 .PHONY: ci-init
 ci-init: $(CI_INIT_DEPS) 	## Prepare environment for running tests.
 
@@ -110,6 +110,7 @@ k3d-upload-images: k3d-upload-pg-images k3d-upload-psmdb-images k3d-upload-pxc-i
 
 # Set a particular test, e.g. make test PROJECT=pr,release:session
 PROJECT = pr
+FLAGS =
 .PHONY: test
 test:               ## Run all tests.
 	@{ \
@@ -136,8 +137,5 @@ test:               ## Run all tests.
 	for project in $${projects} ; do \
 	  cmd_proj="$${cmd_proj} --project=$${project}" ;\
 	done ;\
-	npx playwright test --config=./playwright.config.ts $${cmd_proj} ;\
+	npx playwright test --config=./playwright.config.ts $${cmd_proj} $${FLAGS};\
 	}
-
-	#cd $(REPO_ROOT)/ui ;\
-#pnpm --filter "@percona/everest" $(PROJECT) ;\
