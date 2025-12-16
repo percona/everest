@@ -263,7 +263,7 @@ test.describe.configure({ retries: 0 });
       }) => {
         test.setTimeout(2400000);
         let i = 0;
-        let expectedResult: string[] = ['1', '2', '3'];
+        const expectedResult: string[] = ['1', '2', '3'];
 
         for (const dbVersion of majorDBVersions[db]) {
           if (i !== 0) {

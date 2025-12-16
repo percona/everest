@@ -177,7 +177,7 @@ export const populateResources = async (
   const expectedMemoryText = ` = ${(memory * clusterSize).toFixed(2)} GB`;
   const expectedDiskText = ` = ${(disk * clusterSize).toFixed(2)} Gi`;
 
-  let nodesText =
+  const nodesText =
     clusterSize == 1 ? `x ${clusterSize} node` : `x ${clusterSize} nodes`;
   expect(await page.getByText(nodesText).count()).toBe(3);
   await expect(page.getByTestId('cpu-resource-sum')).toHaveText(
