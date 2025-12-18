@@ -1878,24 +1878,6 @@ func TestIsDatabaseClusterUpdateAllowed(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStatePausing),
-			currentDB: &everestv1alpha1.DatabaseCluster{
-				Status: everestv1alpha1.DatabaseClusterStatus{
-					Status: everestv1alpha1.AppStatePausing,
-				},
-			},
-			expected: true,
-		},
-		{
-			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateStopping),
-			currentDB: &everestv1alpha1.DatabaseCluster{
-				Status: everestv1alpha1.DatabaseClusterStatus{
-					Status: everestv1alpha1.AppStateStopping,
-				},
-			},
-			expected: true,
-		},
-		{
 			name: fmt.Sprintf("db_state_%s", everestv1alpha1.AppStateReady),
 			currentDB: &everestv1alpha1.DatabaseCluster{
 				Status: everestv1alpha1.DatabaseClusterStatus{
