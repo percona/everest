@@ -27,15 +27,15 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/operator-framework/api v0.33.0
-	github.com/percona/everest-operator v0.6.0-dev1.0.20251218090824-125645481b65
+	github.com/percona/everest-operator v0.6.0-dev1.0.20251218113545-9dc9e3ae71ca
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251218093748-927a43bf83e4
 	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	github.com/unrolled/secure v1.17.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.42.0
-	golang.org/x/mod v0.28.0
+	golang.org/x/crypto v0.43.0
+	golang.org/x/mod v0.29.0
 	golang.org/x/term v0.36.0
 	golang.org/x/time v0.13.0
 	google.golang.org/protobuf v1.36.10
@@ -300,7 +300,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/percona/percona-backup-mongodb v1.8.1-0.20250925114718-2f499a6a31c8 // indirect
-	github.com/percona/percona-postgresql-operator v0.0.0-20250717192602-2b721be58505 // indirect
+	github.com/percona/percona-postgresql-operator/v2 v2.8.0 // indirect
 	github.com/percona/percona-server-mongodb-operator v1.21.1 // indirect
 	github.com/percona/percona-xtradb-cluster-operator v1.18.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
@@ -400,19 +400,19 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/build v0.0.0-20240906172953-ad8de1aafeaf // indirect
 	golang.org/x/exp/typeparams v0.0.0-20250210185358-939b2ce775ac // indirect
-	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/oauth2 v0.31.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/telemetry v0.0.0-20250908211612-aef8a434d053 // indirect
-	golang.org/x/text v0.29.0 // indirect
-	golang.org/x/tools v0.37.0 // indirect
+	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
+	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	golang.org/x/tools/go/expect v0.1.1-deprecated // indirect
 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4 // indirect
-	google.golang.org/grpc v1.75.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
+	google.golang.org/grpc v1.76.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
