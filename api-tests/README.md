@@ -22,7 +22,7 @@ There are several ways running tests
 ```
 
 or
-```
+```bash
    make test
 ```
 
