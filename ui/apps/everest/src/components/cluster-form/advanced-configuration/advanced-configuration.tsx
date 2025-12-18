@@ -24,8 +24,9 @@ import { Messages } from './messages';
 import {
   AdvancedConfigurationFields,
   AllowedFieldsToInitiallyLoadDefaults,
-  ExposureMethod,
+  PROXY_EXPOSE_TYPE_TO_LABEL,
 } from './advanced-configuration.types';
+import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { useFormContext } from 'react-hook-form';
 import { DbEngineType, DbType } from '@percona/types';
 import { getParamsPlaceholderFromDbType } from './advanced-configuration.utils';
@@ -119,11 +120,11 @@ export const AdvancedConfigurationForm = ({
 
   const clusterType = clusterInfo?.clusterType;
 
+  const exposureMethods = Object.values(ProxyExposeType);
   const splitHorizonDNSDomain = splitHorizonDNSConfigs.find(
     (c) =>
       c.metadata.name === getValues(AdvancedConfigurationFields.splitHorizonDNS)
   )?.spec.baseDomainNameSuffix;
-  const exposureMethods = Object.values(ExposureMethod);
 
   const { data: loadBalancerConfigs, isLoading: fetchingLoadBalancer } =
     useLoadBalancerConfigs('load-balancer-configs', dbTypeToDbEngine(dbType), {
@@ -432,13 +433,13 @@ export const AdvancedConfigurationForm = ({
               >
                 {exposureMethods.map((method) => (
                   <MenuItem value={method} key={method}>
-                    {method}
+                    {PROXY_EXPOSE_TYPE_TO_LABEL[method]}
                   </MenuItem>
                 ))}
               </SelectInput>
             </Box>
 
-            {exposureMethod === ExposureMethod.LoadBalancer && (
+            {exposureMethod === ProxyExposeType.LoadBalancer && (
               <>
                 <FormCard
                   title={Messages.cards.loadBalancerConfiguration.title}

@@ -3316,7 +3316,7 @@ components:
             allowUnsafeConfiguration:
               description: |-
                 AllowUnsafeConfiguration field used to ensure that the user can create configurations unfit for production use.
-
+                
                 Deprecated: AllowUnsafeConfiguration will not be supported in the future releases.
               type: boolean
             backup:
@@ -3500,7 +3500,7 @@ components:
                   properties:
                     date:
                       description: 'Date is the UTC date to recover to. The accepted
-                        format: "2006-01-02T15:04:05Z".'
+                       format: "2006-01-02T15:04:05Z".'
                       type: string
                     type:
                       default: date
@@ -3522,7 +3522,7 @@ components:
                     CRVersion is the desired version of the CR to use with the
                     underlying operator.
                     If unspecified, everest-operator will use the same version as the operator.
-
+                    
                     NOTE: Updating this property post installation may lead to a restart of the cluster.
                   type: string
                 replicas:
@@ -3615,10 +3615,10 @@ components:
                       description: |-
                         Claims lists the names of resources, defined in spec.resourceClaims,
                         that are used by this container.
-
+                        
                         This is an alpha field and requires enabling the
                         DynamicResourceAllocation feature gate.
-
+                        
                         This field is immutable. It can only be set for containers.
                       items:
                         description: ResourceClaim references one entry in PodSpec.ResourceClaims.
@@ -3703,11 +3703,15 @@ components:
                         config if applied
                       type: string
                     type:
-                      default: internal
-                      description: Type is the expose type, can be internal or external
+                      default: ClusterIP
+                      description: Type is the expose type, can be ClusterIP, LoadBalancer,
+                        NodePort. The types internal and external are deprecated.
                       enum:
                         - internal
                         - external
+                        - ClusterIP
+                        - LoadBalancer
+                        - NodePort
                       type: string
                   type: object
                   x-kubernetes-validations:
