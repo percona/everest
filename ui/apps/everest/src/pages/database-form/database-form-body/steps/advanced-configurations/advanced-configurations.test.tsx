@@ -6,7 +6,7 @@ import { AdvancedConfigurations } from './advanced-configurations';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { advancedConfigurationsSchema } from 'components/cluster-form/advanced-configuration/advanced-configuration-schema';
-import { ExposureMethod } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
+import { ProxyExposeType } from 'shared-types/dbCluster.types';
 import { DbWizardType } from 'pages/database-form/database-form-schema';
 
 const queryClient = new QueryClient();
@@ -25,9 +25,10 @@ const FormProviderWrapper = ({
       storageClass: 'standard',
       engineParametersEnabled: false,
       podSchedulingPolicyEnabled: false,
-      exposureMethod: 'ClusterIP',
+      exposureMethod: ProxyExposeType.ClusterIP,
       splitHorizonDNSEnabled: false,
       splitHorizonDNS: '',
+
       sourceRanges: [
         {
           sourceRange: '192.168.1.1',
@@ -55,7 +56,7 @@ describe('FourthStep', () => {
                 sourceRange: '',
               },
             ],
-            exposureMethod: ExposureMethod.LoadBalancer,
+            exposureMethod: ProxyExposeType.LoadBalancer,
           }}
         >
           <QueryClientProvider client={queryClient}>
@@ -78,14 +79,14 @@ describe('FourthStep', () => {
     );
     const loadBalancerOption = screen
       .getAllByRole('option')
-      .find((el) => el.textContent === 'LoadBalancer');
+      .find((el) => el.textContent === 'Load balancer');
 
     expect(loadBalancerOption).toBeDefined();
     fireEvent.click(loadBalancerOption!);
 
     await waitFor(() =>
       expect(screen.getByTestId('select-input-exposure-method')).toHaveValue(
-        'LoadBalancer'
+        ProxyExposeType.LoadBalancer
       )
     );
 
@@ -152,7 +153,7 @@ describe('FourthStep', () => {
                 sourceRange: 'invalid-ip',
               },
             ],
-            exposureMethod: ExposureMethod.ClusterIP,
+            exposureMethod: ProxyExposeType.ClusterIP,
           }}
         >
           <QueryClientProvider client={queryClient}>
@@ -178,7 +179,7 @@ describe('FourthStep', () => {
     );
     const loadBalancerOption = screen
       .getAllByRole('option')
-      .find((el) => el.textContent === 'LoadBalancer');
+      .find((el) => el.textContent === 'Load balancer');
 
     expect(loadBalancerOption).toBeDefined();
     fireEvent.click(loadBalancerOption!);
@@ -208,7 +209,7 @@ describe('FourthStep', () => {
                 sourceRange: '192.168.1.1/32',
               },
             ],
-            exposureMethod: ExposureMethod.LoadBalancer,
+            exposureMethod: ProxyExposeType.LoadBalancer,
           }}
         >
           <QueryClientProvider client={queryClient}>
