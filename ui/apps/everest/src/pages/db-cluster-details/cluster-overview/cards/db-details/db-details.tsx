@@ -44,6 +44,7 @@ export const DbDetails = ({
   storageClass,
   podSchedulingPolicy,
   loadBalancerConfig,
+  exposeType,
   splitHorizonDNS,
   splitHorizonDomains,
 }: DatabaseDetailsOverviewCardProps) => {
@@ -91,6 +92,7 @@ export const DbDetails = ({
           connectionUrl={connectionUrl}
           splitHorizonUrl={splitHorizonUrl}
           type={type}
+          exposeType={exposeType}
         />
         {canReadMonitoring && (
           <MonitoringDetails loading={loading} monitoring={monitoring} />
