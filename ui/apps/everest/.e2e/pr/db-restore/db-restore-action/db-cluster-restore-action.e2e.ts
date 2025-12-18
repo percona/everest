@@ -14,42 +14,22 @@
 // limitations under the License.
 
 import { expect, test } from '@playwright/test';
-import { Messages } from '../../../src/modals/restore-db-modal/restore-db-modal.messages';
-import { createDbClusterFn, deleteDbClusterFn } from '@e2e/utils/db-cluster';
+import { Messages } from '../../../../src/modals/restore-db-modal/restore-db-modal.messages';
 import {
   findDbAndClickActions,
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
-import { getBucketNamespacesMap } from '@e2e/constants';
-
-const dbClusterName = 'restore-db';
+import { dbClusterName } from './project.config';
 
 test.describe('DB Cluster Restore', () => {
-  test.beforeAll(async ({ request }) => {
-    await createDbClusterFn(request, {
-      dbName: dbClusterName,
-      dbType: 'mysql',
-      numberOfNodes: '1',
-      backup: {
-        enabled: true,
-        schedules: [
-          {
-            backupStorageName: getBucketNamespacesMap()[0][0],
-            enabled: true,
-            name: 'backup-1',
-            schedule: '0 * * * *',
-          },
-        ],
-      },
-    });
+
+  // IST is UTC+5h30, with or without DST
+  test.use({
+    timezoneId: 'IST',
   });
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/databases');
-  });
-
-  test.afterAll(async ({ request }) => {
-    await deleteDbClusterFn(request, dbClusterName);
   });
 
   test('DB cluster list restore action', async ({ page }) => {
@@ -75,10 +55,11 @@ test.describe('DB Cluster Restore', () => {
     ).toBeVisible();
   });
 
+  //TODO FAILED
   test('keep selected time in the modal', async ({
     page,
-    request,
   }, testInfo) => {
+
     testInfo.setTimeout(30000);
     await page.route(
       '/v1/namespaces/**/database-clusters/**/pitr',

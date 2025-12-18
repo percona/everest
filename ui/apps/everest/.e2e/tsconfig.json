@@ -1,17 +1,38 @@
 {
-  "include": ["./**/*.ts"],
-  "exclude": ["./tests-out"],
+  "include": [
+    "./**/*.ts"
+  ],
+  "exclude": [
+    "./tests-out"
+  ],
   "compilerOptions": {
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "skipLibCheck": true,
     "jsx": "react-jsx",
-    "types": ["@testing-library/jest-dom", "vitest/globals"],
+    "types": [
+      "@testing-library/jest-dom",
+      "vitest/globals"
+    ],
     "paths": {
-      "@e2e/*": ["./*"],
-      "@percona/ui-lib": ["../../../packages/ui-lib/src"],
-      "@percona/design": ["../../../packages/design/src"],
-      "@percona/types": ["../../../packages/types/src"],
-      "@percona/utils": ["../../../packages/utils/src"]
+      "@e2e/*": [
+        "./*"
+      ],
+      "@percona/ui-lib": [
+        "../../../packages/ui-lib/src"
+      ],
+      "@percona/design": [
+        "../../../packages/design/src"
+      ],
+      "@percona/types": [
+        "../../../packages/types/src"
+      ],
+      "@percona/utils": [
+        "../../../packages/utils/src"
+      ]
     },
     "noEmit": false,
     "allowImportingTsExtensions": false,
@@ -21,5 +42,6 @@
     "moduleResolution": "Node",
     "sourceMap": true,
     "outDir": "./tests-out"
+    // "tsBuildInfoFile": "./tests-out/tsconfig.tsbuildinfo"
   }
 }

@@ -14,11 +14,11 @@
 // limitations under the License.
 
 import { test, expect } from '@playwright/test';
-import {createDbClusterFn, deleteDbClusterFn, getDbClusterAPI} from '@e2e/utils/db-cluster';
-import {EVEREST_CI_NAMESPACES, TIMEOUTS} from '@e2e/constants';
+import { createDbClusterFn, deleteDbClusterFn, getDbClusterAPI } from '@e2e/utils/db-cluster';
+import { EVEREST_CI_NAMESPACES, TIMEOUTS } from '@e2e/constants';
 import { findDbAndClickRow } from '@e2e/utils/db-clusters-list';
-import {goToUrl, limitedSuffixedName} from "@e2e/utils/generic";
-import {getCITokenFromLocalStorage} from "@e2e/utils/localStorage";
+import { goToUrl, limitedSuffixedName } from "@e2e/utils/generic";
+import { getCITokenFromLocalStorage } from "@e2e/utils/localStorage";
 
 const dbClusterName = 'pr-db-ovw';
 
@@ -121,7 +121,7 @@ test.describe.parallel('DB cluster overview', async () => {
         })
 
         await goToUrl(page, '/databases');
-        await expect(page.getByText(dbName)).toBeVisible({timeout: TIMEOUTS.TenSeconds});
+        await expect(page.getByText(dbName)).toBeVisible({ timeout: TIMEOUTS.TenSeconds });
       });
 
       await test.step(`Deleting ${dbName} DB cluster via UI`, async () => {
@@ -143,7 +143,7 @@ test.describe.parallel('DB cluster overview', async () => {
         await expect(page.getByTestId('irreversible-action-alert')).toBeVisible();
         const deleteConfirmationButton = page
           .getByRole('button')
-          .filter({hasText: 'Delete'});
+          .filter({ hasText: 'Delete' });
         await expect(deleteConfirmationButton).toBeDisabled();
         await page.getByTestId('text-input-confirm-input').fill(dbName);
         await expect(deleteConfirmationButton).toBeEnabled();
