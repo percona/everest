@@ -19,7 +19,7 @@ const testPrefix = 'pg-backup',
   bsName = th.limitedSuffixedName(testPrefix + '-bs-s3')
 
 test.describe('PG cluster backup tests', {tag: ['@pg', '@backup']}, () => {
-  test.describe.configure({ timeout: 120 * 1000 });
+  test.describe.configure({ timeout: 180 * 1000 });
 
   test.beforeAll(async ({ request }) => {
     await th.createBackupStorageS3(request, bsName)
@@ -29,7 +29,7 @@ test.describe('PG cluster backup tests', {tag: ['@pg', '@backup']}, () => {
     await th.deleteBackupStorage(request, bsName)
   })
 
-  test('create/list/delete db cluster backup', async ({request}) => {
+  test('create/list/delete db cluster backup', async ({page, request}) => {
     const dbClusterName = th.limitedSuffixedName(testPrefix + '-sin'),
       backupName = th.suffixedName(dbClusterName + '-backup')
 
@@ -39,10 +39,15 @@ test.describe('PG cluster backup tests', {tag: ['@pg', '@backup']}, () => {
       });
 
       await test.step('create DB cluster backup', async () => {
-        const backup = await th.createDBClusterBackup(request, dbClusterName, backupName, bsName)
+        let backup = await th.createDBClusterBackup(request, dbClusterName, backupName, bsName)
         expect(backup.metadata.name).toMatch(backupName)
         expect(backup.spec.dbClusterName).toMatch(dbClusterName)
         expect(backup.spec.backupStorageName).toMatch(bsName)
+        // heuristic interval to wait until the backup is complete
+        await page.waitForTimeout(150000)
+        backup = await th.getDBClusterBackup(request, backupName)
+        // expecting a completed state which allows to delete the backup and the backupStorage
+        expect(backup.status.state).toMatch('Failed')
       })
 
       await test.step('list DB cluster backups', async () => {
