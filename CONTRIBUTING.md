@@ -23,9 +23,9 @@ You can find the definition of the custom resources in the [Everest operator rep
 3. Check out a particular branch if needed:
 `git checkout <branch_name>`
 4. Run the dev environment:
-`make k3d-cluster-reset`
-5. Build CLI: `make build-cli`
-6. Deploy the build: `make deploy`
+`make k3d-cluster-up`
+5. Build the CLI: `make build-cli-debug`
+6. Deploy Everest using the CLI : `make deploy`
 
 ### Add a new proxy method
 1. Copy the corresponding k8s spec to the [openapi.yml](./docs/spec/openapi.yml). For information on observing your cluster API, see [Kubernetes: How to View Swagger UI blog post](https://jonnylangefeld.com/blog/kubernetes-how-to-view-swagger-ui), which details the operator-defined methods (if the everest operator is installed).
@@ -37,8 +37,7 @@ You can find the definition of the custom resources in the [Everest operator rep
 3. If needed, copy the custom resources schema from the [Everest operator config](https://github.com/percona/dbaas-operator/tree/main/config/crd/bases) to the **Components** section of the [openapi.yml](./docs/spec/openapi.yml) file.
 
 4. Run the following command to generate the code:
-```
- $ make init
+```bash
  $ make gen
 ```
 5. Implement the missing `ServerInterface` methods.
@@ -60,21 +59,11 @@ To do this, add the following host to the `/etc/hosts` file on your local machin
 127.0.0.1          host.docker.internal
 ```
 
-#### Running minikube clusters
-1. Spin up a Minikube cluster, using`--apiserver-names host.docker.internal`, depending on your operating system.
-
-2. Run the `make local-env-up` command from [everest-operator](https://github.com/percona/everest-operator/blob/main/Makefile#L301). This command works fine on MacOS.
-
-3. Once the Minikube cluster's kubeconfig is available, update the server address in the kubeconfig file from `127.0.0.1` to `host.docker.internal`, while maintaining the same port.
-
-
-4. Use Everest by initiating the provisioning procedure through the command line interface.
-
 ### Troubleshooting
 
 Here are some commands that can help you fix potential issues:
 #### Operator installation process
-```
+```bash
 kubectl -n namespace get sub         # Check that subscription was created for an operator
 kubectl -n namespace get ip          # Check that install plan was created and approved for an operator
 kubectl -n namespace get csv         # Check that Cluster service version was created and phase is Installed
@@ -84,7 +73,7 @@ kubectl -n namespace logs <podname>  # Check logs for a pod
 ```
 #### Database Cluster troubleshooting
 
-```
+```bash
 kubectl -n namespace get db          # Get list of database clusters
 kubectl -n namespace get po          # Get pods for a database cluster
 kubectl -n namespace describe db     # Describe database cluster. Provides useful information about conditions or messages
@@ -95,6 +84,20 @@ kubectl -n namespace logs <podname>  # Check logs for a pod
 ```
 
 #### PVC troubleshooting
-```
+```bash
 kubectl -n namespace get pvc  # PVCs should be Bound
+```
+
+#### MySQL database cluster is not up
+
+If your MySQL database cluster is stuck in the initializing state, HAProxy resources are likely too small. Ensure HAProxy has at least 600m CPU and 600M memory. This issue is common on Arm systems because the HAProxy image is currently built only for amd64.
+
+Check HAProxy resource settings with:
+
+```bash
+kubectl -n everest get pxc -o jsonpath='{.items[*].spec.haproxy.resources}'
+```
+
+```json
+{"limits":{"cpu":"600m","memory":"600M"},"requests":{"cpu":"600m","memory":"600M"}}
 ```
