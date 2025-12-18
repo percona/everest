@@ -1,6 +1,6 @@
 # Percona everest API integration tests
 
-Before running tests you need to [run Everst locally](../CONTRIBUTING.md#run-everest-locally).
+Before running tests you need to [run Everest locally](../CONTRIBUTING.md#run-everest-locally).
 
 ## Running integration tests
 There are several ways running tests
