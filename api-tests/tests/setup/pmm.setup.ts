@@ -38,7 +38,7 @@ const createPmmApiKey = async (request, pmmUrl, saName) => {
 }
 
 const sa_1_name = th.limitedSuffixedName('-key-1'),
-  sa_2_name = th.limitedSuffixedName('key-2');
+  sa_2_name = th.limitedSuffixedName('-key-2');
 
 setup.describe.parallel('Monitoring config setup', () => {
   setup('Create API key in PMM_1', async ({request}) => {

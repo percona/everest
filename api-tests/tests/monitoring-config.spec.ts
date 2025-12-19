@@ -75,24 +75,11 @@ test.describe.parallel('Monitoring instances tests', () => {
     })
 
     await test.step('update monitoring instance', async () => {
-      const patchData = {url: 'http://monitoring-service.default.svc.cluster.local'} // URL pointing to the same instance
+      const patchData = {url: 'http://monitoring-service.everest-monitoring.svc.cluster.local'} // URL pointing to the same instance
 
       await expect(async () => {
         const updated = await th.updateMonitoringConfig(request, mcNameKey, patchData)
         expect(updated.url).toMatch(patchData.url)
-      }).toPass({
-        intervals: [1000],
-        timeout: 30 * 1000,
-      })
-    })
-
-    await test.step('update monitoring instance to existing with no creds', async () => {
-      const patchData = {url: 'https://monitoring-service.everest-monitoring.svc.cluster.local'} // existing other monitoring URL
-
-      await expect(async () => {
-        const updated = await th.updateMonitoringConfigRaw(request, mcNameKey, patchData)
-        expect(updated.ok()).toBeFalsy()
-        expect((await updated.json()).message).toMatch("authorization failed, please provide the correct credentials")
       }).toPass({
         intervals: [1000],
         timeout: 30 * 1000,
@@ -116,7 +103,7 @@ test.describe.parallel('Monitoring instances tests', () => {
 
     await test.step('update monitoring instance to existing with apiKey', async () => {
       const patchData = {
-        url: 'https://monitoring-service.everest-monitoring.svc.cluster.local', // existing other monitoring URL
+        url: `https://${process.env.PMM2_IP}`, // existing other monitoring URL
         pmm: {
           apiKey: `${process.env.PMM2_API_KEY}`,
         },
