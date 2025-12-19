@@ -188,24 +188,15 @@ jobs:
 
       - name: Init testing (CI) environment
         working-directory: api-tests
-        timeout-minutes: 30
+        timeout-minutes: 20
         run: |
           make ci-init
 
       - name: Run integration tests
         working-directory: api-tests
-        shell: bash
         timeout-minutes: 20
         run: |
           make test
-
-      - name: Run debug commands on failure
-        if: ${{ failure() }}
-        run: |
-          kubectl -n everest-system describe pods
-          kubectl -n everest-monitoring describe pods
-          kubectl -n everest describe pods
-          kubectl -n everest-system logs deploy/everest-server
 
   integration_tests_cli:
     name: CLI Integration Tests
