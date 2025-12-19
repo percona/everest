@@ -3706,11 +3706,15 @@ components:
                         config if applied
                       type: string
                     type:
-                      default: internal
-                      description: Type is the expose type, can be internal or external
+                      default: ClusterIP
+                      description: Type is the expose type, can be ClusterIP, LoadBalancer,
+                        NodePort. The types internal and external are deprecated.
                       enum:
                         - internal
                         - external
+                        - ClusterIP
+                        - LoadBalancer
+                        - NodePort
                       type: string
                   type: object
                   x-kubernetes-validations:
