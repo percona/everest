@@ -1,3 +1,4 @@
+REPO_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 ##@ General
 .PHONY: default
 default: help
@@ -11,27 +12,26 @@ help: ## Display this help.
 .PHONY: init
 init:     ## Install tests dependencies.
 	$(info Installing dependencies)
-	npm ci
+	pnpm install
+	#npm ci
 	PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx playwright install
 
 # NOTE: API tests do not wait for DB clusters to be ready.
 # The only exception is pg-data-importer test, so that only PG images are pre-uploaded to K3D cluster.
-CI_INIT_DEPS := init deploy-monitoring create-test-users
-CI_INIT_DEPS += k3d-upload-pg-images port-forward-monitoring
+CI_INIT_DEPS := init deploy-monitoring create-test-users k3d-upload-images
+CI_INIT_DEPS += deploy-data-importer deploy-minio
 .PHONY: ci-init
 ci-init: $(CI_INIT_DEPS) 	## Prepare environment for running tests.
 
 PMM_HELM_CHART_VER=1.4.13
 HELM=go tool -modfile=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/../go.mod helm
 .PHONY: deploy-monitoring
-deploy-monitoring:     ## Deploy monitoring instances to K3D test cluster.
+deploy-monitoring:   ## Deploy monitoring instances to K3D test cluster.
 	$(info Deploying PMM instances to K3D test cluster)
 	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
-	$(HELM) install pmm1 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 2m --wait
-	$(HELM) install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 2m -n everest-monitoring --wait
-
-.PHONY: port-forward-monitoring
-port-forward-monitoring:
+	# PMM 3 starts really slowly, so we increase timeout to 10 minutes
+	$(HELM) install pmm1 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 10m --wait
+	$(HELM) install pmm2 --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 10m -n everest-monitoring --wait
 	$(info Port-forwarding PMM instances to localhost)
 	kubectl port-forward --namespace default svc/monitoring-service 8090:443 &
 	kubectl port-forward --namespace everest-monitoring  svc/monitoring-service 8091:443 &
@@ -44,6 +44,19 @@ create-test-users: ## Create test users and add everest_ci user to admin role.
 	$(EVERESTCTL) accounts create -u everest_ci -p password
 	kubectl patch configmap everest-rbac -n everest-system --patch "$$(kubectl get configmap everest-rbac -n everest-system -o json | jq '.data["policy.csv"] += "\ng, everest_ci, role:admin"' | jq '{data: { "policy.csv": .data["policy.csv"] } }')"
 	kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
+
+DATA_IMPORTER_RESOURCE=$(REPO_ROOT)/manifests/dataimporter.yaml
+.PHONY: deploy-data-importer
+deploy-data-importer:
+	$(info Deploying Data Importer to K3D cluster)
+	kubectl apply -f $(DATA_IMPORTER_RESOURCE)
+
+MINIO_RESOURCE=$(REPO_ROOT)/manifests/minio.yaml
+.PHONY: deploy-minio
+deploy-minio:
+	$(info Deploying MinIO to K3D cluster)
+	kubectl apply -f $(MINIO_RESOURCE)
+	kubectl wait deploy/minio --for=condition=Available -n minio --timeout=120s
 
 .PHONY: k3d-upload-pg-images
 k3d-upload-pg-images: ## Pre-upload Postgresql images to K3D test  cluster to speedup tests execution.
@@ -106,53 +119,63 @@ lint-fix:           ## Fix linter errors where possible.
 ##@ Test
 
 # Set a particular test, e.g. make test TEST=database-cluster.spec.ts
-TEST =
+#	RAND=$$(echo $${RANDOM} | md5sum | head -c 5 ) ;\
+
+PROJECT = api-tests
+FLAGS =
 .PHONY: test
 test:               ## Run all tests.
 	@{ \
   	set -xe ;\
-	RAND=$$(echo $${RANDOM} | md5sum | head -c 5 ) ;\
 	export PMM1_IP=$$(kubectl get svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')  ;\
 	if [ -z "$${PMM1_IP}" ]; then echo "Cannot get PMM1_IP" ; exit 1 ; fi ;\
 	export PMM2_IP=$$(kubectl get svc/monitoring-service -o json --request-timeout=2m -n everest-monitoring | jq -r '.spec.clusterIP') ;\
 	if [ -z "$${PMM2_IP}" ]; then echo "Cannot get PMM2_IP" ; exit 1 ; fi ;\
-	export PMM1_API_KEY=$$( \
-      SA_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8090/graph/api/serviceaccounts" \
-        --header 'Content-Type: application/json' \
-        --insecure \
-        --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
-      UID=$$(echo "$$SA_RESP" | jq -r '.uid'); \
-      if [ -z "$$UID" ] || [ "$$UID" = "null" ]; then echo "Failed to create service account for PMM1_API_KEY"; exit 1; fi ;\
-      TOKEN_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8090/graph/api/serviceaccounts/$$UID/tokens" \
-        --header 'Content-Type: application/json' \
-        --insecure \
-        --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
-      KEY=$$(echo "$$TOKEN_RESP" | jq -r '.key'); \
-      if [ -z "$$KEY" ] || [ "$$KEY" = "null" ]; then echo "Failed to create token for PMM1_API_KEY"; exit 1; fi ;\
-      echo "$$KEY" \
-    ) ;\
-	export PMM2_API_KEY=$$( \
-	  SA_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8091/graph/api/serviceaccounts" \
-		--header 'Content-Type: application/json' \
-		--insecure \
-		--data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
-	  UID=$$(echo "$$SA_RESP" | jq -r '.uid'); \
-	  if [ -z "$$UID" ] || [ "$$UID" = "null" ]; then echo "Failed to create service account for PMM2_API_KEY"; exit 1; fi ;\
-	  TOKEN_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8091/graph/api/serviceaccounts/$$UID/tokens" \
-		--header 'Content-Type: application/json' \
-		--insecure \
-		--data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
-	  KEY=$$(echo "$$TOKEN_RESP" | jq -r '.key'); \
-	  if [ -z "$$KEY" ] || [ "$$KEY" = "null" ]; then echo "Failed to create token for PMM2_API_KEY"; exit 1; fi ;\
-	  echo "$$KEY" \
-	) ;\
-	export API_TOKEN=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token) ;\
-	if [ -z "$${API_TOKEN}" ]; then echo "Cannot get API_TOKEN" ; exit 1 ; fi ;\
-	export API_TOKEN_TEST=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "test","password": "password"}' | jq -r .token) ;\
-	if [ -z "$${API_TOKEN_TEST}" ]; then echo "Cannot get API_TOKEN_TEST" ; exit 1 ; fi ;\
-	npx playwright test $(TEST) ;\
+	export PMM_1_LOCAL_URL="https://admin:admin@localhost:8090" ;\
+	export PMM_2_LOCAL_URL="https://admin:admin@localhost:8091" ;\
+	export CI_USER="everest_ci" ;\
+	export CI_PASSWORD="password" ;\
+	export TEST_USER="test" ;\
+	export TEST_PASSWORD="password" ;\
+	projects=$$(echo $(PROJECT) | tr ',' ' ') ;\
+	cmd_proj="" ;\
+	for project in $${projects} ; do \
+	  cmd_proj="$${cmd_proj} --project=$${project}" ;\
+	done ;\
+	npx playwright test --config=./playwright.config.ts $${cmd_proj} $${FLAGS};\
 	}
 
-#.PHONY: test-api-pxc
-#test-api-pxc:       ## Run tests with @pxc tag.
-#	npx playwright test --config=playwright.config.ts -g '@pxc'
+#	export API_TOKEN=$$(curl --location -s localhost:8080/v1/session --header 'Content-Type: application/json' --data '{"username": "everest_ci","password": "password"}' | jq -r .token) ;\
+#	if [ -z "$${API_TOKEN}" ]; then echo "Cannot get API_TOKEN" ; exit 1 ; fi ;\
+
+#export PMM1_API_KEY=$$( \
+#      SA_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8090/graph/api/serviceaccounts" \
+#        --header 'Content-Type: application/json' \
+#        --insecure \
+#        --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
+#      PMM_UID=$$(echo "$$SA_RESP" | jq -r '.uid'); \
+#      if [ -z "$$PMM_UID" ] || [ "$$PMM_UID" = "null" ]; then echo "Failed to create service account for PMM1_API_KEY"; exit 1; fi ;\
+#      TOKEN_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8090/graph/api/serviceaccounts/$$PMM_UID/tokens" \
+#        --header 'Content-Type: application/json' \
+#        --insecure \
+#        --data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
+#      KEY=$$(echo "$$TOKEN_RESP" | jq -r '.key'); \
+#      if [ -z "$$KEY" ] || [ "$$KEY" = "null" ]; then echo "Failed to create token for PMM1_API_KEY"; exit 1; fi ;\
+#      echo "$$KEY" \
+#    ) ;\
+
+#export PMM2_API_KEY=$$( \
+#	  SA_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8091/graph/api/serviceaccounts" \
+#		--header 'Content-Type: application/json' \
+#		--insecure \
+#		--data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
+#	  PMM_UID=$$(echo "$$SA_RESP" | jq -r '.uid'); \
+#	  if [ -z "$$PMM_UID" ] || [ "$$PMM_UID" = "null" ]; then echo "Failed to create service account for PMM2_API_KEY"; exit 1; fi ;\
+#	  TOKEN_RESP=$$(curl -s -X POST "https://admin:admin@localhost:8091/graph/api/serviceaccounts/$$PMM_UID/tokens" \
+#		--header 'Content-Type: application/json' \
+#		--insecure \
+#		--data "{\"name\":\"everest-test-$${RAND}\",\"role\":\"Admin\"}"); \
+#	  KEY=$$(echo "$$TOKEN_RESP" | jq -r '.key'); \
+#	  if [ -z "$$KEY" ] || [ "$$KEY" = "null" ]; then echo "Failed to create token for PMM2_API_KEY"; exit 1; fi ;\
+#	  echo "$$KEY" \
+#	) ;\

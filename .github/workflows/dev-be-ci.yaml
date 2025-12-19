@@ -177,6 +177,7 @@ jobs:
 
       - name: Init testing (CI) environment
         working-directory: api-tests
+        timeout-minutes: 10
         run: |
           make ci-init
 
