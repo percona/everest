@@ -1,4 +1,4 @@
-REPO_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+TEST_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 ##@ General
 .PHONY: default
 default: help
@@ -24,7 +24,7 @@ CI_INIT_DEPS += deploy-data-importer deploy-minio
 ci-init: $(CI_INIT_DEPS) 	## Prepare environment for running tests.
 
 PMM_HELM_CHART_VER=1.4.13
-HELM=go tool -modfile=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/../go.mod helm
+HELM=go tool -modfile=$(TEST_ROOT)/../go.mod helm
 .PHONY: deploy-monitoring
 deploy-monitoring:   ## Deploy monitoring instances to K3D test cluster.
 	$(info Deploying PMM instances to K3D test cluster)
@@ -33,9 +33,9 @@ deploy-monitoring:   ## Deploy monitoring instances to K3D test cluster.
 	$(HELM) install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 10m -n everest-monitoring --wait
 	$(info Port-forwarding PMM instances to localhost)
 	kubectl port-forward -n everest-monitoring svc/monitoring-service 8090:443 &
-	kubectl port-forward -n everest-monitoring pod/pmm-0 8091:8443 &
+	kubectl port-forward -n everest-monitoring svc/monitoring-service 8091:443 &
 
-EVERESTCTL=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/../bin/everestctl
+EVERESTCTL=$(TEST_ROOT)/../bin/everestctl
 .PHONY: create-test-users
 create-test-users: ## Create test users and add everest_ci user to admin role.
 	$(info Creating test users in Everest)
@@ -44,13 +44,13 @@ create-test-users: ## Create test users and add everest_ci user to admin role.
 	kubectl patch configmap everest-rbac -n everest-system --patch "$$(kubectl get configmap everest-rbac -n everest-system -o json | jq '.data["policy.csv"] += "\ng, everest_ci, role:admin"' | jq '{data: { "policy.csv": .data["policy.csv"] } }')"
 	kubectl get configmap everest-rbac -n everest-system -ojsonpath='{.data.policy\.csv}'
 
-DATA_IMPORTER_RESOURCE=$(REPO_ROOT)/manifests/dataimporter.yaml
+DATA_IMPORTER_RESOURCE=$(TEST_ROOT)/manifests/dataimporter.yaml
 .PHONY: deploy-data-importer
 deploy-data-importer:
 	$(info Deploying Data Importer to K3D cluster)
 	kubectl apply -f $(DATA_IMPORTER_RESOURCE)
 
-MINIO_RESOURCE=$(REPO_ROOT)/manifests/minio.yaml
+MINIO_RESOURCE=$(TEST_ROOT)/manifests/minio.yaml
 .PHONY: deploy-minio
 deploy-minio:
 	$(info Deploying MinIO to K3D cluster)
@@ -126,8 +126,7 @@ test:               ## Run all tests.
   	set -xe ;\
 	export PMM1_IP=$$(kubectl get -n everest-monitoring svc/monitoring-service -o json --request-timeout=2m | jq -r '.spec.clusterIP')  ;\
 	if [ -z "$${PMM1_IP}" ]; then echo "Cannot get PMM1_IP" ; exit 1 ; fi ;\
-	export PMM2_IP="$$(kubectl get -n everest-monitoring pod/pmm-0 -o json --request-timeout=2m | jq -r '.status.podIP'):8443" ;\
-	if [ -z "$${PMM2_IP}" ]; then echo "Cannot get PMM2_IP" ; exit 1 ; fi ;\
+	export PMM2_IP=$${PMM1_IP} ;\
 	export PMM_1_LOCAL_URL="https://admin:admin@localhost:8090" ;\
 	export PMM_2_LOCAL_URL="https://admin:admin@localhost:8091" ;\
 	export CI_USER="everest_ci" ;\

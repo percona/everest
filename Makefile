@@ -117,8 +117,8 @@ release-cli: ## Build Everest CLI release versions for different OS and ARCH. (U
 .PHONY: build-ui
 build-ui:
 	$(info Building Everest UI)
-	$(MAKE) -C ${REPO_ROOT}/ui init
-	$(MAKE) -C ${REPO_ROOT}/ui build EVEREST_OUT_DIR=${REPO_ROOT}/public/dist
+	$(MAKE) -C ${TEST_ROOT}/ui init
+	$(MAKE) -C ${TEST_ROOT}/ui build EVEREST_OUT_DIR=${TEST_ROOT}/public/dist
 
 IMAGE_OWNER ?= perconalab/everest
 IMAGE_TAG ?= 0.0.0
