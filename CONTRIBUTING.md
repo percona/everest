@@ -91,7 +91,7 @@ kubectl -n namespace get pvc  # PVCs should be Bound
 #### MySQL database cluster is not up
 If a PXC cluster remains in initializing, use these checks and fixes.
 
-* HAProxy resources: ensure at least 600m CPU and 600Mi memory (prefer 1 CPU and 1Gi) because low resources can throttle HAProxy or its external health-checks and cause timeouts. This issue is common on Arm systems because the HAProxy image is currently built only for amd64.
+* HAProxy resources: ensure at least 600m CPU and 600M memory (prefer 1 CPU and 1G) because low resources can throttle HAProxy or its external health-checks and cause timeouts. This issue is common on Arm systems because the HAProxy image is currently built only for amd64.
 
   ```bash
   kubectl -n everest get pxc -o jsonpath='{.items[*].spec.haproxy.resources}'
