@@ -89,15 +89,25 @@ kubectl -n namespace get pvc  # PVCs should be Bound
 ```
 
 #### MySQL database cluster is not up
+If a PXC cluster remains in initializing, use these checks and fixes.
 
-If your MySQL database cluster is stuck in the initializing state, HAProxy resources are likely too small. Ensure HAProxy has at least 600m CPU and 600M memory. This issue is common on Arm systems because the HAProxy image is currently built only for amd64.
+* HAProxy resources: ensure at least 600m CPU and 600M memory (prefer 1 CPU and 1G) because low resources can throttle HAProxy or its external health-checks and cause timeouts. This issue is common on Arm systems because the HAProxy image is currently built only for amd64.
 
-Check HAProxy resource settings with:
+  ```bash
+  kubectl -n everest get pxc -o jsonpath='{.items[*].spec.haproxy.resources}'
+  ```
 
-```bash
-kubectl -n everest get pxc -o jsonpath='{.items[*].spec.haproxy.resources}'
-```
+* Storage size: set at least `2Gi` to provide space for gcache (Galera uses `gcache=1Gi`).
 
-```json
-{"limits":{"cpu":"600m","memory":"600M"},"requests":{"cpu":"600m","memory":"600M"}}
-```
+  ```bash
+  kubectl -n everest get db -o jsonpath='{.items[*].spec.engine.storage.size}'
+  ```
+
+* Storage unit: use `Gi` (binary), not `G` (decimal); k3d uses local-path provisioner and resizing is not supported. Using `G` causes repeated resize to `Gi`, leading to failures.
+
+* Networking: before creating the k3d cluster, load `br_netfilter` and disable AppArmor/SELinux so networking works and HAProxy initialization succeeds. On GitHub Actions with k3d, following adjustments were made.
+
+  ```bash
+  sudo modprobe br_netfilter
+  sudo systemctl stop apparmor && sudo aa-teardown
+  ```
