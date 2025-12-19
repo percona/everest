@@ -130,6 +130,13 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+          cache: "pnpm"
+          cache-dependency-path: api-tests/package-lock.json
+
       - name: Install Kubernetes tools
         uses: ./.github/actions/install-kubernetes-tools
         with:
