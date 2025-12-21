@@ -1,14 +1,16 @@
 import { PlaywrightTestProject } from "@playwright/test";
-import { dbRestoreActionProject } from "./db-restore-action/project.config";
+import { dbRestoreAction, dbRestoreActionProject } from "./db-restore-action/project.config";
+import { dbRestoreToNewCluster, dbRestoreToNewClusterProject } from "./db-restore-to-new-cluster/project.config";
 
 export const dbRestoreProject: PlaywrightTestProject[] = [
     {
         name: 'pr:db-restore',
         testMatch: /.^/,
         dependencies: [
-            'pr:db-restore:db-restore-action',
-            // 'pr:db-restore:db-restore-to-new-cluster',
+            dbRestoreAction,
+            dbRestoreToNewCluster,
         ],
     },
-    ...dbRestoreActionProject
+    ...dbRestoreActionProject,
+    ...dbRestoreToNewClusterProject,
 ];
