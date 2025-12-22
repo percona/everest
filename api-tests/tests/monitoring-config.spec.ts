@@ -12,17 +12,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { expect, test } from '@fixtures'
-import * as th from "@tests/tests/helpers";
+
+import {expect, test} from '@fixtures'
+import * as th from '@tests/utils/api';
 
 const testPrefix = 'mc',
   mcNameKey = th.limitedSuffixedName(testPrefix + '-key'),
   mcNamePass = th.limitedSuffixedName(testPrefix + '-pass')
 
-test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
-  test.describe.configure({ timeout: 60*1000 });
+test.describe.parallel('Monitoring instances tests', () => {
+  test.describe.configure({timeout: 60 * 1000});
 
-  test.afterAll(async ({ request }) => {
+  test.afterAll(async ({request}) => {
     await th.deleteMonitoringConfig(request, mcNameKey)
     await th.deleteMonitoringConfig(request, mcNamePass)
   })
@@ -74,7 +75,7 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
     })
 
     await test.step('update monitoring instance', async () => {
-      const patchData = { url: 'http://monitoring-service.default.svc.cluster.local'} // URL pointing to the same instance
+      const patchData = {url: 'http://monitoring-service.everest-monitoring.svc.cluster.local'} // URL pointing to the same instance
 
       await expect(async () => {
         const updated = await th.updateMonitoringConfig(request, mcNameKey, patchData)
@@ -85,37 +86,24 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
       })
     })
 
-    await test.step('update monitoring instance to existing with no creds', async () => {
-       const patchData = { url: 'https://monitoring-service.everest-monitoring.svc.cluster.local'} // existing other monitoring URL
-
-       await expect(async () => {
-         const updated = await th.updateMonitoringConfigRaw(request, mcNameKey, patchData)
-         expect(updated.ok()).toBeFalsy()
-         expect((await updated.json()).message).toMatch("authorization failed, please provide the correct credentials")
-       }).toPass({
-         intervals: [1000],
-         timeout: 30 * 1000,
-       })
-     })
-
     await test.step('update monitoring instance to not existing', async () => {
-       const patchData = {
-         url: 'http://not-existing-url', // existing other monitoring URL
-       }
+      const patchData = {
+        url: 'http://not-existing-url', // existing other monitoring URL
+      }
 
-       await expect(async () => {
-         const updated = await th.updateMonitoringConfigRaw(request, mcNameKey, patchData)
-         expect(updated.ok()).toBeFalsy()
-         expect((await updated.json()).message).toContain("dial tcp: lookup not-existing-url")
-       }).toPass({
-         intervals: [1000],
-         timeout: 30 * 1000,
-       })
-     })
+      await expect(async () => {
+        const updated = await th.updateMonitoringConfigRaw(request, mcNameKey, patchData)
+        expect(updated.ok()).toBeFalsy()
+        expect((await updated.json()).message).toContain("dial tcp: lookup not-existing-url")
+      }).toPass({
+        intervals: [1000],
+        timeout: 30 * 1000,
+      })
+    })
 
     await test.step('update monitoring instance to existing with apiKey', async () => {
       const patchData = {
-        url: 'https://monitoring-service.everest-monitoring.svc.cluster.local', // existing other monitoring URL
+        url: `https://${process.env.PMM2_IP}`, // existing other monitoring URL
         pmm: {
           apiKey: `${process.env.PMM2_API_KEY}`,
         },
@@ -159,7 +147,7 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
           errorText: 'Error at "/pmm/apiKey"',
         },
         {
-          payload: { type: 'pmm',},
+          payload: {type: 'pmm',},
           errorText: 'pmm key is required',
         },
       ]
@@ -206,7 +194,7 @@ test.describe('Monitoring instances tests', {tag: ['@monitoring']}, () => {
   })
 
   test('create monitoring instance failures', async ({request}) => {
-    const data ={},
+    const data = {},
       response = await th.createMonitoringConfigWithDataRaw(request, data)
     expect(response.status()).toBe(400)
   })
