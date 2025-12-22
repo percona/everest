@@ -13,14 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {test} from '@playwright/test';
-import {checkError} from '@tests/utils/api';
+import {test as teardown} from '@playwright/test';
+import * as th from "@tests/utils/api";
+import {MONITORING_CONFIG_1, MONITORING_CONFIG_2} from "@root/constants";
 
-test.describe.parallel('Everest settings tests', async () => {
+teardown.describe.parallel('Monitoring config teardown', () => {
+  teardown('Remove Monitoring config 1', async ({request}) => {
+    await th.deleteMonitoringConfig(request, MONITORING_CONFIG_1);
+  });
 
-  test('get settings endpoint', async ({request}) => {
-    const settings = await request.get('/v1/settings')
-
-    await checkError(settings)
-  })
+  teardown('Remove Monitoring config 2', async ({request}) => {
+    await th.deleteMonitoringConfig(request, MONITORING_CONFIG_2);
+  });
 });

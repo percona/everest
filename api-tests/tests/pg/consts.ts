@@ -13,14 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {test} from '@playwright/test';
-import {checkError} from '@tests/utils/api';
-
-test.describe.parallel('Everest settings tests', async () => {
-
-  test('get settings endpoint', async ({request}) => {
-    const settings = await request.get('/v1/settings')
-
-    await checkError(settings)
-  })
-});
+export const PG_BACKUP_STORAGE_NAME_ENV = 'pg-back-strg',
+  PG_BACKUP_BUCKET_NAME = 'bucket-1',
+  PG_BACKUP_DB_CLUSTER_NAME_ENV = 'pg-db-backup',
+  PG_RESTORE_DB_CLUSTER_NAME_ENV = 'pg-db-restore',
+  PG_RESTORE_DB_BACKUP_NAME_ENV = 'pg-db-restore-backup';
