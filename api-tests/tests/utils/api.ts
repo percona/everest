@@ -1,7 +1,21 @@
-import {expect} from '@playwright/test'
-import {CliHelper} from '../helpers/cliHelper'
+// everest
+// Copyright (C) 2023 Percona LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-export const testsNs = 'everest'
+import {expect} from '@playwright/test'
+import {EVEREST_CI_NAMESPACE, TIMEOUTS} from '@root/constants';
+
 
 // --------------------- General helpers --------------------------------------------------
 // testPrefix is used to differentiate between several workers
@@ -23,9 +37,9 @@ export const limitedSuffixedName = (name: string) => {
 }
 
 export const checkError = async (response) => {
-  if (!response.ok()) {
-    console.log(`${response.url()}: `, await response.json());
-  }
+  // if (!response.ok()) {
+  //   console.log(`${response.url()}: `, await response.json());
+  // }
 
   expect(response.ok()).toBeTruthy()
 }
@@ -44,7 +58,7 @@ export const checkResourceDeletion = async (apiResp) => {
 // --------------------- DB Cluster helpers -----------------------------------------------
 // Returns DBCluster object for creating 1-node PG cluster
 export const getPGClusterDataSimple = (name: string) => {
-  const  data = {
+  const data = {
     apiVersion: 'everest.percona.com/v1alpha1',
     kind: 'DatabaseCluster',
     metadata: {
@@ -168,7 +182,18 @@ export const createDBClusterWithData = async (request, data) => {
 // Creates DB cluster with provided data as body.
 // Returns raw response object without any checks or parsing.
 export const createDBClusterWithDataRaw = async (request, data) => {
-  return await request.post(`/v1/namespaces/${testsNs}/database-clusters`, { data })
+  return await request.post(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-clusters`, {data})
+}
+
+// Waits for DB cluster status to be Ready
+export const waitForDBClusterToBeReady = async (request, name) => {
+  await expect.poll(async () => {
+    const db = await getDBCluster(request, name)
+    return db.status.status
+  }, {
+    intervals: [TIMEOUTS.TenSeconds],
+    timeout: TIMEOUTS.TenMinutes,
+  }).toBe('ready')
 }
 
 export const getDBCluster = async (request, name) => {
@@ -179,11 +204,11 @@ export const getDBCluster = async (request, name) => {
 }
 
 export const getDBClusterRaw = async (request, name) => {
-  return  await request.get(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-clusters/${name}`)
 }
 
 export const updateDBCluster = async (request, name, updateData) => {
-  const response = await request.put(`/v1/namespaces/${testsNs}/database-clusters/${name}`, { data: updateData })
+  const response = await request.put(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-clusters/${name}`, {data: updateData})
   await checkError(response)
   return (await response.json())
 }
@@ -200,37 +225,37 @@ export const deleteDBCluster = async (request, name) => {
   })
 }
 
-export const deleteDBClusterRaw = async (request,  name) => {
-  return await request.delete(`/v1/namespaces/${testsNs}/database-clusters/${name}`)
+export const deleteDBClusterRaw = async (request, name) => {
+  return await request.delete(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-clusters/${name}`)
 }
 
 // --------------------- Backup Storage helpers -----------------------------------------
 export const getBackupStorageS3Payload = (bsName: string) => {
   const payload = {
-      type: 's3',
-      name: bsName,
-      url: 'http://custom-url',
-      description: 'Dev storage',
-      bucketName: bsName,
-      region: 'us-east-2',
-      accessKey: 'sdfs',
-      secretKey: 'sdfsdfsd',
-      allowedNamespaces: [testsNs]
-    }
+    type: 's3',
+    name: bsName,
+    url: 'https://custom-url',
+    description: 'Dev storage',
+    bucketName: bsName,
+    region: 'us-east-2',
+    accessKey: 'sdfs',
+    secretKey: 'sdfsdfsd',
+    allowedNamespaces: [EVEREST_CI_NAMESPACE]
+  }
   return JSON.parse(JSON.stringify(payload))
 }
 
 export const getBackupStorageAzurePayload = (bsName: string) => {
   const payload = {
-      type: 'azure',
-      name: bsName,
-      description: 'Dev storage',
-      region: 'us-east-2',
-      bucketName: bsName,
-      accessKey: 'sdfs',
-      secretKey: 'sdfsdfsd',
-      allowedNamespaces: [testsNs]
-    }
+    type: 'azure',
+    name: bsName,
+    description: 'Dev storage',
+    region: 'us-east-2',
+    bucketName: bsName,
+    accessKey: 'sdfs',
+    secretKey: 'sdfsdfsd',
+    allowedNamespaces: [EVEREST_CI_NAMESPACE]
+  }
   return JSON.parse(JSON.stringify(payload))
 }
 
@@ -246,7 +271,7 @@ export const createBackupStorageWithData = async (request, data) => {
 }
 
 export const createBackupStorageWithDataRaw = async (request, data) => {
-  return await request.post(`/v1/namespaces/${testsNs}/backup-storages`, { data: data })
+  return await request.post(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/backup-storages`, {data: data})
 }
 
 export const getBackupStorage = async (request, name) => {
@@ -256,7 +281,7 @@ export const getBackupStorage = async (request, name) => {
 }
 
 export const getBackupStorageRaw = async (request, name) => {
-  return await request.get(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/backup-storages/${name}`)
 }
 
 export const listBackupStorages = async (request) => {
@@ -266,7 +291,7 @@ export const listBackupStorages = async (request) => {
 }
 
 export const listBackupStoragesRaw = async (request) => {
-  return await request.get(`/v1/namespaces/${testsNs}/backup-storages`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/backup-storages`)
 }
 
 export const updateBackupStorage = async (request, name, data) => {
@@ -276,7 +301,7 @@ export const updateBackupStorage = async (request, name, data) => {
 }
 
 export const updateBackupStorageRaw = async (request, name, data) => {
-  return await request.patch(`/v1/namespaces/${testsNs}/backup-storages/${name}`, {data: data})
+  return await request.patch(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/backup-storages/${name}`, {data: data})
 }
 
 export const deleteBackupStorage = async (request, name) => {
@@ -292,7 +317,7 @@ export const deleteBackupStorage = async (request, name) => {
 }
 
 export const deleteBackupStorageRaw = async (request, name) => {
-  return await request.delete(`/v1/namespaces/${testsNs}/backup-storages/${name}`)
+  return await request.delete(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/backup-storages/${name}`)
 }
 
 // --------------------- DB Backup helpers -----------------------------------------------
@@ -319,7 +344,7 @@ export const createDBClusterBackupWithData = async (request, data) => {
 }
 
 export const createDBClusterBackupWithDataRaw = async (request, data) => {
-  return await request.post(`/v1/namespaces/${testsNs}/database-cluster-backups`, { data })
+  return await request.post(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-cluster-backups`, {data})
 }
 
 export const getDBClusterBackup = async (request, name) => {
@@ -329,7 +354,7 @@ export const getDBClusterBackup = async (request, name) => {
 }
 
 export const getDBClusterBackupRaw = async (request, name) => {
-  return await request.get(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-cluster-backups/${name}`)
 }
 
 export const listDBClusterBackups = async (request, dbClusterName) => {
@@ -339,24 +364,32 @@ export const listDBClusterBackups = async (request, dbClusterName) => {
 }
 
 export const listDBClusterBackupsRaw = async (request, dbClusterName) => {
-  return await request.get(`/v1/namespaces/${testsNs}/database-clusters/${dbClusterName}/backups`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-clusters/${dbClusterName}/backups`)
 }
 
 export const deleteDBClusterBackup = async (request, name) => {
-  let res = await deleteDBClusterBackupRaw(request, name)
-
   // Wait for deletion mark.
   await expect(async () => {
-    res = await getDBClusterBackupRaw(request, name)
-    await checkResourceDeletion(res)
+    await deleteDBClusterBackupRaw(request, name)
+    await checkResourceDeletion(await getDBClusterBackupRaw(request, name))
   }).toPass({
     intervals: [1000],
-    timeout: 30 * 1000,
+    timeout: 120 * 1000,
   })
 }
 
 export const deleteDBClusterBackupRaw = async (request, name) => {
-  return await request.delete(`/v1/namespaces/${testsNs}/database-cluster-backups/${name}`)
+  return await request.delete(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-cluster-backups/${name}`)
+}
+
+export const waitForDBClusterBackupToFinish = async (request, name) => {
+  await expect.poll(async () => {
+    const backup = await getDBClusterBackup(request, name)
+    return backup.status.state
+  }, {
+    intervals: [10 * 1000],
+    timeout: 600 * 1000,
+  }).toBe('Succeeded')
 }
 
 // --------------------- DB Restore helpers -----------------------------------------------
@@ -384,7 +417,7 @@ export const createDBClusterRestoreWithData = async (request, data) => {
 }
 
 export const createDBClusterRestoreWithDataRaw = async (request, data) => {
-  return await request.post(`/v1/namespaces/${testsNs}/database-cluster-restores`, { data })
+  return await request.post(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-cluster-restores`, {data})
 }
 
 export const getDBClusterRestore = async (request, name) => {
@@ -394,7 +427,7 @@ export const getDBClusterRestore = async (request, name) => {
 }
 
 export const getDBClusterRestoreRaw = async (request, name) => {
-  return await request.get(`/v1/namespaces/${testsNs}/database-cluster-restores/${name}`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-cluster-restores/${name}`)
 }
 
 export const listDBClusterRestores = async (request, dbClusterName) => {
@@ -404,7 +437,7 @@ export const listDBClusterRestores = async (request, dbClusterName) => {
 }
 
 export const listDBClusterRestoresRaw = async (request, dbClusterName) => {
-  return await request.get(`/v1/namespaces/${testsNs}/database-clusters/${dbClusterName}/restores`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-clusters/${dbClusterName}/restores`)
 }
 
 export const deleteDBClusterRestore = async (request, name) => {
@@ -421,7 +454,17 @@ export const deleteDBClusterRestore = async (request, name) => {
 }
 
 export const deleteDBClusterRestoreRaw = async (request, name) => {
-  return await request.delete(`/v1/namespaces/${testsNs}/database-cluster-restores/${name}`)
+  return await request.delete(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-cluster-restores/${name}`)
+}
+
+export const waitForDBClusterRestoreToFinish = async (request, name) => {
+  await expect.poll(async () => {
+    const backup = await getDBClusterRestore(request, name)
+    return backup.status.state
+  }, {
+    intervals: [TIMEOUTS.TenSeconds],
+    timeout: TIMEOUTS.TenMinutes,
+  }).toBe('Succeeded')
 }
 
 // --------------------- Monitoring Config helpers ---------------------------------------
@@ -435,7 +478,7 @@ export const createMonitoringConfig = async (request, name) => {
     },
     verifyTLS: false,
   }
-  return  await createMonitoringConfigWithDataRaw(request, miData)
+  return await createMonitoringConfigWithDataRaw(request, miData)
 }
 
 export const createMonitoringConfigWithData = async (request, data) => {
@@ -445,7 +488,7 @@ export const createMonitoringConfigWithData = async (request, data) => {
 }
 
 export const createMonitoringConfigWithDataRaw = async (request, data) => {
-  return await request.post(`/v1/namespaces/${testsNs}/monitoring-instances`, { data: data })
+  return await request.post(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/monitoring-instances`, {data: data})
 }
 
 export const getMonitoringConfig = async (request, name) => {
@@ -455,7 +498,7 @@ export const getMonitoringConfig = async (request, name) => {
 }
 
 export const getMonitoringConfigRaw = async (request, name) => {
-  return await request.get(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/monitoring-instances/${name}`)
 }
 
 export const updateMonitoringConfig = async (request, name, data) => {
@@ -465,7 +508,7 @@ export const updateMonitoringConfig = async (request, name, data) => {
 }
 
 export const updateMonitoringConfigRaw = async (request, name, data) => {
-  return await request.patch(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`, {data: data})
+  return await request.patch(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/monitoring-instances/${name}`, {data: data})
 }
 
 export const deleteMonitoringConfig = async (request, name) => {
@@ -481,12 +524,12 @@ export const deleteMonitoringConfig = async (request, name) => {
 }
 
 export const deleteMonitoringConfigRaw = async (request, name) => {
-  return await request.delete(`/v1/namespaces/${testsNs}/monitoring-instances/${name}`)
+  return await request.delete(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/monitoring-instances/${name}`)
 }
 
 // --------------------- DB Engine helpers -----------------------------------------------
 export const getPSMDBEngineRecommendedVersion = async (request) => {
-  const response = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`)
+  const response = await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-engines/percona-server-mongodb-operator`)
   await checkError(response)
 
   const availableVersions = (await response.json()).status.availableVersions.engine
@@ -502,32 +545,6 @@ export const getPSMDBEngineRecommendedVersion = async (request) => {
   return recommendedVersion
 }
 // --------------------- Data Importer helpers -----------------------------------------------
-export const createDataImporter = async (cli: CliHelper) => {
-  let dataImporterPath = 'testdata/dataimporter.yaml'
-  await cli.exec(`kubectl apply -f ${dataImporterPath} || true`)
-
-  await expect(async () => {
-    const out = await cli.execSilent(`kubectl get dataimporters`)
-    await out.outContains("test-data-importer")
-  }).toPass({
-    intervals: [1000],
-    timeout: 30 * 1000,
-  })
-}
-
-export const deleteDataImporter = async (cli: CliHelper) => {
-  let dataImporterPath = 'testdata/dataimporter.yaml'
-  await cli.exec(`kubectl delete -f ${dataImporterPath} || true`)
-
-  await expect(async () => {
-    const out = await cli.execSilent(`kubectl get dataimporters`)
-    await out.outNotContains(["test-data-importer"])
-  }).toPass({
-    intervals: [2000],
-    timeout: 30 * 1000,
-  })
-}
-
 export const getDataImportJobs = async (request, dbClusterName) => {
   const response = await getDataImportJobsRaw(request, dbClusterName)
   await checkError(response)
@@ -535,5 +552,62 @@ export const getDataImportJobs = async (request, dbClusterName) => {
 }
 
 export const getDataImportJobsRaw = async (request, dbClusterName) => {
-  return await request.get(`/v1/namespaces/${testsNs}/database-clusters/${dbClusterName}/data-import-jobs`)
+  return await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-clusters/${dbClusterName}/data-import-jobs`)
+}
+
+// --------------------- LoadBalancer Config helpers ---------------------------------------
+export const createLoadBalancerConfigWithData = async (request, data) => {
+  const response = await createLoadBalancerConfigWithDataRaw(request, data)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const createLoadBalancerConfigWithDataRaw = async (request, data) => {
+  return await request.post(`/v1/load-balancer-configs`, {data: data})
+}
+
+export const getLoadBalancerConfig = async (request, name) => {
+  const response = await getLoadBalancerConfigRaw(request, name)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const getLoadBalancerConfigRaw = async (request, name) => {
+  return await request.get(`/v1/load-balancer-configs/${name}`)
+}
+
+export const updateLoadBalancerConfigWithData = async (request, name, data) => {
+  const response = await updateLoadBalancerConfigWithDataRaw(request, name, data)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const updateLoadBalancerConfigWithDataRaw = async (request, name, data) => {
+  return await request.put(`/v1/load-balancer-configs/${name}`, {data: data})
+}
+
+export const listLoadBalancerConfigs = async (request) => {
+  const response = await listLoadBalancerConfigsRaw(request)
+  await checkError(response)
+  return (await response.json())
+}
+
+export const listLoadBalancerConfigsRaw = async (request) => {
+  return await request.get(`/v1/load-balancer-configs`)
+}
+
+export const deleteLoadBalancerConfig = async (request, name) => {
+  // Wait for deletion mark.
+  await expect(async () => {
+    await deleteLoadBalancerConfigRaw(request, name)
+    const res = await getLoadBalancerConfigRaw(request, name)
+    await checkResourceDeletion(res)
+  }).toPass({
+    intervals: [1000],
+    timeout: 300 * 1000,
+  })
+}
+
+export const deleteLoadBalancerConfigRaw = async (request, name) => {
+  return await request.delete(`/v1/load-balancer-configs/${name}`)
 }
