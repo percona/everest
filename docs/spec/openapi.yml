@@ -3316,7 +3316,7 @@ components:
             allowUnsafeConfiguration:
               description: |-
                 AllowUnsafeConfiguration field used to ensure that the user can create configurations unfit for production use.
-                
+
                 Deprecated: AllowUnsafeConfiguration will not be supported in the future releases.
               type: boolean
             backup:
@@ -3387,7 +3387,7 @@ components:
                   properties:
                     backupStorageName:
                       description: |-
-                        BackupStorageName is the name of the BackupStorage used for backups.
+                        BackupStorageName is the name of the BackupStorage used for storing backups.
                         The BackupStorage must be created in the same namespace as the DatabaseCluster.
                       type: string
                     path:
@@ -3500,7 +3500,7 @@ components:
                   properties:
                     date:
                       description: 'Date is the UTC date to recover to. The accepted
-                       format: "2006-01-02T15:04:05Z".'
+                        format: "2006-01-02T15:04:05Z".'
                       type: string
                     type:
                       default: date
@@ -3522,7 +3522,7 @@ components:
                     CRVersion is the desired version of the CR to use with the
                     underlying operator.
                     If unspecified, everest-operator will use the same version as the operator.
-                    
+
                     NOTE: Updating this property post installation may lead to a restart of the cluster.
                   type: string
                 replicas:
@@ -3574,6 +3574,9 @@ components:
                     - postgresql
                     - psmdb
                   type: string
+                  x-kubernetes-validations:
+                    - message: .spec.engine.type cannot be changed
+                      rule: self == oldSelf
                 userSecretsName:
                   description: UserSecretsName is the name of the secret containing
                     the user secrets
@@ -3615,10 +3618,10 @@ components:
                       description: |-
                         Claims lists the names of resources, defined in spec.resourceClaims,
                         that are used by this container.
-                        
-                        This is an alpha field and requires enabling the
+
+                        This field depends on the
                         DynamicResourceAllocation feature gate.
-                        
+
                         This field is immutable. It can only be set for containers.
                       items:
                         description: ResourceClaim references one entry in PodSpec.ResourceClaims.
@@ -3941,13 +3944,23 @@ components:
     # please do not edit the definition below manually
     # -------------------------
     DatabaseClusterBackup:
-      description: DatabaseClusterBackup is the Schema for the databaseclusterbackups API.
+      description: DatabaseClusterBackup is the Schema for the databaseclusterbackups
+        API.
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
           type: string
         metadata:
           type: object
@@ -3955,7 +3968,9 @@ components:
           description: DatabaseClusterBackupSpec defines the desired state of DatabaseClusterBackup.
           properties:
             backupStorageName:
-              description: BackupStorageName is the name of the BackupStorage used for backups.
+              description: |-
+                BackupStorageName is the name of the BackupStorage used for backups.
+                The BackupStorage must be created in the same namespace as the DatabaseCluster.
               type: string
             dbClusterName:
               description: DBClusterName is the original database cluster name.
@@ -3965,7 +3980,8 @@ components:
             - dbClusterName
           type: object
         status:
-          description: DatabaseClusterBackupStatus defines the observed state of DatabaseClusterBackup.
+          description: DatabaseClusterBackupStatus defines the observed state of
+            DatabaseClusterBackup.
           properties:
             completed:
               description: Completed is the time when the job was completed.
@@ -3979,10 +3995,17 @@ components:
               description: Destination is the full path to the backup.
               type: string
             gaps:
-              description: Gaps identifies if there are gaps detected in the PITR logs
+              description: Gaps identifies if there are gaps detected in the PITR
+                logs
+              type: boolean
+            inUse:
+              default: false
+              description: InUse is a flag that indicates if this restore resource
+                is being used to restore DB cluster from backup.
               type: boolean
             latestRestorableTime:
-              description: LatestRestorableTime is the latest time that can be used for PITR restore
+              description: LatestRestorableTime is the latest time that can be used
+                for PITR restore
               format: date-time
               type: string
             state:
@@ -3997,13 +4020,23 @@ components:
     # please do not edit the definition below manually
     # -------------------------
     DatabaseClusterRestore:
-      description: DatabaseClusterRestore is the Schema for the databaseclusterrestores API.
+      description: DatabaseClusterRestore is the Schema for the databaseclusterrestores
+        API.
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
           type: string
         metadata:
           type: object
@@ -4014,10 +4047,14 @@ components:
               description: DataSource defines a data source for restoration.
               properties:
                 backupSource:
-                  description: BackupSource is the backup source to restore from
+                  description: |-
+                    BackupSource is the backup source to restore from.
+                    Shall be set either this field or DBClusterBackupName.
                   properties:
                     backupStorageName:
-                      description: BackupStorageName is the name of the BackupStorage used for backups.
+                      description: |-
+                        BackupStorageName is the name of the BackupStorage used for storing backups.
+                        The BackupStorage must be created in the same namespace as the DatabaseCluster.
                       type: string
                     path:
                       description: Path is the path to the backup file/directory.
@@ -4027,13 +4064,18 @@ components:
                     - path
                   type: object
                 dbClusterBackupName:
-                  description: DBClusterBackupName is the name of the DB cluster backup to restore from
+                  description: |-
+                    DBClusterBackupName is the name of the DB cluster backup to restore from.
+                    Shall be set either this field or BackupSource.
                   type: string
                 pitr:
-                  description: PITR is the point-in-time recovery configuration
+                  description: |-
+                    PITR is the point-in-time recovery configuration.
+                    May be set in addition to DBClusterBackupName or BackupSource to perform PITR restore.
                   properties:
                     date:
-                      description: 'Date is the UTC date to recover to. The accepted format: "2006-01-02T15:04:05Z".'
+                      description: 'Date is the UTC date to recover to. The accepted
+                        format: "2006-01-02T15:04:05Z".'
                       type: string
                     type:
                       default: date
@@ -4045,18 +4087,25 @@ components:
                   type: object
               type: object
             dbClusterName:
-              description: DBClusterName defines the cluster name to restore.
+              description: DBClusterName defines the target database cluster name
+                that needs to be restored from backup.
               type: string
           required:
             - dataSource
             - dbClusterName
           type: object
         status:
-          description: DatabaseClusterRestoreStatus defines the observed state of DatabaseClusterRestore.
+          description: DatabaseClusterRestoreStatus defines the observed state of
+            DatabaseClusterRestore.
           properties:
             completed:
               format: date-time
               type: string
+            inUse:
+              default: false
+              description: InUse is a flag that indicates if this restore resource
+                is being used to restore DB cluster from backup.
+              type: boolean
             message:
               type: string
             state:
