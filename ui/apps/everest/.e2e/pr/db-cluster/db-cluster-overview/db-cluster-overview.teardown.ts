@@ -19,7 +19,7 @@ import { EVEREST_CI_NAMESPACES } from "@e2e/constants";
 
 const dbClusterName = 'pr-db-ovw';
 
-teardown.describe.serial('DB Cluster Restore teardown', () => {
+teardown.describe.serial('DB Cluster Overview teardown', () => {
   teardown(`Delete ${dbClusterName} cluster`, async ({ request }) => {
     await deleteDbClusterFn(request, dbClusterName, EVEREST_CI_NAMESPACES.EVEREST_UI,);
   });

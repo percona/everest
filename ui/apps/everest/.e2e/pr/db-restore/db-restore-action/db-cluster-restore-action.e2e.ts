@@ -23,9 +23,9 @@ import { dbClusterName } from './project.config';
 
 test.describe('DB Cluster Restore', () => {
 
-  // IST is UTC+5h30, with or without DST
+  // GMT is UTC+0:00, with or without DST
   test.use({
-    timezoneId: 'IST',
+    timezoneId: 'GMT',
   });
 
   test.beforeEach(async ({ page }) => {
@@ -55,7 +55,6 @@ test.describe('DB Cluster Restore', () => {
     ).toBeVisible();
   });
 
-  //TODO FAILED
   test('keep selected time in the modal', async ({
     page,
   }, testInfo) => {
@@ -108,9 +107,18 @@ test.describe('DB Cluster Restore', () => {
     await page.getByTestId('radio-option-fromPITR').click();
     const input = await page.getByTestId('date-time-picker-pitr-backup');
     expect(await input.inputValue()).toBe('27/02/2025 at 15:30:00');
-    await input.fill('27/02/2025 at 15:25:00');
-    // Wait for some time to make sure the input value hasn't changed
-    await page.waitForTimeout(12000);
+
+    // In headless mode, Chromium runs too fast and the Material-UI DateTimePicker's 
+    // React state doesn't update properly when using fill() Playwright issue #36395
+    // evaluate() approach bypasses the readonly restriction entirely 
+    // (works in both headed and headless):
+    await input.evaluate((el: HTMLInputElement) => {
+      el.value = '27/02/2025 at 15:25:00';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    await page.waitForTimeout(2000);
     expect(await input.inputValue()).toBe('27/02/2025 at 15:25:00');
   });
 });

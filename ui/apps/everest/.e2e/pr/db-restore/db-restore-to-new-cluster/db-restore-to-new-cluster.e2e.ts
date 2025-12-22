@@ -21,9 +21,8 @@ import {
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
 import { EVEREST_CI_NAMESPACES, getBucketNamespacesMap, TIMEOUTS } from '@e2e/constants';
-import { goToStep, moveForward } from '@e2e/utils/db-wizard';
+import { moveForward } from '@e2e/utils/db-wizard';
 import { dbClusterName } from './project.config';
-import { debug } from 'yaml/dist/log';
 import { limitedSuffixedName } from '@e2e/utils/generic';
 import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
 
@@ -70,7 +69,7 @@ test.describe.parallel('DB Cluster Restore to the new cluster', () => {
         });
       }
     );
-    await page.pause();
+
     await findDbAndClickRow(page, dbClusterName);
     const actionButton = page.getByTestId('actions-button');
     await actionButton.click();
@@ -99,7 +98,6 @@ test.describe.parallel('DB Cluster Restore to the new cluster', () => {
     await page.getByTestId('text-input-db-name').fill('new-db-cluster');
     await moveForward(page);
 
-    await page.pause();
     await expect(page.getByTestId('text-input-shard-nr')).toHaveValue('2');
     await expect(
       page.getByText(
