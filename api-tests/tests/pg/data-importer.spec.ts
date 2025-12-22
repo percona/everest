@@ -12,20 +12,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { expect, test } from '@fixtures'
-import * as th from "@tests/tests/helpers";
+
+import {expect, test} from '@fixtures'
+import * as th from '@tests/utils/api';
 
 const testPrefix = 'pg-di'
 
-test.describe('PG data importer tests', {tag: ['@pg', '@data-importer']}, () => {
-  test.describe.configure({timeout: 360 * 1000, mode: 'default'});
+test.describe.parallel('PG data importer tests', () => {
+  test.describe.configure({timeout: 300 * 1000});
 
-  test.beforeAll(async ({ cli }) => {
-    await th.createDataImporter(cli)
-  })
+  const dbClusterName = th.limitedSuffixedName(testPrefix);
 
-  test.afterAll(async ({ cli }) => {
-    await th.deleteDataImporter(cli)
+  test.afterAll(async ({request, cli}) => {
+    await th.deleteDBCluster(request, dbClusterName);
   })
 
   test('list data importers', async ({request}) => {
@@ -37,7 +36,6 @@ test.describe('PG data importer tests', {tag: ['@pg', '@data-importer']}, () => 
   })
 
   test('import data into fresh cluster', async ({request}) => {
-    const dbClusterName = th.limitedSuffixedName(testPrefix)
     let dbClusterPayload = th.getPGClusterDataSimple(dbClusterName)
     dbClusterPayload.spec.dataSource = {
       dataImport: {
@@ -57,36 +55,32 @@ test.describe('PG data importer tests', {tag: ['@pg', '@data-importer']}, () => 
       },
     }
 
-    try {
-      let dbCluster
+    let dbCluster
 
-      await test.step('prepare env', async () => {
-        await th.createDBClusterWithData(request, dbClusterPayload)
-      });
+    await test.step('prepare env', async () => {
+      await th.createDBClusterWithData(request, dbClusterPayload)
+    });
 
-      await test.step('check db cluster data importing', async () => {
-        await expect(async () => {
-          dbCluster = await th.getDBCluster(request, dbClusterName)
-          expect(dbCluster.status.status).toBe('importing')
-        }).toPass({
-          intervals: [1000],
-          timeout: 300 * 1000,
-        })
-      });
-
-      await test.step('check data importer job', async () => {
-        await expect(async () => {
-          const dijList = await th.getDataImportJobs(request, dbClusterName)
-          expect(dijList.items.length).toBe(1)
-          const dij = dijList.items[0]
-          expect(dij.status.state).toBe('Running')
-        }).toPass({
-          intervals: [1000],
-          timeout: 30 * 1000,
-        });
+    await test.step('check db cluster data importing', async () => {
+      await expect(async () => {
+        dbCluster = await th.getDBCluster(request, dbClusterName)
+        expect(dbCluster.status.status).toBe('importing')
+      }).toPass({
+        intervals: [1000],
+        timeout: 300 * 1000,
       })
-    } finally {
-      await th.deleteDBCluster(request, dbClusterName)
-    }
+    });
+
+    await test.step('check data importer job', async () => {
+      await expect(async () => {
+        const dijList = await th.getDataImportJobs(request, dbClusterName)
+        expect(dijList.items.length).toBe(1)
+        const dij = dijList.items[0]
+        expect(dij.status.state).toBe('Running')
+      }).toPass({
+        intervals: [1000],
+        timeout: 30 * 1000,
+      });
+    })
   })
 })
