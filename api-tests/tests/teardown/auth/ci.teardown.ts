@@ -13,14 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {test} from '@playwright/test';
-import {checkError} from '@tests/utils/api';
+import {test as teardown} from '@playwright/test';
+import {logoutCIUser} from '@tests/utils/user';
 
-test.describe.parallel('Everest settings tests', async () => {
-
-  test('get settings endpoint', async ({request}) => {
-    const settings = await request.get('/v1/settings')
-
-    await checkError(settings)
-  })
+teardown.describe.serial('Auth teardown CI', () => {
+  teardown('Logout CI user', async ({request}) => {
+    await logoutCIUser(request);
+  });
 });
