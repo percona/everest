@@ -37,7 +37,8 @@ declare module '@mui/material/styles' {
     };
   }
 
-  interface Palette extends PaletteOptions {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface Palette extends PaletteOptions { }
   interface SimplePaletteColorOptions {
     surface?: string;
   }
@@ -110,143 +111,143 @@ const baseThemeOptions = (mode: PaletteMode): ThemeOptions => ({
     mode,
     ...(mode === 'light'
       ? {
-          default: {
-            light: '#4B5468',
-            main: '#3A4151',
-            dark: '#2C323E',
-            contrastText: '#3A4151',
-            surface: 'rgba(44, 50, 62, 0.122)',
-          },
-          error: {
-            light: '#CC352E',
-            main: '#B10810',
-            dark: '#920000',
-            contrastText: '#920000',
-            surface: '#FFECE9',
-          },
-          warning: {
-            light: '#AA7F26',
-            main: '#9C7407',
-            dark: '#654B17',
-            contrastText: '#654B17',
-            surface: '#FFF5C2',
-          },
-          info: {
-            light: '#127AE8',
-            main: '#0E5FB5',
-            dark: '#0B4A8C',
-            contrastText: '#0B4A8C',
-            surface: '#E8F3FF',
-          },
-          success: {
-            light: '#008C71',
-            main: '#00745B',
-            dark: '#005C45',
-            contrastText: '#005C45',
-            surface: '#E7F6F1',
-          },
-          text: {
-            primary: 'rgba(44, 50, 62, 1)',
-            secondary: 'rgba(44, 50, 62, 0.72)',
-            disabled: 'rgba(44, 50, 62, 0.4)',
-          },
-          action: {
-            hover: 'rgba(44, 50, 62, 0.04)',
-            hoverOpacity: 0.04,
-            disabled: 'rgba(44, 50, 62, 0.12)',
-            disabledOpacity: 0.12,
-            focus: 'rgba(44, 50, 62, 0.12)',
-            focusOpacity: 0.12,
-          },
-          background: {
-            default: '#FFFFFF',
-            paper: '#FFFFFF',
-          },
-          surfaces: {
-            backdrop: 'rgba(44, 50, 62, 0.72)',
-            elevation0: 'rgba(240, 241, 244, 1)',
-            elevation1: 'rgba(255, 255, 255, 1)',
-          },
-          dividers: {
-            divider: 'rgba(44, 50, 62, 0.25)',
-            dividerStrong: 'rgba(44, 50, 62, 0.5)',
-            dividerStronger: '#2C323E',
-            contour: 'rgba(0, 0, 0, 0.06)',
-          },
-          tooltips: {
-            background: '#3A4151',
-            color: '#FFFFFF',
-          },
-        }
+        default: {
+          light: '#4B5468',
+          main: '#3A4151',
+          dark: '#2C323E',
+          contrastText: '#3A4151',
+          surface: 'rgba(44, 50, 62, 0.122)',
+        },
+        error: {
+          light: '#CC352E',
+          main: '#B10810',
+          dark: '#920000',
+          contrastText: '#920000',
+          surface: '#FFECE9',
+        },
+        warning: {
+          light: '#AA7F26',
+          main: '#9C7407',
+          dark: '#654B17',
+          contrastText: '#654B17',
+          surface: '#FFF5C2',
+        },
+        info: {
+          light: '#127AE8',
+          main: '#0E5FB5',
+          dark: '#0B4A8C',
+          contrastText: '#0B4A8C',
+          surface: '#E8F3FF',
+        },
+        success: {
+          light: '#008C71',
+          main: '#00745B',
+          dark: '#005C45',
+          contrastText: '#005C45',
+          surface: '#E7F6F1',
+        },
+        text: {
+          primary: 'rgba(44, 50, 62, 1)',
+          secondary: 'rgba(44, 50, 62, 0.72)',
+          disabled: 'rgba(44, 50, 62, 0.4)',
+        },
+        action: {
+          hover: 'rgba(44, 50, 62, 0.04)',
+          hoverOpacity: 0.04,
+          disabled: 'rgba(44, 50, 62, 0.12)',
+          disabledOpacity: 0.12,
+          focus: 'rgba(44, 50, 62, 0.12)',
+          focusOpacity: 0.12,
+        },
+        background: {
+          default: '#FFFFFF',
+          paper: '#FFFFFF',
+        },
+        surfaces: {
+          backdrop: 'rgba(44, 50, 62, 0.72)',
+          elevation0: 'rgba(240, 241, 244, 1)',
+          elevation1: 'rgba(255, 255, 255, 1)',
+        },
+        dividers: {
+          divider: 'rgba(44, 50, 62, 0.25)',
+          dividerStrong: 'rgba(44, 50, 62, 0.5)',
+          dividerStronger: '#2C323E',
+          contour: 'rgba(0, 0, 0, 0.06)',
+        },
+        tooltips: {
+          background: '#3A4151',
+          color: '#FFFFFF',
+        },
+      }
       : {
-          default: {
-            light: '#FFFFFF',
-            main: '#F0F1F4',
-            dark: '#D1D5DE',
-            contrastText: '#F0F1F4',
-            surface: 'rgba(240, 241, 244, 0.149)',
-          },
-          error: {
-            light: '#FEA195',
-            main: '#F37C6F',
-            dark: '#E2584D',
-            contrastText: '#FFFFFF',
-            surface: '#E2584D',
-          },
-          warning: {
-            light: '#FFF5C2',
-            main: '#FFEE99',
-            dark: '#FFE770',
-            contrastText: '#654B17',
-            surface: '#FFE770',
-          },
-          info: {
-            light: '#439EFF',
-            main: '#1486FF',
-            dark: '#127AE8',
-            contrastText: '#FFFFFF',
-            surface: '#127AE8',
-          },
-          success: {
-            light: '#51BAA2',
-            main: '#00A489',
-            dark: '#008C71',
-            contrastText: '#FFFFFF',
-            surface: '#008C71',
-          },
-          text: {
-            primary: '#FBFBFB',
-            secondary: 'rgba(251, 251, 251, 0.72)',
-            disabled: 'rgba(251, 251, 251, 0.4)',
-          },
-          action: {
-            hover: 'rgba(240, 241, 244, 0.06)',
-            hoverOpacity: 0.06,
-            disabled: 'rgba(240, 241, 244, 0.14)',
-            disabledOpacity: 0.14,
-            focus: 'rgba(240, 241, 244, 0.14)',
-            focusOpacity: 0.14,
-          },
-          background: {
-            default: '#3A4151',
-            paper: '#3A4151',
-          },
-          surfaces: {
-            backdrop: 'rgba(44, 50, 62, 0.72)',
-            elevation0: 'rgba(44, 50, 62, 1)',
-            elevation1: 'rgba(58, 65, 81, 1)',
-          },
-          dividers: {
-            divider: 'rgba(209, 213, 222, 0.25)',
-            dividerStrong: 'rgba(209, 213, 222, 0.5)',
-            dividerStronger: '#FFFFFF',
-            contour: 'rgba(255, 255, 255, 0.08)',
-          },
-          tooltips: {
-            background: '#F0F1F4',
-            color: '#2C323E',
-          },
-        }),
+        default: {
+          light: '#FFFFFF',
+          main: '#F0F1F4',
+          dark: '#D1D5DE',
+          contrastText: '#F0F1F4',
+          surface: 'rgba(240, 241, 244, 0.149)',
+        },
+        error: {
+          light: '#FEA195',
+          main: '#F37C6F',
+          dark: '#E2584D',
+          contrastText: '#FFFFFF',
+          surface: '#E2584D',
+        },
+        warning: {
+          light: '#FFF5C2',
+          main: '#FFEE99',
+          dark: '#FFE770',
+          contrastText: '#654B17',
+          surface: '#FFE770',
+        },
+        info: {
+          light: '#439EFF',
+          main: '#1486FF',
+          dark: '#127AE8',
+          contrastText: '#FFFFFF',
+          surface: '#127AE8',
+        },
+        success: {
+          light: '#51BAA2',
+          main: '#00A489',
+          dark: '#008C71',
+          contrastText: '#FFFFFF',
+          surface: '#008C71',
+        },
+        text: {
+          primary: '#FBFBFB',
+          secondary: 'rgba(251, 251, 251, 0.72)',
+          disabled: 'rgba(251, 251, 251, 0.4)',
+        },
+        action: {
+          hover: 'rgba(240, 241, 244, 0.06)',
+          hoverOpacity: 0.06,
+          disabled: 'rgba(240, 241, 244, 0.14)',
+          disabledOpacity: 0.14,
+          focus: 'rgba(240, 241, 244, 0.14)',
+          focusOpacity: 0.14,
+        },
+        background: {
+          default: '#3A4151',
+          paper: '#3A4151',
+        },
+        surfaces: {
+          backdrop: 'rgba(44, 50, 62, 0.72)',
+          elevation0: 'rgba(44, 50, 62, 1)',
+          elevation1: 'rgba(58, 65, 81, 1)',
+        },
+        dividers: {
+          divider: 'rgba(209, 213, 222, 0.25)',
+          dividerStrong: 'rgba(209, 213, 222, 0.5)',
+          dividerStronger: '#FFFFFF',
+          contour: 'rgba(255, 255, 255, 0.08)',
+        },
+        tooltips: {
+          background: '#F0F1F4',
+          color: '#2C323E',
+        },
+      }),
   },
   typography: {
     h1: {

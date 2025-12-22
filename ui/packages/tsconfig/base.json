@@ -5,10 +5,12 @@
     "composite": false,
     "declaration": true,
     "declarationMap": true,
+    "downlevelIteration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
+    "jsx": "react-jsx",
     "moduleResolution": "node",
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -16,5 +18,7 @@
     "skipLibCheck": true,
     "strict": true
   },
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -115,16 +115,20 @@ export const NonLinearStepper: Story = {
         newActiveStep =
           stepper === 'horizontal' ? activeStep + 1 : verticalActiveStep + 1;
       }
-      stepper === 'horizontal'
-        ? setActiveStep(newActiveStep)
-        : setVerticalActiveStep(newActiveStep);
+      if (stepper === 'horizontal') {
+        setActiveStep(newActiveStep)
+      } else {
+        setVerticalActiveStep(newActiveStep);
+      }
     };
     const handleBack = (stepper: 'vertical' | 'horizontal') => {
-      stepper === 'horizontal'
-        ? setActiveStep((prevActiveStep) => prevActiveStep - 1)
-        : setVerticalActiveStep(
-            (prevVerticalActiveStep) => prevVerticalActiveStep - 1
-          );
+      if (stepper === 'horizontal') {
+        setActiveStep((prevActiveStep) => prevActiveStep - 1)
+      } else {
+        setVerticalActiveStep(
+          (prevVerticalActiveStep) => prevVerticalActiveStep - 1
+        );
+      }
     };
 
     const handleStep = (step: number) => () => {
@@ -248,16 +252,20 @@ export const VerticalStepper: Story = {
         newActiveStep =
           stepper === 'horizontal' ? activeStep + 1 : verticalActiveStep + 1;
       }
-      stepper === 'horizontal'
-        ? setActiveStep(newActiveStep)
-        : setVerticalActiveStep(newActiveStep);
+      if (stepper === 'horizontal') {
+        setActiveStep(newActiveStep)
+      } else {
+        setVerticalActiveStep(newActiveStep);
+      }
     };
     const handleBack = (stepper: 'vertical' | 'horizontal') => {
-      stepper === 'horizontal'
-        ? setActiveStep((prevActiveStep) => prevActiveStep - 1)
-        : setVerticalActiveStep(
-            (prevVerticalActiveStep) => prevVerticalActiveStep - 1
-          );
+      if (stepper === 'horizontal') {
+        setActiveStep((prevActiveStep) => prevActiveStep - 1)
+      } else {
+        setVerticalActiveStep(
+          (prevVerticalActiveStep) => prevVerticalActiveStep - 1
+        );
+      }
     };
 
     return (

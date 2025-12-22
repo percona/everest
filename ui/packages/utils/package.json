@@ -25,6 +25,10 @@
     "@percona/prettier-config": "workspace:*",
     "@percona/tsconfig": "workspace:*",
     "@percona/types": "workspace:*",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
@@ -33,6 +37,6 @@
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-postcss": "^4.0.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.9.3"
   }
 }

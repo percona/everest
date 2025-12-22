@@ -6,7 +6,7 @@
   "license": "MIT",
   "devDependencies": {
     "turbo": "^1.10.16",
-    "typescript": "^5.2.2"
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "test": "turbo run test",

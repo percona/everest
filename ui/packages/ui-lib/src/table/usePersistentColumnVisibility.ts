@@ -8,9 +8,9 @@ import {
 const usePersistentColumnVisibility = (
   key: string
 ): [
-  MRT_VisibilityState,
-  (updater: MRT_Updater<MRT_VisibilityState>) => void,
-] => {
+    MRT_VisibilityState,
+    (updater: MRT_Updater<MRT_VisibilityState>) => void,
+  ] => {
   const [localStorageValue, setLocalStorageValue] =
     useState<MRT_VisibilityState>(() => {
       try {
@@ -19,7 +19,7 @@ const usePersistentColumnVisibility = (
           return JSON.parse(value);
         }
         return {};
-      } catch (error) {
+      } catch {
         return {};
       }
     });

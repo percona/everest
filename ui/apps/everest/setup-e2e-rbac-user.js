@@ -10,7 +10,7 @@ const envFilePath = path.resolve(__dirname, './.e2e', '.env');
 dotenv.config({ path: envFilePath });
 
 const createE2EUser = async () => {
-  // eslint-disable-next-line no-undef
+   
   const { RBAC_USER, RBAC_PASSWORD } = process.env;
   const command = `../../../bin/everestctl accounts create -u${RBAC_USER} -p${RBAC_PASSWORD} || true`;
   execSync(command);

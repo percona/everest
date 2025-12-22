@@ -245,7 +245,7 @@ const zephyrMap: Record<string, string> = {
           }
         }
 
-        let resource = await getK8sResource(
+        const resource = await getK8sResource(
           'svc',
           `${resourceName}`,
           'everest-ui'

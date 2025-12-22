@@ -592,7 +592,7 @@ function getBackupStorage(): string {
           await page.getByRole('button', { name: 'OK' }).click();
 
           await page.getByTestId('form-dialog-create').click({ timeout: 5000 });
-          let currentUrl = page.url();
+          const currentUrl = page.url();
           expect(currentUrl).toContain('/databases/new');
 
           newClusterName = await page
