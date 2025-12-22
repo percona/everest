@@ -12,13 +12,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { test, expect } from '@fixtures';
-import { checkError, testsNs } from '@tests/tests/helpers';
-import { GetDatabaseEngineResponse, GetDatabaseEnginesResponse } from '@support/types/database-engines';
 
-test.describe('DB engines tests', {tag: ['@db-engine']}, () => {
+import {test, expect} from '@fixtures';
+import {EVEREST_CI_NAMESPACE} from '@root/constants';
+import {checkError} from '@tests/utils/api';
+import {GetDatabaseEngineResponse, GetDatabaseEnginesResponse} from '@support/types/database-engines';
+
+test.describe.parallel('DB engines tests', () => {
+
   test('check operators are installed', async ({request}) => {
-    const enginesList = await request.get(`/v1/namespaces/${testsNs}/database-engines`);
+    const enginesList = await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-engines`);
 
     await checkError(enginesList);
     const engines = (await enginesList.json() as GetDatabaseEnginesResponse).items;
@@ -31,7 +34,7 @@ test.describe('DB engines tests', {tag: ['@db-engine']}, () => {
   });
 
   test('get/edit database engine versions', async ({request}) => {
-    let engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`);
+    let engineResponse = await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-engines/percona-server-mongodb-operator`);
 
     await checkError(engineResponse);
 
@@ -46,13 +49,13 @@ test.describe('DB engines tests', {tag: ['@db-engine']}, () => {
     delete engineData.status;
     engineData.spec.allowedVersions = allowedVersions;
 
-    const updateResponse = await request.put(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`, {
+    const updateResponse = await request.put(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-engines/percona-server-mongodb-operator`, {
       data: engineData,
     });
 
     await checkError(updateResponse);
 
-    engineResponse = await request.get(`/v1/namespaces/${testsNs}/database-engines/percona-server-mongodb-operator`);
+    engineResponse = await request.get(`/v1/namespaces/${EVEREST_CI_NAMESPACE}/database-engines/percona-server-mongodb-operator`);
     await checkError(engineResponse);
 
     expect((await engineResponse.json() as GetDatabaseEngineResponse).spec.allowedVersions).toEqual(allowedVersions);

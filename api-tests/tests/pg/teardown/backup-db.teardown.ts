@@ -13,14 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {test} from '@playwright/test';
-import {checkError} from '@tests/utils/api';
+import {test as teardown} from '@playwright/test';
+import * as th from "@tests/utils/api";
+import {PG_BACKUP_DB_CLUSTER_NAME_ENV} from "@tests/pg/consts";
 
-test.describe.parallel('Everest settings tests', async () => {
-
-  test('get settings endpoint', async ({request}) => {
-    const settings = await request.get('/v1/settings')
-
-    await checkError(settings)
-  })
+teardown.describe.parallel('PG cluster fore backup teardown', () => {
+  teardown('Removing PG cluster', async ({request}) => {
+    await th.deleteDBCluster(request, process.env[PG_BACKUP_DB_CLUSTER_NAME_ENV]);
+  });
 });
