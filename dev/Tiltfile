@@ -495,6 +495,7 @@ k8s_resource(
         'loadbalancerconfigs.everest.percona.com:customresourcedefinition',
         'dataimporters.everest.percona.com:customresourcedefinition',
         'dataimportjobs.everest.percona.com:customresourcedefinition',
+        'splithorizondnsconfigs.enginefeatures.everest.percona.com:customresourcedefinition',
     ],
     new_name='everest-crds',
     labels=["everest-operator"]
@@ -531,6 +532,8 @@ k8s_resource(
     'everest-operator-podschedulingpolicy-viewer-role:clusterrole',
     'everest-operator-loadbalancerconfig-editor-role:clusterrole',
     'everest-operator-loadbalancerconfig-viewer-role:clusterrole',
+    'enginefeatures.everest-splithorizondnsconfig-editor-role:clusterrole',
+    'enginefeatures.everest-splithorizondnsconfig-viewer-role:clusterrole',
     'everest-helm-psp-cleanup-hook:clusterrole',
     'everest-helm-psp-cleanup-hook:clusterrolebinding',
     'everest-percona-pg-operator:dataimporter',
