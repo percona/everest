@@ -1,3 +1,4 @@
+REPO_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 RELEASE_VERSION ?= v0.0.0-$(shell git rev-parse --short HEAD)
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
 
@@ -113,6 +114,12 @@ release-cli: ## Build Everest CLI release versions for different OS and ARCH. (U
 	GOOS=darwin GOARCH=arm64 go build -v -ldflags "$(CLI_LD_FLAGS)" -o ./dist/everestctl-darwin-arm64 ./cmd/cli
 	GOOS=windows GOARCH=amd64 go build -v -ldflags "$(CLI_LD_FLAGS)" -o ./dist/everestctl.exe ./cmd/cli
 
+.PHONY: build-ui
+build-ui:
+	$(info Building Everest UI)
+	$(MAKE) -C ${TEST_ROOT}/ui init
+	$(MAKE) -C ${TEST_ROOT}/ui build EVEREST_OUT_DIR=${TEST_ROOT}/public/dist
+
 IMAGE_OWNER ?= perconalab/everest
 IMAGE_TAG ?= 0.0.0
 IMG = $(IMAGE_OWNER):$(IMAGE_TAG)
@@ -159,7 +166,7 @@ docker-build-operator:
 	git clone -q https://github.com/percona/everest-operator.git ;\
 	cd ./everest-operator ;\
 	git reset --hard $${operator_commit_id} ;\
-	make docker-build IMG=$(EVEREST_OPERATOR_IMG) ;\
+	make build docker-build IMG=$(EVEREST_OPERATOR_IMG) ;\
 	}
 
 .PHONY: deploy
@@ -179,9 +186,9 @@ deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	--helm.set versionMetadataURL=https://check-dev.percona.com \
 	--helm.set server.initialAdminPassword=admin \
 	--helm.set operator.init=false
-	$(MAKE) port-forward
+	$(MAKE) expose
 
-DEPLOY_ALL_DEPS := docker-build k3d-upload-server-image
+DEPLOY_ALL_DEPS := build-ui build-debug docker-build k3d-upload-server-image
 DEPLOY_ALL_DEPS += docker-build-operator k3d-upload-operator-image
 DEPLOY_ALL_DEPS += build-cli-debug deploy
 .PHONY: deploy-all
@@ -192,9 +199,10 @@ undeploy: build-cli-debug ## Undeploy Everest from K8S cluster using Everest CLI
 	$(info Uninstalling Everest from K8S cluster using everestctl)
 	$(LOCALBIN)/everestctl uninstall -y -f -v
 
-.PHONY: port-forward
-port-forward:
-	kubectl port-forward -n everest-system deployment/everest-server 8080:8080 &
+.PHONY: expose
+expose:
+	kubectl patch svc -n everest-system everest --type=merge \
+	-p '{"spec": {"type": "NodePort", "ports": [{"name": "http", "port": 8080, "protocol": "TCP", "targetPort": 8080, "nodePort": 30080}]}}'
 
 .PHONY: k3d-cluster-up
 k3d-cluster-up: ## Create a K8S cluster for testing.
@@ -210,7 +218,7 @@ k3d-cluster-down: ## Create a K8S cluster for testing.
 k3d-cluster-reset: k3d-cluster-down k3d-cluster-up ## Reset the K8S cluster for testing.
 
 .PHONY: k3d-upload-server-image
-k3d-upload-server-image: docker-build ## Upload the Everest API server image to the testing k3d cluster.
+k3d-upload-server-image: ## Upload the Everest API server image to the testing k3d cluster.
 	$(info Uploading Everest API server image=$(IMG) to K3D testing cluster)
 	k3d image import -c everest-server-test -m direct $(IMG)
 
