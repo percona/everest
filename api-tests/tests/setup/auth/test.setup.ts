@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {test} from '@playwright/test';
-import {checkError} from '@tests/utils/api';
+import {test as setup} from '@playwright/test';
+import {loginTESTUser} from '@tests/utils/user';
 
-test.describe.parallel('Everest settings tests', async () => {
-
-  test('get settings endpoint', async ({request}) => {
-    const settings = await request.get('/v1/settings')
-
-    await checkError(settings)
-  })
+setup.describe.serial('Auth setup TEST', () => {
+  setup('Login TEST user', async ({request, page}) => {
+    // need to wait a little bit because this test and ci.setup.ts running simultaneously
+    // lead to '429 Too many Requests' error
+    await page.waitForTimeout(1000);
+    await loginTESTUser(request);
+  });
 });
