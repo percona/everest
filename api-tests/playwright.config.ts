@@ -265,7 +265,7 @@ export default defineConfig({
         'pg:cluster',
         'pg:data-importer',
         'pg:monitoring',
-        // 'pg:restore',
+        'pg:restore',
       ],
     },
     // pg:backup tests
