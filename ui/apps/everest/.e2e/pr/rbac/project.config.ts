@@ -1,7 +1,6 @@
 import { CI_USER_STORAGE_STATE_FILE } from "@e2e/constants";
 
 export const rbacProject = [
-    // pr:rbac tests
     {
         name: 'pr:rbac',
         testMatch: /.^/,
@@ -9,7 +8,6 @@ export const rbacProject = [
             'pr:rbac:backups',
         ],
     },
-    // pr:rbac:backups tests
     {
         name: 'pr:rbac:backups',
         testDir: './pr/rbac',

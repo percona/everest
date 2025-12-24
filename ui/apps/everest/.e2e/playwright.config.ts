@@ -24,6 +24,7 @@ import { multinamespacesProject } from './pr/multinamespaces/project.config';
 import { settingsProject } from './pr/settings/project.config';
 import { noMatchProject } from './pr/no-match/project.config';
 import { dbRestoreProject } from './pr/db-restore/project.config';
+import { rbacProject } from './pr/rbac/project.config';
 
 // Convert 'import.meta.url' to the equivalent __dirname
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -138,14 +139,17 @@ export default defineConfig({
         'pr:no-match',
         'pr:settings',
         'pr:db-restore',
+        // 'pr:rbac'
       ],
     },
+
     ...dbClusterProject,
     ...dbClusterDetailsProject,
     ...dbRestoreProject,
     ...multinamespacesProject,
     ...noMatchProject,
     ...settingsProject,
+    ...rbacProject,
     // ---------------------- RELEASE TESTS ----------------------
     // release project
     {
@@ -164,34 +168,34 @@ export default defineConfig({
 
     // -----------------------------------
     // e2e:rbac project
-    // {
-    //   name: 'rbac-setup',
-    //   testDir: './setup',
-    //   testMatch: /rbac.setup\.ts/,
-    //   use: {
-    //     storageState: STORAGE_STATE_FILE,
-    //   },
-    //   dependencies: ['setup'],
-    // },
-    // {
-    //   name: 'rbac',
-    //   use: {
-    //     browserName: 'chromium',
-    //     channel: 'chrome',
-    //     storageState: STORAGE_STATE_FILE,
-    //   },
-    //   testDir: './pr/rbac',
-    //   dependencies: ['setup', 'rbac-setup'],
-    // },
-    // {
-    //   name: 'rbac-teardown',
-    //   testDir: './teardown',
-    //   testMatch: /rbac\.teardown\.ts/,
-    //   use: {
-    //     storageState: STORAGE_STATE_FILE,
-    //   },
-    //   dependencies: ['rbac'],
-    // },
+    {
+      name: 'rbac-setup',
+      testDir: './setup',
+      testMatch: /rbac.setup\.ts/,
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+      // dependencies: ['setup'],
+    },
+    {
+      name: 'rbac',
+      use: {
+        // browserName: 'chromium',
+        channel: 'chrome',
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+      testDir: './pr/rbac',
+      dependencies: ['rbac-setup'],
+    },
+    {
+      name: 'rbac-teardown',
+      testDir: './teardown',
+      testMatch: /rbac\.teardown\.ts/,
+      use: {
+        storageState: CI_USER_STORAGE_STATE_FILE,
+      },
+      dependencies: ['rbac'],
+    },
 
     // PR project
     // {
