@@ -108,11 +108,23 @@ k3d-upload-images: k3d-upload-pg-images k3d-upload-psmdb-images k3d-upload-pxc-i
 
 ##@ Test
 
+## Clean up test artifacts and compile TypeScript tests.
+.PHONY: pre-test
+pre-test:          
+# 	$(info Cleaning up test artifacts)
+# 	@rm -rf tests-out test-results
+# 	@rm -f ../tsconfig.tsbuildinfo
+# 	$(info Compiling TypeScript tests)
+# 	@cd .. && npx tsc --incremental --noImplicitAny false -p .e2e/tsconfig.json
+# 	$(info Resolving path aliases)
+# 	@cd .. && npx tsc-alias -p .e2e/tsconfig.json
+
 # Set a particular test, e.g. make test PROJECT=pr,release:session
 PROJECT = pr
 FLAGS =
 .PHONY: test
-test:               ## Run all tests.
+# test: pre-test ## Run all tests.
+test: ## Run all tests.
 	@{ \
   	set -xe ;\
 	RAND=$$(echo $${RANDOM} | md5sum | head -c 5 ) ;\

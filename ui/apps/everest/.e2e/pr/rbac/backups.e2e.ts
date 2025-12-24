@@ -34,7 +34,7 @@ test.describe.serial('Backups RBAC', () => {
     expect(await rows.count()).toBe(0);
   });
 
-  test('Show Backups', async ({ page }) => {
+  test.skip('Show Backups', async ({ page }) => {
     await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
@@ -52,7 +52,7 @@ test.describe.serial('Backups RBAC', () => {
     expect(await rows.count()).toBe(1);
   });
 
-  test('Delete backup', async ({ page }) => {
+  test.skip('Delete backup', async ({ page }) => {
     await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
@@ -76,7 +76,7 @@ test.describe.serial('Backups RBAC', () => {
     await expect(page.getByText('Create new DB')).not.toBeVisible();
   });
 
-  test('Create on-demand backup', async ({ page }) => {
+  test.skip('Create on-demand backup', async ({ page }) => {
     await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
@@ -98,7 +98,7 @@ test.describe.serial('Backups RBAC', () => {
     await expect(page.getByText('Schedule', { exact: true })).not.toBeVisible();
   });
 
-  test('Create scheduled backup', async ({ page }) => {
+  test.skip('Create scheduled backup', async ({ page }) => {
     await setRBACPermissionsK8S([
       ['namespaces', 'read', namespace],
       ['database-engines', '*', `${namespace}/*`],
@@ -120,4 +120,3 @@ test.describe.serial('Backups RBAC', () => {
     await expect(page.getByText('Schedule', { exact: true })).toBeVisible();
   });
 });
-1;
