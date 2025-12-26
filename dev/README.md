@@ -76,7 +76,7 @@ Copy file dev/config.yaml.example to dev/config.yaml and:
 ```sh
 export PXC_OPERATOR_VERSION=1.18.0
 export PSMDB_OPERATOR_VERSION=1.21.1
-export PG_OPERATOR_VERSION=2.8.1
+export PG_OPERATOR_VERSION=2.8.2
 ```
 
 4. (Optional) If you want to debug Everest Server and/or Everest operator remotely, you can set the following environment variables in .env file or in the terminal: 
