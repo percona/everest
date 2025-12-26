@@ -543,6 +543,24 @@ func (_m *MockHandler) GetDatabaseClusterBackup(ctx context.Context, namespace s
 	return r0, r1
 }
 
+// GetDatabaseClusterComponentLogs provides a mock function with given fields: ctx, namespace, clusterName, componentName, params, stream
+func (_m *MockHandler) GetDatabaseClusterComponentLogs(ctx context.Context, namespace string, clusterName string, componentName string, params api.GetDatabaseClusterComponentLogsParams, stream StreamFunc) error {
+	ret := _m.Called(ctx, namespace, clusterName, componentName, params, stream)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDatabaseClusterComponentLogs")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, api.GetDatabaseClusterComponentLogsParams, StreamFunc) error); ok {
+		r0 = rf(ctx, namespace, clusterName, componentName, params, stream)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetDatabaseClusterComponents provides a mock function with given fields: ctx, namespace, name
 func (_m *MockHandler) GetDatabaseClusterComponents(ctx context.Context, namespace string, name string) ([]api.DatabaseClusterComponent, error) {
 	ret := _m.Called(ctx, namespace, name)

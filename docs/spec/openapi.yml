@@ -700,6 +700,115 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/namespaces/{namespace}/database-clusters/{name}/components/{component_name}/logs':
+    x-everest-resource-name: database-clusters
+    get:
+      tags:
+        - Database Cluster
+      summary: Get database cluster component logs
+      description: |
+        This API gets the logs of the component specified by the `component_name` of the database cluster specified by the `name` and `namespace`.
+      operationId: getDatabaseClusterComponentLogs
+      parameters:
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: Name of the database cluster. Can be found under Metadata["name"] of the DatabaseCluster object.
+          required: true
+          schema:
+            type: string
+        - name: component_name
+          in: path
+          description: Name of the component.
+          required: true
+          schema:
+            type: string
+        - name: container
+          in: query
+          required: false
+          description: Container name. If omitted, the first container in the pod spec is used.
+          schema:
+            type: string
+        - name: follow
+          in: query
+          required: false
+          description: Stream logs continuously
+          schema:
+            type: boolean
+            default: false
+        - name: tailLines
+          in: query
+          required: false
+          description: Number of lines from the end of the logs to show
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+        - name: sinceSeconds
+          in: query
+          required: false
+          description: Return logs newer than this many seconds
+          schema:
+            type: integer
+            minimum: 1
+        - name: sinceTime
+          in: query
+          required: false
+          description: RFC3339 timestamp to start logs from
+          schema:
+            type: string
+            format: date-time
+        - name: timestamps
+          in: query
+          required: false
+          description: Include timestamps in log lines
+          schema:
+            type: boolean
+            default: false
+        - name: previous
+          in: query
+          required: false
+          description: Return logs from the previous container instance
+          schema:
+            type: boolean
+            default: false
+        - name: limitBytes
+          in: query
+          required: false
+          description: Maximum bytes to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 104857600
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                example:
+                  value: |
+                    2025-01-01T10:00:00Z Starting server
+                    2025-01-01T10:00:01Z Listening on :8080
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   '/namespaces/{namespace}/database-clusters/{dbName}/data-import-jobs':
     x-everest-resource-name: data-import-jobs

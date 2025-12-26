@@ -42,6 +42,8 @@ type Handler interface {
 	GetSettings(ctx context.Context) (*api.Settings, error)
 }
 
+type StreamFunc func(ctx context.Context, namespace, clusterName, componentName string, params api.GetDatabaseClusterComponentLogsParams) error
+
 // DatabaseClusterHandler provides methods for handling operations on database clusters.
 type DatabaseClusterHandler interface {
 	CreateDatabaseCluster(ctx context.Context, req *everestv1alpha1.DatabaseCluster) (*everestv1alpha1.DatabaseCluster, error)
@@ -51,6 +53,7 @@ type DatabaseClusterHandler interface {
 	GetDatabaseCluster(ctx context.Context, namespace, name string) (*everestv1alpha1.DatabaseCluster, error)
 	GetDatabaseClusterCredentials(ctx context.Context, namespace, name string) (*api.DatabaseClusterCredential, error)
 	GetDatabaseClusterComponents(ctx context.Context, namespace, name string) ([]api.DatabaseClusterComponent, error)
+	GetDatabaseClusterComponentLogs(ctx context.Context, namespace, clusterName, componentName string, params api.GetDatabaseClusterComponentLogsParams, stream StreamFunc) error
 	GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error)
 	CreateDatabaseClusterSecret(ctx context.Context, namespace, dbName string, secret *corev1.Secret) (*corev1.Secret, error)
 }
