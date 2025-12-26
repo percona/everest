@@ -112,7 +112,7 @@ func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, namespace, 
 func (e *EverestServer) GetDatabaseClusterComponentLogs(c echo.Context, ns, cName, componentName string, params api.GetDatabaseClusterComponentLogsParams) error {
 	ctx := c.Request().Context()
 
-	// function to stream logs. it uses closures for the echo-related dependencies to keep the handlers (validation, rbac, k8s) independent form http-framework
+	// function to stream logs. it uses closures for the echo-related dependencies to keep the handlers (validation, rbac, k8s) independent from http-framework
 	stream := func(ctx context.Context, namespace, clusterName, componentName string, params api.GetDatabaseClusterComponentLogsParams) error {
 		opts, err := e.buildPodLogOptions(ctx, namespace, componentName, params)
 		if err != nil {
