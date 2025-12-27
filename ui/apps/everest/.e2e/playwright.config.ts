@@ -139,7 +139,10 @@ export default defineConfig({
         'pr:no-match',
         'pr:settings',
         'pr:db-restore',
-        // 'pr:rbac'
+        ...(process.env.IGNORE_RBAC_TESTS &&
+          process.env.IGNORE_RBAC_TESTS !== 'false'
+          ? []
+          : ['pr:rbac']),
       ],
     },
 
@@ -151,68 +154,21 @@ export default defineConfig({
     ...settingsProject,
     ...rbacProject,
     // ---------------------- RELEASE TESTS ----------------------
-    // release project
-    {
-      name: 'release',
-      testMatch: /.^/,
-      dependencies: [
-        'release:session',
-      ],
-    },
-    // release:session:session project
-    {
-      name: 'release:session',
-      testDir: './release/session',
-      dependencies: ['global:session:setup'],
-    },
-
-    // -----------------------------------
-    // e2e:rbac project
-    {
-      name: 'rbac-setup',
-      testDir: './setup',
-      testMatch: /rbac.setup\.ts/,
-      use: {
-        storageState: CI_USER_STORAGE_STATE_FILE,
-      },
-      // dependencies: ['setup'],
-    },
-    {
-      name: 'rbac',
-      use: {
-        // browserName: 'chromium',
-        channel: 'chrome',
-        storageState: CI_USER_STORAGE_STATE_FILE,
-      },
-      testDir: './pr/rbac',
-      dependencies: ['rbac-setup'],
-    },
-    {
-      name: 'rbac-teardown',
-      testDir: './teardown',
-      testMatch: /rbac\.teardown\.ts/,
-      use: {
-        storageState: CI_USER_STORAGE_STATE_FILE,
-      },
-      dependencies: ['rbac'],
-    },
-
-    // PR project
+    // // release project
     // {
-    //   name: 'pr',
-    //   use: {
-    //     storageState: STORAGE_STATE_FILE,
-    //   },
-    //   testDir: 'pr',
-    //   testIgnore: ['pr/rbac/**/*'],
+    //   name: 'release',
+    //   testMatch: /.^/,
     //   dependencies: [
-    //     'setup',
-    //     ...(process.env.IGNORE_RBAC_TESTS &&
-    //     process.env.IGNORE_RBAC_TESTS !== 'false'
-    //       ? []
-    //       : ['rbac', 'rbac-teardown']),
+    //     'release:session',
     //   ],
     // },
+    // // release:session:session project
+    // {
+    //   name: 'release:session',
+    //   testDir: './release/session',
+    //   dependencies: ['global:session:setup'],
+    // },
+
     // {
     //   name: 'release-rbac-setup',
     //   testDir: './setup',

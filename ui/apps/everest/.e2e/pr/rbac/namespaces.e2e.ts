@@ -1,145 +1,150 @@
-import { expect, test } from '@playwright/test';
-import { getCITokenFromLocalStorage } from '@e2e/utils/localStorage';
-import { getNamespacesFn } from '@e2e/utils/namespaces';
-import { setRBACPermissionsK8S } from '@e2e/utils/rbac-cmd-line';
+import { expect, Page, test } from '@playwright/test';
+import { setRBACRoleWithPermissionsK8s } from '@e2e/utils/rbac-cmd-line';
+import { RBACTestWrapper } from './utils';
+import { loginTestUser, RBACTestUser } from '@e2e/utils/user';
 
 // Namespaces, engines and DBs are already filtered by the API according to permissions, so here we test the UI
 test.describe('Namespaces RBAC', () => {
-  let namespaces = [];
-
-  test.beforeAll(async ({ request }) => {
-    await setRBACPermissionsK8S([['namespaces', 'read', '*']]);
-    const token = await getCITokenFromLocalStorage();
-    namespaces = await getNamespacesFn(token, request);
-  });
+  test.setTimeout(60000);
 
   test('should show upgrade button when there is permission to update DB engines', async ({
-    page,
+    browser
   }) => {
-    await setRBACPermissionsK8S([
-      ['namespaces', 'read', namespaces[0]],
-      ['database-engines', '*', `${namespaces[0]}/*`],
-      ['database-clusters', '*', `${namespaces[0]}/*`],
-    ]);
-    await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines`,
-      async (route) => {
-        await route.fulfill({
-          json: {
-            items: [
-              {
-                metadata: {
-                  name: 'percona-xtradb-cluster-operator',
-                  namespace: namespaces[0],
-                },
-                spec: {
-                  type: 'pxc',
-                },
-                status: {
-                  status: 'installed',
-                  availableVersions: {
-                    engine: {
-                      '8.0.36-28.1': {
-                        status: 'available',
+    const userName = 'namespaces-rbac-upgrade-button';
+    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+      await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
+        ['namespaces', 'read', namespace],
+        ['database-engines', '*', `${namespace}/*`],
+        ['database-clusters', '*', `${namespace}/*`],
+      ], testUser.username);
+      await loginTestUser(page, testUser.username, testUser.password);
+
+      await page.route(
+        `/v1/namespaces/${namespace}/database-engines`,
+        async (route) => {
+          await route.fulfill({
+            json: {
+              items: [
+                {
+                  metadata: {
+                    name: 'percona-xtradb-cluster-operator',
+                    namespace: namespace,
+                  },
+                  spec: {
+                    type: 'pxc',
+                  },
+                  status: {
+                    status: 'installed',
+                    availableVersions: {
+                      engine: {
+                        '8.0.36-28.1': {
+                          status: 'available',
+                        },
                       },
                     },
+                    pendingOperatorUpgrades: [
+                      {
+                        targetVersion: '1.15.0',
+                      },
+                    ],
                   },
-                  pendingOperatorUpgrades: [
-                    {
-                      targetVersion: '1.15.0',
-                    },
-                  ],
                 },
-              },
-            ],
-          },
-        });
-      }
-    );
-    await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines/upgrade-plan`,
-      async (route) => {
-        await route.fulfill({
-          json: {
-            upgrades: [
-              {
-                name: 'percona-xtradb-cluster-operator',
-                currentVersion: '1.14.0',
-                targetVersion: '1.15.0',
-              },
-            ],
-            pendingActions: [],
-          },
-        });
-      }
-    );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await expect(page.getByText('Upgrade Operators')).toBeVisible();
-    await expect(page.getByText('Upgrade Operators')).not.toBeDisabled();
+              ],
+            },
+          });
+        }
+      );
+      await page.route(
+        `/v1/namespaces/${namespace}/database-engines/upgrade-plan`,
+        async (route) => {
+          await route.fulfill({
+            json: {
+              upgrades: [
+                {
+                  name: 'percona-xtradb-cluster-operator',
+                  currentVersion: '1.14.0',
+                  targetVersion: '1.15.0',
+                },
+              ],
+              pendingActions: [],
+            },
+          });
+        }
+      );
+      await page.goto(`/settings/namespaces/${namespace}`);
+      await expect(page.getByText('Upgrade Operators')).toBeVisible();
+      await expect(page.getByText('Upgrade Operators')).not.toBeDisabled();
+    });
   });
 
   test('should disable upgrade button when there is no permission to update DB engines', async ({
-    page,
+    browser
   }) => {
-    await setRBACPermissionsK8S([
-      ['namespaces', 'read', namespaces[0]],
-      ['database-engines', 'read', `${namespaces[0]}/*`],
-      ['database-clusters', '*', `${namespaces[0]}/*`],
-    ]);
-    await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines`,
-      async (route) => {
-        await route.fulfill({
-          json: {
-            items: [
-              {
-                metadata: {
-                  name: 'percona-xtradb-cluster-operator',
-                  namespace: namespaces[0],
-                },
-                spec: {
-                  type: 'pxc',
-                },
-                status: {
-                  status: 'installed',
-                  availableVersions: {
-                    engine: {
-                      '8.0.36-28.1': {
-                        status: 'available',
+    const userName = 'namespaces-rbac-upgrade-button-no-perm';
+
+    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+      await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
+        ['namespaces', 'read', namespace],
+        ['database-engines', 'read', `${namespace}/*`],
+        ['database-clusters', '*', `${namespace}/*`]
+      ], testUser.username);
+      await loginTestUser(page, testUser.username, testUser.password);
+
+      await page.route(
+        `/v1/namespaces/${namespace}/database-engines`,
+        async (route) => {
+          await route.fulfill({
+            json: {
+              items: [
+                {
+                  metadata: {
+                    name: 'percona-xtradb-cluster-operator',
+                    namespace: namespace,
+                  },
+                  spec: {
+                    type: 'pxc',
+                  },
+                  status: {
+                    status: 'installed',
+                    availableVersions: {
+                      engine: {
+                        '8.0.36-28.1': {
+                          status: 'available',
+                        },
                       },
                     },
+                    pendingOperatorUpgrades: [
+                      {
+                        targetVersion: '1.15.0',
+                      },
+                    ],
                   },
-                  pendingOperatorUpgrades: [
-                    {
-                      targetVersion: '1.15.0',
-                    },
-                  ],
                 },
-              },
-            ],
-          },
-        });
-      }
-    );
-    await page.route(
-      `/v1/namespaces/${namespaces[0]}/database-engines/upgrade-plan`,
-      async (route) => {
-        await route.fulfill({
-          json: {
-            upgrades: [
-              {
-                name: 'percona-xtradb-cluster-operator',
-                currentVersion: '1.14.0',
-                targetVersion: '1.15.0',
-              },
-            ],
-            pendingActions: [],
-          },
-        });
-      }
-    );
-    await page.goto(`/settings/namespaces/${namespaces[0]}`);
-    await expect(page.getByText('Upgrade Operators')).toBeVisible();
-    await expect(page.getByText('Upgrade Operators')).toBeDisabled();
+              ],
+            },
+          });
+        }
+      );
+      await page.route(
+        `/v1/namespaces/${namespace}/database-engines/upgrade-plan`,
+        async (route) => {
+          await route.fulfill({
+            json: {
+              upgrades: [
+                {
+                  name: 'percona-xtradb-cluster-operator',
+                  currentVersion: '1.14.0',
+                  targetVersion: '1.15.0',
+                },
+              ],
+              pendingActions: [],
+            },
+          });
+        }
+      );
+      await page.goto(`/settings/namespaces/${namespace}`);
+      await expect(page.getByText('Upgrade Operators')).toBeVisible();
+      await expect(page.getByText('Upgrade Operators')).toBeDisabled();
+    })
   });
 });
