@@ -13,15 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test as setup } from "@playwright/test";
-import { createDbClusterFn } from "@e2e/utils/db-cluster";
-import { EVEREST_CI_NAMESPACES } from "@e2e/constants";
+import { test as setup } from '@playwright/test';
+import { createDbClusterFn } from '@e2e/utils/db-cluster';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
 
 const dbClusterName = 'pr-db-ovw';
 
 setup.describe.serial('DB Cluster Overview setup', () => {
   setup(`Create ${dbClusterName} cluster`, async ({ request }) => {
-    await createDbClusterFn(request,
+    await createDbClusterFn(
+      request,
       {
         dbName: dbClusterName,
         dbType: 'postgresql',
@@ -37,7 +38,7 @@ setup.describe.serial('DB Cluster Overview setup', () => {
           },
         ],
       },
-      EVEREST_CI_NAMESPACES.EVEREST_UI,
+      EVEREST_CI_NAMESPACES.EVEREST_UI
     );
   });
-})
+});

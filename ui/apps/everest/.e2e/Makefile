@@ -14,9 +14,10 @@ help: ## Display this help.
 .PHONY: init
 init:     ## Install tests dependencies.
 	$(info Installing dependencies)
-	cd $(REPO_ROOT)/ui && pnpm install
-	$(info Install Chromium for Playwright)
-	npx playwright install --with-deps chromium
+	cd $(REPO_ROOT)/ui && \
+		pnpm install && \
+		cd apps/everest/.e2e && \
+		npx playwright install --with-deps chromium
 
 CI_INIT_DEPS := init deploy-minio create-db-namespaces deploy-monitoring
 CI_INIT_DEPS += k3d-upload-images

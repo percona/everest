@@ -140,7 +140,7 @@ export default defineConfig({
         'pr:settings',
         'pr:db-restore',
         ...(process.env.IGNORE_RBAC_TESTS &&
-          process.env.IGNORE_RBAC_TESTS !== 'false'
+        process.env.IGNORE_RBAC_TESTS !== 'false'
           ? []
           : ['pr:rbac']),
       ],

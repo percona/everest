@@ -13,32 +13,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { test as setup } from "@playwright/test";
-import { createDbClusterFn } from "@e2e/utils/db-cluster";
-import { EVEREST_CI_NAMESPACES, getBucketNamespacesMap } from "@e2e/constants";
-import { dbClusterName } from "./project.config";
+import { test as setup } from '@playwright/test';
+import { createDbClusterFn } from '@e2e/utils/db-cluster';
+import { EVEREST_CI_NAMESPACES, getBucketNamespacesMap } from '@e2e/constants';
+import { dbClusterName } from './project.config';
 
 setup.describe.serial('DB Cluster Restore setup', () => {
-    setup(`Create ${dbClusterName} cluster`, async ({ request }) => {
-        await createDbClusterFn(request,
+  setup(`Create ${dbClusterName} cluster`, async ({ request }) => {
+    await createDbClusterFn(
+      request,
+      {
+        dbName: dbClusterName,
+        dbType: 'mysql',
+        numberOfNodes: '1',
+        backup: {
+          enabled: true,
+          schedules: [
             {
-                dbName: dbClusterName,
-                dbType: 'mysql',
-                numberOfNodes: '1',
-                backup: {
-                    enabled: true,
-                    schedules: [
-                        {
-                            backupStorageName: getBucketNamespacesMap()[0][0],
-                            enabled: true,
-                            name: 'backup-1',
-                            schedule: '0 * * * *',
-                        },
-                    ],
-                },
-
+              backupStorageName: getBucketNamespacesMap()[0][0],
+              enabled: true,
+              name: 'backup-1',
+              schedule: '0 * * * *',
             },
-            EVEREST_CI_NAMESPACES.EVEREST_UI,
-        );
-    });
-})
+          ],
+        },
+      },
+      EVEREST_CI_NAMESPACES.EVEREST_UI
+    );
+  });
+});

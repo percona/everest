@@ -15,12 +15,20 @@
 
 import { expect, test } from '@playwright/test';
 import { Messages } from '../../../../src/modals/restore-db-modal/restore-db-modal.messages';
-import { createDbClusterFn, deleteDbClusterFn, getDbClusterAPI } from '@e2e/utils/db-cluster';
+import {
+  createDbClusterFn,
+  deleteDbClusterFn,
+  getDbClusterAPI,
+} from '@e2e/utils/db-cluster';
 import {
   findDbAndClickActions,
   findDbAndClickRow,
 } from '@e2e/utils/db-clusters-list';
-import { EVEREST_CI_NAMESPACES, getBucketNamespacesMap, TIMEOUTS } from '@e2e/constants';
+import {
+  EVEREST_CI_NAMESPACES,
+  getBucketNamespacesMap,
+  TIMEOUTS,
+} from '@e2e/constants';
 import { moveForward } from '@e2e/utils/db-wizard';
 import { dbClusterName } from './project.config';
 import { limitedSuffixedName } from '@e2e/utils/generic';
@@ -162,41 +170,50 @@ test.describe.parallel('DB Cluster Restore to the new cluster', () => {
 
     try {
       await test.step(`Create ${dbName} DB cluster`, async () => {
-        await createDbClusterFn(request, {
-          dbName,
-          dbType: 'postgresql',
-          cpu: '1',
-          memory: '2',
-          disk: '25',
-          numberOfNodes: '4',
-          numberOfProxies: '1',
-          storageClass: 'my-storage-class',
-          backup: {
-            enabled: true,
-            schedules: [
-              {
-                backupStorageName: getBucketNamespacesMap()[0][0],
+        await createDbClusterFn(
+          request,
+          {
+            dbName,
+            dbType: 'postgresql',
+            cpu: '1',
+            memory: '2',
+            disk: '25',
+            numberOfNodes: '4',
+            numberOfProxies: '1',
+            storageClass: 'my-storage-class',
+            backup: {
+              enabled: true,
+              schedules: [
+                {
+                  backupStorageName: getBucketNamespacesMap()[0][0],
+                  enabled: true,
+                  name: 'backup-1',
+                  schedule: '0 * * * *',
+                },
+              ],
+              pitr: {
                 enabled: true,
-                name: 'backup-1',
-                schedule: '0 * * * *',
+                backupStorageName: 'minio',
+              },
+            },
+            externalAccess: true,
+            sourceRanges: [
+              {
+                sourceRange: '192.168.1.1/32',
               },
             ],
-            pitr: {
-              enabled: true,
-              backupStorageName: 'minio',
-            },
+            monitoringConfigName: 'pmm',
           },
-          externalAccess: true,
-          sourceRanges: [
-            {
-              sourceRange: '192.168.1.1/32',
-            },
-          ],
-          monitoringConfigName: 'pmm',
-        }, EVEREST_CI_NAMESPACES.PG_ONLY);
+          EVEREST_CI_NAMESPACES.PG_ONLY
+        );
 
         // Get the actual version that was created
-        const cluster = await getDbClusterAPI(dbName, EVEREST_CI_NAMESPACES.PG_ONLY, request, token);
+        const cluster = await getDbClusterAPI(
+          dbName,
+          EVEREST_CI_NAMESPACES.PG_ONLY,
+          request,
+          token
+        );
         dbVersion = cluster.spec.engine.version;
       });
 
@@ -266,9 +283,9 @@ test.describe.parallel('DB Cluster Restore to the new cluster', () => {
       await expect(
         page.getByTestId('toggle-button-nodes-custom')
       ).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.getByTestId('text-input-custom-nr-of-nodes')).toHaveValue(
-        '4'
-      );
+      await expect(
+        page.getByTestId('text-input-custom-nr-of-nodes')
+      ).toHaveValue('4');
       await expect(
         page.getByTestId('node-resources-toggle-button-small')
       ).toHaveAttribute('aria-pressed', 'true');
@@ -277,7 +294,9 @@ test.describe.parallel('DB Cluster Restore to the new cluster', () => {
         page.getByTestId('toggle-button-PG Bouncers-1')
       ).toHaveAttribute('aria-pressed', 'true');
       await expect(page.getByTestId('text-input-proxy-cpu')).toHaveValue('1');
-      await expect(page.getByTestId('text-input-proxy-memory')).toHaveValue('1');
+      await expect(page.getByTestId('text-input-proxy-memory')).toHaveValue(
+        '1'
+      );
 
       await moveForward(page);
 
@@ -292,11 +311,17 @@ test.describe.parallel('DB Cluster Restore to the new cluster', () => {
       await moveForward(page);
       await moveForward(page);
       await expect(page.getByTestId('db-wizard-submit-button')).toBeEnabled();
-      await expect(page.getByTestId('preview-error-resources')).not.toBeVisible();
+      await expect(
+        page.getByTestId('preview-error-resources')
+      ).not.toBeVisible();
     } finally {
       await deleteDbClusterFn(request, dbName, EVEREST_CI_NAMESPACES.PG_ONLY);
       if (restoredDbName) {
-        await deleteDbClusterFn(request, restoredDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
+        await deleteDbClusterFn(
+          request,
+          restoredDbName,
+          EVEREST_CI_NAMESPACES.PG_ONLY
+        );
       }
     }
   });

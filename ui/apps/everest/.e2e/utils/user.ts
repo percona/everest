@@ -213,8 +213,12 @@ export const logoutTestUser = async (page: Page): Promise<void> => {
     }
     await logout(page);
   } catch (error: any) {
-    if (error.message?.includes('Target page, context or browser has been closed') ||
-      error.message?.includes('Execution context was destroyed')) {
+    if (
+      error.message?.includes(
+        'Target page, context or browser has been closed'
+      ) ||
+      error.message?.includes('Execution context was destroyed')
+    ) {
       // console.log('⚠️  Page closed during logout, cleanup skipped');
       return;
     }
@@ -228,7 +232,9 @@ export interface RBACTestUser {
   cleanup: () => Promise<void>;
 }
 
-export const createRBACTestUser = async (testName: string): Promise<RBACTestUser> => {
+export const createRBACTestUser = async (
+  testName: string
+): Promise<RBACTestUser> => {
   const timestamp = Date.now();
   const sanitizedTestName = testName
     .toLowerCase()
@@ -253,7 +259,9 @@ export const createRBACTestUser = async (testName: string): Promise<RBACTestUser
 
       if (errorMessage.includes('the object has been modified')) {
         // console.log(`⚠️  Retry ${attempt}/5 for user ${username} (conflict detected)`);
-        await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt - 1)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, 100 * Math.pow(2, attempt - 1))
+        );
         continue;
       }
 
@@ -263,7 +271,10 @@ export const createRBACTestUser = async (testName: string): Promise<RBACTestUser
   }
 
   if (lastError) {
-    console.error(`Failed to create user ${username} after 5 attempts:`, lastError);
+    console.error(
+      `Failed to create user ${username} after 5 attempts:`,
+      lastError
+    );
     throw lastError;
   }
 
@@ -282,8 +293,3 @@ export const createRBACTestUser = async (testName: string): Promise<RBACTestUser
     },
   };
 };
-
-
-
-
-

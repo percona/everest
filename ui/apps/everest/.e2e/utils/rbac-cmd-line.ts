@@ -13,7 +13,9 @@ async function acquireRBACLock(): Promise<() => Promise<void>> {
   while (true) {
     try {
       // fails if file exists
-      await fs.writeFile(RBAC_LOCK_FILE, process.pid.toString(), { flag: 'wx' });
+      await fs.writeFile(RBAC_LOCK_FILE, process.pid.toString(), {
+        flag: 'wx',
+      });
 
       // Successfully acquired lock
       return async () => {
@@ -37,7 +39,7 @@ async function acquireRBACLock(): Promise<() => Promise<void>> {
 
       // Wait before retrying (exponential backoff)
       const waitTime = Math.min(100 + Math.random() * 100, 500);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
   }
 }
@@ -63,12 +65,16 @@ export const setRBACPermissionsK8S = async (
   permissions: [string, string, string][] = []
 ) => {
   // Validate permissions to prevent invalid policy syntax
-  const validPermissions = permissions.filter(p => {
-    return p.every(value => value && value !== 'undefined' && value.trim() !== '');
+  const validPermissions = permissions.filter((p) => {
+    return p.every(
+      (value) => value && value !== 'undefined' && value.trim() !== ''
+    );
   });
 
   if (validPermissions.length !== permissions.length) {
-    console.warn('Warning: Some RBAC permissions were filtered out due to empty or undefined values');
+    console.warn(
+      'Warning: Some RBAC permissions were filtered out due to empty or undefined values'
+    );
     console.warn('Original:', permissions);
     console.warn('Filtered:', validPermissions);
   }
@@ -112,11 +118,11 @@ export const setRBACPermissionsK8S = async (
  * Sets RBAC permissions for a specific role and assigns a user to that role.
  * This is the recommended approach for RBAC testing as it allows parallel test execution
  * with unique users and roles per test.
- * 
+ *
  * @param roleName - Unique role name (e.g., 'role:test-backups', 'role:admin')
  * @param permissions - Array of permission tuples [resource, action, object]
  * @param userName - Username to assign to the role (REQUIRED for new tests)
- * 
+ *
  * Note: When called, removes ALL existing role assignments for the user to ensure
  * the user has only one role at a time, preventing permission conflicts.
  */
@@ -132,12 +138,16 @@ export const setRBACRoleWithPermissionsK8s = async (
     const user = userName;
 
     // Validate permissions to prevent invalid policy syntax
-    const validPermissions = permissions.filter(p => {
-      return p.every(value => value && value !== 'undefined' && value.trim() !== '');
+    const validPermissions = permissions.filter((p) => {
+      return p.every(
+        (value) => value && value !== 'undefined' && value.trim() !== ''
+      );
     });
 
     if (validPermissions.length !== permissions.length) {
-      console.warn(`Warning: Some RBAC permissions for role ${roleName} were filtered out due to empty or undefined values`);
+      console.warn(
+        `Warning: Some RBAC permissions for role ${roleName} were filtered out due to empty or undefined values`
+      );
       console.warn('Original:', permissions);
       console.warn('Filtered:', validPermissions);
     }
@@ -158,7 +168,7 @@ export const setRBACRoleWithPermissionsK8s = async (
     const currentPolicy = getCurrentPolicy();
 
     // Filter out existing entries for the specified role and user assignment to ALL roles (ensure single role per user)
-    const filteredPolicy = currentPolicy.filter(line => {
+    const filteredPolicy = currentPolicy.filter((line) => {
       const isRolePermission = line.startsWith(`p,${roleName},`);
       const isAnyUserAssignment = line.startsWith(`g,${user},`);
       return !isRolePermission && !isAnyUserAssignment;
@@ -179,12 +189,15 @@ export const setRBACRoleWithPermissionsK8s = async (
     const patchData = {
       data: {
         enabled: 'true',
-        'policy.csv': finalPolicy.join('\n')
-      }
+        'policy.csv': finalPolicy.join('\n'),
+      },
     };
 
     // Write patch data to a temporary file to avoid E2BIG error with large policies
-    const tempFile = join(tmpdir(), `rbac-patch-${Date.now()}-${Math.random().toString(36).substring(7)}.json`);
+    const tempFile = join(
+      tmpdir(),
+      `rbac-patch-${Date.now()}-${Math.random().toString(36).substring(7)}.json`
+    );
     await fs.writeFile(tempFile, JSON.stringify(patchData), 'utf-8');
 
     try {
@@ -218,7 +231,7 @@ export const setRBACRoleWithPermissionsK8s = async (
 
 /**
  * Legacy function for giving admin permissions to the shared RBAC_USER.
- * 
+ *
  * @deprecated Only used by legacy PR tests. New tests should use:
  * setRBACRoleWithPermissionsK8s('role:admin', [], username)
  */
