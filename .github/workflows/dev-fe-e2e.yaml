@@ -47,6 +47,14 @@ jobs:
           make k3d-cluster-up
 
        # Setup Node
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -59,11 +67,6 @@ jobs:
           echo "[DEBUG] Which pnpm: $(which pnpm)"
           echo "[DEBUG] pnpm version: $(pnpm --version)"
           echo "[DEBUG] Shell: $SHELL"
-
-      - name: Use Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
 
       - name: Build Everest UI
         shell: bash
