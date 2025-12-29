@@ -92,6 +92,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
+          cache: "pnpm"
+          cache-dependency-path: ui/pnpm-lock.yaml
 
       - name: Enable Corepack
         run: corepack enable
@@ -100,24 +102,21 @@ jobs:
         with:
           version: 9.4.0
 
-      - name: Get pnpm store directory
+      - name: Verify pnpm setup
         shell: bash
         run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - uses: actions/cache@v4
-        name: Setup pnpm cache
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          echo "[DEBUG] PATH after pnpm setup: $PATH"
+          echo "[DEBUG] Which pnpm: $(which pnpm)"
+          echo "[DEBUG] pnpm version: $(pnpm --version)"
+          echo "[DEBUG] Shell: $SHELL"
 
       - name: Init testing (CI) environment
         shell: bash
         working-directory: ui/apps/everest/.e2e
         timeout-minutes: 20
         run: |
+          echo "[DEBUG] Starting ci-init..."
+          echo "[DEBUG] PATH in ci-init step: $PATH"
           make ci-init
 
       - name: Run integration tests

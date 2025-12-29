@@ -1,3 +1,8 @@
+# Use a single shell for all recipe lines to preserve environment variables
+.ONESHELL:
+SHELL := /bin/bash
+.SHELLFLAGS := -euo pipefail -c
+
 REPO_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/../../../../
 REPO_ROOT_MAKEFILE=$(REPO_ROOT)/Makefile
 
@@ -14,15 +19,29 @@ help: ## Display this help.
 .PHONY: init
 init:     ## Install tests dependencies.
 	$(info Installing dependencies)
+	@echo "[DEBUG] Current PATH: $$PATH"
+	@echo "[DEBUG] Checking pnpm availability..."
+	@which pnpm || echo "[ERROR] pnpm not found in PATH"
+	@pnpm --version || echo "[ERROR] pnpm command failed"
+	@echo "[DEBUG] Changing to $(REPO_ROOT)/ui"
 	cd $(REPO_ROOT)/ui && \
+		echo "[DEBUG] Running pnpm install..." && \
 		pnpm install && \
+		echo "[DEBUG] pnpm install completed, changing to apps/everest/.e2e" && \
 		cd apps/everest/.e2e && \
-		npx playwright install --with-deps chromium
+		echo "[DEBUG] Installing Playwright..." && \
+		npx playwright install --with-deps chromium && \
+		echo "[DEBUG] Playwright installation completed"
 
 CI_INIT_DEPS := init deploy-minio create-db-namespaces deploy-monitoring
 CI_INIT_DEPS += k3d-upload-images
 .PHONY: ci-init
 ci-init: $(CI_INIT_DEPS) 	## Prepare environment for running tests.
+
+# CI init without the init step (dependencies are installed separately in the workflow)
+CI_INIT_NO_DEPS := deploy-minio create-db-namespaces deploy-monitoring k3d-upload-images
+.PHONY: ci-init-no-deps
+ci-init-no-deps: $(CI_INIT_NO_DEPS) 	## Prepare environment for CI (assumes dependencies already installed).
 
 MINIO_RESOURCE=$(REPO_ROOT)/.github/minio.conf.yaml
 .PHONY: install-minio
