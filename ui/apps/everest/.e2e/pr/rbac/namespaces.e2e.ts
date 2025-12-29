@@ -1,17 +1,18 @@
-import { expect, Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { setRBACRoleWithPermissionsK8s } from '@e2e/utils/rbac-cmd-line';
 import { RBACTestWrapper } from './utils';
-import { loginTestUser, RBACTestUser } from '@e2e/utils/user';
+import { loginTestUser } from '@e2e/utils/user';
+import { TIMEOUTS } from '@e2e/constants';
 
 // Namespaces, engines and DBs are already filtered by the API according to permissions, so here we test the UI
 test.describe('Namespaces RBAC', () => {
-  test.setTimeout(60000);
+  test.describe.configure({ timeout: TIMEOUTS.OneMinute });
 
   test('should show upgrade button when there is permission to update DB engines', async ({
     browser
   }) => {
     const userName = 'namespaces-rbac-upgrade-button';
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -82,7 +83,7 @@ test.describe('Namespaces RBAC', () => {
   }) => {
     const userName = 'namespaces-rbac-upgrade-button-no-perm';
 
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', 'read', `${namespace}/*`],

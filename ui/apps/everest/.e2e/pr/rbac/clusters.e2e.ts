@@ -1,16 +1,17 @@
-import { expect, Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { mockEngines, MOCK_CLUSTER_NAME, mockClusters, RBACTestWrapper } from './utils';
 import { setRBACRoleWithPermissionsK8s } from '@e2e/utils/rbac-cmd-line';
-import { loginTestUser, RBACTestUser } from '@e2e/utils/user';
+import { loginTestUser } from '@e2e/utils/user';
+import { TIMEOUTS } from '@e2e/constants';
 
 test.describe.parallel('Clusters RBAC', () => {
-  test.setTimeout(60000);
+  test.describe.configure({ timeout: TIMEOUTS.OneMinute });
 
   test('permitted cluster creation with present clusters', async ({ browser }) => {
 
     const userName = 'permitted-clstr-with-clstrs';
 
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -30,7 +31,7 @@ test.describe.parallel('Clusters RBAC', () => {
     browser }) => {
     const userName = 'permitted-clstr-without-clstrs';
 
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -50,7 +51,7 @@ test.describe.parallel('Clusters RBAC', () => {
   }) => {
     const userName = 'not-permitted-clstr-with-clstrs';
 
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -71,7 +72,7 @@ test.describe.parallel('Clusters RBAC', () => {
 
     const userName = 'not-permitted-clstr-without-clstrs';
 
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -90,7 +91,7 @@ test.describe.parallel('Clusters RBAC', () => {
 
     const userName = 'visible-clstr-actions';
 
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await mockClusters(page, namespace);
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
@@ -122,7 +123,7 @@ test.describe.parallel('Clusters RBAC', () => {
   test('not visible actions', async ({ browser }) => {
     const userName = 'not-visible-clstr-actions';
 
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],

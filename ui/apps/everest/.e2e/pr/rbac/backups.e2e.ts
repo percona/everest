@@ -1,5 +1,5 @@
 import { setRBACRoleWithPermissionsK8s } from '@e2e/utils/rbac-cmd-line';
-import { createRBACTestUser, loginTestUser, logoutTestUser, RBACTestUser } from '@e2e/utils/user';
+import { loginTestUser, RBACTestUser } from '@e2e/utils/user';
 import { expect, Page, test } from '@playwright/test';
 import {
   MOCK_CLUSTER_NAME,
@@ -8,20 +8,14 @@ import {
   mockStorages,
   RBACTestWrapper,
 } from './utils';
-import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import { a } from 'vitest/dist/chunks/suite.B2jumIFP';
-
-function getRBACNamespace(): string {
-  return EVEREST_CI_NAMESPACES.EVEREST_UI;
-}
+import { TIMEOUTS } from '@e2e/constants';
 
 test.describe.parallel('Backups RBAC', () => {
-  // Increase timeout for RBAC tests due to setup/teardown overhead
-  test.setTimeout(60000);
+  test.describe.configure({ timeout: TIMEOUTS.OneMinute });
 
   test('Hide Backups', async ({ browser }) => {
     const userName = 'hide-backups';
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -52,7 +46,7 @@ test.describe.parallel('Backups RBAC', () => {
   test('Show Backups', async ({ browser }) => {
 
     const userName = 'show-backups';
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -78,7 +72,7 @@ test.describe.parallel('Backups RBAC', () => {
 
   test('Delete backup', async ({ browser }) => {
     const userName = 'delete-backup';
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -111,7 +105,7 @@ test.describe.parallel('Backups RBAC', () => {
   test('Create on-demand backup', async ({ browser }) => {
     const userName = 'create-ondemand-backup';
 
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],
@@ -141,7 +135,7 @@ test.describe.parallel('Backups RBAC', () => {
 
   test('Create scheduled backup', async ({ browser }) => {
     const userName = 'create-scheduled-backup';
-    await RBACTestWrapper(browser, userName, async (page: Page, namespace: string, testUser: RBACTestUser) => {
+    await RBACTestWrapper(browser, userName, async (page, namespace, testUser) => {
       await setRBACRoleWithPermissionsK8s(`role:${userName}`, [
         ['namespaces', 'read', namespace],
         ['database-engines', '*', `${namespace}/*`],

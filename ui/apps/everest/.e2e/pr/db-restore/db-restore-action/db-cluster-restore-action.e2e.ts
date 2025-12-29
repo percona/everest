@@ -118,7 +118,6 @@ test.describe('DB Cluster Restore', () => {
       el.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
-    await page.waitForTimeout(2000);
     expect(await input.inputValue()).toBe('27/02/2025 at 15:25:00');
   });
 });

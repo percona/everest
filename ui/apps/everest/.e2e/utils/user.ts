@@ -45,12 +45,12 @@ export const login = async (
   await page.getByTestId('text-input-password').fill(password);
   await page.getByTestId('login-button').click();
 
-  await page.waitForURL((url) => !url.pathname.includes('/login'), {
-    timeout: TIMEOUTS.ThirtySeconds,
-  });
+  // await page.waitForURL((url) => !url.pathname.includes('/login'), {
+  //   timeout: TIMEOUTS.ThirtySeconds,
+  // });
 
   await expect(page.getByTestId('user-appbar-button')).toBeVisible({
-    timeout: TIMEOUTS.ThirtySeconds,
+    timeout: TIMEOUTS.TenSeconds,
   });
 
   try {
@@ -121,8 +121,12 @@ export const loginTestUser = async (
       }
 
       await login(page, username, password);
-      // Wait for RBAC permissions after login
+      await page.waitForLoadState('networkidle');
+
+      // Additional wait for RBAC permissions to be fully applied in the UI
+      // This is needed because the UI might still be rendering permission-based components
       await page.waitForTimeout(2000);
+
       return;
     } catch (error: any) {
       if (attempt === maxRetries) {
