@@ -55,7 +55,7 @@ MINIO_RESOURCE=$(TEST_ROOT)/manifests/minio.yaml
 deploy-minio:
 	$(info Deploying MinIO to K3D cluster)
 	kubectl apply -f $(MINIO_RESOURCE)
-	kubectl wait deploy/minio --for=condition=Available -n minio --timeout=120s
+	kubectl wait deploy/minio --for=condition=Available -n minio --timeout=240s
 
 .PHONY: k3d-upload-pg-images
 k3d-upload-pg-images: ## Pre-upload Postgresql images to K3D test  cluster to speedup tests execution.
