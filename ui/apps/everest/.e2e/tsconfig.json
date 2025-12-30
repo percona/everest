@@ -21,5 +21,6 @@
     "moduleResolution": "Node",
     "sourceMap": true,
     "outDir": "./tests-out"
+    // "tsBuildInfoFile": "./tests-out/tsconfig.tsbuildinfo"
   }
 }

@@ -1,4 +1,10 @@
-import { Page } from '@playwright/test';
+import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import {
+  createRBACTestUser,
+  logoutTestUser,
+  RBACTestUser,
+} from '@e2e/utils/user';
+import { Browser, Page } from '@playwright/test';
 
 type ClusterConfigOptions = {
   enableSchedules?: boolean;
@@ -181,3 +187,37 @@ export const mockStorages = (page: Page, namespace: string) =>
       ],
     });
   });
+
+export const getRBACNamespace = (): string => {
+  return EVEREST_CI_NAMESPACES.EVEREST_UI;
+};
+
+export const RBACTestWrapper = async (
+  browser: Browser,
+  userName: string,
+  testFunc: (
+    page: Page,
+    namespace: string,
+    testUser: RBACTestUser
+  ) => Promise<void>
+) => {
+  // Create isolated context for test to avoid session conflicts
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const namespace = getRBACNamespace();
+  const testUser = await createRBACTestUser(userName);
+
+  try {
+    await testFunc(page, namespace, testUser);
+  } finally {
+    if (!page.isClosed()) {
+      await logoutTestUser(page);
+    }
+    await testUser.cleanup();
+    try {
+      await context.close();
+    } catch (error) {
+      console.log('Context already closed, skipping cleanup');
+    }
+  }
+};

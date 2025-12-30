@@ -14,19 +14,16 @@
 // limitations under the License.
 
 import { test as teardown } from '@playwright/test';
-import 'dotenv/config';
 import { deleteDbClusterFn } from '@e2e/utils/db-cluster';
 import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
+import { dbClusterName } from './project.config';
 
-const pgDbName = 'pr-mul-ns-db-pg';
-const pxcDbName = 'pr-mul-ns-db-pxc';
-
-teardown.describe.parallel('Storage Locations teardown', () => {
-  teardown('Destroy PG cluster', async ({ request }) => {
-    await deleteDbClusterFn(request, pgDbName, EVEREST_CI_NAMESPACES.PG_ONLY);
-  });
-
-  teardown('Destroy PXC cluster', async ({ request }) => {
-    await deleteDbClusterFn(request, pxcDbName, EVEREST_CI_NAMESPACES.PXC_ONLY);
+teardown.describe.serial('DB Cluster Restore Action teardown', () => {
+  teardown(`Delete ${dbClusterName} cluster`, async ({ request }) => {
+    await deleteDbClusterFn(
+      request,
+      dbClusterName,
+      EVEREST_CI_NAMESPACES.EVEREST_UI
+    );
   });
 });

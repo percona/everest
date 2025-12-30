@@ -14,41 +14,31 @@
 // limitations under the License.
 
 import { test as setup } from '@playwright/test';
-import 'dotenv/config';
 import { createDbClusterFn } from '@e2e/utils/db-cluster';
-import { EVEREST_CI_NAMESPACES } from '@e2e/constants';
-import { waitForInitializingState } from '@e2e/utils/table';
+import { EVEREST_CI_NAMESPACES, getBucketNamespacesMap } from '@e2e/constants';
+import { dbClusterName } from './project.config';
 
-const pgDbName = 'pr-mul-ns-db-pg';
-const pxcDbName = 'pr-mul-ns-db-pxc';
-
-setup.describe.parallel('Storage Locations setup', () => {
-  setup('Create PG cluster', async ({ page, request }) => {
+setup.describe.serial('DB Cluster Restore setup', () => {
+  setup(`Create ${dbClusterName} cluster`, async ({ request }) => {
     await createDbClusterFn(
       request,
       {
-        dbName: pgDbName,
-        dbType: 'postgresql',
-        numberOfNodes: '1',
-      },
-      EVEREST_CI_NAMESPACES.PG_ONLY
-    );
-    await page.goto('/databases');
-    await waitForInitializingState(page, pgDbName);
-  });
-
-  setup('Create PXC cluster', async ({ request }) => {
-    await createDbClusterFn(
-      request,
-      {
-        dbName: pxcDbName,
+        dbName: dbClusterName,
         dbType: 'mysql',
         numberOfNodes: '1',
         backup: {
-          enabled: false,
+          enabled: true,
+          schedules: [
+            {
+              backupStorageName: getBucketNamespacesMap()[0][0],
+              enabled: true,
+              name: 'backup-1',
+              schedule: '0 * * * *',
+            },
+          ],
         },
       },
-      EVEREST_CI_NAMESPACES.PXC_ONLY
+      EVEREST_CI_NAMESPACES.EVEREST_UI
     );
   });
 });
