@@ -55,7 +55,7 @@ MINIO_RESOURCE=$(TEST_ROOT)/manifests/minio.yaml
 deploy-minio:
 	$(info Deploying MinIO to K3D cluster)
 	kubectl apply -f $(MINIO_RESOURCE)
-	if ! kubectl wait deploy/minio --for=condition=Available -n minio --timeout=3s; then \
+	if ! kubectl wait deploy/minio --for=condition=Available -n minio --timeout=300s; then \
 		echo "❌ MinIO deployment did not become ready in time"; \
 		echo "🔎 Deployment YAML:"; \
 		kubectl get deploy minio -n minio -o yaml || true; \
