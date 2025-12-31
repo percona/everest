@@ -25,7 +25,7 @@ require (
 	github.com/lestrrat-go/jwx/v2 v2.1.6
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oapi-codegen/echo-middleware v1.0.2
-	github.com/oapi-codegen/runtime v1.1.1
+	github.com/oapi-codegen/runtime v1.1.2
 	github.com/operator-framework/api v0.33.0
 	github.com/percona/everest-operator v0.6.0-dev1.0.20251231123520-157f371f4761
 	github.com/percona/percona-helm-charts/charts/everest v0.0.0-20251230135423-b2a4e2ebdcbe
