@@ -12,6 +12,7 @@ import (
 
 	everestv1alpha1 "github.com/percona/everest-operator/api/everest/v1alpha1"
 	"github.com/percona/everest/api"
+	"github.com/percona/everest/internal/server/handlers"
 	"github.com/percona/everest/pkg/common"
 	"github.com/percona/everest/pkg/rbac"
 )
@@ -196,6 +197,14 @@ func (h *rbacHandler) GetDatabaseClusterComponents(ctx context.Context, namespac
 		return nil, err
 	}
 	return h.next.GetDatabaseClusterComponents(ctx, namespace, name)
+}
+
+func (h *rbacHandler) GetDatabaseClusterComponentLogs(ctx context.Context, namespace, clusterName, componentName string, params api.GetDatabaseClusterComponentLogsParams, stream handlers.StreamFunc) error {
+	// if users have access to the DB cluster let's give them access to read the logs
+	if err := h.enforce(ctx, rbac.ResourceDatabaseClusters, rbac.ActionRead, rbac.ObjectName(namespace, clusterName)); err != nil {
+		return err
+	}
+	return h.next.GetDatabaseClusterComponentLogs(ctx, namespace, clusterName, componentName, params, stream)
 }
 
 func (h *rbacHandler) GetDatabaseClusterPitr(ctx context.Context, namespace, name string) (*api.DatabaseClusterPitr, error) {
