@@ -1022,6 +1022,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/cluster/{cluster}/namespaces/{namespace}/database-engines/{name}/schema':
+    x-everest-resource-name: database-engines
+    get:
+      tags:
+        - Database Engine
+      summary: Get schema of the specified database engine.
+      description: |
+        This API gets the schema of the specified database engine.
+      operationId: getDatabaseEngineSchema
+      parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          description: Name of the namespace
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseEngineSchema'
+        '400':
+          description: Unsuccessful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   '/namespaces/{namespace}/database-engines/upgrade-plan':
     x-everest-resource-name: database-engines
     get:
@@ -3027,6 +3068,87 @@ components:
         metadata:
           type: object
       type: object
+    DatabaseEngineSchema:
+      description: DatabaseEngineSchema is an object that contains the schema of the specified database engine.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+                  of an object. Servers should convert recognized schemas to the latest
+                  internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+                  object represents. Servers may infer this from the endpoint the client
+                  submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        schema:
+          description: Schema is the OpenAPI v3 schema definition for fields supported by the database engine
+          type: array # preserve the order of properties
+          items:
+            $ref: '#/components/schemas/DatabaseEngineSchemaProperty'
+      type: object
+    DatabaseEngineSchemaProperty:
+      description: DatabaseEngineSchemaProperty defines a single property in the database engine schema
+      type: object
+      properties:
+        required:
+          - name
+          - uiType
+        name: # dynamic key is hard to represent than dynamic value
+          description: The name of the property
+          type: string
+          example: allowUnsafeFlags
+        uiType:
+          description: The type of UI component to use for this property
+          type: string
+          enum:
+            - Toggle
+            - Number
+            - Group
+        uiDescription : # description is reserved key for Open API
+          description: Description of the property (used as the text to display in UI)
+          type: string
+          example: Allow unsafe configurations
+        validation:
+          description: 'Validation rules for the property in Common Expression Langugage (CEL)
+                  or standard Zod rules'
+          type: object
+          properties:
+            celExpr:
+              type: string
+              description: Validation rules in CEL syntax
+              expample: 'components.mongod.resources.limits.cpu >= 10 && components.mongod.resources.requests2 < 4'
+            min:
+              type: number
+              description: Validation rules in Zod syntax for minimum value
+            max:
+              type: number
+              description: Validation rules in Zod syntax for maximum value
+        params:
+          description: Configuration of parameters for the property
+          type: object
+          properties:
+            label:
+              type: string
+              description: Label to use for the property in UI
+              example: Replicas
+            placeholder:
+              type: string
+              description: Placeholder text to use for the property in UI
+              example: Enter number of replicas
+            default:
+              type: string
+              description: Default value for the property
+              example: '9999'
+            badge:
+              type: string
+              description: Badge to display next to the property in UI
+              example: 'Gi'
+        subParameters:
+          description: Sub-parameters for group type properties
+          type: array # preserve the order of properties
+          items:
+            $ref: '#/components/schemas/DatabaseEngineSchemaProperty'
     UpgradePlanApproval:
       type: object
       description: |
