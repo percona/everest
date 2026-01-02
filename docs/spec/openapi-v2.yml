@@ -1,6 +1,6 @@
 openapi: 3.0.2
 servers:
-  - url: /v1
+  - url: /v2
 info:
   version: 1.0.0
   title: Percona Everest schema
@@ -223,7 +223,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Settings'
-  '/resources':
+  '/clusters':
+    get:
+      tags:
+        - Kubernetes
+      summary: Manage Kubernetes clusters
+      description: |
+        This API returns a list of Kubernetes clusters managed by Everest.
+      operationId: listKubernetesClusters
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KubernetesClusterList'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/cluster/{cluster}/resources':
     get:
       tags:
         - Kubernetes
@@ -250,7 +271,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/cluster-info':
+  '/cluster/{cluster}/cluster-info':
     get:
       tags:
         - Kubernetes
@@ -277,7 +298,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters':
     x-everest-resource-name: database-clusters
     post:
       tags:
@@ -287,6 +308,12 @@ paths:
         This API creates a new database cluster in the specified namespace.
       operationId: createDatabaseCluster
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -364,7 +391,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{name}':
     x-everest-resource-name: database-clusters
     get:
       tags:
@@ -374,6 +401,12 @@ paths:
         This API gets the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseCluster
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -495,7 +528,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{cluster-name}/backups':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{cluster-name}/backups':
     x-everest-resource-name: database-cluster-backups
     get:
       tags:
@@ -505,6 +538,12 @@ paths:
         This API lists all database cluster backups in the specified `namespace`.
       operationId: listDatabaseClusterBackups
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -536,7 +575,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{cluster-name}/restores':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{cluster-name}/restores':
     x-everest-resource-name: database-cluster-restores
     get:
       tags:
@@ -546,6 +585,12 @@ paths:
         This API lists all database cluster restores for a database cluster specified by the `name` and `namespace`.
       operationId: listDatabaseClusterRestores
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -577,7 +622,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/credentials':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{name}/credentials':
     x-everest-resource-name: database-cluster-credentials
     get:
       tags:
@@ -587,6 +632,12 @@ paths:
         This API gets the credentials for the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseClusterCredentials
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -618,7 +669,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/pitr':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{name}/pitr':
     x-everest-resource-name: database-clusters
     get:
       tags:
@@ -628,6 +679,12 @@ paths:
         This API gets the Point-in-Time recovery info for the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseClusterPitr
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -659,7 +716,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/components':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{name}/components':
     x-everest-resource-name: database-clusters
     get:
       tags:
@@ -669,6 +726,12 @@ paths:
         This API gets the various components of the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseClusterComponents
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -700,7 +763,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-clusters/{name}/components/{component_name}/logs':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{name}/components/{component_name}/logs':
     x-everest-resource-name: database-clusters
     get:
       tags:
@@ -710,6 +773,12 @@ paths:
         This API gets the logs of the component specified by the `component_name` of the database cluster specified by the `name` and `namespace`.
       operationId: getDatabaseClusterComponentLogs
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -810,7 +879,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  '/namespaces/{namespace}/database-clusters/{dbName}/data-import-jobs':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{dbName}/data-import-jobs':
     x-everest-resource-name: data-import-jobs
     get:
       tags:
@@ -820,6 +889,12 @@ paths:
         This API lists all data import jobs for the database cluster specified by the `name` and `namespace`.
       operationId: listDataImportJobs
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -846,7 +921,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  '/namespaces/{namespace}/database-clusters/{dbName}/secret':
+  '/cluster/{cluster}/namespaces/{namespace}/database-clusters/{dbName}/secret':
     post:
       tags:
         - Database Cluster
@@ -855,6 +930,12 @@ paths:
         This API creates a secret for the database cluster specified by the `name` and `namespace`
       operationId: createDatabaseClusterSecret
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: dbName
           in: path
           description: Name of the database cluster
@@ -900,7 +981,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Secret'
       
-  '/namespaces/{namespace}/database-engines':
+  '/cluster/{cluster}/namespaces/{namespace}/database-engines':
     x-everest-resource-name: database-engines
     get:
       tags:
@@ -910,6 +991,12 @@ paths:
         This API lists all database engines in the specified `namespace`.
       operationId: listDatabaseEngines
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -935,7 +1022,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/{name}':
+  '/cluster/{cluster}/namespaces/{namespace}/database-engines/{name}':
     x-everest-resource-name: database-engines
     get:
       tags:
@@ -945,6 +1032,12 @@ paths:
         This API gets the database engine specified by the `name` and `namespace`.
       operationId: getDatabaseEngine
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -1022,7 +1115,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/upgrade-plan':
+  '/cluster/{cluster}/namespaces/{namespace}/database-engines/upgrade-plan':
     x-everest-resource-name: database-engines
     get:
       tags:
@@ -1038,6 +1131,12 @@ paths:
         The older upgrade APIs are deprecated and will be removed in v1.2.0
       operationId: getUpgradePlan
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -1063,7 +1162,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-engines/upgrade-plan/approval':
+  '/cluster/{cluster}/namespaces/{namespace}/database-engines/upgrade-plan/approval':
     x-everest-resource-name: database-engines
     post:
       tags:
@@ -1077,6 +1176,12 @@ paths:
 
       operationId: approveUpgradePlan
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -1105,7 +1210,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-cluster-restores':
+  '/cluster/{cluster}/namespaces/{namespace}/database-cluster-restores':
     x-everest-resource-name: database-cluster-restores
     post:
       tags:
@@ -1115,6 +1220,12 @@ paths:
         This API creates a new database cluster restore in the specified `namespace`.
       operationId: createDatabaseClusterRestore
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -1159,7 +1270,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DatabaseClusterRestore'
-  '/namespaces/{namespace}/database-cluster-restores/{name}':
+  '/cluster/{cluster}/namespaces/{namespace}/database-cluster-restores/{name}':
     x-everest-resource-name: database-cluster-restores
     get:
       tags:
@@ -1169,6 +1280,12 @@ paths:
         This API gets the database cluster restore specified by the `name` and `namespace`.
       operationId: getDatabaseClusterRestore
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -1291,7 +1408,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/database-cluster-backups':
+  '/cluster/{cluster}/namespaces/{namespace}/database-cluster-backups':
     x-everest-resource-name: database-cluster-backups
     post:
       tags:
@@ -1301,6 +1418,12 @@ paths:
         This API creates a new database cluster backup in the specified `namespace`.
       operationId: createDatabaseClusterBackup
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -1345,7 +1468,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DatabaseClusterBackup'
-  '/namespaces/{namespace}/database-cluster-backups/{name}':
+  '/cluster/{cluster}/namespaces/{namespace}/database-cluster-backups/{name}':
     x-everest-resource-name: database-cluster-backups
     get:
       tags:
@@ -1355,6 +1478,12 @@ paths:
         This API gets the database cluster backup specified by the `name` and `namespace`.
       operationId: getDatabaseClusterBackup
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Name of the namespace
@@ -1431,7 +1560,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/backup-storages':
+  '/cluster/{cluster}/namespaces/{namespace}/backup-storages':
     x-everest-resource-name: backup-storages
     post:
       tags:
@@ -1473,6 +1602,12 @@ paths:
           ```
       operationId: createBackupStorage
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Namespace of the backup storage
@@ -1537,7 +1672,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/backup-storages/{name}':
+  '/cluster/{cluster}/namespaces/{namespace}/backup-storages/{name}':
     x-everest-resource-name: backup-storages
     get:
       tags:
@@ -1546,6 +1681,12 @@ paths:
       description: This API gets the backup storage speciciied by the `name` in the given `namespace`.
       operationId: getBackupStorage
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of the backup storage
@@ -1657,7 +1798,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/monitoring-instances':
+  '/cluster/{cluster}/namespaces/{namespace}/monitoring-instances':
     x-everest-resource-name: monitoring-instances
     post:
       tags:
@@ -1671,6 +1812,12 @@ paths:
         Such as, if `type: pmm`, then `pmm` key needs to be provided with a configuration.
       operationId: createMonitoringInstance
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Namespace of the backup storage
@@ -1735,7 +1882,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/monitoring-instances/{name}':
+  '/cluster/{cluster}/namespaces/{namespace}/monitoring-instances/{name}':
     x-everest-resource-name: monitoring-instances
     get:
       tags:
@@ -1744,6 +1891,12 @@ paths:
       description: This API gets the monitoring instance specified by the `name`.
       operationId: getMonitoringInstance
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of the Monitoring instance
@@ -2266,7 +2419,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 # ------- Engine Features endpoints -------
-  '/namespaces/{namespace}/engine-features/split-horizon-dns-configs':
+  '/cluster/{cluster}/namespaces/{namespace}/engine-features/split-horizon-dns-configs':
     x-everest-resource-name: enginefeatures/split-horizon-dns-configs
     post:
       tags:
@@ -2276,6 +2429,12 @@ paths:
         This API creates a new Split-Horizon DNS Config instance.
       operationId: createSplitHorizonDNSConfig
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: namespace
           in: path
           description: Namespace of the Split-Horizon DNS Config instance.
@@ -2340,7 +2499,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/namespaces/{namespace}/engine-features/split-horizon-dns-configs/{name}':
+  '/cluster/{cluster}/namespaces/{namespace}/engine-features/split-horizon-dns-configs/{name}':
     x-everest-resource-name: enginefeatures/split-horizon-dns-configs
     get:
       tags:
@@ -2349,6 +2508,12 @@ paths:
       description: This API gets the Split-Horizon DNS Config instance specified by the `name`.
       operationId: getSplitHorizonDNSConfig
       parameters:
+        - name: cluster
+          in: path
+          description: Name of the Kubernetes cluster
+          required: true
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of the Split-Horizon DNS Config instance.
@@ -2889,6 +3054,10 @@ components:
         gaps:
           description: indicates if there are pitr logs gaps detected after this backup was taken
           type: boolean
+    KubernetesClusterList:
+      type: array
+      items:
+        type: string
     KubernetesClusterResources:
       type: object
       description: kubernetes cluster resources
