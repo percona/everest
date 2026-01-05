@@ -22,3 +22,5 @@ This list is sorted chronologically by submission date.
 | Organization | Contact | Date | Description of Use |
 | ------------ | ------- | ---- | ------------------ |
 | [Percona](https://percona.com) | @recharte | 2024-02-29 | Percona provides support and services for Percona Everest |
+| [Solanica](https://solanica.io) | @spron-in | 2025-12-01 | Solanica is a core contributor to the OpenEverest project and a pioneer in cloud-native data platform automation. The Solanica Platform delivers seamless deployment, observability, and expert support for teams standardizing on OpenEverest |
+| [Lyrid](https://lyrid.io) | @handoyo-lyrid | 2026-01-03 | Lyrid uses Percona Everest to provide a flexible and open DBaaS where customers can choose their database and approach without the fear of vendor lock-in. [Read more](https://www.lyrid.io/post/lyrid-launches-open-source-database-as-a-service-platform-based-on-percona-everest). |
