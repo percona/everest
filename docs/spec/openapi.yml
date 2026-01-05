@@ -1022,15 +1022,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  '/cluster/{cluster}/namespaces/{namespace}/database-engines/{name}/schema':
-    x-everest-resource-name: database-engines
+  '/cluster/{cluster}/namespaces/{namespace}/provider/{name}/schema':
+    x-everest-resource-name: provider
     get:
       tags:
-        - Database Engine
-      summary: Get schema of the specified database engine.
+        - Provider
+      summary: Get the schema of the specified provider.
       description: |
-        This API gets the schema of the specified database engine.
-      operationId: getDatabaseEngineSchema
+        This API gets the schema of the specified provider.
+      operationId: getProviderSchema
       parameters:
         - name: cluster
           in: path
@@ -1050,7 +1050,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DatabaseEngineSchema'
+                $ref: '#/components/schemas/ProviderSchema'
         '400':
           description: Unsuccessful operation
           content:
@@ -3068,8 +3068,8 @@ components:
         metadata:
           type: object
       type: object
-    DatabaseEngineSchema:
-      description: DatabaseEngineSchema is an object that contains the schema of the specified database engine.
+    ProviderSchema:
+      description: ProviderSchema is an object that contains the schema of the specified database engine.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -3085,10 +3085,10 @@ components:
           description: Schema is the OpenAPI v3 schema definition for fields supported by the database engine
           type: array # preserve the order of properties
           items:
-            $ref: '#/components/schemas/DatabaseEngineSchemaProperty'
+            $ref: '#/components/schemas/ProviderUISchema'
       type: object
-    DatabaseEngineSchemaProperty:
-      description: DatabaseEngineSchemaProperty defines a single property in the database engine schema
+    ProviderUISchema:
+      description: ProviderUISchema defines a single property in the provider schema
       type: object
       properties:
         required:
