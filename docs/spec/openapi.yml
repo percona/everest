@@ -907,7 +907,7 @@ paths:
         - Data Store
       summary: Get the schema of the specified data store.
       description: |
-        This API gets the schema of the specified data store.
+        This API gets the schema required by CR and UI components of the specified data store.
       operationId: getDataStoreSchema
       parameters:
         - name: cluster
@@ -3081,19 +3081,21 @@ components:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
                   of an object. Servers should convert recognized schemas to the latest
-                  internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                  internal value, and may reject unrecognized values. More info:
+                  https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
                   object represents. Servers may infer this from the endpoint the client
-                  submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                  submits requests to. Cannot be updated. In CamelCase. More info:
+                  https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         customResource:
           description: CustomResource is the schema definition for the custom resource of the data store
           type: object
           $ref: '#/components/schemas/DataStoreCRSchema'
         uiComponents:
-          description: uiComponents is the schema definition for fields supported by the data store
+          description: uiComponents is the schema definition for UI components supported by the data store
           type: array # preserve the order of properties
           items:
             $ref: '#/components/schemas/DataStoreUISchema'
@@ -3129,7 +3131,7 @@ components:
               uiType: Group
               description: Nodes configuration
               subParameters:
-                - name: nodeCounts
+                - name: replicas
                   uiType: Number
                   uiDescription: Number of nodes
                   mapping: spec.engine.replicas
@@ -3139,7 +3141,7 @@ components:
                   selector:
                     - label: "1 node"
                       value: 1
-                    - label: "2 node"
+                    - label: "3 node"
                       value: 3
                     - label: "5 node"
                       value: 5
@@ -3166,7 +3168,7 @@ components:
                   params:
                     badge: Gi
                     label: Disk
-            - name: nodes
+            - name: proxy
               uiType: Group
               description: Proxy configuration
               subParameters:
@@ -3206,7 +3208,7 @@ components:
             - Number
             - Group
         description :
-          description: Description of the property (used as the text to display in UI)
+          description: Description of the property that is used as the text to display in UI
           type: string
           example: Allow unsafe configurations
         validation:
