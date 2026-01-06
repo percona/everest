@@ -3101,34 +3101,66 @@ components:
             - name: provider
               uiType: Toggle
               description: Data store provider
+              mapping: spec.engine.type
+              selector:
+                - label: "MySQL"
+                  value: "pxc"
             - name: namespace
               uiType: Toggle
               description: Namespace
+              mapping: metadata.namespace
+              selector:
+                - label: "everest"
+                  value: "everest"
             - name: name
               uiType: TextBox
               description: Display name
+              mapping: metadata.name
             - name: dataStoreVersion
               uiType: Toggle
               description: Data store version
+              mapping: spec.version
+              selector:
+                - label: "v1.0"
+                  value: "1.0.0"
+                - label: "v2.0"
+                  value: "2.0.0"
             - name: nodes
               uiType: Group
               description: Nodes configuration
               subParameters:
-                - name: cpu
+                - name: nodeCounts
                   uiType: Number
                   uiDescription: Number of nodes
+                  mapping: spec.engine.replicas
                   params:
-                    badge: limits
-                    label: CPU
+                    badge: node
+                    label: node
+                  selector:
+                    - label: "1 node"
+                      value: 1
+                    - label: "2 node"
+                      value: 3
+                    - label: "5 node"
+                      value: 5
+                - name: cpu
+                  uiType: Number
+                  uiDescription: Resource size per node
+                  mapping: spec.engine.resources.cpu
+                  params:
+                    badge: GB
+                    label: Memory
                 - name: memory
                   uiType: Number
                   uiDescription: Resource size per node
+                  mapping: spec.engine.resources.memory
                   params:
                     badge: GB
                     label: Memory
                 - name: disk
                   uiType: Number
                   uiDescription: Disk
+                  mapping: spec.engine.storage.size
                   params:
                     badge: Gi
                     label: Disk
@@ -3139,12 +3171,14 @@ components:
                 - name: cpu
                   uiType: Number
                   uiDescription: Number of proxies
+                  mapping: spec.proxy.resources.cpu
                   params:
                     badge: CPU
                     label: CPU
                 - name: memory
                   uiType: Number
                   uiDescription: Resource size per proxy
+                  mapping: spec.proxy.resources.memory
                   params:
                     badge: Gi
                     label: Memory
@@ -3230,6 +3264,16 @@ components:
       example:
         type: object
         properties:
+          metadata:
+            description: Metadata of the data store custom resource
+            type: object
+            properties:
+              name:
+                description: Name of the data store
+                type: string
+              namespace:
+                description: Namespace to deploy the data store
+                type: string
           spec:
             description: Specification of the data store custom resource
             type: object
@@ -3240,6 +3284,7 @@ components:
               provider:
                 description: The name of the data store provider
                 type: string
+                default: pxc
               topology:
                 description: topology is the configuration of the data store topology
                 type: object
@@ -3266,32 +3311,67 @@ components:
                       type:
                         description: Type of the engine
                         type: string
+                        default: pxc
                       version:
                         description: Version of the engine
                         type: string
                       replicas:
                         description: Number of replicas
                         type: number
+                      resources:
+                        description: Resources configuration
+                        type: object
+                        properties:
+                          cpu:
+                            description: Number of CPU cores (e.g., 1)
+                            type: string
+                          memory:
+                            description: Size of the memory (e.g., 2G)
+                            type: string
                       storage:
                         description: Storage configuration
                         type: object
                         properties:
+                          class:
+                            description: Storage class name
+                            type: string
                           size:
                             description: Size of the storage (e.g., 5Gi)
                             type: string
-                  backupAgent:
-                    description: Backup agent component configuration
+                  podSchedulingPolicyName:
+                    description: Pod scheduling policy name
+                    type: string
+                    default: "everest-default-mysql"
+                  proxy:
+                    description: Proxy component configuration
                     type: object
                     properties:
                       type:
-                        description: Type of the backup agent
-                        type: string
-                      version:
-                        description: Version of the backup agent
+                        description: Type of the proxy
                         type: string
                       replicas:
                         description: Number of replicas
                         type: number
+                      resources:
+                        description: Resources configuration
+                        type: object
+                        properties:
+                          cpu:
+                            description: Number of CPU cores (e.g., 0.6)
+                            type: string
+                          memory:
+                            description: Size of the memory (e.g., 0.6G)
+                            type: string
+                      exposes:
+                        description: Resources configuration
+                        type: object
+                        properties:
+                          type:
+                            description: Type of the expose
+                            type: string
+                          loadBalancerConfigName:
+                            description: Load balancer configuration name
+                            type: string
                   monitoring:
                     description: Monitoring component configuration
                     type: object
