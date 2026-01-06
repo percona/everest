@@ -900,7 +900,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Secret'
 
-  '/cluster/{cluster}/namespaces/{namespace}/data-store/{name}/schema':
+  '/cluster/{cluster}/namespaces/{namespace}/data-store/{dataStore}/schema':
     x-everest-resource-name: data-store
     get:
       tags:
@@ -919,6 +919,12 @@ paths:
         - name: namespace
           in: path
           description: Name of the namespace
+          required: true
+          schema:
+            type: string
+        - name: dataStore
+          in: path
+          description: Name of the data store
           required: true
           schema:
             type: string
@@ -3083,11 +3089,11 @@ components:
                   submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         customResource:
-          description: CustomResource is the OpenAPI v3 schema definition for the custom resource of the data store
+          description: CustomResource is the schema definition for the custom resource of the data store
           type: object
           $ref: '#/components/schemas/DataStoreCRSchema'
-        uiSchema:
-          description: Schema is the OpenAPI v3 schema definition for fields supported by the data store
+        uiComponents:
+          description: uiComponents is the schema definition for fields supported by the data store
           type: array # preserve the order of properties
           items:
             $ref: '#/components/schemas/DataStoreUISchema'
@@ -3095,10 +3101,10 @@ components:
     DataStoreUISchema:
       description: DataStoreUISchema defines a single property in the data store schema
       type: object
+      required:
+        - name
+        - uiType
       properties:
-        required:
-          - name
-          - uiType
         name: # dynamic key is hard to represent, use dynamic value
           description: The name of the property
           type: string
@@ -3110,7 +3116,7 @@ components:
             - Toggle
             - Number
             - Group
-        uiDescription : # description is reserved key for Open API
+        description :
           description: Description of the property (used as the text to display in UI)
           type: string
           example: Allow unsafe configurations
@@ -3122,7 +3128,7 @@ components:
             celExpr:
               type: string
               description: Validation rules in CEL syntax
-              expample: 'components.mongod.resources.limits.cpu >= 10 && components.mongod.resources.requests2 < 4'
+              example: 'components.mongod.resources.limits.cpu >= 10 && components.mongod.resources.requests2 < 4'
             min:
               type: number
               description: Validation rules in Zod syntax for minimum value
@@ -3174,46 +3180,76 @@ components:
         type: object
         properties:
           spec:
+            description: Specification of the data store custom resource
             type: object
+            required:
+              - provider
+              - topology
             properties:
               provider:
+                description: The name of the data store provider
                 type: string
               topology:
-                type: string
+                description: topology is the configuration of the data store topology
+                type: object
+                properties:
+                  type:
+                    description: Type of the topology
+                    type: string
+                  config:
+                    description: configuration of the topology
+                    type: object
+                    properties:
+                      shards:
+                        description: Number of shards
+                        type: number
               components:
                 type: object
                 properties:
                   engine:
+                    description: engine component configuration
                     type: object
                     required:
                       - type
                     properties:
                       type:
+                        description: Type of the engine
                         type: string
                       version:
+                        description: Version of the engine
                         type: string
                       replicas:
-                        type: integer
+                        description: Number of replicas
+                        type: number
                       storage:
+                        description: Storage configuration
                         type: object
                         properties:
                           size:
+                            description: Size of the storage (e.g., 5Gi)
                             type: string
                   backupAgent:
+                    description: Backup agent component configuration
                     type: object
                     properties:
                       type:
+                        description: Type of the backup agent
                         type: string
                       version:
+                        description: Version of the backup agent
                         type: string
                       replicas:
-                        type: integer
+                        description: Number of replicas
+                        type: number
                   monitoring:
+                    description: Monitoring component configuration
                     type: object
                     properties:
                       type:
+                        description: Type of the monitoring component
                         type: string
                       version:
+                        description: Version of the monitoring component
                         type: string
     UpgradePlanApproval:
       type: object
