@@ -3147,6 +3147,7 @@ components:
                   uiType: Number
                   uiDescription: Resource size per node
                   mapping: spec.engine.resources.cpu
+                  editable: true
                   params:
                     badge: GB
                     label: Memory
@@ -3154,6 +3155,7 @@ components:
                   uiType: Number
                   uiDescription: Resource size per node
                   mapping: spec.engine.resources.memory
+                  editable: true
                   params:
                     badge: GB
                     label: Memory
@@ -3172,6 +3174,7 @@ components:
                   uiType: Number
                   uiDescription: Number of proxies
                   mapping: spec.proxy.resources.cpu
+                  editable: true
                   params:
                     badge: CPU
                     label: CPU
@@ -3179,6 +3182,7 @@ components:
                   uiType: Number
                   uiDescription: Resource size per proxy
                   mapping: spec.proxy.resources.memory
+                  editable: true
                   params:
                     badge: Gi
                     label: Memory
