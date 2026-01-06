@@ -3097,6 +3097,57 @@ components:
           type: array # preserve the order of properties
           items:
             $ref: '#/components/schemas/DataStoreUISchema'
+          example:
+            - name: provider
+              uiType: Toggle
+              description: Data store provider
+            - name: namespace
+              uiType: Toggle
+              description: Namespace
+            - name: name
+              uiType: TextBox
+              description: Display name
+            - name: dataStoreVersion
+              uiType: Toggle
+              description: Data store version
+            - name: nodes
+              uiType: Group
+              description: Nodes configuration
+              subParameters:
+                - name: cpu
+                  uiType: Number
+                  uiDescription: Number of nodes
+                  params:
+                    badge: limits
+                    label: CPU
+                - name: memory
+                  uiType: Number
+                  uiDescription: Resource size per node
+                  params:
+                    badge: GB
+                    label: Memory
+                - name: disk
+                  uiType: Number
+                  uiDescription: Disk
+                  params:
+                    badge: Gi
+                    label: Disk
+            - name: nodes
+              uiType: Group
+              description: Proxy configuration
+              subParameters:
+                - name: cpu
+                  uiType: Number
+                  uiDescription: Number of proxies
+                  params:
+                    badge: CPU
+                    label: CPU
+                - name: memory
+                  uiType: Number
+                  uiDescription: Resource size per proxy
+                  params:
+                    badge: Gi
+                    label: Memory
       type: object
     DataStoreUISchema:
       description: DataStoreUISchema defines a single property in the data store schema
