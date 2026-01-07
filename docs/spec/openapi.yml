@@ -3104,6 +3104,7 @@ components:
               uiType: Toggle
               description: Data store provider
               mapping: spec.engine.type
+              disable-edit: ['all']
               selector:
                 - label: "MySQL"
                   value: "pxc"
@@ -3111,6 +3112,7 @@ components:
               uiType: Toggle
               description: Namespace
               mapping: metadata.namespace
+              disable-edit: ['all']
               selector:
                 - label: "everest"
                   value: "everest"
@@ -3118,6 +3120,7 @@ components:
               uiType: TextBox
               description: Display name
               mapping: metadata.name
+              disable-edit: ['all']
             - name: dataStoreVersion
               uiType: Toggle
               description: Data store version
@@ -3135,6 +3138,7 @@ components:
                   uiType: Number
                   uiDescription: Number of nodes
                   mapping: spec.engine.replicas
+                  disable-edit: ['restore']
                   params:
                     badge: node
                     label: node
@@ -3149,7 +3153,7 @@ components:
                   uiType: Number
                   uiDescription: Resource size per node
                   mapping: spec.engine.resources.cpu
-                  editable: true
+                  disable-edit: ['restore']
                   params:
                     badge: GB
                     label: Memory
@@ -3157,7 +3161,7 @@ components:
                   uiType: Number
                   uiDescription: Resource size per node
                   mapping: spec.engine.resources.memory
-                  editable: true
+                  disable-edit: ['restore']
                   params:
                     badge: GB
                     label: Memory
@@ -3165,6 +3169,7 @@ components:
                   uiType: Number
                   uiDescription: Disk
                   mapping: spec.engine.storage.size
+                  disable-edit: ['restore']
                   params:
                     badge: Gi
                     label: Disk
@@ -3176,7 +3181,7 @@ components:
                   uiType: Number
                   uiDescription: Number of proxies
                   mapping: spec.proxy.resources.cpu
-                  editable: true
+                  disable-edit: ['restore']
                   params:
                     badge: CPU
                     label: CPU
@@ -3184,7 +3189,7 @@ components:
                   uiType: Number
                   uiDescription: Resource size per proxy
                   mapping: spec.proxy.resources.memory
-                  editable: true
+                  disable-edit: ['restore']
                   params:
                     badge: Gi
                     label: Memory
