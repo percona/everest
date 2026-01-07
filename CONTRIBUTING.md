@@ -10,22 +10,7 @@ The proxy methods align with Everest operator methods but don't support all orig
 You can find the definition of the custom resources in the [Everest operator repo](https://github.com/percona/everest-operator/tree/main/config/crd/bases).
 
 ### Run everest locally
-0. Prerequisites:
-    - Golang 1.24.x
-    - Make 3.x
-    - Docker 20.x
-    - Git 2.x
-    - k3d 5.x
-1. Check out the repo:
-`git clone https://github.com/percona/everest`
-2. Navigate to the repo folder:
-`cd everest`
-3. Check out a particular branch if needed:
-`git checkout <branch_name>`
-4. Run the dev environment:
-`make k3d-cluster-up`
-5. Build the CLI: `make build-cli-debug`
-6. Deploy Everest using the CLI : `make deploy`
+See [setting up a development environment](dev/README.md).
 
 ### Add a new proxy method
 1. Copy the corresponding k8s spec to the [openapi.yml](./docs/spec/openapi.yml). For information on observing your cluster API, see [Kubernetes: How to View Swagger UI blog post](https://jonnylangefeld.com/blog/kubernetes-how-to-view-swagger-ui), which details the operator-defined methods (if the everest operator is installed).
