@@ -99,6 +99,12 @@ func (e *EverestServer) GetDatabaseCluster(c echo.Context, namespace, name strin
 	return c.JSON(http.StatusOK, result)
 }
 
+// GetDataStoreSchema implements [api.ServerInterface].
+// It retrieves the schema of CR and UI components for the given data store.
+func (e *EverestServer) GetDataStoreSchema(ctx echo.Context, cluster string, namespace string, dataStore string) error {
+	panic("unimplemented")
+}
+
 // GetDatabaseClusterComponents returns database cluster components.
 func (e *EverestServer) GetDatabaseClusterComponents(c echo.Context, namespace, name string) error {
 	result, err := e.handler.GetDatabaseClusterComponents(c.Request().Context(), namespace, name)
