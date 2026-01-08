@@ -61,7 +61,7 @@ export const getEnginesLatestRecommendedVersions = async (
   namespace: string,
   request: APIRequestContext
 ) => {
-  let latestRecommendedVersions = {
+  const latestRecommendedVersions = {
     pxc: '',
     psmdb: '',
     postgresql: '',
