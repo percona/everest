@@ -35,6 +35,7 @@ import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
 import { Path, UseFormGetFieldState } from 'react-hook-form';
 import cronConverter from './cron-converter';
 import { EMPTY_LOAD_BALANCER_CONFIGURATION } from 'consts';
+import { mapDeprecatedExposeType } from 'components/cluster-form/advanced-configuration/advanced-configuration.utils';
 
 export const dbTypeToIcon = (dbType: DbType) => {
   switch (dbType) {
@@ -849,21 +850,26 @@ export const changeDbClusterResources = (
         size: `${newResources.disk}${newResources.diskUnit}`,
       },
     },
-    proxy: getProxySpec(
-      dbEngineToDbType(dbCluster.spec.engine.type),
-      newResources.numberOfProxies.toString(),
-      '',
-      dbCluster.spec.proxy?.expose?.type || ProxyExposeType.ClusterIP,
-      newResources.proxyCpu,
-      newResources.proxyMemory,
-      !!sharding,
-      ((dbCluster.spec.proxy as Proxy)?.expose?.ipSourceRanges || []).map(
-        (sourceRange) => ({ sourceRange })
-      ),
-      dbCluster.spec.proxy?.expose?.type === ProxyExposeType.LoadBalancer
-        ? dbCluster.spec.proxy?.expose?.loadBalancerConfigName
-        : undefined
-    ),
+    proxy: (() => {
+      const exposeType = dbCluster.spec.proxy?.expose?.type;
+      const mappedExposeType = mapDeprecatedExposeType(exposeType);
+
+      return getProxySpec(
+        dbEngineToDbType(dbCluster.spec.engine.type),
+        newResources.numberOfProxies.toString(),
+        '',
+        mappedExposeType,
+        newResources.proxyCpu,
+        newResources.proxyMemory,
+        !!sharding,
+        ((dbCluster.spec.proxy as Proxy)?.expose?.ipSourceRanges || []).map(
+          (sourceRange) => ({ sourceRange })
+        ),
+        mappedExposeType === ProxyExposeType.LoadBalancer
+          ? dbCluster.spec.proxy?.expose?.loadBalancerConfigName
+          : undefined
+      );
+    })(),
     ...(dbCluster.spec.engine.type === DbEngineType.PSMDB &&
       sharding && {
         sharding: {
