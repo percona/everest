@@ -44,12 +44,16 @@ export const BackupActionButtons = (
     'database-clusters',
     `${dbCluster.metadata.namespace}/*`
   );
+  const { canUpdate: canUpdateCluster } = useRBACPermissions(
+    'database-clusters',
+    `${dbCluster.metadata.namespace}/${row.original.dbClusterName}`
+  );
   const { canRead: canReadCredentials } = useRBACPermissions(
     'database-cluster-credentials',
     `${dbCluster.metadata.namespace}/${row.original.dbClusterName}`
   );
 
-  const canRestore = canCreateRestore && canReadCredentials;
+  const canRestore = canCreateRestore && canReadCredentials && canUpdateCluster;
   const canCreateClusterFromBackup = canRestore && canCreateClusters;
 
   return [
