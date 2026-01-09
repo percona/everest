@@ -66,10 +66,10 @@ test.describe.serial('PG cluster tests', () => {
       await test.step('expose DB cluster', async () => {
         await expect(async () => {
           dbCluster = await th.getDBCluster(request, dbClusterSinName)
-          dbCluster.spec.proxy.expose.type = 'Load'
+          dbCluster.spec.proxy.expose.type = 'LoadBalancer'
 
           dbCluster = await th.updateDBCluster(request, dbClusterSinName, dbCluster)
-          expect(dbCluster.spec.proxy.expose.type).toMatch('ClusterIP')
+          expect(dbCluster.spec.proxy.expose.type).toMatch('LoadBalancer')
         }).toPass({
           intervals: [1000],
           timeout: 30 * 1000,
