@@ -1,6 +1,9 @@
 ---
 name: API CI
 on:
+  push:
+    branches:
+      - tmp-debug
   pull_request:
     paths-ignore:
       - 'ui/**'
@@ -18,106 +21,7 @@ env:
   GOPRIVATE: 'github.com/percona'
 
 jobs:
-  test:
-    name: Test
-    timeout-minutes: 30
-    strategy:
-      fail-fast: true
-    continue-on-error: false
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v5
-
-      - name: Set up Go release
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
-      - name: Run tests
-        timeout-minutes: 20
-        run: |
-          go clean -testcache
-          make test
-
-      - name: Check that there are no source code changes
-        run: |
-          # Break job if any files were changed during its run (code generation, etc), except go.sum.
-          # `go mod tidy` could remove old checksums from that file, and that's okay on CI,
-          # and actually expected for PRs made by @dependabot.
-          # Checksums of actually used modules are checked by previous `go` subcommands.
-          pushd tools && go mod tidy -v && git checkout go.sum
-          popd        && go mod tidy -v && git checkout go.sum
-          git diff --exit-code
-
-      - name: Run debug commands on failure
-        if: ${{ failure() }}
-        run: |
-          env
-          go version
-          go env
-          pwd
-          git status
-
-  check:
-    name: Check
-    timeout-minutes: 10
-    strategy:
-      fail-fast: true
-    continue-on-error: false
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Set up Go release
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
-      - name: Run linters
-        run: |
-          go tool golangci-lint run --new --out-format=line-number | env REVIEWDOG_GITHUB_API_TOKEN=${{ secrets.GITHUB_TOKEN }} go tool reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=true
-      - name: Check that dev Helm chart is up-to-date
-        run: |
-          make update-dev-chart
-          git diff --exit-code
-
-      - name: Check that there are no source code changes
-        run: |
-          make format
-          pushd tools && go mod tidy -v
-          popd        && go mod tidy -v
-          git status
-          git diff --exit-code
-
-      - name: Check the Makefile references dev version
-        run: |
-          if ! grep -q "RELEASE_VERSION ?= v0.0.0" Makefile; then 
-            echo "default RELEASE_VERSION in Makefile should be 0.0.0" 
-            exit 1 
-          fi 
-
-      - name: Run debug commands on failure
-        if: ${{ failure() }}
-        run: |
-          env
-          go version
-          go env
-          pwd
-          git status
-
   integration_tests_api:
-    strategy:
-      fail-fast: true
-    continue-on-error: false
     name: API Integration Tests
     runs-on: ubuntu-latest
     steps:
@@ -192,85 +96,13 @@ jobs:
         run: |
           make ci-init
 
+      - name: "Setup tmate debug ssh session"
+        uses: "percona/gh-action-action-tmate@v3"
+        if: ${{ always() }}
+
       - name: Run integration tests
         working-directory: api-tests
         timeout-minutes: 20
         run: |
           make test
 
-  integration_tests_cli:
-    name: CLI Integration Tests
-    strategy:
-      fail-fast: true
-    continue-on-error: false
-    runs-on: ubuntu-latest
-    env:
-      PERCONA_VERSION_SERVICE_URL: https://check-dev.percona.com/versions/v1
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Set up Go release
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
-      - name: Build CLI binary
-        run: |
-          make build-cli
-
-      - name: Create KIND cluster
-        uses: helm/kind-action@v1.12.0
-
-      - name: Run integration tests
-        id: cli-tests
-        run: |
-          cd cli-tests
-          make init
-          make install-operators
-          make test-cli
-
-      - name: Attach the report
-        if: ${{ always() && steps.cli-tests.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: cli-tests-report
-          path: cli-tests/test-report
-          overwrite: true
-
-  integration_tests_flows:
-    strategy:
-      fail-fast: false
-      matrix:
-        make_target: [
-          'test-all-operators',
-          'test-mongo-operator',
-          'test-pg-operator',
-          'test-pxc-operator',
-          'test-namespaces'
-        ]
-    name: CLI tests
-    uses: ./.github/workflows/cli-tests.yml
-    secrets: inherit
-    with:
-      make_target: ${{ matrix.make_target }}
-
-  merge-gatekeeper:
-    needs: [ test, check, integration_tests_api, integration_tests_flows, integration_tests_cli]
-    name: Merge Gatekeeper
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Merge Gatekeeper
-        uses: upsidr/merge-gatekeeper@v1.2.1
-        with:
-          self: Merge Gatekeeper
-          token: ${{ secrets.GITHUB_TOKEN }}
-          interval: 45
-          timeout: 600
-          ignored: "license/snyk (Percona Everest), security/snyk (Percona Everest)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
