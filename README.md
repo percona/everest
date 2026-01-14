@@ -18,7 +18,7 @@ Why you should try OpenEverest:
 
 ## Documentation
 
-For comprehensive information about OpenEverest, see the [documentation](https://openeverest.io/docs/).
+For comprehensive information about OpenEverest, see the [documentation](https://openeverest.io/documentation/current/).
 
 ## Install OpenEverest Using Helm (Recommended)
 
@@ -192,4 +192,4 @@ We value your thoughts and opinions and we would be thrilled to hear from you! [
 
 If you find a bug in OpenEverest, [create a GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue#creating-an-issue-from-a-repository) in this repository.
 
-Learn more about submitting bugs, new features ideas and improvements in the [documentation](https://openeverest.io/documentation/1.11.0/contribute.html).
+Learn more about submitting bugs, new features ideas and improvements in the [documentation](https://openeverest.io/documentation/current/contribute.html).
