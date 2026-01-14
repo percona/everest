@@ -174,7 +174,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Ope
 # Need help?
 
 | **Commercial Support** | **Community Support** |
-| --- | --- |
+| :---: | :---: |
 | Get enterprise-grade support and services for OpenEverest from certified partners. | Connect with our engineers and fellow users for general questions, troubleshooting, and sharing feedback and ideas. |
 | **[Get Commercial Support](https://openeverest.io/support/)** | **[Talk to us](https://github.com/openeverest#getting-in-touch)** |
 
