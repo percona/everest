@@ -67,7 +67,7 @@ kubectl port-forward svc/everest 8080:8080 -n everest-system
 
 Access the UI at http://127.0.0.1:8080.
 
-For more information about our Helm charts, visit the official [Percona Everest Helm Charts repository](https://github.com/percona/percona-helm-charts/tree/main/charts/everest).
+For more information about our Helm charts, visit the official [OpenEverest Helm Charts repository](https://github.com/percona/percona-helm-charts/tree/main/charts/everest).
 
 ## Install OpenEverest using CLI
 
@@ -100,7 +100,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Ope
    Linux and WSL
 
    ```sh
-   curl -sSL -o everestctl-linux-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-linux-amd64
+   curl -sSL -o everestctl-linux-amd64 https://github.com/openeverest/openeverest/releases/latest/download/everestctl-linux-amd64
    sudo install -m 555 everestctl-linux-amd64 /usr/local/bin/everestctl
    rm everestctl-linux-amd64
    ```
@@ -108,7 +108,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Ope
    macOS (Apple Silicon)
 
    ```sh
-   curl -sSL -o everestctl-darwin-arm64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-arm64
+   curl -sSL -o everestctl-darwin-arm64 https://github.com/openeverest/openeverest/releases/latest/download/everestctl-darwin-arm64
    sudo install -m 555 everestctl-darwin-arm64 /usr/local/bin/everestctl
    rm everestctl-darwin-arm64
 
@@ -117,7 +117,7 @@ Starting from version **1.4.0**, `everestctl` uses the Helm chart to install Ope
    macOS (Intel CPU)
 
    ```sh
-   curl -sSL -o everestctl-darwin-amd64 https://github.com/percona/everest/releases/latest/download/everestctl-darwin-amd64
+   curl -sSL -o everestctl-darwin-amd64 https://github.com/openeverest/openeverest/releases/latest/download/everestctl-darwin-amd64
    sudo install -m 555 everestctl-darwin-amd64 /usr/local/bin/everestctl
    rm everestctl-darwin-amd64
 
@@ -192,4 +192,4 @@ We value your thoughts and opinions and we would be thrilled to hear from you! [
 
 If you find a bug in OpenEverest, [create a GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue#creating-an-issue-from-a-repository) in this repository.
 
-Learn more about submitting bugs, new features ideas and improvements in the [documentation](https://docs.percona.com/everest/contribute.html).
+Learn more about submitting bugs, new features ideas and improvements in the [documentation](https://openeverest.io/documentation/1.11.0/contribute.html).
