@@ -96,6 +96,13 @@ jobs:
       EVEREST_OPERATOR_BRANCH: ${{ inputs.everest_operator_branch }}
       EVEREST_CATALOG_BRANCH: ${{ inputs.everest_catalog_branch }}
 
+      IMAGE_PREFIX: 'ghcr.io/openeverest'
+      EVEREST_SERVER_DEV_IMAGE_NAME: 'everest-dev'
+      EVEREST_OPERATOR_DEV_IMAGE_NAME: 'everest-operator-dev'
+      EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME: 'everest-operator-bundle-dev'
+      EVEREST_CATALOG_DEV_IMAGE_NAME: 'everest-catalog-dev'
+      EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME: 'version-service-dev'
+
       VS_PORT: 8081
       ARCH: ""
       OS: ""
@@ -132,9 +139,9 @@ jobs:
           # Fall back to default branch if the specified branch does not exist
           git ls-remote --heads --exit-code --quiet https://github.com/Percona-Lab/percona-version-service.git $VS_BRANCH > /dev/null || echo "VS_BRANCH=production" | tee -a $GITHUB_ENV
           git ls-remote --heads --exit-code --quiet https://github.com/percona/percona-helm-charts.git $HELM_BRANCH > /dev/null || echo "HELM_BRANCH=main" | tee -a $GITHUB_ENV
-          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest.git $EVEREST_BRANCH > /dev/null || echo "EVEREST_BRANCH=main" | tee -a $GITHUB_ENV
-          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-operator.git $EVEREST_OPERATOR_BRANCH > /dev/null || echo "EVEREST_OPERATOR_BRANCH=main" | tee -a $GITHUB_ENV
-          git ls-remote --heads --exit-code --quiet https://github.com/percona/everest-catalog.git $EVEREST_CATALOG_BRANCH > /dev/null || echo "EVEREST_CATALOG_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/openeverest/openeverest.git $EVEREST_BRANCH > /dev/null || echo "EVEREST_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/openeverest/openeverest-operator.git $EVEREST_OPERATOR_BRANCH > /dev/null || echo "EVEREST_OPERATOR_BRANCH=main" | tee -a $GITHUB_ENV
+          git ls-remote --heads --exit-code --quiet https://github.com/openeverest/openeverest-catalog.git $EVEREST_CATALOG_BRANCH > /dev/null || echo "EVEREST_CATALOG_BRANCH=main" | tee -a $GITHUB_ENV
 
       - name: Create temporary directory for storing artifacts
         run: |
@@ -150,7 +157,7 @@ jobs:
       - name: Operator - check out
         uses: actions/checkout@v5
         with:
-          repository: percona/everest-operator
+          repository: openeverest/openeverest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
@@ -197,7 +204,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            perconalab/everest-operator
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_DEV_IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
 
@@ -206,7 +213,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            perconalab/everest-operator-bundle
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
 
@@ -248,7 +255,7 @@ jobs:
       - name: Operator - check out again
         uses: actions/checkout@v5
         with:
-          repository: percona/everest-operator
+          repository: openeverest/openeverest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
@@ -286,13 +293,13 @@ jobs:
         with:
           context: percona-version-service
           push: true
-          tags: perconalab/version-service:${{ env.VS_TAG }}
+          tags: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME }}:${{ env.VS_TAG }}
 
 
       - name: Catalog - checkout
         uses: actions/checkout@v5
         with:
-          repository: percona/everest-catalog
+          repository: openeverest/openeverest-catalog
           ref: ${{ env.EVEREST_CATALOG_BRANCH }}
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
@@ -302,7 +309,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            perconalab/everest-catalog
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CATALOG_DEV_IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
 
@@ -371,7 +378,7 @@ jobs:
         with:
           context: .
           push: true
-          tags:  perconalab/everest:${{ env.VERSION }}
+          tags: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_SERVER_DEV_IMAGE_NAME }}:${{ env.VERSION }}
 
       - name: Create vs_tag file
         run: |
@@ -381,7 +388,7 @@ jobs:
       - name: Version Service - create deployment manifest
         run: |
           curl -fsSL https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
-          sed -i "s/perconalab\/version-service:.*/perconalab\/version-service:$VS_TAG/g" /tmp/${VERSION}/vs_deploy.yaml
+          sed -i "s/perconalab\/version-service:.*/$IMAGE_PREFIX\/$EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME:$VS_TAG/g" /tmp/${VERSION}/vs_deploy.yaml
           sed -i "s/replicas: [0-9]/replicas: 1/g" /tmp/${VERSION}/vs_deploy.yaml
 
       - name: Upload artifacts

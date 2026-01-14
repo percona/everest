@@ -15,6 +15,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      IMAGE_PREFIX: 'ghcr.io/openeverest'
+      EVEREST_SERVER_DEV_IMAGE_NAME: 'everest-dev'
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v5
@@ -53,7 +56,7 @@ jobs:
         uses: docker/metadata-action@v5
         id: meta
         with:
-          images: perconalab/everest
+          images: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_SERVER_DEV_IMAGE_NAME }}
           tags: 0.0.0
 
       - name: Login to GitHub Container Registry

@@ -36,6 +36,16 @@ jobs:
       IS_RC: 0
       ARCH: ""
       OS: ""
+      IMAGE_PREFIX: 'ghcr.io/openeverest'
+      EVEREST_SERVER_IMAGE_NAME: 'everest'
+      EVEREST_SERVER_DEV_IMAGE_NAME: 'everest-dev'
+      EVEREST_OPERATOR_IMAGE_NAME: 'everest-operator'
+      EVEREST_OPERATOR_DEV_IMAGE_NAME: 'everest-operator-dev'
+      EVEREST_OPERATOR_BUNDLE_IMAGE_NAME: 'everest-operator-bundle'
+      EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME: 'everest-operator-bundle-dev'
+      EVEREST_CATALOG_IMAGE_NAME: 'everest-catalog'
+      EVEREST_CATALOG_DEV_IMAGE_NAME: 'everest-catalog-dev'
+      EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME: 'version-service-dev'
     steps:
       - name: Enable /mnt (big volume) to be used by runner
         run: |
@@ -63,7 +73,7 @@ jobs:
       - name: Operator - check out
         uses: actions/checkout@v5
         with:
-          repository: percona/everest-operator
+          repository: openeverest/everest-operator
           path: everest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
@@ -80,41 +90,29 @@ jobs:
 
           git checkout $BRANCH_NAME
 
-          # update version in the Makefile
-          sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
-
-          # if there is something to commit, commit it and add the tag
-          if [[ -n $(git status --porcelain) ]]; then
-            if git tag --list | grep -q "^$GH_TAG$"; then
-              echo "The tag is already present in github. Please create a different RC/Release"
-              exit 1
-            fi
-
-            # update IMAGE_TAG_OWNER in the Makefile to point to a correct org
-            if [[ $IS_RC == 1 ]]; then 
-              # if the RC build is being run over a Release build, there will be the "percona" org mentioned in the quickstart file, 
-              # so we should replace the org
-              sed -i "s/IMAGE_TAG_OWNER ?= docker.io\/percona\$/IMAGE_TAG_OWNER ?= docker.io\/perconalab/g" Makefile 
-            else
-              sed -i "s/IMAGE_TAG_OWNER ?= docker.io\/perconalab/IMAGE_TAG_OWNER ?= docker.io\/percona/g" Makefile 
-            fi 
-            
-            make init
-            make release
-
-            # configure userdata for commits
-            git config --global user.email "everest-ci@percona.com"
-            git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
-
-            # commit and push the updated files
-            git commit -a -m "update version tag"
-            git push origin $BRANCH_NAME
-
-            git tag $GH_TAG
-            git push origin $GH_TAG
-          else
-            echo "No need for a new build"
+          if git tag --list | grep -q "^$GH_TAG$"; then
+            echo "The tag is already present in github. Please create a different RC/Release"
+            exit 1
           fi
+
+          make init
+
+          if [[ $IS_RC == 1 ]]; then 
+            IMAGE_TAG_BASE=${IMAGE_PREFIX}/${EVEREST_OPERATOR_DEV_IMAGE_NAME} make release
+          else
+            IMAGE_TAG_BASE=${IMAGE_PREFIX}/${EVEREST_OPERATOR_IMAGE_NAME} make release
+          fi 
+
+          # configure userdata for commits
+          git config --global user.email "everest-ci@percona.com"
+          git config --global user.name "Everest RC CI triggered by ${{ github.actor }}"
+
+          # commit and push the updated files
+          git commit -a -m "update version tag"
+          git push origin $BRANCH_NAME
+
+          git tag $GH_TAG
+          git push origin $GH_TAG
 
       - name: Operator - install operator-sdk
         run: |
@@ -148,8 +146,8 @@ jobs:
         # in the codebase prior putting the tag, so the action uses the raw tags
         with:
           images: |
-            percona/everest-operator,enable=${{ env.IS_RC == 0 }}
-            perconalab/everest-operator
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_IMAGE_NAME }},enable=${{ env.IS_RC == 0 }}
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_DEV_IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
             type=raw,value=latest
@@ -160,8 +158,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            percona/everest-operator-bundle,enable=${{ env.IS_RC == 0 }}
-            perconalab/everest-operator-bundle
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_BUNDLE_IMAGE_NAME }},enable=${{ env.IS_RC == 0 }}
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
@@ -209,7 +207,7 @@ jobs:
       - name: Catalog - checkout
         uses: actions/checkout@v5
         with:
-          repository: percona/everest-catalog
+          repository: openeverest/everest-catalog
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
 
@@ -244,8 +242,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            percona/everest-catalog,enable=${{ env.IS_RC == 0 }}
-            perconalab/everest-catalog
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CATALOG_IMAGE_NAME }},enable=${{ env.IS_RC == 0 }}
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CATALOG_DEV_IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
@@ -291,7 +289,7 @@ jobs:
           git checkout $BRANCH_NAME
 
           # Update the operator go module to reference the version tag
-          go get github.com/percona/everest-operator@$GH_TAG
+          go get github.com/openeverest/everest-operator@$GH_TAG
           go mod tidy
 
           # Change version in Makefile
@@ -346,8 +344,8 @@ jobs:
         id: everest_meta
         with:
           images: |
-            percona/everest,enable=${{ env.IS_RC == 0 }}
-            perconalab/everest
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_SERVER_IMAGE_NAME }},enable=${{ env.IS_RC == 0 }}
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_SERVER_DEV_IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
             type=raw,value=latest
