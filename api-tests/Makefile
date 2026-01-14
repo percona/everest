@@ -29,8 +29,8 @@ HELM=go tool -modfile=$(TEST_ROOT)/../go.mod helm
 deploy-monitoring:   ## Deploy monitoring instances to K3D test cluster.
 	$(info Deploying PMM instances to K3D test cluster)
 	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
-	# PMM 3 starts really slowly, so we increase timeout to 10 minutes
-	$(HELM) install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 10m -n everest-monitoring --wait
+	# PMM 3 starts really slowly, so we increase timeout to 15 minutes
+	$(HELM) install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 15m -n everest-monitoring --wait
 	$(info Port-forwarding PMM instances to localhost)
 	kubectl port-forward -n everest-monitoring svc/monitoring-service 8090:443 &
 	kubectl port-forward -n everest-monitoring svc/monitoring-service 8091:443 &
@@ -55,7 +55,7 @@ MINIO_RESOURCE=$(TEST_ROOT)/manifests/minio.yaml
 deploy-minio:
 	$(info Deploying MinIO to K3D cluster)
 	kubectl apply -f $(MINIO_RESOURCE)
-	if ! kubectl wait deploy/minio --for=condition=Available -n minio --timeout=300s; then \
+	if ! kubectl wait deploy/minio --for=condition=Available -n minio --timeout=600s; then \
 		echo "❌ MinIO deployment did not become ready in time"; \
 		echo "🔎 Deployment YAML:"; \
 		kubectl get deploy minio -n minio -o yaml || true; \
