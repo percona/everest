@@ -29,8 +29,8 @@ HELM=go tool -modfile=$(TEST_ROOT)/../go.mod helm
 deploy-monitoring:   ## Deploy monitoring instances to K3D test cluster.
 	$(info Deploying PMM instances to K3D test cluster)
 	$(HELM) repo add percona https://percona.github.io/percona-helm-charts/
-	# PMM 3 starts really slowly, so we increase timeout to 10 minutes
-	$(HELM) install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 10m -n everest-monitoring --wait
+	# PMM 3 starts really slowly, so we increase timeout to 15 minutes
+	$(HELM) install pmm --set secret.pmm_password='admin',service.type=ClusterIP percona/pmm --version $(PMM_HELM_CHART_VER) --timeout 15m -n everest-monitoring --wait
 	$(info Port-forwarding PMM instances to localhost)
 	kubectl port-forward -n everest-monitoring svc/monitoring-service 8090:443 &
 	kubectl port-forward -n everest-monitoring svc/monitoring-service 8091:443 &
