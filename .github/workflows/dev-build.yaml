@@ -11,6 +11,7 @@ env:
   GONOPROXY: 'github.com/percona'
   GONOSUMDB: 'github.com/percona'
   GOPRIVATE: 'github.com/percona'
+  REGISTRY: ghcr.io
 
 jobs:
   build:
@@ -62,8 +63,9 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push everest dev image
         uses: docker/build-push-action@v6

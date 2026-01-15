@@ -19,6 +19,7 @@ env:
   GOPRIVATE: 'github.com/percona'
   GOCACHE: '/mnt/go_cache'
   GOMODCACHE: '/mnt/go_mod_cache'
+  REGISTRY: ghcr.io
 
 jobs:
   build:
@@ -167,8 +168,9 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Operator - build everest-operator image
         uses: docker/build-push-action@v6
