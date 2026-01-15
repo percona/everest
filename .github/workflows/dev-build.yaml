@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE_PREFIX: 'ghcr.io/openeverest'
-      EVEREST_SERVER_DEV_IMAGE_NAME: 'everest-dev'
+      EVEREST_SERVER_DEV_IMAGE_NAME: 'openeverest-dev'
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v5
@@ -67,7 +67,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push everest dev image
+      - name: Build and Push openeverest dev image
         uses: docker/build-push-action@v6
         with:
           context: .
