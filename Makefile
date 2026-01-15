@@ -1,6 +1,13 @@
 REPO_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 RELEASE_VERSION ?= v0.0.0-$(shell git rev-parse --short HEAD)
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
+IMAGE_PREFIX ?= ghcr.io/openeverest
+EVEREST_SERVER_DEV_IMAGE_NAME ?= everest-dev
+EVEREST_OPERATOR_DEV_IMAGE_NAME ?= everest-operator-dev
+IMAGE_TAG ?= 0.0.0
+IMG = $(IMAGE_PREFIX)/$(EVEREST_SERVER_DEV_IMAGE_NAME):$(IMAGE_TAG)
+EVEREST_OPERATOR_IMG = $(IMAGE_PREFIX)/$(EVEREST_OPERATOR_DEV_IMAGE_NAME):$(IMAGE_TAG)
+
 
 .PHONY: default
 default: help
@@ -120,10 +127,6 @@ build-ui:
 	$(MAKE) -C ${TEST_ROOT}/ui init
 	$(MAKE) -C ${TEST_ROOT}/ui build EVEREST_OUT_DIR=${TEST_ROOT}/public/dist
 
-IMAGE_OWNER ?= perconalab/everest
-IMAGE_TAG ?= 0.0.0
-IMG = $(IMAGE_OWNER):$(IMAGE_TAG)
-
 .PHONY: docker-build
 docker-build: ## Build docker image with Everest API server.
 	docker build -t ${IMG} .
@@ -155,7 +158,6 @@ test-crosscover:        ## Run unit tests and collect cross-package coverage inf
 
 # This target builds the docker image for Everest operator from the commit referenced in go.mod.
 # Docker image will be tagged with the same tag as Everest API server image (IMAGE_TAG).
-EVEREST_OPERATOR_IMG = perconalab/everest-operator:$(IMAGE_TAG)
 .PHONY: docker-build-operator
 docker-build-operator:
 	$(info Building Everest Operator Docker image=$(EVEREST_OPERATOR_IMG))
@@ -171,7 +173,7 @@ docker-build-operator:
 
 .PHONY: deploy
 deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
-	$(info Deploying Everest ($(IMAGE_OWNER):$(IMAGE_TAG)) into K8S cluster using everestctl)
+	$(info Deploying Everest ($(IMG)) into K8S cluster using everestctl)
 	$(LOCALBIN)/everestctl install -v \
 	--disable-telemetry \
 	--version=$(IMAGE_TAG) \
@@ -181,7 +183,7 @@ deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	--operator.mysql=true \
 	--skip-wizard \
 	--namespaces everest \
-	--helm.set server.image=$(IMAGE_OWNER) \
+	--helm.set server.image=$(IMAGE_PREFIX)/$(EVEREST_SERVER_DEV_IMAGE_NAME) \
 	--helm.set server.apiRequestsRateLimit=200 \
 	--helm.set versionMetadataURL=https://check-dev.percona.com \
 	--helm.set server.initialAdminPassword=admin \
