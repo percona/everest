@@ -291,7 +291,7 @@ jobs:
           git checkout $BRANCH_NAME
 
           # Update the operator go module to reference the version tag
-          go get github.com/openeverest/openeverest-operator@$GH_TAG
+          go get github.com/openeverest/everest-operator@$GH_TAG
           go mod tidy
 
           # Change version in Makefile
