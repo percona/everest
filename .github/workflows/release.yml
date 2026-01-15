@@ -38,14 +38,14 @@ jobs:
       ARCH: ""
       OS: ""
       IMAGE_PREFIX: 'ghcr.io/openeverest'
-      EVEREST_SERVER_IMAGE_NAME: 'everest'
-      EVEREST_SERVER_DEV_IMAGE_NAME: 'everest-dev'
-      EVEREST_OPERATOR_IMAGE_NAME: 'everest-operator'
-      EVEREST_OPERATOR_DEV_IMAGE_NAME: 'everest-operator-dev'
-      EVEREST_OPERATOR_BUNDLE_IMAGE_NAME: 'everest-operator-bundle'
-      EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME: 'everest-operator-bundle-dev'
-      EVEREST_CATALOG_IMAGE_NAME: 'everest-catalog'
-      EVEREST_CATALOG_DEV_IMAGE_NAME: 'everest-catalog-dev'
+      EVEREST_SERVER_IMAGE_NAME: 'openeverest'
+      EVEREST_SERVER_DEV_IMAGE_NAME: 'openeverest-dev'
+      EVEREST_OPERATOR_IMAGE_NAME: 'openeverest-operator'
+      EVEREST_OPERATOR_DEV_IMAGE_NAME: 'openeverest-operator-dev'
+      EVEREST_OPERATOR_BUNDLE_IMAGE_NAME: 'openeverest-operator-bundle'
+      EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME: 'openeverest-operator-bundle-dev'
+      EVEREST_CATALOG_IMAGE_NAME: 'openeverest-catalog'
+      EVEREST_CATALOG_DEV_IMAGE_NAME: 'openeverest-catalog-dev'
       EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME: 'version-service-dev'
     steps:
       - name: Enable /mnt (big volume) to be used by runner
@@ -74,13 +74,13 @@ jobs:
       - name: Operator - check out
         uses: actions/checkout@v5
         with:
-          repository: openeverest/everest-operator
-          path: everest-operator
+          repository: openeverest/openeverest-operator
+          path: openeverest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Operator - create release branch
         run: |
-          cd everest-operator
+          cd openeverest-operator
           # Check if the branch already exists
           git fetch
           check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
@@ -136,10 +136,10 @@ jobs:
 
       - name: Operator - build and bundle
         run: |
-          cd everest-operator
+          cd openeverest-operator
           make build manifests bundle
 
-      - name: Operator - setup Docker meta for everest-operator
+      - name: Operator - setup Docker meta for openeverest-operator
         id: operator_meta
         uses: docker/metadata-action@v5
         # docker/metadata-action action looks more elegant when being triggered by a GH tag,
@@ -154,7 +154,7 @@ jobs:
             type=raw,value=latest
             type=raw,value=${{ env.FLOATING_TAG }},enable=${{ env.IS_RC == 0 }}
 
-      - name: Operator - setup Docker meta for everest-operator-bundle
+      - name: Operator - setup Docker meta for openeverest-operator-bundle
         id: bundle_meta
         uses: docker/metadata-action@v5
         with:
@@ -172,50 +172,50 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Operator - build everest-operator image
+      - name: Operator - build openeverest-operator image
         uses: docker/build-push-action@v6
         with:
-          context: everest-operator
+          context: openeverest-operator
           push: false
           tags: ${{ steps.operator_meta.outputs.tags }}
 
 
-      - name: Operator - push everest-operator image
+      - name: Operator - push openeverest-operator image
         uses: docker/build-push-action@v6
         with:
-          context: everest-operator
+          context: openeverest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
           build-args: |
             FLAGS= -X 'github.com/percona/everest-operator/internal/consts.Version=${{ env.VERSION }}'
 
-      - name: Operator - build everest-operator-bundle image
+      - name: Operator - build openeverest-operator-bundle image
         uses: docker/build-push-action@v6
         with:
-          context: everest-operator
+          context: openeverest-operator
           push: false
           tags: ${{ steps.bundle_meta.outputs.tags }}
-          file: everest-operator/bundle.Dockerfile
+          file: openeverest-operator/bundle.Dockerfile
 
 
-      - name: Operator - push everest-operator-bundle image
+      - name: Operator - push openeverest-operator-bundle image
         uses: docker/build-push-action@v6
         with:
-          context: everest-operator
+          context: openeverest-operator
           push: true
           tags: ${{ steps.bundle_meta.outputs.tags }}
-          file: everest-operator/bundle.Dockerfile
+          file: openeverest-operator/bundle.Dockerfile
 
       - name: Catalog - checkout
         uses: actions/checkout@v5
         with:
           repository: openeverest/openeverest-catalog
-          path: everest-catalog
+          path: openeverest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Catalog - create release branch
         run: |
-          cd everest-catalog
+          cd openeverest-catalog
           # Check if the branch already exists
           git fetch
           check_branch=$(git ls-remote --heads origin ${BRANCH_NAME})
@@ -253,19 +253,19 @@ jobs:
       - name: Catalog - build image
         uses: docker/build-push-action@v6
         with:
-          context: everest-catalog
+          context: openeverest-catalog
           push: false
           tags: ${{ steps.catalog_meta.outputs.tags }}
-          file: everest-catalog/everest-catalog.Dockerfile
+          file: openeverest-catalog/everest-catalog.Dockerfile
 
 
       - name: Catalog - push image
         uses: docker/build-push-action@v6
         with:
-          context: everest-catalog
+          context: openeverest-catalog
           push: true
           tags: ${{ steps.catalog_meta.outputs.tags }}
-          file: everest-catalog/everest-catalog.Dockerfile
+          file: openeverest-catalog/everest-catalog.Dockerfile
 
       - name: Everest - check out
         uses: actions/checkout@v5
@@ -291,7 +291,7 @@ jobs:
           git checkout $BRANCH_NAME
 
           # Update the operator go module to reference the version tag
-          go get github.com/openeverest/everest-operator@$GH_TAG
+          go get github.com/percona/everest-operator@$GH_TAG
           go mod tidy
 
           # Change version in Makefile

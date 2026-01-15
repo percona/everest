@@ -98,10 +98,10 @@ jobs:
       EVEREST_CATALOG_BRANCH: ${{ inputs.everest_catalog_branch }}
 
       IMAGE_PREFIX: 'ghcr.io/openeverest'
-      EVEREST_SERVER_DEV_IMAGE_NAME: 'everest-dev'
-      EVEREST_OPERATOR_DEV_IMAGE_NAME: 'everest-operator-dev'
-      EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME: 'everest-operator-bundle-dev'
-      EVEREST_CATALOG_DEV_IMAGE_NAME: 'everest-catalog-dev'
+      EVEREST_SERVER_DEV_IMAGE_NAME: 'openeverest-dev'
+      EVEREST_OPERATOR_DEV_IMAGE_NAME: 'openeverest-operator-dev'
+      EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME: 'openeverest-operator-bundle-dev'
+      EVEREST_CATALOG_DEV_IMAGE_NAME: 'openeverest-catalog-dev'
       EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME: 'version-service-dev'
 
       VS_PORT: 8081
@@ -161,7 +161,7 @@ jobs:
         with:
           repository: openeverest/openeverest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
-          path: everest-operator
+          path: openeverest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Operator - install operator-sdk
@@ -185,7 +185,7 @@ jobs:
 
       - name: Operator - build and bundle
         run: |
-          cd everest-operator
+          cd openeverest-operator
           git checkout -b $VERSION_TAG
           sed -i "s/^VERSION ?=.*/VERSION ?= $VERSION/g" Makefile
 
@@ -201,7 +201,7 @@ jobs:
           # to build crds in helm, the remote ref with the version name should exist
           git push origin $VERSION_TAG
 
-      - name: Operator - setup Docker meta for everest-operator
+      - name: Operator - setup Docker meta for openeverest-operator
         id: operator_meta
         uses: docker/metadata-action@v5
         with:
@@ -210,7 +210,7 @@ jobs:
           tags: |
             type=raw,value=${{ env.VERSION }}
 
-      - name: Operator - setup Docker meta for everest-operator-bundle
+      - name: Operator - setup Docker meta for openeverest-operator-bundle
         id: bundle_meta
         uses: docker/metadata-action@v5
         with:
@@ -219,22 +219,22 @@ jobs:
           tags: |
             type=raw,value=${{ env.VERSION }}
 
-      - name: Operator - push everest-operator image
+      - name: Operator - push openeverest-operator image
         uses: docker/build-push-action@v6
         with:
-          context: everest-operator
+          context: openeverest-operator
           push: true
           tags: ${{ steps.operator_meta.outputs.tags }}
           build-args: |
             FLAGS= -X 'github.com/percona/everest-operator/internal/consts.Version=${{ env.VERSION }}'
 
-      - name: Operator - push everest-operator-bundle image
+      - name: Operator - push openeverest-operator-bundle image
         uses: docker/build-push-action@v6
         with:
-          context: everest-operator
+          context: openeverest-operator
           push: true
           tags: ${{ steps.bundle_meta.outputs.tags }}
-          file: everest-operator/bundle.Dockerfile
+          file: openeverest-operator/bundle.Dockerfile
 
       - name: Helm - checkout
         uses: actions/checkout@v5
@@ -259,12 +259,12 @@ jobs:
         with:
           repository: openeverest/openeverest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
-          path: everest-operator
+          path: openeverest-operator
           token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Operator - delete the feature build branch
         run: |
-          cd everest-operator
+          cd openeverest-operator
           git push -d origin $VERSION_TAG
 
       - name: VS - checkout
@@ -303,10 +303,10 @@ jobs:
         with:
           repository: openeverest/openeverest-catalog
           ref: ${{ env.EVEREST_CATALOG_BRANCH }}
-          path: everest-catalog
+          path: openeverest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
 
-      - name: Catalog - setup Docker meta for everest-catalog
+      - name: Catalog - setup Docker meta for openeverest-catalog
         id: catalog_meta
         uses: docker/metadata-action@v5
         with:
@@ -315,13 +315,13 @@ jobs:
           tags: |
             type=raw,value=${{ env.VERSION }}
 
-      - name: Catalog - push everest-catalog image
+      - name: Catalog - push openeverest-catalog image
         uses: docker/build-push-action@v6
         with:
-          context: everest-catalog
+          context: openeverest-catalog
           push: true
           tags: ${{ steps.catalog_meta.outputs.tags }}
-          file: everest-catalog/everest-catalog.Dockerfile
+          file: openeverest-catalog/everest-catalog.Dockerfile
 
 
       - name: Everest - check out
@@ -390,7 +390,7 @@ jobs:
       - name: Version Service - create deployment manifest
         run: |
           curl -fsSL https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
-          sed -i "s/perconalab\/version-service:.*/$IMAGE_PREFIX\/$EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME:$VS_TAG/g" /tmp/${VERSION}/vs_deploy.yaml
+          sed -i "s|perconalab/version-service:.*|$IMAGE_PREFIX/$EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME:$VS_TAG|g" /tmp/${VERSION}/vs_deploy.yaml
           sed -i "s/replicas: [0-9]/replicas: 1/g" /tmp/${VERSION}/vs_deploy.yaml
 
       - name: Upload artifacts
