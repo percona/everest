@@ -207,7 +207,7 @@ jobs:
       - name: Catalog - checkout
         uses: actions/checkout@v5
         with:
-          repository: openeverest/everest-catalog
+          repository: openeverest/openeverest-catalog
           path: everest-catalog
           token: ${{ secrets.ROBOT_TOKEN }}
 
