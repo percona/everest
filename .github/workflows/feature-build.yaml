@@ -162,7 +162,6 @@ jobs:
           repository: openeverest/openeverest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
           path: everest-operator
-          token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Operator - install operator-sdk
         run: |
@@ -242,7 +241,6 @@ jobs:
           repository: percona/percona-helm-charts
           ref: ${{ env.HELM_BRANCH }}
           path: percona-helm-charts
-          token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Helm - build
         run: |
@@ -260,7 +258,6 @@ jobs:
           repository: openeverest/openeverest-operator
           ref: ${{ env.EVEREST_OPERATOR_BRANCH }}
           path: everest-operator
-          token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Operator - delete the feature build branch
         run: |
@@ -273,7 +270,6 @@ jobs:
           repository: Percona-Lab/percona-version-service
           ref: ${{ env.VS_BRANCH }}
           path: percona-version-service
-          token: ${{ secrets.ROBOT_TOKEN }}
 
 
       - name: VS - update
@@ -304,7 +300,6 @@ jobs:
           repository: openeverest/openeverest-catalog
           ref: ${{ env.EVEREST_CATALOG_BRANCH }}
           path: everest-catalog
-          token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Catalog - setup Docker meta for everest-catalog
         id: catalog_meta
@@ -327,7 +322,6 @@ jobs:
       - name: Everest - check out
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.ROBOT_TOKEN }}
           ref: ${{ env.EVEREST_BRANCH }}
 
       - name: Set up Go release
