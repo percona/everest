@@ -186,7 +186,7 @@ See the [Contribution Guide](CONTRIBUTING.md) for more information on how you ca
 
 ## Communication
 
-We value your thoughts and opinions and we would be thrilled to hear from you! [Get in touch with us](https://github.com/openeverest#getting-in-touch) to ask questions, share your feedback, and spark creative ideas with our community.
+We value your thoughts and opinions and we would be thrilled to hear from you! [Get in touch with us](https://openeverest.io/#community) to ask questions, share your feedback, and spark creative ideas with our community.
 
 # Submitting Bug Reports
 
