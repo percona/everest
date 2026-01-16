@@ -11,22 +11,21 @@ components.
 Build and runtime logs can be easily accessed using tilt's web UI.
 
 ## Prerequisites
-
-1. Install [k3d](https://k3d.io)
-
-2. Install [tilt.dev](https://docs.tilt.dev/install.html)
-NOTE: for MacOS tilt needs to have installed and runing `docker-desktop` tool. This is not required and can be skiped since we use `k3d` instead.
- 
-3. Clone [everest-operator](https://github.com/percona/everest-operator).
-
-4. Clone [percona-helm-charts](https://github.com/percona/percona-helm-charts).
+- Golang 1.25.x
+- Make 3.x
+- Docker 20.x
+- Git 2.x
+- [k3d](https://k3d.io) 5.x
+- [tilt.dev](https://docs.tilt.dev/install.html)
+- Clone [everest-operator](https://github.com/percona/everest-operator)
+- Clone [percona-helm-charts](https://github.com/percona/percona-helm-charts)
 
 ## Set up the environment
 
 ### 1. Set up k8s & registry   
-#### Option A: Local  
+#### Option A: Local k3d cluster
 ```sh
-k3d cluster create everest-dev --registry-create k3d-registry
+make k3d-cluster-up
 ```  
 #### Option B: Remote (GKE)  
 1. Setup your default gcloud project, e.g.  
@@ -110,7 +109,7 @@ tilt down
 
 2. Tear down local k8s cluster
 ```sh
-k3d cluster delete everest-dev
+make k3d-cluster-down
 ```
 
 ## Notes for frontend development
