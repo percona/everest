@@ -72,7 +72,7 @@ jobs:
           echo "OS=$(uname | awk '{print tolower($0)}')" >> $GITHUB_ENV
 
       - name: Operator - check out
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: openeverest/openeverest-operator
           path: openeverest-operator
@@ -207,7 +207,7 @@ jobs:
           file: openeverest-operator/bundle.Dockerfile
 
       - name: Catalog - checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: openeverest/openeverest-catalog
           path: openeverest-catalog
@@ -268,7 +268,7 @@ jobs:
           file: openeverest-catalog/everest-catalog.Dockerfile
 
       - name: Everest - check out
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.ROBOT_TOKEN }}
 
